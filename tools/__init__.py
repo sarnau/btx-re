@@ -1,0 +1,1 @@
+"""Analyst-facing reporting helpers."""

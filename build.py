@@ -20,6 +20,7 @@ from dis6801.asm import assemble
 from dis6801.emit import emit
 from dis6801.sidecar import load_sidecar
 from dis6801.trace import trace
+from tools.report import format_report
 
 ROOT = pathlib.Path(__file__).resolve().parent
 SIDECAR_PATH = ROOT / "sidecar" / "decoder_ii.toml"
@@ -33,6 +34,7 @@ class BuildResult:
     assembled: bytes
     code_bytes: int
     unknown_bytes: int
+    kind: list[str]
     unresolved: list[int]
     bad_opcodes: list[int]
 
@@ -73,6 +75,7 @@ def run(*, write: bool = True) -> BuildResult:
         assembled=assembled,
         code_bytes=cov["code"],
         unknown_bytes=cov["unknown"],
+        kind=result.kind,
         unresolved=result.unresolved,
         bad_opcodes=result.bad_opcodes,
     )
@@ -81,6 +84,8 @@ def run(*, write: bool = True) -> BuildResult:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true", help="verify without writing")
+    parser.add_argument("--report", action="store_true",
+                        help="list unresolved jumps and unreached regions")
     args = parser.parse_args()
 
     result = run(write=not args.check)
@@ -91,6 +96,13 @@ def main() -> int:
           f"({result.coverage_pct:.1f}% classified)")
     print(f"unresolved {len(result.unresolved)} computed jumps")
     print(f"bad opcode {len(result.bad_opcodes)} sites")
+
+    if args.report:
+        print()
+        print(format_report(base=0x8000, kind=result.kind,
+                            unresolved=result.unresolved,
+                            bad_opcodes=result.bad_opcodes))
+        print()
 
     if not result.ok:
         offset = result.first_mismatch
