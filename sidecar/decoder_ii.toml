@@ -2,7 +2,11 @@
 # the value collides with a named location. c1aEBX and c1aSBX load $4000 into X
 # as a two-byte parameter pair for $E4FF - which stores it with STX $04B6 and
 # never indexes through it - so it is not planeRender.
-literal_immediates = [0xDCD1, 0xDCDE]
+literal_immediates = [
+    0xDCD1, 0xDCDE, 0xDCEB, 0xDCFF, 0xDD0C, 0xDD20,   # setAttrSpan parameter pairs
+    0xF957, 0xF960, 0xF969, 0xF0C7,                   # $FFFF - a decrement, not $FFFF
+    0xF864, 0xF8EE,                                   # $84D0 - a timer preload
+]
 
 # Analysis metadata for the Commodore BTX Decoder II firmware.
 #
@@ -2036,6 +2040,7 @@ vectors before entering the main firmware."""
 "0xE222" = "attrFillHi"
 
 [symbols]
+"0x0400" = "stackTop"
 "0x0040" = "dbtLatch"
 "0x00E0" = "curAttr0"
 "0x00E1" = "curSet"

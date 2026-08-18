@@ -75,9 +75,35 @@ def format_operand(insn: Insn, sidecar: Sidecar) -> str:
         # it takes a name when one exists. Only exact matches qualify, and
         # nothing below $0100: the 6801 register file lives there, so small
         # constants collide with it and ADDD #$0002 would print as ADDD #PORT1.
-        name = (sidecar.symbols.get(value) or sidecar.labels.get(value)
-                if value >= 0x0100 and insn.addr not in sidecar.literal_immediates
-                else None)
+        name = None
+        if value >= 0x0100 and insn.addr not in sidecar.literal_immediates:
+            name = sidecar.symbols.get(value) or sidecar.labels.get(value)
+            if name is None:
+                # PUL pre-increments, so a table walked with the stack pointer
+                # is loaded one byte early. NAME-1 is what that means.
+                after = sidecar.symbols.get(value + 1) or sidecar.labels.get(value + 1)
+                # A C64 block is assembled separately and linked in as binary,
+                # so its labels do not exist in this listing.
+                if sidecar.c64_block_at(value + 1) is not None:
+                    after = None
+                if after is not None:
+                    name = f"{after}-1"
+            if name is None:
+                # Otherwise an address inside a labelled data region is an
+                # offset into it.
+                reg = (None if sidecar.c64_block_at(value) is not None
+                       else sidecar.region_at(value))
+                if reg is not None and reg.kind in ("bytes", "string", "words",
+                                                    "words_raw", "ptr_table",
+                                                    "chargen"):
+                    base_name = (sidecar.labels.get(reg.start)
+                                 or sidecar.symbols.get(reg.start))
+                    if base_name:
+                        off = value - reg.start
+                        # A large offset into a data region is far more likely
+                        # to be a constant that happens to land there.
+                        if off <= 128:
+                            name = f"{base_name}+{off}"
         return f"#{name}" if name else f"#${value:04X}"
     if mode is Mode.IDX:
         return f"${value:02X},X"

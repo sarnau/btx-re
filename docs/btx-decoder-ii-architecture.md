@@ -535,8 +535,19 @@ the C64's tests name themselves:
 | `$28` | "Verbindung" | `c64GetKey`, before translating a carriage return |
 | `$50` | "Abbruch" | `c64TelesoftByte`, to abandon a download |
 
-`showModeName` at `$EF1C` does the same for `strModeNames`, and it is what
-identifies the terminal-mode flags — it tests each in turn and loads S with
+`showModeName` at `$EF1C` does the same for `strModeNames` — and because it
+loads S one byte early for `PUL`, the listing shows which record each flag
+picks without any arithmetic:
+
+```
+        LDS     #strModeNames-1         CEPT
+        LDS     #strModeNames+79        HEX
+        LDS     #strModeNames+19        PRESTEL
+        LDS     #strModeNames+59        ANTIOPE
+        LDS     #strModeNames+39        ASCII
+```
+
+It is what identifies the terminal-mode flags — it tests each in turn and loads S with
 that record's address:
 
 | Flag | Record |
@@ -914,11 +925,11 @@ $AF7B  separationMask  20 bytes
 ## 8. ROM map
 
 ```
-$8000-$877F   G0 character set            96 glyphs x 20 bytes
-$8780-$8EFF   G2 accents and symbols      96 glyphs
-$8F00-$967F   G1 mosaics                  96 glyphs
-$9680-$9DFF   line drawing                96 glyphs
-$9E00-$A20F   8x10 font                  104 glyphs x 10 bytes
+$8000-$877F   fontG0             96 glyphs x 20 bytes
+$8780-$8EFF   fontAccents        96 glyphs, CEPT G2
+$8F00-$967F   fontMosaic         96 glyphs, CEPT G1
+$9680-$9DFF   fontSet3           96 glyphs, line drawing
+$9E00-$A20F   fontNarrow        104 glyphs x 10 bytes, 8 pixels wide
 $A210-$AEEF   firmware
 $AEF0-$AEF9   fontBaseTable      5 words, one per character set
 $AEFA         lineWidthMax       $27
@@ -929,20 +940,20 @@ $AFA3-$AFBA   accentLetters      23 letters and a terminator
 $AFBB-$AFE8   accentGlyphPtrs    23 words, spaced 20 apart
 $AFE9-$B1B4   accentGlyphs       23 glyphs x 20 bytes
 $B1B5-$B1FF   fontTail           75 bytes
-$B200-$B32C   reset and payload transfer
-$B32D-$B33F   C64 cartridge header ("CBM80")
+$B200-$B32C   reset and sendPayloadToC64
+$B32D-$B33F   c64CartHeader      the "CBM80" autostart header
 $B340-$B3A5   c64CartStart, executed at C64 $8000
-$B3A6-$B3A7   payload load address ($1000)
+$B3A6-$B3A7   c64LoadAddr        $1000
 $B3A8-$D108   C64 terminal application, runs at $1000-$2D60
-$D109-$D348   CEPT dispatch tables
-$D419-$D460   format-parameter tables
+$D109-$D348   ctrlTableC0..csiTable, the CEPT dispatch tables
+$D419-$D460   fmtKeys, fmtVals041C, fmtVals041D, fmtVals041F
 $E000-$EF66   firmware
-$EF67-$EFCA   terminal mode names
-$EFF5-$F080   status messages and version string
-$F9FA-$FA39   ASCII-mode C0 dispatch table
-$FC45-$FD0C   screen line-address tables
-$FD21-$FFEF   unused ($FF fill, 719 bytes)
-$FFF0-$FFFF   hardware vectors
+$EF67-$EFCA   strModeNames       5 records x 20
+$EFF5-$F080   strStatusMsgs      7 records x 20, including the version
+$F9FA-$FA39   asciiCtrlTable     32 handler addresses
+$FC45-$FD0C   lineAddrAccent, lineAddrChar, lineAddrAttr, lineAddrRender
+$FD21-$FFEF   romPadding         $FF fill, 719 bytes
+$FFF0-$FFFF   vectors            the eight 6801 hardware vectors
 ```
 
 The payload's own layout, in runtime addresses:

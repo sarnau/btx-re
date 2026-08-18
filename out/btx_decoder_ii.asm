@@ -46,6 +46,7 @@ softVecOcf     EQU     $F4
 softVecIcf     EQU     $F6
 softVecIrq1    EQU     $F8
 softVecSwi     EQU     $FA
+stackTop       EQU     $0400
 drcsStorePtr   EQU     $0402
 scrollEnd      EQU     $0406
 scrollStart    EQU     $0408
@@ -1486,7 +1487,7 @@ LA5D6:
         ANDB    #$07
         CMPB    #$06
         BNE     LA5F3
-        LDX     #$AF8E
+        LDX     #fontSet6Glyph-1
         STX     glyphPtr
         CLR     glyphPass
         LDAB    >curSet
@@ -1628,7 +1629,7 @@ LA6CB:
         INX
         DECB
         BNE     LA6CB
-        LDS     #$AF7A                  ; separationMask - 1, since PUL pre-increments, same convention as glyphPtr
+        LDS     #separationMask-1       ; separationMask - 1, since PUL pre-increments, same convention as glyphPtr
         LDX     #glyphBuf
         LDAB    #$0A
 
@@ -1776,7 +1777,7 @@ drcsGlyphPtr:
         SUBB    #$20
         LDAA    #$30
         MUL
-        ADDD    #$07FF
+        ADDD    #drcsStore-1
         STD     glyphPtr
         LDAA    glyphRows
         CMPA    #$0B
@@ -2917,7 +2918,7 @@ fontTail:
 ; Sets up the stack, configures ports 1 and 2, and installs the interrupt soft
 ; vectors before entering the main firmware.
 reset:
-        LDS     #$0400                  ; stack top - external RAM lies below $0400
+        LDS     #stackTop               ; stack top - external RAM lies below $0400
         LDAA    #$10
         STAA    PORT1
         CLR     P1DDR
@@ -2971,7 +2972,7 @@ reset:
 
 LB280:
         SEI
-        LDS     #$0400
+        LDS     #stackTop
         LDD     #sciRxHandler
         STD     >softVecSci
         CLI
@@ -3147,7 +3148,7 @@ csiTable:
         FDB     seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored
 
 LD349:
-        LDS     #$0400
+        LDS     #stackTop
 
 LD34C:
         JSR     LF081
@@ -5920,7 +5921,7 @@ LE4E3:
 LE4E9:
         STAA    $00,X
         INX
-        CPX     #$1B1B
+        CPX     #scrollTop-1
         BNE     LE4E9
         JMP     parseNextByte
 
@@ -7287,7 +7288,7 @@ LEE9A:
 LEEA5:
         STAA    $00,X
         INX
-        CPX     #$1B1B
+        CPX     #scrollTop-1
         BNE     LEEA5
         STAA    rowFlags
         RTS
@@ -7386,28 +7387,28 @@ showModeName:
         PSHA
         SEI
         STS     savedSP
-        LDS     #$EF66
+        LDS     #strModeNames-1
         TST     modeHex
         BEQ     LEF32
-        LDS     #$EFB6
+        LDS     #strModeNames+79
         BRA     LEF4E
 
 LEF32:
         TST     modePrestel
         BEQ     LEF3C
-        LDS     #$EF7A
+        LDS     #strModeNames+19
         BRA     LEF4E
 
 LEF3C:
         TST     modeAntiope
         BEQ     LEF46
-        LDS     #$EFA2
+        LDS     #strModeNames+59
         BRA     LEF4E
 
 LEF46:
         TST     modeAscii
         BEQ     LEF4E
-        LDS     #$EF8E
+        LDS     #strModeNames+39
 
 LEF4E:
         LDX     #$57C0
@@ -8902,7 +8903,7 @@ LF97C:
 
 LF999:
         SEI
-        LDS     #$0400
+        LDS     #stackTop
         LDD     #$FC25
         STD     >softVecSci
         CLI
@@ -8921,7 +8922,7 @@ LF999:
 LF9C3:
         STAA    $00,X
         INX
-        CPX     #$1B1B
+        CPX     #scrollTop-1
         BNE     LF9C3
         JSR     redrawScreen
         LDAA    #$17

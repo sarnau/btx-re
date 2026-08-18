@@ -84,11 +84,22 @@ def test_dispatch_tables_name_their_handlers():
     # the screen line tables hold display RAM, so their entries resolve to a
     # plane and an offset rather than to code
     assert "FDB     planeAttr,planeAttr+160,planeAttr+320" in src
-    # only data symbols take an offset - a code label plus one would be naming
-    # a point inside an instruction
-    offsets = set(re.findall(r"\b([A-Za-z_][A-Za-z0-9_]*)\+\d+", src))
-    assert offsets <= {"planeRender", "planeAttr", "planeChar", "planeAccent",
-                       "fontBaseTable"}, sorted(offsets)
+    # Only data takes an offset. A code label plus one would be naming a point
+    # inside an instruction, so the rule is asserted rather than a name list:
+    # every base must be a symbol (an EQU) or a label sitting in a data region.
+    import tomllib
+    sidecar = tomllib.load(open(ROOT / "sidecar" / "decoder_ii.toml", "rb"))
+    data = [(r["start"], r["end"]) for r in sidecar["regions"]
+            if r["kind"] != "code"]
+    labels = {v: int(k, 16) for k, v in sidecar["labels"].items()}
+    symbols = set(sidecar["symbols"].values())
+    body = "\n".join(ln.split(";")[0] for ln in src.splitlines())
+    for base in set(re.findall(r"\b([A-Za-z_][A-Za-z0-9_]*)[+-]\d+", body)):
+        if base in symbols:
+            continue
+        a = labels.get(base)
+        assert a is not None, base
+        assert any(s <= a < e for s, e in data), f"{base} is a code label"
 
 
 def test_string_regions_render_as_text():
