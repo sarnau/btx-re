@@ -142,18 +142,18 @@ unpackIn       EQU     $04C6
 blinkOff       EQU     $04C8
 blinkSave      EQU     $04C9
 blinkTimer     EQU     $04CB
-modemCmd       EQU     $04CD
+ackSeq         EQU     $04CD
 modemReply     EQU     $04CE
 modemByte      EQU     $04CF
 txRingHead     EQU     $04D0
 txRingTail     EQU     $04D1
-modemShift     EQU     $04D2
+crcShift       EQU     $04D2
 spare04D3      EQU     $04D3
-modemMatch     EQU     $04D4
-modemLast      EQU     $04D5
-modemCount     EQU     $04D6
-modemRetry     EQU     $04D7
-modemToggle    EQU     $04D8
+crcRecv        EQU     $04D4
+crcRecvLo      EQU     $04D5
+crcBytesLeft   EQU     $04D6
+blockBad       EQU     $04D7
+inBlock        EQU     $04D8
 connected      EQU     $04D9
 hostFeedMode   EQU     $04DA
 escPending     EQU     $04DB
@@ -170,9 +170,9 @@ timerC         EQU     $04E7
 txCurBit       EQU     $04EA
 txShift        EQU     $04EB
 txBitsLeft     EQU     $04EC
-modemBreak     EQU     $04ED
+dleSeen        EQU     $04ED
 txRing         EQU     $04EE
-modemBits      EQU     $05EF
+crcBits        EQU     $05EF
 rxBufRd        EQU     $05F0
 rxBufWr        EQU     $05F2
 rxBufMark      EQU     $05F4
@@ -7247,20 +7247,20 @@ LECCB:
         LDD     #$02EE
         STD     blinkTimer
         LDAA    #$30
-        STAA    modemCmd
+        STAA    ackSeq
         LDD     #rxBuffer
         STD     rxBufRd
         STD     rxBufWr
         STD     rxBufMark
         CLR     txRingHead
         CLR     txRingTail
-        CLR     modemToggle
+        CLR     inBlock
         CLR     txBitsLeft
-        CLR     modemCount
-        CLR     modemBreak
-        CLR     modemShift
+        CLR     crcBytesLeft
+        CLR     dleSeen
+        CLR     crcShift
         CLR     spare04D3
-        CLR     modemRetry
+        CLR     blockBad
         CLR     gsetG0
         CLR     gsetGL
         CLR     gsetGLDefault
@@ -7307,13 +7307,13 @@ LED9D:
         CLR     inStatusLine
         CLR     parallelMode
         LDAA    #$30
-        STAA    modemCmd
-        CLR     modemToggle
-        CLR     modemCount
-        CLR     modemBreak
-        CLR     modemShift
+        STAA    ackSeq
+        CLR     inBlock
+        CLR     crcBytesLeft
+        CLR     dleSeen
+        CLR     crcShift
         CLR     spare04D3
-        CLR     modemRetry
+        CLR     blockBad
         CLR     gsetG0
         CLR     gsetGL
         CLR     gsetGLDefault
@@ -8554,7 +8554,7 @@ LF5CF:
         LDAA    #$11
         STAA    P2DDR
         CLR     connected
-        CLR     modemToggle
+        CLR     inBlock
         SEI
         LDD     #timerHandlerAlt
         STD     >softVecOcf
@@ -8581,6 +8581,35 @@ LF601:
         CLI
         RTS
 
+; The data link is BSC, and the control bytes name themselves.
+;
+; sciRxHandler frames, modemDispatch acts, and between them they use the whole
+; Binary Synchronous vocabulary. Every byte is folded into crcShift on the way
+; past:
+;
+;   $02 STX   open a block - inBlock set, crcShift cleared, rxBufWr rewound to
+;             rxBufMark so the block starts from the last committed point
+;   $03 ETX   close it, and $17 ETB likewise: flip ackSeq between '0' and '1',
+;             make that the reply, and set crcBytesLeft to 2
+;   $04 EOT   reset ackSeq to '0'. After a DLE - dleSeen - it is instead the
+;             disconnect: the SCI is shut down and abortFlag raised
+;   $05 ENQ   reply NAK
+;   $07 BEL   reply ACK and expect two more bytes
+;   $10 DLE   set dleSeen, so the next byte is read as a control escape
+;   $01 $06 $14 $15 ignored
+;   anything else is data and goes to rxBufPut
+;
+; The two bytes after ETX are the block's CRC. They land in crcRecvLo then
+; crcRecv, and $F728 compares the pair against crcShift. Equal and blockBad
+; clear commits the block by advancing rxBufMark; otherwise rxBufWr is rewound
+; to rxBufMark and the reply becomes NAK. So a bad block is simply re-received
+; over the top of itself.
+;
+; What settles that this is BSC rather than something BSC-like is the
+; acknowledgement. $F6F4 sends NAK and ACK bare, but anything else it sends as
+; DLE followed by the byte - and the byte is ackSeq, '0' or '1'. DLE 0 and DLE 1
+; are ACK0 and ACK1, the alternating acknowledgement, which is BSC's and nothing
+; else's.
 sciRxHandler:
 ; SCI receive interrupt - a byte off the 1200-baud line, handed to the modem state machine
         JSR     LF75F
@@ -8588,14 +8617,14 @@ sciRxHandler:
         JMP     LF75E
 
 LF627:
-        LDAB    modemCount
+        LDAB    crcBytesLeft
         BEQ     LF62F
         JMP     LF71A
 
 LF62F:
         CMPA    #$04
         BNE     LF65A
-        TST     modemBreak
+        TST     dleSeen
         BEQ     LF65A
         LDAA    #$08
         STAA    TRCSR
@@ -8614,11 +8643,11 @@ LF62F:
         JMP     LF75E
 
 LF65A:
-        CLR     modemBreak
+        CLR     dleSeen
         CMPA    #$10
         BNE     LF669
         LDAB    #$FF
-        STAB    modemBreak
+        STAB    dleSeen
         JMP     LF75E
 
 LF669:
@@ -8665,30 +8694,30 @@ LF6B0:
 
 LF6B3:
         LDAA    #$30
-        STAA    modemCmd
-        CLR     modemToggle
+        STAA    ackSeq
+        CLR     inBlock
         JMP     LF75E
 
 LF6BE:
         LDAA    #$FF
-        STAA    modemToggle
+        STAA    inBlock
         LDD     #$0000
-        STD     modemShift
-        CLR     modemCount
+        STD     crcShift
+        CLR     crcBytesLeft
         LDD     rxBufMark
         STD     rxBufWr
         JMP     LF75E
 
 LF6D5:
-        TST     modemToggle
+        TST     inBlock
         BPL     LF6ED
-        CLR     modemToggle
-        LDAA    modemCmd
+        CLR     inBlock
+        LDAA    ackSeq
         EORA    #$01
         STAA    modemReply
-        STAA    modemCmd
+        STAA    ackSeq
         LDAA    #$02
-        STAA    modemCount
+        STAA    crcBytesLeft
 
 LF6ED:
         JMP     LF75E
@@ -8713,26 +8742,26 @@ LF707:
 
 LF70D:
         LDAA    #$02
-        STAA    modemCount
+        STAA    crcBytesLeft
         LDAA    #$06
         STAA    modemReply
         JMP     LF75E
 
 LF71A:
-        CLR     modemBreak
-        DEC     modemCount
+        CLR     dleSeen
+        DEC     crcBytesLeft
         BEQ     LF728
-        STAA    modemLast
+        STAA    crcRecvLo
         JMP     LF75E
 
 LF728:
-        STAA    modemMatch
-        LDX     modemShift
-        CPX     modemMatch
+        STAA    crcRecv
+        LDX     crcShift
+        CPX     crcRecv
         BNE     LF747
         LDD     #$0000
-        STD     modemShift
-        LDAA    modemRetry
+        STD     crcShift
+        LDAA    blockBad
         BNE     LF747
         LDD     rxBufWr
         STD     rxBufMark
@@ -8741,11 +8770,11 @@ LF728:
 LF747:
         LDD     rxBufMark
         STD     rxBufWr
-        CLR     modemRetry
+        CLR     blockBad
         LDAA    #$15
         STAA    modemReply
         LDD     #$0000
-        STD     modemShift
+        STD     crcShift
         JMP     LF6F4
 
 LF75E:
@@ -8794,7 +8823,7 @@ LF772:
 
 LF79C:
         LDAA    #$01
-        STAA    modemRetry
+        STAA    blockBad
         LDAA    RDR
         RTS
 
@@ -8850,7 +8879,7 @@ LF7D1:
         RTS
 
 rxBufPut:
-; append to rxBuffer, wrapping at $3000, and advance rxBufMark unless modemToggle holds it back
+; append to rxBuffer, wrapping at $3000, and advance rxBufMark unless inBlock holds it back
         LDX     rxBufWr
         INX
         CPX     #$3000
@@ -8859,7 +8888,7 @@ rxBufPut:
 
 LF7F0:
         STX     rxBufWr
-        TST     modemToggle
+        TST     inBlock
         BMI     LF7FB
         STX     rxBufMark
 
@@ -8888,20 +8917,20 @@ LF812:
 
 ; The CRC over the modem link.
 ;
-; modemByte goes in, modemShift carries the running value, and eight rounds of
+; modemByte goes in, crcShift carries the running value, and eight rounds of
 ; LSRD with EORA #$A0 / EORB #$01 on a set bit is a reflected CRC-16 with the
-; polynomial $8005 - the one X.25 and the DBT-03 protocol use. modemBits is the
+; polynomial $8005 - the one X.25 and the DBT-03 protocol use. crcBits is the
 ; byte being clocked out, one bit per round.
 modemCrc:
         LDAA    modemByte
-        STAA    modemBits
-        LDD     modemShift
+        STAA    crcBits
+        LDD     crcShift
         LDX     #$0008
 
 LF824:
         LSRD
         BCC     LF837
-        LSR     modemBits
+        LSR     crcBits
         BCS     LF830
 
 LF82C:
@@ -8911,11 +8940,11 @@ LF82C:
 LF830:
         DEX
         BNE     LF824
-        STD     modemShift
+        STD     crcShift
         RTS
 
 LF837:
-        LSR     modemBits
+        LSR     crcBits
         BCS     LF82C
         BRA     LF830
 

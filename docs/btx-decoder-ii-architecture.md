@@ -539,6 +539,49 @@ short waits.
 `connected` is set when the sequence succeeds, and it gates everything above —
 `execHostByte`, the blink, the abort path.
 
+### The data link is BSC
+
+`sciRxHandler` frames and `modemDispatch` acts, and between them they use the
+whole Binary Synchronous vocabulary. Every byte is folded into `crcShift` on
+the way past.
+
+| | | |
+|---|---|---|
+| `$02` | STX | open a block — `inBlock` set, `crcShift` cleared, `rxBufWr` rewound to `rxBufMark` |
+| `$03` `$17` | ETX, ETB | close it: flip `ackSeq` between `'0'` and `'1'`, make that the reply, expect two more bytes |
+| `$04` | EOT | reset `ackSeq`. After a DLE it is instead the disconnect — the SCI is shut down and `abortFlag` raised |
+| `$05` | ENQ | reply NAK |
+| `$07` | BEL | reply ACK, expect two more bytes |
+| `$10` | DLE | set `dleSeen`, so the next byte reads as a control escape |
+| `$01` `$06` `$14` `$15` | | ignored |
+| anything else | | data, to `rxBufPut` |
+
+The two bytes after ETX are the block's CRC. They land in `crcRecvLo` then
+`crcRecv`, and `$F728` compares the pair against `crcShift`:
+
+```
+        STAA    crcRecv
+        LDX     crcShift
+        CPX     crcRecv
+        BNE     LF747
+        ...
+        LDD     rxBufWr
+        STD     rxBufMark       commit
+LF747:  LDD     rxBufMark
+        STD     rxBufWr         rewind
+```
+
+Equal, and `blockBad` clear, commits the block by advancing `rxBufMark`.
+Otherwise `rxBufWr` is rewound and the reply becomes NAK — so a bad block is
+simply re-received over the top of itself. That is what the third pointer in
+the ring buffer is for.
+
+**What settles that this is BSC** rather than something BSC-shaped is the
+acknowledgement. `$F6F4` sends NAK and ACK bare, but anything else it sends as
+DLE followed by the byte — and the byte is `ackSeq`, `'0'` or `'1'`. `DLE 0`
+and `DLE 1` are ACK0 and ACK1, the alternating acknowledgement, which is BSC's
+and nothing else's. The `$8005` CRC polynomial is the one BSC uses too.
+
 ### Saying so on screen
 
 `statusMsg` holds a byte offset into `strStatusMsgs`, and `showStatusMsg` at
@@ -1050,10 +1093,6 @@ entire C64 payload is byte-for-byte identical. See
 
 ## 10. Not established
 
-- **The modem protocol's finer points.** Every variable is named and the CRC is
-  identified — `modemCrc` at `$F818` is a reflected CRC-16 with polynomial
-  `$8005` — but the meaning of individual DBT-03 command bytes in `modemCmd`
-  and `modemReply` is read off their values, not from a specification.
 - **`$61FC`/`$61FD` and `$81FC`/`$81FD`.** Strobes in the interrupt-enable
   path, named `c64IrqArmA`/`c64IrqArmB` and `btxIrqArmA`/`btxIrqArmB`. What
   they gate is not established — only that the data written is ignored, since

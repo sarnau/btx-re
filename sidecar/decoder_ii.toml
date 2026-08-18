@@ -598,6 +598,36 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xFFF0" = "vectors"
 
 [block_comments]
+"0xF61F" = """
+The data link is BSC, and the control bytes name themselves.
+
+sciRxHandler frames, modemDispatch acts, and between them they use the whole
+Binary Synchronous vocabulary. Every byte is folded into crcShift on the way
+past:
+
+  $02 STX   open a block - inBlock set, crcShift cleared, rxBufWr rewound to
+            rxBufMark so the block starts from the last committed point
+  $03 ETX   close it, and $17 ETB likewise: flip ackSeq between '0' and '1',
+            make that the reply, and set crcBytesLeft to 2
+  $04 EOT   reset ackSeq to '0'. After a DLE - dleSeen - it is instead the
+            disconnect: the SCI is shut down and abortFlag raised
+  $05 ENQ   reply NAK
+  $07 BEL   reply ACK and expect two more bytes
+  $10 DLE   set dleSeen, so the next byte is read as a control escape
+  $01 $06 $14 $15 ignored
+  anything else is data and goes to rxBufPut
+
+The two bytes after ETX are the block's CRC. They land in crcRecvLo then
+crcRecv, and $F728 compares the pair against crcShift. Equal and blockBad
+clear commits the block by advancing rxBufMark; otherwise rxBufWr is rewound
+to rxBufMark and the reply becomes NAK. So a bad block is simply re-received
+over the top of itself.
+
+What settles that this is BSC rather than something BSC-like is the
+acknowledgement. $F6F4 sends NAK and ACK bare, but anything else it sends as
+DLE followed by the byte - and the byte is ackSeq, '0' or '1'. DLE 0 and DLE 1
+are ACK0 and ACK1, the alternating acknowledgement, which is BSC's and nothing
+else's."""
 "0xA351" = """
 The three display modes, and what each one does to a cell.
 
@@ -805,9 +835,9 @@ and the write column is derived as 40 minus what is left."""
 "0xF818" = """
 The CRC over the modem link.
 
-modemByte goes in, modemShift carries the running value, and eight rounds of
+modemByte goes in, crcShift carries the running value, and eight rounds of
 LSRD with EORA #$A0 / EORB #$01 on a set bit is a reflected CRC-16 with the
-polynomial $8005 - the one X.25 and the DBT-03 protocol use. modemBits is the
+polynomial $8005 - the one X.25 and the DBT-03 protocol use. crcBits is the
 byte being clocked out, one bit per round."""
 "0xA5AF" = """
 drcsCell - is this cell a redefined character?
@@ -1845,7 +1875,7 @@ vectors before entering the main firmware."""
 "0xF52D" = "send one screen row to the C64: walk sendPtrChar, sendPtrAttr and sendPtrAccent across 40 columns, pushing each byte into the ring"
 "0xF61F" = "SCI receive interrupt - a byte off the 1200-baud line, handed to the modem state machine"
 "0xF670" = "dispatch a modem byte after folding it into modemCrc: $00 and $01 idle, $03 toggles, $04 resets, and so on"
-"0xF7E4" = "append to rxBuffer, wrapping at $3000, and advance rxBufMark unless modemToggle holds it back"
+"0xF7E4" = "append to rxBuffer, wrapping at $3000, and advance rxBufMark unless inBlock holds it back"
 "0xF7FE" = "take the next byte out of rxBuffer, or return 0 when rxBufRd has caught up with rxBufMark"
 "0xF954" = "the alternate timer handler: count timerA, timerB and timerC down by one and reload the output compare"
 "0xFACB" = "the 24 unimplemented ASCII C0 slots land here"
@@ -2200,15 +2230,15 @@ vectors before entering the main firmware."""
 "0x04C8" = "blinkOff"
 "0x04C9" = "blinkSave"
 "0x04CB" = "blinkTimer"
-"0x04CD" = "modemCmd"
+"0x04CD" = "ackSeq"
 "0x04CE" = "modemReply"
-"0x04D2" = "modemShift"
+"0x04D2" = "crcShift"
 "0x04D3" = "spare04D3"
-"0x04D4" = "modemMatch"
-"0x04D5" = "modemLast"
-"0x04D6" = "modemCount"
-"0x04D7" = "modemRetry"
-"0x04D8" = "modemToggle"
+"0x04D4" = "crcRecv"
+"0x04D5" = "crcRecvLo"
+"0x04D6" = "crcBytesLeft"
+"0x04D7" = "blockBad"
+"0x04D8" = "inBlock"
 "0x04D9" = "connected"
 "0x04DA" = "hostFeedMode"
 "0x04DB" = "escPending"
@@ -2221,8 +2251,8 @@ vectors before entering the main firmware."""
 "0x04E3" = "timerA"
 "0x04E5" = "timerB"
 "0x04E7" = "timerC"
-"0x04ED" = "modemBreak"
-"0x05EF" = "modemBits"
+"0x04ED" = "dleSeen"
+"0x05EF" = "crcBits"
 "0x05F0" = "rxBufRd"
 "0x05F2" = "rxBufWr"
 "0x05F4" = "rxBufMark"
