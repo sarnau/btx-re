@@ -340,6 +340,11 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xFBA9" = "asciiDispatchC0"
 "0xF954" = "timerHandlerAlt"
 "0xAEF0" = "fontBaseTable"
+"0xAF8F" = "fontSet6Glyph"
+"0xAFA3" = "accentLetters"
+"0xAFBB" = "accentGlyphPtrs"
+"0xAFE9" = "accentGlyphs"
+"0xB1B5" = "fontTail"
 "0xAEFA" = "lineWidthMax"
 "0xAEFB" = "bitDoubleTable"
 "0xEF67" = "strModeNames"
@@ -588,6 +593,31 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xFFF0" = "vectors"
 
 [block_comments]
+"0xAFA3" = """
+Alternative letter shapes for accent composition.
+
+Reached from $A618 when curSet bit 3 is set - the accent bit. The base letter
+is searched for in accentLetters, and on a hit the parallel address in
+accentGlyphPtrs replaces glyphPtr, so a different glyph is drawn:
+
+    LDAB #$FF
+  next:
+    INCB / LDX #accentLetters / ABX
+    LDAA 0,X / BEQ miss              $00 terminates the list
+    CMPA glyphCode / BNE next
+    ASLB / LDX #accentGlyphPtrs / ABX
+    LDX 0,X / DEX / STX glyphPtr
+
+23 letters - ACDEGHIJLNORSTUWYZ and dhlti - each with one 20-byte glyph, the
+same size as an ordinary one. The three tables are contiguous and their sizes
+check against each other: 23 letters plus a terminator ends at $AFBB where the
+addresses begin, 23 addresses spaced exactly 20 apart end at $AFE9 where the
+first glyph begins, and 23 glyphs of 20 end at $B1B5.
+
+The letter list is the argument for what these are. It is the set that changes
+shape under a diacritic rather than the set that takes one - which is why the
+lowercase entries are d, h, l, t and i, the ascenders that must be shortened
+and the i that loses its dot."""
 "0xAEF0" = """
 Four tables packed together, $AEF0-$AF8E, with no gaps.
 
@@ -2527,6 +2557,16 @@ kind = "words_raw"
 
 [[regions]]
 start = 0xAF7B
+end = 0xAFBB
+kind = "bytes"
+
+[[regions]]
+start = 0xAFBB
+end = 0xAFE9
+kind = "words"
+
+[[regions]]
+start = 0xAFE9
 end = 0xB200
 kind = "bytes"
 

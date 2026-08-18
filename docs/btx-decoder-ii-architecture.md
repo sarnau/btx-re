@@ -791,6 +791,39 @@ The renderer decides which store to use from `drcsCell`, set when the current
 G-set code is 5 — the ESC 2/8 2/0 designation. A DRCS cell is also **12 rows
 rather than 10**, which is what `blitRows` carries into the blit loop.
 
+### Alternative letter shapes
+
+`$A618` runs when `curSet` bit 3 is set — the accent bit — and it swaps the
+glyph before anything else looks at it:
+
+```
+        LDAB    #$FF
+next:   INCB
+        LDX     #accentLetters
+        ABX
+        LDAA    $00,X
+        BEQ     miss                $00 terminates the list
+        CMPA    glyphCode
+        BNE     next
+        ASLB
+        LDX     #accentGlyphPtrs
+        ABX
+        LDX     $00,X
+        DEX
+        STX     glyphPtr
+```
+
+23 letters — **ACDEGHIJLNORSTUWYZ** and **dhlti** — each with its own 20-byte
+glyph, the same size as an ordinary one. The three tables are contiguous and
+their sizes check against each other: 23 letters plus a terminator end at
+`$AFBB` where the addresses begin, 23 addresses spaced exactly 20 apart end at
+`$AFE9` where the first glyph begins, and 23 glyphs of 20 end at `$B1B5`.
+
+The letter list is the argument for what these are. It is the set that *changes
+shape* under a diacritic rather than the set that takes one — which is why the
+lowercase entries are `d`, `h`, `l`, `t` and `i`: the ascenders that must be
+shortened to make room, and the `i` that loses its dot.
+
 ### Combining accents
 
 `planeAccent` is not a duplicate character plane. When a character comes
@@ -887,8 +920,15 @@ $8F00-$967F   G1 mosaics                  96 glyphs
 $9680-$9DFF   line drawing                96 glyphs
 $9E00-$A20F   8x10 font                  104 glyphs x 10 bytes
 $A210-$AEEF   firmware
-$AEF0-$AEFB   font base addresses
-$AEFC-$B1FF   bit-doubling table
+$AEF0-$AEF9   fontBaseTable      5 words, one per character set
+$AEFA         lineWidthMax       $27
+$AEFB-$AF7A   bitDoubleTable     64 words
+$AF7B-$AF8E   separationMask     20 bytes
+$AF8F-$AFA2   fontSet6Glyph      one glyph, for G-set code 6
+$AFA3-$AFBA   accentLetters      23 letters and a terminator
+$AFBB-$AFE8   accentGlyphPtrs    23 words, spaced 20 apart
+$AFE9-$B1B4   accentGlyphs       23 glyphs x 20 bytes
+$B1B5-$B1FF   fontTail           75 bytes
 $B200-$B32C   reset and payload transfer
 $B32D-$B33F   C64 cartridge header ("CBM80")
 $B340-$B3A5   c64CartStart, executed at C64 $8000
