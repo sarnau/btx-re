@@ -88,7 +88,7 @@ CHROUT       EQU     $FFD2
 STOP         EQU     $FFE1
 GETIN        EQU     $FFE4
 CLALL        EQU     $FFE7
-KERNAL_FFFC  EQU     $FFFC
+KERNAL_RESET EQU     $FFFC
 
         ORG     $0FFE
 
@@ -1225,7 +1225,7 @@ L1A15:
         JSR     IEC_UNLSN
         LDA     #$00
         STA     btxReg005
-        JMP     (KERNAL_FFFC)
+        JMP     (KERNAL_RESET)
 
 ; CEPT datastream, not C64 screen text.
 ;

@@ -28,6 +28,9 @@ INTERNAL = {
     0xEDFE: "IEC_UNLSN", 0xEE13: "IEC_ACPTR",
     0xFD15: "RESTOR", 0xFDA3: "IOINIT", 0xFF5B: "CINT",
     0xF642: "KERNAL_CLOSE", 0xEA31: "IRQ_ENTRY",
+    # The CPU vectors at the top of the map. $FFFC holds the address of the
+    # reset routine, so JMP ($FFFC) restarts the machine.
+    0xFFFC: "KERNAL_RESET",
 }
 
 NAMES: dict[int, str] = {**JUMP_TABLE, **INTERNAL}

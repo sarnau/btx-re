@@ -434,3 +434,10 @@ def test_key_table_is_data_not_code():
     body = src.split("c64KeyTable:", 1)[1].split("c64Vec06:", 1)[0]
     assert not re.search(r"^\s+(LDA|STA|JSR|JMP|RTI|TSX)\s", body, re.M)
     assert 'FCC     "#@;{:|@}+~][["' in body
+
+
+def test_reset_vector_is_named():
+    src = (OUT / "c64_payload.asm").read_text()
+    assert re.search(r"^KERNAL_RESET\s+EQU\s+\$FFFC$", src, re.M)
+    assert "JMP     (KERNAL_RESET)" in src
+    assert "KERNAL_FFFC" not in src
