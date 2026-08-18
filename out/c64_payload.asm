@@ -2575,37 +2575,30 @@ L2494:
 ; offers a reduced text-only mode on the C64 screen as the alternative - which
 ; is what the separate 8x10 narrow font at $9E00 is for.
 c64SplashText:
+        CHARSET $41,$5A,$C1
+        CHARSET $61,$7A,$41
         FCB     $0E,$08,$93,$97,$11,$11,$11
-        FCC     "            "
-        FCB     $C2
-        FCC     "ILDSCHIRMTEXT"
-        FCB     $0D,$11,$11,$11,$11,$20,$20,$20,$C2
-        FCC     "ITTE STECKEN "
-        FCB     $D3,$49,$45,$20,$C9
-        FCC     "HREN "
-        FCB     $CD
-        FCC     "ONITOR"
+        FCC     "            Bildschirmtext"
+        FCB     $0D,$11,$11,$11,$11
+        FCC     "   Bitte stecken Sie Ihren Monitor"
         FCB     $0D
-        FCC     "   AN DAS "
-        FCB     $C2,$54,$58,$2D,$CD
-        FCC     "ODUL AN,"
+        FCC     "   an das Btx-Modul an,"
         FCB     $0D,$0D
-        FCC     "   ODER WAEHLEN "
-        FCB     $D3
-        FCC     "IE DIE EINGE-"
+        FCC     "   oder waehlen Sie die einge-"
         FCB     $0D
-        FCC     "   SCHRAENKTE "
-        FCB     $D4
-        FCC     "EXTDARSTELLUNG"
+        FCC     "   schraenkte Textdarstellung"
         FCB     $0D
-        FCC     "   MIT "
-        FCB     $22,$3C,$C6,$37,$3E,$20,$D3,$22,$2E,$0D,$0D,$20,$20,$20,$D3
-        FCC     "IE VERLASSEN "
-        FCB     $C2
-        FCC     "TX MIT "
-        FCB     $22,$3C,$C6,$37,$3E,$20,$D1,$22,$2E,$0D,$0D,$0D,$0D,$0D
+        FCC     "   mit "
+        FCB     $22
+        FCC     "<F7> S"
+        FCB     $22,$2E,$0D,$0D
+        FCC     "   Sie verlassen Btx mit "
+        FCB     $22
+        FCC     "<F7> Q"
+        FCB     $22,$2E,$0D,$0D,$0D,$0D,$0D
         FCC     "----------------------------------------"
         FCB     $00
+        CHARSET
 
 c64Vec55:
 ; vector 55 at runtime $25A5 - jump-table entry 55

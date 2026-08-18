@@ -206,6 +206,27 @@ def test_splash_text_is_data_not_code():
     src = (OUT / "c64_payload.asm").read_text()
     body = src.split("c64SplashText:", 1)[1].split("c64Vec55:", 1)[0]
     assert "FCB     $0E,$08,$93" in body
-    assert "ILDSCHIRMTEXT" in body
     assert not re.search(r"^\s+(JSR|JMP|LDA)\s", body, re.M), \
         "the splash text must not be disassembled as code"
+
+
+def test_petscii_mode_renders_mixed_case_text():
+    """C64 lowercase charset puts uppercase at $C1-$DA and lowercase at
+    $41-$5A, so CHARSET lets the text be written as ordinary letters. Without
+    it BILDSCHIRMTEXT looked like shouting; it is really 'Bildschirmtext'."""
+    src = (OUT / "c64_payload.asm").read_text()
+    body = src.split("c64SplashText:", 1)[1].split("c64Vec55:", 1)[0]
+    assert "CHARSET $41,$5A,$C1" in body
+    assert "CHARSET $61,$7A,$41" in body
+    assert 'FCC     "            Bildschirmtext"' in body
+    assert '"   Bitte stecken Sie Ihren Monitor"' in body
+    # and the charset is reset before code resumes
+    assert body.rstrip().endswith("CHARSET"), body[-80:]
+
+
+def test_charset_round_trips_through_our_assembler():
+    src = ('        CPU 6502\n        ORG $1000\n'
+           '        CHARSET $41,$5A,$C1\n        CHARSET $61,$7A,$41\n'
+           '        FCC "Bildschirmtext"\n        CHARSET\n        FCC "AB"\n        END\n')
+    _, out = assemble(src)
+    assert out == bytes.fromhex("C2494C4453434849524D5445585441 42".replace(" ", ""))

@@ -52,6 +52,31 @@ def _parse(source: str) -> list[_Line]:
     return out
 
 
+def _charset_map(lines: list["_Line"]) -> list[dict[int, int]]:
+    """The character translation in force on each line.
+
+    CHARSET from,to,target remaps a range of source characters; CHARSET with no
+    operand resets. The 6502 sources use it to write PETSCII text as ordinary
+    letters - uppercase maps to $C1-$DA, lowercase to $41-$5A.
+    """
+    out = []
+    table: dict[int, int] = {}
+    for line in lines:
+        if line.op == "CHARSET":
+            if not line.operand.strip():
+                table = {}
+            else:
+                parts = _split_values(line.operand)
+                if len(parts) != 3:
+                    raise ValueError(f"line {line.no}: CHARSET needs from,to,target")
+                lo, hi, tgt = (_value(t, {}, line.no) for t in parts)
+                table = dict(table)
+                for k in range(lo, hi + 1):
+                    table[k] = tgt + (k - lo)
+        out.append(table)
+    return out
+
+
 def _strip_comment(raw: str) -> str:
     """Drop a trailing ; comment, but not one inside a quoted string.
 
@@ -122,7 +147,7 @@ def _cpu_per_line(lines: list[_Line]) -> list[str]:
 def _sizeof(line: _Line, symbols: dict[str, int], strict: bool, cpu: str) -> int:
     """Byte length of one line. On pass 1 unknown symbols are assumed 16-bit."""
     op = line.op
-    if op in (None, "CPU", "ORG", "END", "EQU"):
+    if op in (None, "CPU", "ORG", "END", "EQU", "CHARSET"):
         return 0
     if op == "BINCLUDE":
         return _binclude_size(line)
@@ -262,6 +287,7 @@ def assemble(source: str, *, include_dir: str | pathlib.Path = ".") -> tuple[int
     _BINCLUDE_DIR = pathlib.Path(include_dir)
     lines = _parse(source)
     cpus = _cpu_per_line(lines)
+    charsets = _charset_map(lines)
     symbols: dict[str, int] = {}
 
     # Pass 1: assign addresses to labels.
@@ -287,7 +313,7 @@ def assemble(source: str, *, include_dir: str | pathlib.Path = ".") -> tuple[int
     # Pass 2: emit.
     out = bytearray()
     pc = origin
-    for line, cpu in zip(lines, cpus):
+    for line, cpu, charset in zip(lines, cpus, charsets):
         op = line.op
         if op == "ORG":
             target = _value(line.operand, symbols, line.no)
@@ -296,7 +322,7 @@ def assemble(source: str, *, include_dir: str | pathlib.Path = ".") -> tuple[int
             out.extend(bytes(target - pc))
             pc = target
             continue
-        if op in (None, "CPU", "END", "EQU"):
+        if op in (None, "CPU", "END", "EQU", "CHARSET"):
             continue
         if op == "BINCLUDE":
             blob = _binclude_path(line).read_bytes()
@@ -305,8 +331,9 @@ def assemble(source: str, *, include_dir: str | pathlib.Path = ".") -> tuple[int
             continue
         if op == "FCC":
             text = _fcc_text(line)
-            out.extend(text.encode("latin-1"))
-            pc += len(text)
+            blob = bytes(charset.get(c, c) for c in text.encode("latin-1"))
+            out.extend(blob)
+            pc += len(blob)
             continue
         if op == "FCB":
             for token in _split_values(line.operand):

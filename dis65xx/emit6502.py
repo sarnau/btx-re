@@ -21,6 +21,31 @@ _MNEM_WIDTH = 8
 _JUMPS = ("JMP", "JSR")
 
 
+# C64 lowercase charset: uppercase letters live at $C1-$DA and lowercase at
+# $41-$5A. Writing that as ordinary text needs a translation, which both asl and
+# dis65xx/asm.py express with CHARSET.
+_PETSCII_CHARSET = ("        CHARSET $41,$5A,$C1",
+                    "        CHARSET $61,$7A,$41")
+
+
+def _petscii_char(b: int) -> str | None:
+    """The source character CHARSET maps to this byte, or None if none does.
+
+    Under the two ranges above, source $41-$5A becomes $C1-$DA and source
+    $61-$7A becomes $41-$5A. Nothing maps to $61-$7A, so those bytes have to
+    stay FCB however printable they look.
+    """
+    if 0xC1 <= b <= 0xDA:
+        return chr(b - 0x80)          # shifted -> uppercase letter
+    if 0x41 <= b <= 0x5A:
+        return chr(b + 0x20)          # unshifted -> lowercase letter
+    if 0x61 <= b <= 0x7A:
+        return None                   # unreachable through the charset
+    if 0x20 <= b < 0x7F and b not in (0x22, 0x5C):
+        return chr(b)                 # digits and punctuation pass through
+    return None
+
+
 def _operand(insn, labels: dict[int, str], symbols: dict[int, str] | None = None) -> str:
     m, v = insn.mode, insn.operand
     if m is Mode.IMP:
@@ -63,7 +88,7 @@ def _operand(insn, labels: dict[int, str], symbols: dict[int, str] | None = None
     raise AssertionError(m)  # pragma: no cover
 
 
-_DATA_KINDS = {"bytes", "string", "words", "ptr_table", "chargen"}
+_DATA_KINDS = {"bytes", "string", "words", "ptr_table", "chargen", "petscii"}
 _WORD_KINDS = {"ptr_table", "words"}
 
 
@@ -211,7 +236,36 @@ def emit_block(data: bytes, base: int, block: C64Block, sidecar: Sidecar) -> str
         # quoting rules that the two assemblers might read differently.
         return 0x20 <= b < 0x7F and b not in (0x22, 0x5C)
 
-    def flush() -> None:
+    def _flush_petscii() -> None:
+        """Emit pending PETSCII, showing letters as letters."""
+        while pending:
+            run = 0
+            while run < len(pending) and _petscii_char(pending[run]) is not None:
+                run += 1
+            if run >= _MIN_FCC:
+                text = "".join(_petscii_char(b) for b in pending[:run])
+                del pending[:run]
+                for i in range(0, len(text), 40):
+                    lines.append(f"{'':{_INDENT}}{'FCC':{_MNEM_WIDTH}}"
+                                 f'"{text[i:i + 40]}"')
+                continue
+            take = BYTES_PER_FCB
+            i = 1
+            while i < min(len(pending), BYTES_PER_FCB):
+                j = i
+                while j < len(pending) and _petscii_char(pending[j]) is not None:
+                    j += 1
+                if j - i >= _MIN_FCC:
+                    take = i
+                    break
+                i = max(j, i + 1)
+            take = min(take, len(pending), BYTES_PER_FCB)
+            chunk = bytes(pending[:take])
+            del pending[:take]
+            lines.append(f"{'':{_INDENT}}{'FCB':{_MNEM_WIDTH}}"
+                         + ",".join(f"${b:02X}" for b in chunk))
+
+    def _flush_ascii() -> None:
         """Emit pending data, showing runs of text as text."""
         while pending:
             run = 0
@@ -244,7 +298,25 @@ def emit_block(data: bytes, base: int, block: C64Block, sidecar: Sidecar) -> str
                          + ",".join(f"${b:02X}" for b in chunk))
 
     words_left = 0
+    in_petscii = False
+    def flush() -> None:
+        """Flush through whichever encoding the pending bytes were collected
+        under. Routing at each call site instead let a label or a word table
+        flush PETSCII as plain ASCII, which CHARSET then shifted again."""
+        if in_petscii:
+            _flush_petscii()
+        else:
+            _flush_ascii()
+
     for rt, insn, byte in _decode_block(data, base, block, labels, sidecar):
+        here = sidecar.region_at(rt + block.offset)
+        if in_petscii and (here is None or here.kind != "petscii"):
+            # Leave PETSCII before anything else is emitted, so the reset sits
+            # with the text it applies to rather than after the next label.
+            flush()
+            lines.append(f"{'':{_INDENT}}CHARSET")
+            in_petscii = False
+
         if rt in labels:
             flush()
             rom_addr = rt + block.offset
@@ -275,6 +347,12 @@ def emit_block(data: bytes, base: int, block: C64Block, sidecar: Sidecar) -> str
                 words_left -= 1
                 continue
         if insn is None:
+            reg = sidecar.region_at(rt + block.offset)
+            if reg is not None and reg.kind == "petscii":
+                if not in_petscii:
+                    flush()
+                    lines.extend(_PETSCII_CHARSET)
+                    in_petscii = True
             pending.append(byte)
             continue
         flush()
@@ -282,6 +360,10 @@ def emit_block(data: bytes, base: int, block: C64Block, sidecar: Sidecar) -> str
                 f"{_operand(insn, all_names, used_symbols)}").rstrip()
         comment = sidecar.line_comments.get(rt + block.offset)
         lines.append(f"{body:<40}; {comment}" if comment else body)
+    if in_petscii:
+        flush()
+        lines.append(f"{'':{_INDENT}}CHARSET")
+        in_petscii = False
     flush()
     lines.append("")
     lines.append(f"{'':{_INDENT}}END")

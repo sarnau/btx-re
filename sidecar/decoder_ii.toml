@@ -1257,7 +1257,7 @@ kind = "code6502"
 [[regions]]
 start = 0xC84C
 end = 0xC94D
-kind = "string"
+kind = "petscii"
 
 [[regions]]
 start = 0xC94D

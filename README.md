@@ -25,6 +25,7 @@ Bildschirmtext Decoder II ROM (`c64_btx_decoder_ii.bin`, MC6801, 32 KB at
 | `symbols` | Address → name for hardware registers and RAM locations. |
 | `regions` | Typed data ranges: `bytes`, `words`, `string`, `ptr_table`, `chargen`, `code6502`. |
 | `c64_blocks` | 6502 blocks: ROM range plus the address each runs at on the C64. |
+| `c64_symbols` | Names for the BTX register window as the C64 sees it. |
 
 `entry_points` must appear **above** the `[meta]` header. TOML assigns bare keys
 written after a table header to that table, so putting it below silently makes it
@@ -63,6 +64,11 @@ its data still lands at $1000. `c64_payload.bin` is therefore a genuine C64
 `.prg` - load address followed by data - which is exactly what the 6801 streams
 and what the bootstrap's loader consumes. The two blocks are contiguous, so the
 6801 listing carries nothing but the two BINCLUDEs.
+
+PETSCII text uses a `petscii` region kind. The C64 lowercase charset puts
+uppercase at `$C1-$DA` and lowercase at `$41-$5A`, so the emitter brackets such
+a region with `CHARSET` and writes the text as ordinary letters - which is how
+`C2 49 4C 44 ...` becomes `"Bildschirmtext"` rather than a hex dump.
 
 Hardware the C64 sees is symbolic too: `btxFifoWr`, `btxFifoRd`, `btxXferEn`
 and friends are declared under `c64_symbols` in the sidecar and pair with the
