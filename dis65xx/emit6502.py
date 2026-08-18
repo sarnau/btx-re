@@ -233,7 +233,11 @@ def _pointer_targets(decoded: list, pairs: set[int]) -> dict[tuple[int, int], in
             continue
         if a.mode is not Mode.IMM or c.mode is not Mode.IMM:
             continue
-        if b.mode is not Mode.ZP or d.mode is not Mode.ZP:
+        # The store can be zero page or absolute - CINV/CINVH at $0314 is a
+        # pointer pair just as much as a zero-page one is.
+        if b.mode not in (Mode.ZP, Mode.ABS) or d.mode not in (Mode.ZP, Mode.ABS):
+            continue
+        if b.mode is not d.mode:
             continue
         if b.operand not in pairs or d.operand != b.operand + 1:
             continue

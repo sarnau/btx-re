@@ -668,9 +668,9 @@ L16B9:
         STA     btxFifo00
         STA     btxFifo0B
         SEI
-        LDA     #$59
+        LDA     #L2359&255
         STA     CINV
-        LDA     #$23
+        LDA     #L2359>>8
         STA     CINVH
         LDA     btxReg1F9
         LDA     #$40
@@ -2538,6 +2538,18 @@ L234C:
         JSR     L105D
         SEC
         RTS
+
+; The payload's IRQ handler, installed into CINV.
+;
+;     BIT btxReg1F8 / BMI ...     test a decoder register
+;     JSR L104B                   a jump-table entry
+;     JMP IRQ_ENTRY               chain to the KERNAL handler
+;
+; So the C64 side services the decoder on interrupt as well as polling it, and
+; either passes the interrupt on to the KERNAL or consumes it. btxReg1F8 is one
+; of the registers whose function is otherwise unestablished; that the handler
+; tests it first says it carries a request or status bit.
+L2359:
         BIT     btxReg1F8
         BMI     L2364
         JSR     L104B

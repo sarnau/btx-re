@@ -407,3 +407,15 @@ def test_every_word_entry_can_carry_its_own_label():
     src = (OUT / "c64_payload.asm").read_text()
     for label in ("L10C6:", "L10C8:", "L10CA:", "L10CC:"):
         assert label in src, label
+
+
+def test_irq_vector_names_its_handler():
+    """CINV/CINVH is a pointer pair set with absolute stores, so the two
+    immediates are halves of the handler's address."""
+    src = (OUT / "c64_payload.asm").read_text()
+    lines = [ln.strip() for ln in src.splitlines()]
+    i = lines.index("STA     CINV")
+    assert lines[i - 1] == "LDA     #L2359&255"
+    assert lines[i + 1] == "LDA     #L2359>>8"
+    assert lines[i + 2] == "STA     CINVH"
+    assert "L2359:" in src

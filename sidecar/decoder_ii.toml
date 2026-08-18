@@ -7,9 +7,10 @@
 # Hardware entry points: the reset vector plus the seven interrupt stubs.
 # Zero-page locations the payload uses as 16-bit pointers. An LDA #lo / STA zp
 # / LDA #hi / STA zp+1 sequence into one of these is an address being set up,
-# not two unrelated constants. Top-level, like entry_points: a bare key written
-# after a table header would belong to that table.
-c64_pointers = [0xA7, 0xBB]
+# not two unrelated constants. $0314 is CINV, the C64's IRQ vector, which is
+# set the same way but with absolute stores. Top-level, like entry_points: a
+# bare key written after a table header would belong to that table.
+c64_pointers = [0xA7, 0xBB, 0x0314]
 
 entry_points = [
     0xB200,  # RESET
@@ -397,6 +398,17 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xFFF0" = "vectors"
 
 [block_comments]
+"0xC701" = """
+The payload's IRQ handler, installed into CINV.
+
+    BIT btxReg1F8 / BMI ...     test a decoder register
+    JSR L104B                   a jump-table entry
+    JMP IRQ_ENTRY               chain to the KERNAL handler
+
+So the C64 side services the decoder on interrupt as well as polling it, and
+either passes the interrupt on to the KERNAL or consumes it. btxReg1F8 is one
+of the registers whose function is otherwise unestablished; that the handler
+tests it first says it carries a request or status bit."""
 "0xB468" = """
 16-bit pointers, runtime $10C0-$10CD.
 
