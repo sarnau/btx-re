@@ -160,6 +160,7 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 
 
 [labels]
+"0xC84C" = "c64SplashText"
 "0xB331" = "c64CartSignature"
 "0xBA18" = "c64StrTable"
 "0xB45F" = "c64VecTableEnd"
@@ -386,6 +387,25 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xFFF0" = "vectors"
 
 [block_comments]
+"0xC84C" = """
+Startup screen text, PETSCII, ROM $C84C-$C94C (runtime $24A4-$25A4).
+
+Opens with $0E $08 $93 - switch to lower case, disable the Shift+Commodore
+case toggle, clear screen - then the message, with $0D for line breaks and
+$11 for cursor-down. Letters that appear as high-bit values ($CD, $C2, $D3 and
+so on) are shifted PETSCII, so the text reads:
+
+    BILDSCHIRMTEXT
+    BITTE STECKEN SIE IHREN MONITOR
+    AN DAS BTX-MODUL AN,
+    ODER WAEHLEN SIE DIE EINGE-
+    SCHRAENKTE TEXTDARSTELLUNG
+    MIT "<F7> S".
+    SIE VERLASSEN BTX MIT "<F7> Q".
+
+So the module tells the user to plug a monitor into the decoder itself, and
+offers a reduced text-only mode on the C64 screen as the alternative - which
+is what the separate 8x10 narrow font at $9E00 is for."""
 "0xBA18" = """
 String table: 31 little-endian pointers, ROM $BA18-$BA55, runtime $1670-$16AD.
 
@@ -1231,6 +1251,16 @@ kind = "ptr_table"
 
 [[regions]]
 start = 0xBA56
+end = 0xC84C
+kind = "code6502"
+
+[[regions]]
+start = 0xC84C
+end = 0xC94D
+kind = "string"
+
+[[regions]]
+start = 0xC94D
 end = 0xD109
 kind = "code6502"
 
@@ -1319,9 +1349,33 @@ org = 0x0FFE
 [c64_symbols]
 "0x8000" = "btxLoadLo"
 "0x8001" = "btxLoadHi"
+"0x8005" = "btxReg005"
 "0x8009" = "btxFifoWr"
 "0x800A" = "btxFifoRd"
 "0x800B" = "btxXferEn"
 "0x800C" = "btxStatus"
+"0x800D" = "btxReg00D"
+"0x800E" = "btxReg00E"
+"0x800F" = "btxReg00F"
 "0x8010" = "btxXferDone"
-"0x8080" = "btxFifo"
+"0x8011" = "btxReg011"
+"0x8012" = "btxReg012"
+"0x8020" = "btxReg020"
+"0x8040" = "btxReg040"
+"0x8080" = "btxFifo00"
+"0x8081" = "btxFifo01"
+"0x8082" = "btxFifo02"
+"0x8083" = "btxFifo03"
+"0x8084" = "btxFifo04"
+"0x8085" = "btxFifo05"
+"0x8086" = "btxFifo06"
+"0x8087" = "btxFifo07"
+"0x8088" = "btxFifo08"
+"0x8089" = "btxFifo09"
+"0x808A" = "btxFifo0A"
+"0x808B" = "btxFifo0B"
+"0x8090" = "btxReg090"
+"0x81F8" = "btxReg1F8"
+"0x81F9" = "btxReg1F9"
+"0x81FC" = "btxReg1FC"
+"0x81FD" = "btxReg1FD"

@@ -11,7 +11,7 @@ btxFifoWr EQU     $8009
 btxFifoRd EQU     $800A
 btxXferEn EQU     $800B
 btxStatus EQU     $800C
-btxFifo   EQU     $8080
+btxFifo00 EQU     $8080
 
 ; C64 ROM entry points.
 RESTOR      EQU     $FD15
@@ -140,7 +140,7 @@ L804D:
 L8066:
         LDA     btxFifoRd
         TAX
-        LDA     btxFifo,X
+        LDA     btxFifo00,X
         INX
         CPX     #$10
         BNE     L8074

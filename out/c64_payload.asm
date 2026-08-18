@@ -5,15 +5,38 @@
         CPU     6502
 
 ; Decoder hardware and RAM, as the C64 sees it.
+btxReg005   EQU     $8005
 btxFifoWr   EQU     $8009
 btxFifoRd   EQU     $800A
 btxXferEn   EQU     $800B
 btxStatus   EQU     $800C
+btxReg00D   EQU     $800D
+btxReg00E   EQU     $800E
+btxReg00F   EQU     $800F
 btxXferDone EQU     $8010
-btxFifo     EQU     $8080
+btxReg011   EQU     $8011
+btxReg012   EQU     $8012
+btxReg020   EQU     $8020
+btxReg040   EQU     $8040
+btxFifo00   EQU     $8080
+btxFifo01   EQU     $8081
+btxFifo02   EQU     $8082
+btxFifo03   EQU     $8083
+btxFifo04   EQU     $8084
+btxFifo05   EQU     $8085
+btxFifo06   EQU     $8086
+btxFifo07   EQU     $8087
+btxFifo08   EQU     $8088
+btxFifo09   EQU     $8089
+btxFifo0A   EQU     $808A
+btxFifo0B   EQU     $808B
+btxReg090   EQU     $8090
+btxReg1F8   EQU     $81F8
+btxReg1F9   EQU     $81F9
+btxReg1FC   EQU     $81FC
+btxReg1FD   EQU     $81FD
 
 ; C64 ROM entry points.
-KERNAL_C220  EQU     $C220
 KERNAL_C86E  EQU     $C86E
 KERNAL_E3BF  EQU     $E3BF
 KERNAL_E56C  EQU     $E56C
@@ -441,36 +464,36 @@ L16B9:
         JSR     KERNAL_E3BF
         JSR     CLALL
         LDA     #$00
-        STA     btxFifo
-        STA     $808B
+        STA     btxFifo00
+        STA     btxFifo0B
         SEI
         LDA     #$59
         STA     $0314
         LDA     #$23
         STA     $0315
-        LDA     $81F9
+        LDA     btxReg1F9
         LDA     #$40
-        STA     $81F8
-        LDA     $81FD
-        STA     $81FD
-        LDA     $81FC
-        STA     $81FC
+        STA     btxReg1F8
+        LDA     btxReg1FD
+        STA     btxReg1FD
+        LDA     btxReg1FC
+        STA     btxReg1FC
         CLI
         JSR     L2404
 
 c64ScreenOut1:
 ; vector 1 at runtime $16FF - CHROUT with $D021/$D800/$D900
         JSR     L10A2                   ; vector 1 at runtime $16FF - CHROUT with $D021/$D800/$D900
-        LDA     $8012
+        LDA     btxReg012
         BNE     L172D
         LDA     #$FF
-        STA     $8012
+        STA     btxReg012
         LDA     $10C4
         STA     $61
         LDA     $10C5
         STA     $62
         LDA     #$FF
-        STA     $800F
+        STA     btxReg00F
 
 L171B:
         LDY     #$00
@@ -500,7 +523,7 @@ L172D:
 c64Vec02:
 ; vector 2 at runtime $174C - jump-table entry 2
         LDA     #$FF                    ; vector 2 at runtime $174C - jump-table entry 2
-        STA     $800F
+        STA     btxReg00F
 
 L1751:
         SEI
@@ -723,20 +746,20 @@ c64Vec06:
         BEQ     c64Vec06
 
 L189B:
-        LDX     $800D
+        LDX     btxReg00D
         INX
         CPX     #$40
         BNE     L18A5
         LDX     #$00
 
 L18A5:
-        CPX     $800E
+        CPX     btxReg00E
         BEQ     L189B
-        CPX     $800E
+        CPX     btxReg00E
         BEQ     L189B
-        LDY     $800D
-        STA     $8040,Y
-        STX     $800D
+        LDY     btxReg00D
+        STA     btxReg040,Y
+        STX     btxReg00D
         JSR     L1021
         RTS
 
@@ -760,7 +783,7 @@ L18CF:
 
 L18D1:
         TAX
-        LDA     $8020,X
+        LDA     btxReg020,X
         INX
         CPX     #$20
         BNE     L18DC
@@ -933,7 +956,7 @@ c64Vec14:
 
 L19E2:
         LDA     #$00
-        STA     btxFifo
+        STA     btxFifo00
         LDA     #$10
         JSR     L1012
 
@@ -990,7 +1013,7 @@ L1A15:
         JSR     IEC_SECOND
         JSR     IEC_UNLSN
         LDA     #$00
-        STA     $8005
+        STA     btxReg005
         JMP     (KERNAL_FFFC)
         FCB     $1F,$2F
         EOR     ($9B,X)
@@ -1532,11 +1555,11 @@ L1E24:
 
 c64Vec24:
 ; vector 24 at runtime $1E39 - jump-table entry 24
-        LDA     btxFifo                 ; vector 24 at runtime $1E39 - jump-table entry 24
-        CMP     btxFifo
+        LDA     btxFifo00               ; vector 24 at runtime $1E39 - jump-table entry 24
+        CMP     btxFifo00
         BNE     c64Vec24
         EOR     #$FF
-        STA     btxFifo
+        STA     btxFifo00
         BEQ     L1E57
         LDA     #$10
         JSR     L1012
@@ -1563,25 +1586,25 @@ c64Vec25:
         SEI
 
 L1E67:
-        LDA     $808B
-        CMP     $808B
+        LDA     btxFifo0B
+        CMP     btxFifo0B
         BNE     L1E67
         CMP     #$00
         BEQ     L1ED7
-        LDY     $8089
+        LDY     btxFifo09
         BMI     L1EDC
-        LDA     $8083
+        LDA     btxFifo03
         AND     #$7F
         STA     $11E1
-        LDA     $8084
+        LDA     btxFifo04
         STA     $11E2
-        LDA     $8085
+        LDA     btxFifo05
         STA     $11E3
-        LDA     $8086
+        LDA     btxFifo06
         STA     $11E4
-        LDA     $8087
+        LDA     btxFifo07
         STA     $11E5
-        LDA     $8088
+        LDA     btxFifo08
         STA     $11E6
         JSR     L108A
         CMP     #$60
@@ -1617,24 +1640,24 @@ L1EC8:
         PLA
 
 L1EC9:
-        LDX     $808A
-        LDY     $8089
+        LDX     btxFifo0A
+        LDY     btxFifo09
         JSR     L10A5
         LDA     #$00
-        STA     $808B
+        STA     btxFifo0B
 
 L1ED7:
-        LDA     $81F9
+        LDA     btxReg1F9
         PLP
         RTS
 
 L1EDC:
-        LDX     $8081
-        LDY     $8082
+        LDX     btxFifo01
+        LDY     btxFifo02
         JSR     L10A8
-        LDA     $81F9
+        LDA     btxReg1F9
         LDA     #$00
-        STA     $808B
+        STA     btxFifo0B
         PLP
         RTS
 
@@ -1812,8 +1835,8 @@ L2020:
         STA     $11BC
 
 L2023:
-        LDA     $8011
-        CMP     $8011
+        LDA     btxReg011
+        CMP     btxReg011
         BNE     L2023
         FCB     $8D,$ED
 
@@ -2030,8 +2053,8 @@ c64Vec40:
 
 c64Vec41:
 ; vector 41 at runtime $2196 - jump-table entry 41
-        LDA     $8011                   ; vector 41 at runtime $2196 - jump-table entry 41
-        STA     $81FC
+        LDA     btxReg011               ; vector 41 at runtime $2196 - jump-table entry 41
+        STA     btxReg1FC
         STA     $11ED
 
 L219F:
@@ -2042,8 +2065,8 @@ L219F:
         JSR     L103F
 
 L21AC:
-        LDA     $8011
-        STA     $81FC
+        LDA     btxReg011
+        STA     btxReg1FC
         CMP     $11ED
         BNE     L21BF
         LDX     #$14
@@ -2320,7 +2343,7 @@ L234C:
         JSR     L105D
         SEC
         RTS
-        BIT     $81F8
+        BIT     btxReg1F8
         BMI     L2364
         JSR     L104B
         JMP     IRQ_ENTRY
@@ -2376,8 +2399,8 @@ L23A8:
         BNE     L23BA
 
 L23AC:
-        LDX     $8090
-        CPX     $8090
+        LDX     btxReg090
+        CPX     btxReg090
         BNE     L23AC
         CPX     #$28
         BEQ     L23BA
@@ -2532,120 +2555,57 @@ L2494:
         INY
         BNE     L2494
         RTS
-        ASL     $9308
-        FCB     $97
-        ORA     ($11),Y
-        ORA     ($20),Y
-        JSR     L2020
-        JSR     L2020
-        JSR     L2020
-        JSR     KERNAL_C220
-        EOR     #$4C
-        FCB     $44,$53,$43
-        PHA
-        EOR     #$52
-        EOR     $4554
-        CLI
-        FCB     $54
-        ORA     $1111
-        ORA     ($11),Y
-        JSR     L2020
+
+; Startup screen text, PETSCII, ROM $C84C-$C94C (runtime $24A4-$25A4).
+;
+; Opens with $0E $08 $93 - switch to lower case, disable the Shift+Commodore
+; case toggle, clear screen - then the message, with $0D for line breaks and
+; $11 for cursor-down. Letters that appear as high-bit values ($CD, $C2, $D3 and
+; so on) are shifted PETSCII, so the text reads:
+;
+;     BILDSCHIRMTEXT
+;     BITTE STECKEN SIE IHREN MONITOR
+;     AN DAS BTX-MODUL AN,
+;     ODER WAEHLEN SIE DIE EINGE-
+;     SCHRAENKTE TEXTDARSTELLUNG
+;     MIT "<F7> S".
+;     SIE VERLASSEN BTX MIT "<F7> Q".
+;
+; So the module tells the user to plug a monitor into the decoder itself, and
+; offers a reduced text-only mode on the C64 screen as the alternative - which
+; is what the separate 8x10 narrow font at $9E00 is for.
+c64SplashText:
+        FCB     $0E,$08,$93,$97,$11,$11,$11
+        FCC     "            "
         FCB     $C2
-        EOR     #$54
-        FCB     $54
-        EOR     $20
-        FCB     $53,$54
-        EOR     $43
-        FCB     $4B
-        EOR     $4E
-        JSR     $49D3
-        EOR     $20
-        CMP     #$48
-        FCB     $52
-        EOR     $4E
-        JSR     $4FCD
-        LSR     $5449
-        FCB     $4F,$52
-        ORA     L2020
-        JSR     $4E41
-        JSR     $4144
-        FCB     $53
-        JSR     $54C2
-        CLI
-        AND     $4FCD
-        FCB     $44
-        EOR     $4C,X
-        JSR     $4E41
-        BIT     $0D0D
-        JSR     L2020
-        FCB     $4F,$44
-        EOR     $52
-        JSR     $4157
-        EOR     $48
-        JMP     $4E45
-        JSR     $49D3
-        EOR     $20
-        FCB     $44
-        EOR     #$45
-        JSR     $4945
-        LSR     $4547
-        AND     $200D
-        JSR     $5320
-        FCB     $43
-        PHA
-        FCB     $52
-        EOR     ($45,X)
-        LSR     $544B
-        EOR     $20
-        FCB     $D4
-        EOR     $58
-        FCB     $54,$44
-        EOR     ($52,X)
-        FCB     $53,$54
-        EOR     $4C
-        JMP     $4E55
-        FCB     $47
-        ORA     L2020
-        JSR     $494D
-        FCB     $54
-        JSR     $3C22
-        DEC     $37
-        ROL     $D320,X
-        FCB     $22
-        ROL     $0D0D
-        JSR     L2020
+        FCC     "ILDSCHIRMTEXT"
+        FCB     $0D,$11,$11,$11,$11,$20,$20,$20,$C2
+        FCC     "ITTE STECKEN "
+        FCB     $D3,$49,$45,$20,$C9
+        FCC     "HREN "
+        FCB     $CD
+        FCC     "ONITOR"
+        FCB     $0D
+        FCC     "   AN DAS "
+        FCB     $C2,$54,$58,$2D,$CD
+        FCC     "ODUL AN,"
+        FCB     $0D,$0D
+        FCC     "   ODER WAEHLEN "
         FCB     $D3
-        EOR     #$45
-        JSR     $4556
-        FCB     $52
-        JMP     $5341
-        FCB     $53
-        EOR     $4E
-        JSR     $54C2
-        CLI
-        JSR     $494D
-        FCB     $54
-        JSR     $3C22
-        DEC     $37
-        ROL     $D120,X
-        FCB     $22
-        ROL     $0D0D
-        ORA     $0D0D
-        AND     $2D2D
-        AND     $2D2D
-        AND     $2D2D
-        AND     $2D2D
-        AND     $2D2D
-        AND     $2D2D
-        AND     $2D2D
-        AND     $2D2D
-        AND     $2D2D
-        AND     $2D2D
-        AND     $2D2D
-        AND     $2D2D
-        AND     $2D2D
-        FCB     $2D
-        BRK
+        FCC     "IE DIE EINGE-"
+        FCB     $0D
+        FCC     "   SCHRAENKTE "
+        FCB     $D4
+        FCC     "EXTDARSTELLUNG"
+        FCB     $0D
+        FCC     "   MIT "
+        FCB     $22,$3C,$C6,$37,$3E,$20,$D3,$22,$2E,$0D,$0D,$20,$20,$20,$D3
+        FCC     "IE VERLASSEN "
+        FCB     $C2
+        FCC     "TX MIT "
+        FCB     $22,$3C,$C6,$37,$3E,$20,$D1,$22,$2E,$0D,$0D,$0D,$0D,$0D
+        FCC     "----------------------------------------"
+        FCB     $00
 
 c64Vec55:
 ; vector 55 at runtime $25A5 - jump-table entry 55
@@ -2861,22 +2821,22 @@ c64Vec34:
         JSR     IEC_SECOND
 
 L26EF:
-        LDA     $8090
-        CMP     $8090
+        LDA     btxReg090
+        CMP     btxReg090
         BNE     L26EF
         CMP     #$28
         BEQ     L2709
 
 L26FB:
-        LDA     $8011
-        CMP     $8011
+        LDA     btxReg011
+        CMP     btxReg011
         BNE     L26FB
         STA     $11ED
         JMP     L271E
 
 L2709:
-        LDA     $8011
-        CMP     $8011
+        LDA     btxReg011
+        CMP     btxReg011
         BNE     L2709
         CMP     $11ED
         BEQ     L271E
@@ -3499,7 +3459,7 @@ c64Vec58:
         JMP     c64Vec58
 
 L2B3A:
-        LDA     $8090
+        LDA     btxReg090
         CMP     #$50
         BEQ     L2B50
         JSR     L109F

@@ -187,3 +187,25 @@ def test_cartridge_header_vectors_render_as_addresses():
     assert re.search(r"^KERNAL_FE72\s+EQU\s+\$FE72$", src, re.M)
     # the signature stays bytes - FCC would change them, CBM is PETSCII
     assert "FCB     $C3,$C2,$CD,$38,$30" in src
+
+
+def test_btx_io_window_is_declared():
+    """The C64 sees the decoder registers at $8000-$81FF; the 6801 sees the
+    same ones $2000 lower. Named where established, address-derived otherwise."""
+    src = (OUT / "c64_payload.asm").read_text()
+    for name, addr in (("btxFifoWr", 0x8009), ("btxFifoRd", 0x800A),
+                       ("btxXferEn", 0x800B), ("btxStatus", 0x800C),
+                       ("btxFifo00", 0x8080), ("btxReg1F8", 0x81F8)):
+        assert re.search(rf"^{name}\s+EQU\s+\${addr:04X}$", src, re.M), name
+    assert not re.search(r"^\s+(LDA|STA|CMP|LDX|LDY|STX|BIT)\s+\$8[01][0-9A-F]{2}$",
+                         src, re.M), "no raw BTX I/O addresses should remain"
+
+
+def test_splash_text_is_data_not_code():
+    """$C84C-$C94C is the PETSCII startup screen, opening with $0E $08 $93."""
+    src = (OUT / "c64_payload.asm").read_text()
+    body = src.split("c64SplashText:", 1)[1].split("c64Vec55:", 1)[0]
+    assert "FCB     $0E,$08,$93" in body
+    assert "ILDSCHIRMTEXT" in body
+    assert not re.search(r"^\s+(JSR|JMP|LDA)\s", body, re.M), \
+        "the splash text must not be disassembled as code"
