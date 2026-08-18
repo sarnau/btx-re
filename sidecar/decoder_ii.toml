@@ -456,6 +456,7 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xF7E4" = "rxBufPut"
 "0xF7FE" = "rxBufGet"
 "0xA210" = "redrawScreen"
+"0xEED2" = "resetStatusLine"
 "0xF670" = "modemDispatch"
 "0xF818" = "modemCrc"
 "0xA7E7" = "drcsGlyphPtr"
@@ -584,6 +585,29 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xFFF0" = "vectors"
 
 [block_comments]
+"0xEED2" = """
+The default status line, and what a c64StrTable record actually is.
+
+resetStatusLine writes four bytes into every cell of planeAttr's last row -
+$5300 stepping by 4 to $53A0, which is 40 cells:
+
+    byte 0  $00
+    byte 1  $C0
+    byte 2  defaultColour
+    byte 3  $98 AND revealMask
+
+The prompt path at $F22A does the same thing with the first four bytes of the
+record the C64 sent, each written across all 40 cells. So the record header is
+not metadata about the string - it *is* the status line's four attribute
+bytes.
+
+That settles what the varying bytes were: byte 2 is the colour, $07 for white
+or $01 for red, which is exactly what host commands ',' and '.' put in
+defaultColour. A prompt record like msgLoadFile carries $01 and reads red; a
+plain one like msgBlank carries $07.
+
+promptLeft counts the 44 bytes down - four attributes then forty characters -
+and the write column is derived as 40 minus what is left."""
 "0xF818" = """
 The CRC over the modem link.
 
@@ -1587,6 +1611,9 @@ Sets up the stack, configures ports 1 and 2, and installs the interrupt soft
 vectors before entering the main firmware."""
 
 [line_comments]
+"0xF37B" = "$10 $5A - begin a status-line record: 4 attribute bytes then 40 characters"
+"0xF38A" = "$10 $7A - end it, and put the default status line back"
+"0xF23F" = "each of the first four bytes is written across all 40 cells of the status row"
 "0xA654" = "the glyph is read with PUL, so S becomes the source pointer and the real stack is parked in $00EC"
 "0xB2B9" = "scrollEnd is scratch here - nothing scrolls until the payload has been sent"
 "0xB2F5" = "one past c64Payload's last byte - the address is also where ctrlTableC0 starts"
@@ -1911,7 +1938,7 @@ vectors before entering the main firmware."""
 "0x04DA" = "hostFeedMode"
 "0x04DB" = "escPending"
 "0x04DD" = "abortFlag"
-"0x04DE" = "promptCol"
+"0x04DE" = "promptLeft"
 "0x04DF" = "captureMode"
 "0x04E0" = "modeHex"
 "0x04E1" = "hexHigh"

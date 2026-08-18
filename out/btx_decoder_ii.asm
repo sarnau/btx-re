@@ -146,7 +146,7 @@ hostFeedMode   EQU     $04DA
 escPending     EQU     $04DB
 pendingByte    EQU     $04DC
 abortFlag      EQU     $04DD
-promptCol      EQU     $04DE
+promptLeft     EQU     $04DE
 captureMode    EQU     $04DF
 modeHex        EQU     $04E0
 hexHigh        EQU     $04E1
@@ -2826,7 +2826,7 @@ reset:
         JSR     setRowPointers
         JSR     LECCB
         JSR     LB2A3
-        JSR     LEED2
+        JSR     resetStatusLine
         JSR     redrawScreen
         LDD     #$F87F
         STAA    PORT4
@@ -2843,7 +2843,7 @@ LB280:
         CLR     modePrestel
         CLR     modeAntiope
         JSR     LEE9A
-        JSR     LEED2
+        JSR     resetStatusLine
         CLR     pendingByte
         JSR     LED9D
         JMP     parseNextByte
@@ -6924,7 +6924,7 @@ LECCB:
         CLR     modeW
         CLR     pendingByte
         CLR     abortFlag
-        CLR     promptCol
+        CLR     promptLeft
         CLR     redrawReq
         CLR     modeT
         CLR     modeR
@@ -7179,7 +7179,29 @@ LEEBC:
         BCS     LEEB3
         RTS
 
-LEED2:
+; The default status line, and what a c64StrTable record actually is.
+;
+; resetStatusLine writes four bytes into every cell of planeAttr's last row -
+; $5300 stepping by 4 to $53A0, which is 40 cells:
+;
+;     byte 0  $00
+;     byte 1  $C0
+;     byte 2  defaultColour
+;     byte 3  $98 AND revealMask
+;
+; The prompt path at $F22A does the same thing with the first four bytes of the
+; record the C64 sent, each written across all 40 cells. So the record header is
+; not metadata about the string - it *is* the status line's four attribute
+; bytes.
+;
+; That settles what the varying bytes were: byte 2 is the colour, $07 for white
+; or $01 for red, which is exactly what host commands ',' and '.' put in
+; defaultColour. A prompt record like msgLoadFile carries $01 and reads red; a
+; plain one like msgBlank carries $07.
+;
+; promptLeft counts the 44 bytes down - four attributes then forty characters -
+; and the write column is derived as 40 minus what is left.
+resetStatusLine:
         LDAA    modePrestel
         ORAA    modeAntiope
         ORAA    modeAscii
@@ -7624,18 +7646,18 @@ LF222:
         STAB    modeHex
 
 LF22A:
-        LDAB    promptCol
+        LDAB    promptLeft
         BEQ     LF29F
         CMPB    #$28
         BLS     LF253
         LDAB    #$2C
-        SUBB    promptCol
+        SUBB    promptLeft
         CMPB    #$03
         BNE     LF23F
         ANDA    revealMask
 
 LF23F:
-        LDX     #$5300
+        LDX     #$5300                  ; each of the first four bytes is written across all 40 cells of the status row
         ABX
         LDAB    #$04
 
@@ -7644,13 +7666,13 @@ LF245:
         ABX
         CPX     #$53A0
         BCS     LF245
-        DEC     promptCol
+        DEC     promptLeft
         JMP     LF409
 
 LF253:
         CMPA    #$00
         BNE     LF25D
-        CLR     promptCol
+        CLR     promptLeft
         JMP     LF409
 
 LF25D:
@@ -7658,16 +7680,16 @@ LF25D:
         BEQ     LF299
         CMPA    #$08
         BNE     LF287
-        LDAA    promptCol
+        LDAA    promptLeft
         CMPA    #$28
         BCS     LF26F
         JMP     LF409
 
 LF26F:
-        INC     promptCol
+        INC     promptLeft
         LDX     #$57C0
         LDAB    #$28
-        SUBB    promptCol
+        SUBB    promptLeft
         ABX
         LDAA    #$A0
         STAA    $00,X
@@ -7678,7 +7700,7 @@ LF26F:
 LF287:
         LDX     #$57C0
         LDAB    #$28
-        SUBB    promptCol
+        SUBB    promptLeft
         ABX
         ORAA    #$80
         STAA    $00,X
@@ -7686,7 +7708,7 @@ LF287:
         STAA    statusDirty
 
 LF299:
-        DEC     promptCol
+        DEC     promptLeft
         JMP     LF409
 
 LF29F:
@@ -7820,17 +7842,17 @@ LF370:
         JMP     LF409
 
 LF37B:
-        CMPA    #$5A
+        CMPA    #$5A                    ; $10 $5A - begin a status-line record: 4 attribute bytes then 40 characters
         BNE     LF38A
         LDAA    #$2C
-        STAA    promptCol
+        STAA    promptLeft
         JSR     cursorBlinkOn
         JMP     LF409
 
 LF38A:
-        CMPA    #$7A
+        CMPA    #$7A                    ; $10 $7A - end it, and put the default status line back
         BNE     LF397
-        JSR     LEED2
+        JSR     resetStatusLine
         JSR     cursorBlinkOn
         JMP     LF409
 
@@ -8040,7 +8062,7 @@ LF4C4:
         CLR     modePrestel
         LDAA    #$FF
         STAA    modeAntiope
-        JSR     LEED2
+        JSR     resetStatusLine
         JMP     LF59F
 
 LF4D9:
@@ -8055,7 +8077,7 @@ LF4E5:
         BNE     LF4F4
         LDAA    #$7F
         STAA    revealMask
-        JSR     LEED2
+        JSR     resetStatusLine
         JMP     LF59F
 
 LF4F4:
@@ -8063,7 +8085,7 @@ LF4F4:
         BNE     LF503
         LDAA    #$FF
         STAA    revealMask
-        JSR     LEED2
+        JSR     resetStatusLine
         JMP     LF59F
 
 LF503:
@@ -8733,7 +8755,7 @@ LF999:
         LDAA    #$FF
         STAA    modeAscii
         JSR     clearPlanes
-        JSR     LEED2
+        JSR     resetStatusLine
         CLR     cursorVisible
         CLR     pendingByte
         LDAA    #$80

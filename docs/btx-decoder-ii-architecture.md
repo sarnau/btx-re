@@ -305,14 +305,54 @@ two listings read against each other directly:
 | `c64MenuLoad` / `c64MenuDisplay` | `$10 $4C` / `$10 $6C` | `hostFeedMode` — the C64 is supplying the page |
 | `c64MenuKeybd` | `$10 $4E` / `$10 $6E` | `germanFont` — which font the reduced display uses |
 | `c64ShowMsgPtr` / `c64HideMsg` | `$10 $75` / `$10 $55` | `blinkOff` — stop the cursor blinking over the overlay |
-
-The `$5A` and `$7A` the same two routines send alongside those are not in this
-dispatch chain and remain unresolved.
+| `c64ShowMsgPtr` / `c64HideMsg` | `$10 $5A` / `$10 $7A` | begin a status-line record, and put the default line back |
 
 `captureMode` is the clearest of them: `TST captureMode / JSR $F979` in two
 different loops, and `$F979` is the routine that pushes a byte into the
 decoder-to-C64 ring. Capture is implemented by the decoder echoing its input,
 not by the C64 listening in.
+
+### What a status-line record is
+
+`$10 $5A` sets `promptLeft` to `$2C` — 44 — and the bytes that follow are
+counted down against it. The first four go somewhere different from the rest:
+
+```
+LF23F:  LDX     #$5300
+        ABX
+        LDAB    #$04
+LF245:  STAA    $00,X
+        ABX
+        CPX     #$53A0
+        BCS     LF245
+```
+
+`$5300` is `planeAttr`'s last row, and the loop writes one byte across all 40
+cells of it. So the record's four-byte header is not metadata about the
+string — **it is the status line's four attribute bytes**. The remaining 40 go
+to `planeChar` at `$57C0`, the same row.
+
+`resetStatusLine` at `$EED2` writes the defaults the same way — `$00`, `$C0`,
+`defaultColour`, `$98 AND revealMask` — which is what `$10 $7A` restores.
+
+That settles the header bytes. Across the 31 records only two combinations
+occur:
+
+| Byte 1 | Byte 2 | Records |
+|---|---|---|
+| `$C0` | `$01` | 30 — a message, colour 1 |
+| `$80` | `$07` | 1 — `msgBlank`, colour 7 |
+
+`msgBlank` is the record `c64ClearMsg` sends to wipe the line, and `$80`/`$07`
+are exactly the values `clearPlanes` puts in attribute bytes 1 and 2 at
+power-on. So the odd record out is the one that restores the defaults, and
+byte 2 is the colour — the same `$01` and `$07` that host commands `,` and `.`
+put into `defaultColour`.
+
+The count byte follows from this too. A full-width record is `$2C`, four
+attributes plus forty characters; the prompts are `$18`, four plus **twenty**,
+so they overwrite only the left half of the line and leave columns 20–39 for
+the user's typed reply to echo into.
 
 ---
 
@@ -750,9 +790,6 @@ entire C64 payload is byte-for-byte identical. See
   sidecar rather than treated as a bug.
 - **Two cell bytes.** Both cell readers store `c64Cell3` and `c64Cell5`, and
   nothing in the payload reads them back.
-- **String-record header bytes 2 and 3.** `$C0`/`$80` and `$01`/`$07` vary
-  across the 31 records and look like display parameters.
-
 ---
 
 ## 11. Where this stands
