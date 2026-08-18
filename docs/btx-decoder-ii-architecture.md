@@ -4,6 +4,10 @@ How the Commodore Bildschirmtext Decoder II works, reconstructed from the
 firmware. Every claim here is traceable to the annotated listing; the few
 inferences that are not proven from code are marked as such.
 
+`docs/6801-6502-protocol.md` documents everything the two processors say to
+each other — the register map, bring-up, both directions and the command set —
+in one place; this document covers what each side does with what it receives.
+
 Companion material: `sidecar/decoder_ii.toml` holds the annotations,
 `out/btx_decoder_ii.asm` the generated 6801 listing, `out/c64_bootstrap.asm`
 and `out/c64_payload.asm` the C64-side 6502 sources, and

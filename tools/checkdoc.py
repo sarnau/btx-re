@@ -29,7 +29,9 @@ ARCH = ROOT / "docs" / "btx-decoder-ii-architecture.md"
 # Every prose file that cites names from the listings. The README drifted for
 # nine turns citing btxFifoWr and btxFifoRd after they were renamed, which is
 # exactly what this catches.
-DOCS = [ARCH, ROOT / "README.md", ROOT / "docs" / "cv30113-revision-diff.md"]
+DOCS = [ARCH, ROOT / "README.md",
+        ROOT / "docs" / "cv30113-revision-diff.md",
+        ROOT / "docs" / "6801-6502-protocol.md"]
 SOURCES = ["btx_decoder_ii.asm", "c64_payload.asm", "c64_bootstrap.asm"]
 
 def _mnemonics() -> set[str]:
