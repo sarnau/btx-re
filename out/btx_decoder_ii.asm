@@ -37,6 +37,20 @@ softVecSwi  EQU     $FA
 
         ORG     $8000
 
+
+; Wide character generator: 384 glyphs, 20 bytes each, $8000-$9DFF.
+;
+; 10 rows per glyph, 2 bytes per row. Rows are stored LITTLE-ENDIAN: the first
+; byte of a row is its RIGHT half, the second its LEFT half. Reading them in the
+; 6801's usual big-endian order splits every glyph into two halves of different
+; characters, which is what makes this font look like garbage at first.
+;
+; Glyph ink spans roughly 12 of the 16 columns, matching the CEPT 12x10
+; character matrix. Glyph 0 is chr$20 (space); 384 glyphs = four 96-character
+; sets, consistent with CEPT G0/G1/G2/G3.
+;
+; Verified by rendering: A-H and the chr$21-$2F punctuation all read correctly.
+fontWide:
         FCB     $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
         FCB     $00,$00,$00,$00,$00,$00,$C0,$00,$C0,$00,$C0,$00,$C0,$00,$C0,$00
         FCB     $00,$00,$C0,$00,$00,$00,$00,$00,$00,$00,$70,$07,$30,$03,$60,$06
@@ -517,6 +531,15 @@ softVecSwi  EQU     $FA
         FCB     $F0,$80,$F8,$81,$FC,$83,$FE,$87,$FF,$0F,$3F,$0F,$FF,$0F,$3F,$0F
         FCB     $3F,$0F,$7F,$0E,$FF,$0C,$E7,$0C,$0F,$0E,$FF,$0F,$00,$80,$FE,$87
         FCB     $FE,$87,$FE,$87,$FE,$87,$FE,$87,$FE,$87,$FE,$87,$FE,$87,$00,$80
+
+; Narrow character generator: 104 glyphs, 10 bytes each, $9E00-$A20F.
+;
+; 10 rows per glyph, 1 byte per row, 8 pixels wide. No byte-order surprise here.
+; Glyph 0 is chr$20 (space). The region ends at $A20F, immediately before the
+; first traced instruction at $A210.
+;
+; Verified by rendering: A-H read correctly.
+fontNarrow:
         FCB     $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$08,$08,$08,$08,$08,$00
         FCB     $08,$00,$00,$00,$14,$14,$14,$00,$00,$00,$00,$00,$00,$00,$14,$14
         FCB     $3E,$14,$3E,$14,$14,$00,$00,$00,$08,$1E,$28,$1C,$0A,$3C,$08,$00
