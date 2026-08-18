@@ -18,6 +18,7 @@ from __future__ import annotations
 
 NAMES: dict[int, str] = {
     0xECF0: "LDTB2",
+    0xFE72: "NNMI20",
     0xFD88: "SIZE",
     0xE3BF: "INITCZ",
     0xE56C: "STUPT",

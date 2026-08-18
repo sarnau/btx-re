@@ -74,7 +74,9 @@ def test_block_sources_use_real_labels_at_real_addresses():
     """Assembled at the address it runs at, so targets are ordinary labels -
     no EQU indirection and no cross-reference comments."""
     src = (OUT / "c64_bootstrap.asm").read_text()
-    assert re.search(r"^L80[0-9A-F]{2}:", src, re.M), "expected labels in $80xx"
+    for label in ("c64CartStart:", "c64CopyLoop:", "c64BootGetByte:"):
+        assert label in src, label
+    assert "JSR     c64BootGetByte" in src
     assert "JSR     IOINIT" in src
     # the old mixed listing annotated each absolute operand with "; name ($ROM)"
     assert not re.search(r"^\s+(JSR|JMP)\s+\S+\s+;\s+\S+\s+\(\$[0-9A-F]{4}\)$",
@@ -184,8 +186,8 @@ def test_cartridge_header_vectors_render_as_addresses():
     they are DW, not bytes. The cold vector resolves to the label it points at,
     which is what proves ROM $B32D maps to C64 $8000."""
     src = (OUT / "c64_bootstrap.asm").read_text()
-    assert "DW      c64ColdStart,KERNAL_FE72" in src
-    assert re.search(r"^KERNAL_FE72\s+EQU\s+\$FE72$", src, re.M)
+    assert "DW      c64CartStart,NNMI20" in src
+    assert re.search(r"^NNMI20\s+EQU\s+\$FE72$", src, re.M)
     # the signature stays bytes - FCC would change them, CBM is PETSCII
     assert "FCB     $C3,$C2,$CD,$38,$30" in src
 

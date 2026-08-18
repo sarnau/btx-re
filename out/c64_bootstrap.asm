@@ -16,11 +16,11 @@ btxStatus EQU     $800C
 btxFifo00 EQU     $8080
 
 ; C64 ROM entry points and tables.
-RESTOR      EQU     $FD15
-SIZE        EQU     $FD88
-IOINIT      EQU     $FDA3
-KERNAL_FE72 EQU     $FE72
-PCINT       EQU     $FF5B
+RESTOR   EQU     $FD15
+SIZE     EQU     $FD88
+IOINIT   EQU     $FDA3
+NNMI20   EQU     $FE72
+PCINT    EQU     $FF5B
 
         ORG     $8000
 
@@ -29,84 +29,111 @@ PCINT       EQU     $FF5B
 ; BTX terminal application in the same 32 KB image as the 68B01 firmware, which
 ; is why a 6801 trace never reaches it.
 ;
-; $B32D-$B33F  c64CartHeader C64 autostart cartridge header
-; $B340-$B3A5  c64ColdStart  cartridge cold-start, runs at C64 $8000
-; $B3A6-$B3A7  c64LoadAddr   $00 $10 - little-endian load address $1000
-; $B3A8-$D108  vecColdStart  7521 bytes, loaded to C64 $1000-$2D60
+;   $B32D-$B33F  c64CartHeader   C64 autostart cartridge header
+;   $B340-$B3A5  c64CartStart    the bootstrap, runs from ROM at C64 $8000
+;   $B3A6-$B3A7  c64LoadAddr     $00 $10 - little-endian load address $1000
+;   $B3A8-$D108  vecColdStart    7521 bytes, loaded to C64 $1000-$2D60
 ;
 ; ROM $B32D maps to C64 $8000, proved by the cartridge header itself:
 ;
 ;     $B32D  13 80              cold start vector  $8013
-;     $B32F  72 FE              warm start vector  $FE72
+;     $B32F  72 FE              warm start vector  $FE72, the KERNAL's NNMI20
 ;     $B331  C3 C2 CD 38 30     "CBM80" autostart signature
 ;     $B336  00 00 00 FF 00...  padding
 ;
-; $8013 resolves to ROM $B32D + $13 = $B340, exactly where the cold-start code
-; begins - and independently, the JMP $8036 at $B36D lands exactly on $B363.
+; $8013 resolves to ROM $B32D + $13 = $B340, exactly where c64CartStart begins -
+; and independently, the JMP $8036 at $B36D lands exactly on c64CopyLoop.
 ;
-; The bootstrap then runs from cartridge ROM at C64 $8000:
+; c64CartStart runs the C64's own cold-start sequence, then copies the payload
+; across one byte at a time:
 ;
-;     JSR IOINIT / SIZE+8 / RESTOR / PCINT   the C64 cold-start sequence
-;     LDX #$00 / STX $D016                VIC setup
-;     JSR $804D / STA $61                 fetch load address low byte
-;     JSR $804D / STA $62                 fetch load address high byte
+;     JSR IOINIT / SIZE+8 / RESTOR / PCINT
+;     LDX #$00 / STX $D016                     VIC setup
+;     JSR c64BootGetByte / STA btxLoadLo, c64Ptr
+;     JSR c64BootGetByte / STA btxLoadHi, c64PtrHi
 ;     LDY #$00
-;   loop:
-;     JSR $804D / BCS done / STA ($61),Y  copy one byte
-;     INY / BNE loop / INC $62 / JMP loop
+;   c64CopyLoop:
+;     JSR c64BootGetByte / BCS c64StartPayload / STA (c64Ptr),Y
+;     INY / BNE c64CopyLoop / INC c64PtrHi / JMP c64CopyLoop
 ;
-; $804D fetches the next byte from the decoder; carry set marks end of stream.
+; SIZE+8 is an entry into the middle of the KERNAL's memory sizing: $FD88 is
+; size, and eight bytes in is the tail that sets MEMSTR to $0800 and HIBASE to
+; $0400, skipping the top-of-memory scan. That scan would walk into the
+; cartridge window, so the payload skips it here and again at c64ColdStart.
+;
 ; The two bytes at c64LoadAddr are the first thing that loop consumes, which is
-; what puts the payload at $1000. Ports $8000, $8001, $8009, $800A and $800B are
-; the C64's window onto the decoder hardware.
+; what puts the payload at $1000. Load address established three independent
+; ways:
 ;
-; The payload begins with a 61-entry JMP table at runtime $1000-$10B6 - the
-; module's dispatch vector - with bodies at $174C-$2943.
-;
-; Load address established three independent ways:
 ;   1. the $00 $10 PRG header at $B3A6, consumed by the loader above;
 ;   2. offset $A3A8 puts 97.6% of the payload's own JSR/JMP targets on real
 ;      instruction boundaries, against 11.7% and 5.9% one byte either side;
 ;   3. call sites JSR into a series spaced 3 apart based at $1009, which is
 ;      entry 3 of the jump table at $1000.
 ;
-; German UI strings run $B552-$B9FF (runtime $11AA-$1657), padded to 40 columns:
-; "Load Capture Display Macro Xfer Screen", "ASCII Btx Keybd Telesoft Edit Pause
-; Quit", "Capture-Modus ein - Ende: STOP-Taste", and the macro prefix
-; "@:BTX-MAK-".
+; c64BootGetByte is the bootstrap's own small copy of what the payload later
+; calls c64GetByte, and the two do not read the same ring:
+;
+;   during boot   16 slots at $8080, wrapped with CPX #$10
+;   once running  32 slots at $8020, wrapped with CPX #$20
+;
+; The 6801 side agrees - sendPayloadToC64 masks its index with ANDB #$0F over
+; c64Fifo at $6080, while the running firmware sets up LDX #$6020 and LDX #$6040.
+; So $8080 serves as the transfer FIFO only while the payload is being loaded;
+; afterwards the payload uses $8080-$808B as the mailbox the decoder posts one
+; display cell into, which c64IrqPlotCell reads under the IRQ.
+;
+; Handing over is the last thing c64StartPayload does:
+;
+;     LDA #$00 / STA btxStatus     bank the cartridge out
+;     JMP (btxLoadLo)              jump through $8000
+;
+; $8000 is cartridge ROM while the cartridge is mapped, holding the cold-start
+; vector $8013. The loader has already written the fetched load address into
+; btxLoadLo/btxLoadHi - stores land in the RAM underneath the ROM - so once the
+; cartridge is banked out the same indirect read returns $1000 instead, and
+; control lands on the payload rather than back in the bootstrap. That is why the
+; loader stores the load address twice, to c64Ptr for its own copy loop and to
+; btxLoadLo for this jump.
+;
+; What it lands on is vecColdStart, entry 0 of the payload's 61-entry JMP table
+; at runtime $1000-$10B6. The whole C64 side is built out of that table; see the
+; comment there.
 ;
 ; Note $D109-$D348 is NOT part of this payload - those are the 6801 control-code
 ; dispatch tables documented at $D36A.
 c64CartHeader:
-        DW      c64ColdStart,KERNAL_FE72
+        DW      c64CartStart,NNMI20
 
 c64CartSignature:
 ; C3 C2 CD 38 30 = "CBM80", CBM in PETSCII (bit 7 set), then padding
         FCB     $C3,$C2,$CD,$38,$30,$00,$00,$00,$FF,$00,$00,$00,$00,$00,$00
 
-c64ColdStart:
+c64CartStart:
+; runs at C64 $8000 from cartridge ROM - the terminal's own cold start is c64ColdStart, in the payload
         LDX     #$00
         STX     $D016
         JSR     IOINIT
         JSR     SIZE+8
         JSR     RESTOR
         JSR     PCINT
-        JSR     L804D
+        JSR     c64BootGetByte
         STA     btxLoadLo
         STA     c64Ptr
-        JSR     L804D
+        JSR     c64BootGetByte
         STA     btxLoadHi
         STA     c64PtrHi
         LDY     #$00
 
-L8036:
-        JSR     L804D
-        BCS     L8045
+c64CopyLoop:
+; copy one byte, 256 at a time, until c64BootGetByte reports end of stream
+        JSR     c64BootGetByte
+        BCS     c64StartPayload
         STA     (c64Ptr),Y
         INY
-        BNE     L8036
+        BNE     c64CopyLoop
         INC     c64PtrHi
-        JMP     L8036
+        JMP     c64CopyLoop
 
 ; Handing control to the payload.
 ;
@@ -121,34 +148,37 @@ L8036:
 ;
 ; That is why the loader stores the load address twice, to $61/$62 for its own
 ; copy loop and to $8000/$8001 for this jump.
-L8045:
+c64StartPayload:
         LDA     #$00
         STA     btxStatus
         JMP     (btxLoadLo)
 
-L804D:
+c64BootGetByte:
+; the bootstrap's own c64GetByte: one byte from the transfer FIFO, C=1 when the decoder has finished sending
         LDA     btxFifoWr
         CMP     btxFifoWr
-        BNE     L804D
+        BNE     c64BootGetByte
         CMP     btxFifoRd
-        BNE     L8066
+        BNE     c64BootTake
         BIT     btxXferEn
-        BMI     L804D
+        BMI     c64BootGetByte
         BIT     btxXferEn
-        BMI     L804D
+        BMI     c64BootGetByte
         SEC
         RTS
 
-L8066:
+c64BootTake:
+; a byte is waiting - the two index reads agreed and the ring is not empty
         LDA     btxFifoRd
         TAX
         LDA     btxFifo00,X
         INX
         CPX     #$10
-        BNE     L8074
+        BNE     c64BootAdvance
         LDX     #$00
 
-L8074:
+c64BootAdvance:
+; publish the advanced read index, which is what frees the slot for the decoder
         STX     btxFifoRd
         CLC
         RTS
