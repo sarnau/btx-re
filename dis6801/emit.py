@@ -119,7 +119,7 @@ def emit(data: bytes, result: TraceResult, sidecar: Sidecar) -> str:
             if label:
                 lines.append(f"{label}:")
 
-        if region is not None and region.kind == "words" and not is_code:
+        if region is not None and region.kind in ("words", "ptr_table") and not is_code:
             flush()
             count = min(8, (min(region.end, end) - addr) // 2)
             if count:

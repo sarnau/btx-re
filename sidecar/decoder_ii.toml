@@ -17,6 +17,119 @@ entry_points = [
     0xF148,  # follows the NMI RTI
     0xF14C,  # installed into a soft vector by reset
     0xF1D8,  # called from $F148
+
+    # Targets resolved from the $D3xx control-code jump tables.
+    0xD355,
+    0xD36A,
+    0xD386,
+    0xD394,
+    0xD3A5,
+    0xD3B0,
+    0xD3D0,
+    0xDA40,
+    0xDA43,
+    0xDA4C,
+    0xDA55,
+    0xDA7F,
+    0xDAA9,
+    0xDADC,
+    0xDAE8,
+    0xDAFB,
+    0xDB0E,
+    0xDB2B,
+    0xDB5B,
+    0xDB69,
+    0xDBD2,
+    0xDBE2,
+    0xDBF2,
+    0xDC04,
+    0xDC6D,
+    0xDC70,
+    0xDC73,
+    0xDC76,
+    0xDC79,
+    0xDC7C,
+    0xDC7F,
+    0xDC82,
+    0xDC90,
+    0xDCB1,
+    0xDCD1,
+    0xDCDE,
+    0xDCEB,
+    0xDCF8,
+    0xDD0C,
+    0xDD19,
+    0xDD41,
+    0xDD44,
+    0xDD47,
+    0xDD4A,
+    0xDD4D,
+    0xDD50,
+    0xDD53,
+    0xDD56,
+    0xDD77,
+    0xDD84,
+    0xDD91,
+    0xDD9E,
+    0xDDA1,
+    0xDDA9,
+    0xDDD8,
+    0xDDEE,
+    0xDE01,
+    0xDE04,
+    0xDE07,
+    0xDE0A,
+    0xDE0D,
+    0xDE10,
+    0xDE13,
+    0xDE16,
+    0xDE1E,
+    0xDE3A,
+    0xDE56,
+    0xDE61,
+    0xDE6C,
+    0xDE77,
+    0xDE84,
+    0xDE91,
+    0xDE9C,
+    0xDE9F,
+    0xDEA2,
+    0xDEA5,
+    0xDEA8,
+    0xDEAB,
+    0xDEAE,
+    0xDEB1,
+    0xDEB9,
+    0xDEC4,
+    0xDECF,
+    0xDEDA,
+    0xDEDD,
+    0xDEE8,
+    0xDEF3,
+    0xDF08,
+    0xDF13,
+    0xDF1B,
+    0xDF23,
+    0xDF2B,
+    0xDF36,
+    0xDF41,
+    0xDF5E,
+    0xDF7B,
+    0xDF98,
+    0xDFB5,
+    0xE254,
+    0xE276,
+    0xE2A6,
+    0xE2D6,
+    0xE2F8,
+    0xE30C,
+    0xE320,
+    0xE334,
+    0xE341,
+    0xE34E,
+    0xE35B,
+    0xE367,
+    0xFC42,
 ]
 
 [meta]
@@ -26,6 +139,19 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 
 
 [labels]
+"0xD109" = "ctrlTableC0"
+"0xD149" = "ctrlTableC1a"
+"0xD189" = "ctrlTableC1b"
+"0xD1C9" = "escTable"
+"0xD289" = "csiTable"
+"0xD355" = "parseNextByte"
+"0xD36A" = "dispatchC0"
+"0xD386" = "dispatchC1a"
+"0xD394" = "dispatchC1b"
+"0xD3B0" = "dispatchEsc"
+"0xD3D0" = "dispatchCsi"
+"0xDA40" = "ctrlIgnored"
+"0xFC42" = "seqIgnored"
 "0x8000" = "fontG0"
 "0x8780" = "fontAccents"
 "0x8F00" = "fontMosaic"
@@ -42,6 +168,30 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xFFF0" = "vectors"
 
 [block_comments]
+"0xD36A" = """
+CEPT control-code interpreter.
+
+Five jump tables, all reached through the same idiom:
+
+    PSHA / ANDA #mask / ASLA / TAB / LDX #table / ABX / LDX 0,X / PULA / JMP 0,X
+
+The guards above each site identify the range being decoded:
+
+  $D374  A < $20            ctrlTableC0   32 entries  C0 control codes
+  $D392  $80 <= A < $A0     ctrlTableC1a  32 entries  C1 controls, $0497 bit7 clear
+  $D3A0  $80 <= A < $A0     ctrlTableC1b  32 entries  C1 controls, $0497 bit7 set
+  $D3C3  after ESC ($1B)    escTable      96 entries  A - $20, range $20-$7F
+  $D3E3  after CSI ($9B)    csiTable      96 entries  A - $20, range $20-$7F
+
+$0497 bit 7 selects between two complete C1 sets, which is how the serial and
+parallel attribute modes of the CEPT presentation layer are switched.
+
+All 106 distinct targets lie inside the ROM. Unhandled codes fall to
+ctrlIgnored ($DA40, 14 of the 32 C0 slots) and seqIgnored ($FC42, 85 of the 96
+slots in each of the ESC and CSI tables).
+
+The escTable assignments are recognisably ISO 2022: $28-$2B designate G0-G3,
+$6E/$6F are the locking shifts LS2/LS3, and $7C-$7E the single shifts."""
 "0x8000" = """
 Character generator: four 96-glyph sets of 20 bytes each, $8000-$9DFF.
 
@@ -152,3 +302,30 @@ kind = "chargen"
 start = 0x9E00
 end = 0xA210
 kind = "chargen"
+
+# Control-code dispatch tables. See the block comment at $D36A.
+
+[[regions]]
+start = 0xD109
+end = 0xD149
+kind = "ptr_table"
+
+[[regions]]
+start = 0xD149
+end = 0xD189
+kind = "ptr_table"
+
+[[regions]]
+start = 0xD189
+end = 0xD1C9
+kind = "ptr_table"
+
+[[regions]]
+start = 0xD1C9
+end = 0xD289
+kind = "ptr_table"
+
+[[regions]]
+start = 0xD289
+end = 0xD349
+kind = "ptr_table"

@@ -2265,7 +2265,7 @@ reset:
         JSR     $EED2
         CLR     $04DC
         JSR     $ED9D
-        JMP     $D355
+        JMP     parseNextByte
         LDAA    #$03
         STAA    P1DDR
         LDAA    #$03
@@ -2805,44 +2805,60 @@ reset:
         FCB     $64,$65,$72,$6D,$6F,$64,$75,$6C,$20,$66,$19,$48,$75,$72,$20,$43
         FCB     $2D,$36,$34,$2F,$31,$32,$38,$2E,$20,$12,$6E,$9B,$30,$40,$87,$D0
         FCB     $12,$67,$20,$12,$67,$1F,$58,$41,$83,$98,$56,$31,$2E,$36,$20,$31
-        FCB     $34,$31,$30,$38,$37,$77,$72,$1F,$2F,$43,$1E,$00,$D3,$55,$DA,$40
-        FCB     $DA,$40,$DA,$40,$DA,$40,$DA,$40,$DA,$40,$DA,$40,$DA,$43,$DA,$4C
-        FCB     $DA,$55,$DA,$7F,$DA,$A9,$DA,$DC,$DA,$E8,$DA,$FB,$DA,$40,$DB,$0E
-        FCB     $DB,$2B,$DA,$40,$DB,$5B,$DA,$40,$DA,$40,$DA,$40,$DB,$69,$DB,$D2
-        FCB     $DA,$40,$D3,$A5,$DA,$40,$DB,$E2,$DB,$F2,$DC,$04,$DC,$6D,$DC,$70
-        FCB     $DC,$73,$DC,$76,$DC,$79,$DC,$7C,$DC,$7F,$DC,$82,$DC,$90,$DC,$B1
-        FCB     $DC,$D1,$DC,$DE,$DC,$EB,$DC,$F8,$DD,$0C,$DD,$19,$DD,$41,$DD,$44
-        FCB     $DD,$47,$DD,$4A,$DD,$4D,$DD,$50,$DD,$53,$DD,$56,$DD,$77,$DD,$84
-        FCB     $DD,$91,$DD,$9E,$DD,$A1,$DD,$A9,$DD,$D8,$DD,$EE,$DE,$01,$DE,$04
-        FCB     $DE,$07,$DE,$0A,$DE,$0D,$DE,$10,$DE,$13,$DE,$16,$DE,$1E,$DE,$3A
-        FCB     $DE,$56,$DE,$61,$DE,$6C,$DE,$77,$DE,$84,$DE,$91,$DE,$9C,$DE,$9F
-        FCB     $DE,$A2,$DE,$A5,$DE,$A8,$DE,$AB,$DE,$AE,$DE,$B1,$DE,$B9,$DE,$C4
-        FCB     $DE,$CF,$DE,$DA,$DE,$DD,$DE,$E8,$DE,$F3,$DF,$08,$FC,$42,$FC,$42
-        FCB     $DF,$B5,$E3,$67,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$DF,$41,$DF,$5E
-        FCB     $DF,$7B,$DF,$98,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42
-        FCB     $FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42
-        FCB     $FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42
-        FCB     $FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42
-        FCB     $FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42
-        FCB     $FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42
-        FCB     $FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42
-        FCB     $FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42
-        FCB     $FC,$42,$FC,$42,$FC,$42,$FC,$42,$DF,$2B,$DF,$36,$FC,$42,$FC,$42
-        FCB     $FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42
-        FCB     $FC,$42,$FC,$42,$DF,$23,$DF,$1B,$DF,$13,$FC,$42,$FC,$42,$FC,$42
-        FCB     $FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42
-        FCB     $FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$E2,$54,$E2,$76
-        FCB     $E2,$A6,$E2,$D6,$E2,$F8,$E3,$0C,$E3,$20,$E3,$34,$E3,$41,$E3,$4E
-        FCB     $FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42
-        FCB     $E3,$5B,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42
-        FCB     $FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42
-        FCB     $FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42
-        FCB     $FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42
-        FCB     $FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42
-        FCB     $FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42
-        FCB     $FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42
-        FCB     $FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$FC,$42,$8E,$04,$00,$BD
-        FCB     $F0,$81,$81,$1F,$26,$F9,$27,$03
+        FCB     $34,$31,$30,$38,$37,$77,$72,$1F,$2F,$43,$1E,$00
+
+ctrlTableC0:
+        FDB     $D355,$DA40,$DA40,$DA40,$DA40,$DA40,$DA40,$DA40
+        FDB     $DA43,$DA4C,$DA55,$DA7F,$DAA9,$DADC,$DAE8,$DAFB
+        FDB     $DA40,$DB0E,$DB2B,$DA40,$DB5B,$DA40,$DA40,$DA40
+        FDB     $DB69,$DBD2,$DA40,$D3A5,$DA40,$DBE2,$DBF2,$DC04
+
+ctrlTableC1a:
+        FDB     $DC6D,$DC70,$DC73,$DC76,$DC79,$DC7C,$DC7F,$DC82
+        FDB     $DC90,$DCB1,$DCD1,$DCDE,$DCEB,$DCF8,$DD0C,$DD19
+        FDB     $DD41,$DD44,$DD47,$DD4A,$DD4D,$DD50,$DD53,$DD56
+        FDB     $DD77,$DD84,$DD91,$DD9E,$DDA1,$DDA9,$DDD8,$DDEE
+
+ctrlTableC1b:
+        FDB     $DE01,$DE04,$DE07,$DE0A,$DE0D,$DE10,$DE13,$DE16
+        FDB     $DE1E,$DE3A,$DE56,$DE61,$DE6C,$DE77,$DE84,$DE91
+        FDB     $DE9C,$DE9F,$DEA2,$DEA5,$DEA8,$DEAB,$DEAE,$DEB1
+        FDB     $DEB9,$DEC4,$DECF,$DEDA,$DEDD,$DEE8,$DEF3,$DF08
+
+escTable:
+        FDB     $FC42,$FC42,$DFB5,$E367,$FC42,$FC42,$FC42,$FC42
+        FDB     $DF41,$DF5E,$DF7B,$DF98,$FC42,$FC42,$FC42,$FC42
+        FDB     $FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42
+        FDB     $FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42
+        FDB     $FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42
+        FDB     $FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42
+        FDB     $FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42
+        FDB     $FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42
+        FDB     $FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42
+        FDB     $FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$DF2B,$DF36
+        FDB     $FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42
+        FDB     $FC42,$FC42,$FC42,$FC42,$DF23,$DF1B,$DF13,$FC42
+
+csiTable:
+        FDB     $FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42
+        FDB     $FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42
+        FDB     $E254,$E276,$E2A6,$E2D6,$E2F8,$E30C,$E320,$E334
+        FDB     $E341,$E34E,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42
+        FDB     $FC42,$FC42,$E35B,$FC42,$FC42,$FC42,$FC42,$FC42
+        FDB     $FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42
+        FDB     $FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42
+        FDB     $FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42
+        FDB     $FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42
+        FDB     $FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42
+        FDB     $FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42
+        FDB     $FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42
+        LDS     #$0400
+        JSR     $F081
+        CMPA    #$1F
+        BNE     $D34C
+        BEQ     $D358
+
+parseNextByte:
         JSR     $F081
         CMPA    #$1B
         BNE     $D35F
@@ -2852,6 +2868,31 @@ reset:
         JMP     $D3C5
         CMPA    #$20
         BCC     $D376
+
+; CEPT control-code interpreter.
+;
+; Five jump tables, all reached through the same idiom:
+;
+;     PSHA / ANDA #mask / ASLA / TAB / LDX #table / ABX / LDX 0,X / PULA / JMP 0,X
+;
+; The guards above each site identify the range being decoded:
+;
+;   $D374  A < $20            ctrlTableC0   32 entries  C0 control codes
+;   $D392  $80 <= A < $A0     ctrlTableC1a  32 entries  C1 controls, $0497 bit7 clear
+;   $D3A0  $80 <= A < $A0     ctrlTableC1b  32 entries  C1 controls, $0497 bit7 set
+;   $D3C3  after ESC ($1B)    escTable      96 entries  A - $20, range $20-$7F
+;   $D3E3  after CSI ($9B)    csiTable      96 entries  A - $20, range $20-$7F
+;
+; $0497 bit 7 selects between two complete C1 sets, which is how the serial and
+; parallel attribute modes of the CEPT presentation layer are switched.
+;
+; All 106 distinct targets lie inside the ROM. Unhandled codes fall to
+; ctrlIgnored ($DA40, 14 of the 32 C0 slots) and seqIgnored ($FC42, 85 of the 96
+; slots in each of the ESC and CSI tables).
+;
+; The escTable assignments are recognisably ISO 2022: $28-$2B designate G0-G3,
+; $6E/$6F are the locking shifts LS2/LS3, and $7C-$7E the single shifts.
+dispatchC0:
         PSHA
         ASLA
         TAB
@@ -2866,7 +2907,9 @@ reset:
         CMPA    #$A0
         BCC     $D3A2
         TST     $0497
-        BMI     $D394
+        BMI     dispatchC1b
+
+dispatchC1a:
         PSHA
         ANDA    #$1F
         ASLA
@@ -2876,6 +2919,8 @@ reset:
         LDX     $00,X
         PULA
         JMP     $00,X
+
+dispatchC1b:
         PSHA
         ANDA    #$1F
         ASLA
@@ -2888,12 +2933,14 @@ reset:
         JMP     $E986
         JSR     $F081
         TST     $04AF
-        BPL     $D3B0
+        BPL     dispatchEsc
         JMP     $E9A2
+
+dispatchEsc:
         PSHA
         SUBA    #$20
         BCC     $D3B8
-        JMP     $D355
+        JMP     parseNextByte
         ANDA    #$7F
         ASLA
         TAB
@@ -2904,12 +2951,14 @@ reset:
         JMP     $00,X
         JSR     $F081
         TST     $04AF
-        BPL     $D3D0
+        BPL     dispatchCsi
         JMP     $E9A2
+
+dispatchCsi:
         PSHA
         SUBA    #$20
         BCC     $D3D8
-        JMP     $D355
+        JMP     parseNextByte
         ANDA    #$7F
         ASLA
         TAB
@@ -2934,74 +2983,436 @@ reset:
         DEC     $0489
         BNE     $D3F0
         RTS
-        FCB     $BD,$E9,$8C,$81,$20,$27,$50,$25,$03,$7E,$D4,$BD,$7E,$E9,$A2,$16
-        FCB     $17,$1A,$1B,$1C,$1F,$26,$27,$2A,$2B,$2C,$2F,$46,$47,$4A,$4B,$4C
-        FCB     $4F,$00,$00,$FF,$FF,$FF,$FF,$00,$00,$FF,$FF,$FF,$FF,$FF,$FF,$FF
-        FCB     $FF,$FF,$FF,$00,$00,$00,$00,$FF,$FF,$00,$00,$00,$00,$FF,$FF,$00
-        FCB     $00,$00,$00,$FF,$FF,$01,$01,$01,$01,$01,$01,$02,$02,$01,$01,$01
-        FCB     $01,$02,$02,$02,$02,$01,$01,$BD,$E9,$8C,$81,$40,$22,$16,$81,$28
-        FCB     $26,$06,$BD,$D3,$E5,$7E,$D4,$75,$BD,$E9,$8C,$BD,$E9,$8C,$BD,$E9
-        FCB     $8C,$BD,$E9,$8C,$84,$0F,$B7,$04,$88,$BD,$E9,$8C,$84,$07,$B7,$04
-        FCB     $1E,$48,$48,$48,$48,$BA,$04,$88,$C6,$11,$CE,$D4,$19,$3A,$A1,$00
-        FCB     $27,$03,$5A,$2A,$F5,$CE,$D4,$2B,$3A,$A6,$00,$B7,$04,$1C,$CE,$D4
-        FCB     $3D,$3A,$A6,$00,$B7,$04,$1D,$CE,$D4,$4F,$3A,$A6,$00,$B7,$04,$1F
-        FCB     $7E,$D3,$4C,$81,$7F,$25,$03,$7E,$D3,$49,$B7,$04,$1B,$C6,$66,$86
-        FCB     $00,$CE,$04,$1F,$3A,$A7,$00,$5A,$26,$F7,$BD,$E9,$8C,$7E,$D5,$27
-        FCB     $BD,$E9,$8C,$81,$30,$25,$23,$81,$80,$25,$03,$7E,$D7,$ED,$81,$40
-        FCB     $24,$18,$81,$34,$25,$03,$7E,$D7,$ED,$84,$03,$16,$86,$FF,$CE,$04
-        FCB     $22,$3A,$A7,$00,$7E,$D4,$DA,$BD,$F0,$81,$81,$1F,$26,$03,$7E,$D6
-        FCB     $C4,$24,$03,$7E,$D7,$ED,$81,$30,$26,$03,$7E,$D6,$D1,$24,$03,$7E
-        FCB     $D6,$53,$81,$80,$25,$03,$7E,$D7,$ED,$81,$40,$24,$28,$7F,$04,$22
-        FCB     $7F,$04,$23,$7F,$04,$24,$7F,$04,$25,$7F,$04,$87,$7F,$04,$20,$7F
-        FCB     $04,$21,$F6,$1B,$00,$C1,$13,$26,$03,$7E,$D4,$DD,$7C,$04,$87,$7C
-        FCB     $04,$87,$7E,$D4,$DD,$84,$3F,$F6,$04,$1C,$2B,$03,$7E,$D6,$23,$F6
-        FCB     $04,$1E,$C1,$04,$26,$09,$B7,$04,$21,$7F,$04,$20,$7E,$D5,$A7,$7F
-        FCB     $04,$20,$7F,$04,$21,$44,$76,$04,$21,$77,$04,$21,$44,$76,$04,$21
-        FCB     $77,$04,$21,$44,$76,$04,$21,$77,$04,$21,$44,$76,$04,$21,$77,$04
-        FCB     $21,$44,$76,$04,$20,$77,$04,$20,$44,$76,$04,$20,$77,$04,$20,$44
-        FCB     $76,$04,$20,$77,$04,$20,$44,$76,$04,$20,$77,$04,$20,$BD,$D5,$B5
-        FCB     $F6,$04,$1D,$2A,$03,$BD,$D5,$B5,$7E,$D5,$01,$F6,$04,$87,$C1,$18
-        FCB     $24,$63,$B6,$04,$22,$2A,$11,$F6,$04,$87,$B6,$04,$20,$CE,$04,$26
-        FCB     $3A,$A7,$00,$B6,$04,$21,$A7,$01,$B6,$04,$23,$2A,$11,$F6,$04,$87
-        FCB     $CE,$04,$3E,$3A,$B6,$04,$20,$A7,$00,$B6,$04,$21,$A7,$01,$B6,$04
-        FCB     $24,$2A,$11,$F6,$04,$87,$B6,$04,$20,$CE,$04,$56,$3A,$A7,$00,$B6
-        FCB     $04,$21,$A7,$01,$B6,$04,$25,$2A,$11,$F6,$04,$87,$B6,$04,$20,$CE
-        FCB     $04,$6E,$3A,$A7,$00,$B6,$04,$21,$A7,$01,$F6,$04,$87,$5C,$5C,$C1
-        FCB     $19,$25,$02,$C6,$18,$F7,$04,$87,$39,$F6,$04,$87,$56,$25,$1B,$B7
-        FCB     $04,$20,$7F,$04,$21,$74,$04,$20,$76,$04,$21,$74,$04,$20,$76,$04
-        FCB     $21,$BD,$D5,$B5,$7A,$04,$87,$7E,$D5,$01,$BA,$04,$21,$B7,$04,$21
-        FCB     $7A,$04,$87,$BD,$D5,$B5,$7E,$D5,$01,$F6,$04,$87,$56,$24,$03,$7C
-        FCB     $04,$87,$81,$20,$26,$09,$7F,$04,$20,$7F,$04,$21,$7E,$D6,$97,$81
-        FCB     $2C,$26,$0C,$7F,$04,$20,$7F,$04,$21,$BD,$D6,$B8,$7E,$D5,$01,$81
-        FCB     $2D,$26,$0E,$C6,$FF,$F7,$04,$20,$F7,$04,$21,$BD,$D6,$B8,$7E,$D5
-        FCB     $01,$81,$2F,$26,$15,$C6,$FF,$F7,$04,$20,$F7,$04,$21,$BD,$D6,$B8
-        FCB     $F6,$04,$87,$C1,$18,$25,$F6,$7E,$D5,$01,$81,$2E,$27,$EF,$84,$0F
-        FCB     $B7,$04,$88,$BD,$D6,$B8,$7A,$04,$88,$26,$F8,$7E,$D5,$01,$BD,$D5
-        FCB     $B5,$F6,$04,$1D,$2A,$03,$BD,$D5,$B5,$39,$BD,$D6,$D9,$86,$FF,$B7
-        FCB     $1B,$23,$86,$1F,$7E,$D3,$58,$36,$BD,$D6,$D9,$32,$7E,$D5,$27,$F6
-        FCB     $04,$87,$56,$24,$03,$7C,$04,$87,$7F,$04,$20,$7F,$04,$21,$BD,$D6
-        FCB     $B8,$F6,$04,$87,$C1,$18,$25,$F6,$B6,$04,$1B,$80,$20,$24,$01,$39
-        FCB     $C6,$30,$3D,$C3,$08,$00,$FD,$04,$02,$B6,$04,$1B,$BB,$04,$1F,$81
-        FCB     $7F,$25,$02,$86,$7F,$B7,$04,$1B,$B6,$04,$1E,$81,$01,$27,$24,$81
-        FCB     $02,$27,$3E,$7E,$D7,$8C,$37,$36,$3C,$B6,$04,$20,$FE,$04,$02,$A7
-        FCB     $00,$B6,$04,$21,$A7,$01,$FC,$04,$02,$C3,$00,$02,$FD,$04,$02,$38
-        FCB     $32,$33,$39,$C6,$00,$CE,$04,$26,$3A,$A6,$01,$B7,$04,$20,$A6,$00
-        FCB     $84,$0F,$8A,$00,$B7,$04,$21,$BD,$D7,$20,$5C,$5C,$C1,$18,$25,$E5
-        FCB     $39,$C6,$00,$CE,$04,$26,$3A,$A6,$01,$B7,$04,$20,$A6,$00,$84,$0F
-        FCB     $8A,$20,$B7,$04,$21,$BD,$D7,$20,$CE,$04,$3E,$3A,$A6,$01,$B7,$04
-        FCB     $20,$A6,$00,$84,$0F,$B7,$04,$21,$BD,$D7,$20,$5C,$5C,$C1,$18,$25
-        FCB     $D2,$39,$5F,$CE,$04,$3E,$3A,$A6,$01,$44,$44,$84,$0F,$8A,$30,$B7
-        FCB     $04,$21,$A6,$01,$46,$46,$46,$84,$C0,$A7,$01,$B7,$04,$89,$CE,$04
-        FCB     $26,$3A,$A6,$01,$84,$3F,$BA,$04,$89,$B7,$04,$20,$BD,$D7,$20,$CE
-        FCB     $04,$6E,$3A,$A6,$01,$44,$44,$84,$0F,$B7,$04,$21,$A6,$01,$46,$46
-        FCB     $46,$84,$C0,$A7,$01,$B7,$04,$89,$CE,$04,$56,$3A,$A6,$01,$84,$3F
-        FCB     $BA,$04,$89,$B7,$04,$20,$BD,$D7,$20,$5C,$5C,$C1,$18,$22,$03,$7E
-        FCB     $D7,$8D,$39,$7F,$04,$20,$7F,$04,$21,$BD,$D6,$B8,$F6,$04,$87,$C1
-        FCB     $18,$25,$F6,$BD,$D6,$D9,$86,$FF,$B7,$1B,$23,$7E,$D3,$49,$BD,$E9
-        FCB     $8C,$81,$20,$26,$03,$7E,$D8,$70,$81,$21,$26,$03,$7E,$D8,$43,$81
-        FCB     $30,$25,$03,$7E,$D8,$A8,$7E,$D3,$49,$00,$00,$00,$0F,$00,$F0,$00
-        FCB     $FF,$0F,$00,$0F,$0F,$0F,$F0,$0F,$FF,$00,$00,$00,$0F,$00,$F0,$00
-        FCB     $FF,$0F,$00,$0F,$0F,$0F,$F0,$0F,$FF,$BD,$D8,$49,$7E,$D3,$4C
+        JSR     $E98C
+        CMPA    #$20
+        BEQ     $D461
+        BCS     $D416
+        JMP     $D4BD
+        JMP     $E9A2
+        FCB     $16,$17,$1A,$1B,$1C,$1F,$26,$27,$2A,$2B,$2C,$2F,$46,$47,$4A,$4B
+        FCB     $4C,$4F,$00,$00,$FF,$FF,$FF,$FF,$00,$00,$FF,$FF,$FF,$FF,$FF,$FF
+        FCB     $FF,$FF,$FF,$FF,$00,$00,$00,$00,$FF,$FF,$00,$00,$00,$00,$FF,$FF
+        FCB     $00,$00,$00,$00,$FF,$FF,$01,$01,$01,$01,$01,$01,$02,$02,$01,$01
+        FCB     $01,$01,$02,$02,$02,$02,$01,$01
+        JSR     $E98C
+        CMPA    #$40
+        BHI     $D47E
+        CMPA    #$28
+        BNE     $D472
+        JSR     $D3E5
+        JMP     $D475
+        JSR     $E98C
+        JSR     $E98C
+        JSR     $E98C
+        JSR     $E98C
+        ANDA    #$0F
+        STAA    $0488
+        JSR     $E98C
+        ANDA    #$07
+        STAA    $041E
+        ASLA
+        ASLA
+        ASLA
+        ASLA
+        ORAA    $0488
+        LDAB    #$11
+        LDX     #$D419
+        ABX
+        CMPA    $00,X
+        BEQ     $D49F
+        DECB
+        BPL     $D494
+        LDX     #$D42B
+        ABX
+        LDAA    $00,X
+        STAA    $041C
+        LDX     #$D43D
+        ABX
+        LDAA    $00,X
+        STAA    $041D
+        LDX     #$D44F
+        ABX
+        LDAA    $00,X
+        STAA    $041F
+        JMP     $D34C
+        CMPA    #$7F
+        BCS     $D4C4
+        JMP     $D349
+        STAA    $041B
+        LDAB    #$66
+        LDAA    #$00
+        LDX     #$041F
+        ABX
+        STAA    $00,X
+        DECB
+        BNE     $D4CB
+        JSR     $E98C
+        JMP     $D527
+        JSR     $E98C
+        CMPA    #$30
+        BCS     $D504
+        CMPA    #$80
+        BCS     $D4E8
+        JMP     $D7ED
+        CMPA    #$40
+        BCC     $D504
+        CMPA    #$34
+        BCS     $D4F3
+        JMP     $D7ED
+        ANDA    #$03
+        TAB
+        LDAA    #$FF
+        LDX     #$0422
+        ABX
+        STAA    $00,X
+        JMP     $D4DA
+        JSR     $F081
+        CMPA    #$1F
+        BNE     $D50B
+        JMP     $D6C4
+        BCC     $D510
+        JMP     $D7ED
+        CMPA    #$30
+        BNE     $D517
+        JMP     $D6D1
+        BCC     $D51C
+        JMP     $D653
+        CMPA    #$80
+        BCS     $D523
+        JMP     $D7ED
+        CMPA    #$40
+        BCC     $D54F
+        CLR     $0422
+        CLR     $0423
+        CLR     $0424
+        CLR     $0425
+        CLR     $0487
+        CLR     $0420
+        CLR     $0421
+        LDAB    $1B00
+        CMPB    #$13
+        BNE     $D546
+        JMP     $D4DD
+        INC     $0487
+        INC     $0487
+        JMP     $D4DD
+        ANDA    #$3F
+        LDAB    $041C
+        BMI     $D559
+        JMP     $D623
+        LDAB    $041E
+        CMPB    #$04
+        BNE     $D569
+        STAA    $0421
+        CLR     $0420
+        JMP     $D5A7
+        CLR     $0420
+        CLR     $0421
+        LSRA
+        ROR     $0421
+        ASR     $0421
+        LSRA
+        ROR     $0421
+        ASR     $0421
+        LSRA
+        ROR     $0421
+        ASR     $0421
+        LSRA
+        ROR     $0421
+        ASR     $0421
+        LSRA
+        ROR     $0420
+        ASR     $0420
+        LSRA
+        ROR     $0420
+        ASR     $0420
+        LSRA
+        ROR     $0420
+        ASR     $0420
+        LSRA
+        ROR     $0420
+        ASR     $0420
+        JSR     $D5B5
+        LDAB    $041D
+        BPL     $D5B2
+        JSR     $D5B5
+        JMP     $D501
+        LDAB    $0487
+        CMPB    #$18
+        BCC     $D61F
+        LDAA    $0422
+        BPL     $D5D2
+        LDAB    $0487
+        LDAA    $0420
+        LDX     #$0426
+        ABX
+        STAA    $00,X
+        LDAA    $0421
+        STAA    $01,X
+        LDAA    $0423
+        BPL     $D5E8
+        LDAB    $0487
+        LDX     #$043E
+        ABX
+        LDAA    $0420
+        STAA    $00,X
+        LDAA    $0421
+        STAA    $01,X
+        LDAA    $0424
+        BPL     $D5FE
+        LDAB    $0487
+        LDAA    $0420
+        LDX     #$0456
+        ABX
+        STAA    $00,X
+        LDAA    $0421
+        STAA    $01,X
+        LDAA    $0425
+        BPL     $D614
+        LDAB    $0487
+        LDAA    $0420
+        LDX     #$046E
+        ABX
+        STAA    $00,X
+        LDAA    $0421
+        STAA    $01,X
+        LDAB    $0487
+        INCB
+        INCB
+        CMPB    #$19
+        BCS     $D61F
+        LDAB    #$18
+        STAB    $0487
+        RTS
+        LDAB    $0487
+        RORB
+        BCS     $D644
+        STAA    $0420
+        CLR     $0421
+        LSR     $0420
+        ROR     $0421
+        LSR     $0420
+        ROR     $0421
+        JSR     $D5B5
+        DEC     $0487
+        JMP     $D501
+        ORAA    $0421
+        STAA    $0421
+        DEC     $0487
+        JSR     $D5B5
+        JMP     $D501
+        LDAB    $0487
+        RORB
+        BCC     $D65C
+        INC     $0487
+        CMPA    #$20
+        BNE     $D669
+        CLR     $0420
+        CLR     $0421
+        JMP     $D697
+        CMPA    #$2C
+        BNE     $D679
+        CLR     $0420
+        CLR     $0421
+        JSR     $D6B8
+        JMP     $D501
+        CMPA    #$2D
+        BNE     $D68B
+        LDAB    #$FF
+        STAB    $0420
+        STAB    $0421
+        JSR     $D6B8
+        JMP     $D501
+        CMPA    #$2F
+        BNE     $D6A4
+        LDAB    #$FF
+        STAB    $0420
+        STAB    $0421
+        JSR     $D6B8
+        LDAB    $0487
+        CMPB    #$18
+        BCS     $D697
+        JMP     $D501
+        CMPA    #$2E
+        BEQ     $D697
+        ANDA    #$0F
+        STAA    $0488
+        JSR     $D6B8
+        DEC     $0488
+        BNE     $D6AD
+        JMP     $D501
+        JSR     $D5B5
+        LDAB    $041D
+        BPL     $D6C3
+        JSR     $D5B5
+        RTS
+        JSR     $D6D9
+        LDAA    #$FF
+        STAA    $1B23
+        LDAA    #$1F
+        JMP     $D358
+        PSHA
+        JSR     $D6D9
+        PULA
+        JMP     $D527
+        LDAB    $0487
+        RORB
+        BCC     $D6E2
+        INC     $0487
+        CLR     $0420
+        CLR     $0421
+        JSR     $D6B8
+        LDAB    $0487
+        CMPB    #$18
+        BCS     $D6E8
+        LDAA    $041B
+        SUBA    #$20
+        BCC     $D6FA
+        RTS
+        LDAB    #$30
+        MUL
+        ADDD    #$0800
+        STD     $0402
+        LDAA    $041B
+        ADDA    $041F
+        CMPA    #$7F
+        BCS     $D70F
+        LDAA    #$7F
+        STAA    $041B
+        LDAA    $041E
+        CMPA    #$01
+        BEQ     $D73D
+        CMPA    #$02
+        BEQ     $D75B
+        JMP     $D78C
+        PSHB
+        PSHA
+        PSHX
+        LDAA    $0420
+        LDX     $0402
+        STAA    $00,X
+        LDAA    $0421
+        STAA    $01,X
+        LDD     $0402
+        ADDD    #$0002
+        STD     $0402
+        PULX
+        PULA
+        PULB
+        RTS
+        LDAB    #$00
+        LDX     #$0426
+        ABX
+        LDAA    $01,X
+        STAA    $0420
+        LDAA    $00,X
+        ANDA    #$0F
+        ORAA    #$00
+        STAA    $0421
+        JSR     $D720
+        INCB
+        INCB
+        CMPB    #$18
+        BCS     $D73F
+        RTS
+        LDAB    #$00
+        LDX     #$0426
+        ABX
+        LDAA    $01,X
+        STAA    $0420
+        LDAA    $00,X
+        ANDA    #$0F
+        ORAA    #$20
+        STAA    $0421
+        JSR     $D720
+        LDX     #$043E
+        ABX
+        LDAA    $01,X
+        STAA    $0420
+        LDAA    $00,X
+        ANDA    #$0F
+        STAA    $0421
+        JSR     $D720
+        INCB
+        INCB
+        CMPB    #$18
+        BCS     $D75D
+        RTS
+        CLRB
+        LDX     #$043E
+        ABX
+        LDAA    $01,X
+        LSRA
+        LSRA
+        ANDA    #$0F
+        ORAA    #$30
+        STAA    $0421
+        LDAA    $01,X
+        RORA
+        RORA
+        RORA
+        ANDA    #$C0
+        STAA    $01,X
+        STAA    $0489
+        LDX     #$0426
+        ABX
+        LDAA    $01,X
+        ANDA    #$3F
+        ORAA    $0489
+        STAA    $0420
+        JSR     $D720
+        LDX     #$046E
+        ABX
+        LDAA    $01,X
+        LSRA
+        LSRA
+        ANDA    #$0F
+        STAA    $0421
+        LDAA    $01,X
+        RORA
+        RORA
+        RORA
+        ANDA    #$C0
+        STAA    $01,X
+        STAA    $0489
+        LDX     #$0456
+        ABX
+        LDAA    $01,X
+        ANDA    #$3F
+        ORAA    $0489
+        STAA    $0420
+        JSR     $D720
+        INCB
+        INCB
+        CMPB    #$18
+        BHI     $D7EC
+        JMP     $D78D
+        RTS
+        CLR     $0420
+        CLR     $0421
+        JSR     $D6B8
+        LDAB    $0487
+        CMPB    #$18
+        BCS     $D7F3
+        JSR     $D6D9
+        LDAA    #$FF
+        STAA    $1B23
+        JMP     $D349
+        JSR     $E98C
+        CMPA    #$20
+        BNE     $D812
+        JMP     $D870
+        CMPA    #$21
+        BNE     $D819
+        JMP     $D843
+        CMPA    #$30
+        BCS     $D820
+        JMP     $D8A8
+        JMP     $D349
+        FCB     $00,$00,$00,$0F,$00,$F0,$00,$FF,$0F,$00,$0F,$0F,$0F,$F0,$0F,$FF
+        FCB     $00,$00,$00,$0F,$00,$F0,$00,$FF,$0F,$00,$0F,$0F,$0F,$F0,$0F,$FF
+        JSR     $D849
+        JMP     $D34C
         CLRA
         STAA    $1B2A
         INCA
@@ -3021,31 +3432,173 @@ reset:
         DECB
         BPL     $D85E
         JMP     $D9FE
-        FCB     $7F,$04,$BF,$7F,$04,$C0,$BD,$F0,$81,$81,$30,$25,$03,$7E,$D3,$4C
-        FCB     $81,$1F,$26,$03,$7E,$D3,$58,$24,$03,$7E,$D3,$49,$84,$0F,$B7,$04
-        FCB     $BF,$BD,$F0,$81,$81,$1F,$26,$03,$7E,$D3,$58,$24,$03,$7E,$D3,$49
-        FCB     $84,$0F,$B7,$04,$C0,$7E,$D3,$4C,$84,$0F,$B7,$04,$20,$BD,$F0,$81
-        FCB     $81,$40,$24,$2C,$81,$1F,$26,$03,$7E,$D3,$58,$24,$03,$7E,$D3,$49
-        FCB     $84,$0F,$B7,$04,$21,$B6,$04,$20,$C6,$0A,$3D,$FB,$04,$21,$F7,$04
-        FCB     $20,$BD,$F0,$81,$81,$1F,$26,$03,$7E,$D3,$58,$24,$03,$7E,$D3,$49
-        FCB     $F6,$04,$BF,$C4,$0F,$C1,$02,$26,$03,$7E,$D9,$C9,$F6,$04,$20,$C1
-        FCB     $10,$24,$03,$7E,$D3,$49,$C1,$20,$25,$03,$7E,$D3,$49,$C0,$10,$F7
-        FCB     $04,$20,$7F,$04,$C1,$7F,$04,$C2,$7F,$04,$C3,$7F,$04,$C4,$7F,$04
-        FCB     $C5,$7E,$D9,$17,$BD,$F0,$81,$81,$1F,$26,$03,$7E,$D3,$58,$81,$40
-        FCB     $24,$03,$7E,$D3,$49,$81,$80,$25,$03,$7E,$D3,$49,$B7,$04,$C6,$BD
-        FCB     $F0,$81,$81,$1F,$26,$03,$7E,$D3,$58,$81,$40,$24,$03,$7E,$D3,$49
-        FCB     $81,$80,$25,$03,$7E,$D3,$49,$44,$76,$04,$C1,$44,$76,$04,$C2,$44
-        FCB     $76,$04,$C3,$44,$76,$04,$C1,$44,$76,$04,$C2,$44,$76,$04,$C3,$B6
-        FCB     $04,$C6,$44,$76,$04,$C1,$44,$76,$04,$C2,$44,$76,$04,$C3,$44,$76
-        FCB     $04,$C1,$44,$76,$04,$C2,$44,$76,$04,$C3,$86,$00,$B7,$04,$C5,$86
-        FCB     $04,$78,$04,$C1,$79,$04,$C5,$4A,$26,$F7,$86,$04,$78,$04,$C2,$79
-        FCB     $04,$C4,$4A,$26,$F7,$86,$04,$78,$04,$C3,$79,$04,$C4,$4A,$26,$F7
-        FCB     $B6,$04,$20,$48,$16,$B6,$04,$C4,$CE,$05,$F6,$3A,$A7,$01,$B6,$04
-        FCB     $C5,$A7,$00,$BD,$D9,$FE,$7C,$04,$20,$F6,$04,$20,$C1,$10,$25,$03
-        FCB     $7E,$D3,$4C,$7E,$D9,$14,$BD,$F0,$81,$81,$1F,$26,$03,$7E,$D3,$58
-        FCB     $81,$40,$24,$03,$7E,$D3,$49,$81,$60,$25,$03,$7E,$D3,$49,$84,$1F
-        FCB     $F6,$04,$20,$CE,$1B,$2A,$3A,$A7,$00,$7C,$04,$20,$BD,$DA,$1C,$F6
-        FCB     $04,$20,$C1,$04,$25,$05,$86,$05,$B7,$04,$20,$7E,$D9,$C6
+        CLR     $04BF
+        CLR     $04C0
+        JSR     $F081
+        CMPA    #$30
+        BCS     $D880
+        JMP     $D34C
+        CMPA    #$1F
+        BNE     $D887
+        JMP     $D358
+        BCC     $D88C
+        JMP     $D349
+        ANDA    #$0F
+        STAA    $04BF
+        JSR     $F081
+        CMPA    #$1F
+        BNE     $D89B
+        JMP     $D358
+        BCC     $D8A0
+        JMP     $D349
+        ANDA    #$0F
+        STAA    $04C0
+        JMP     $D34C
+        ANDA    #$0F
+        STAA    $0420
+        JSR     $F081
+        CMPA    #$40
+        BCC     $D8E0
+        CMPA    #$1F
+        BNE     $D8BB
+        JMP     $D358
+        BCC     $D8C0
+        JMP     $D349
+        ANDA    #$0F
+        STAA    $0421
+        LDAA    $0420
+        LDAB    #$0A
+        MUL
+        ADDB    $0421
+        STAB    $0420
+        JSR     $F081
+        CMPA    #$1F
+        BNE     $D8DB
+        JMP     $D358
+        BCC     $D8E0
+        JMP     $D349
+        LDAB    $04BF
+        ANDB    #$0F
+        CMPB    #$02
+        BNE     $D8EC
+        JMP     $D9C9
+        LDAB    $0420
+        CMPB    #$10
+        BCC     $D8F6
+        JMP     $D349
+        CMPB    #$20
+        BCS     $D8FD
+        JMP     $D349
+        SUBB    #$10
+        STAB    $0420
+        CLR     $04C1
+        CLR     $04C2
+        CLR     $04C3
+        CLR     $04C4
+        CLR     $04C5
+        JMP     $D917
+        JSR     $F081
+        CMPA    #$1F
+        BNE     $D91E
+        JMP     $D358
+        CMPA    #$40
+        BCC     $D925
+        JMP     $D349
+        CMPA    #$80
+        BCS     $D92C
+        JMP     $D349
+        STAA    $04C6
+        JSR     $F081
+        CMPA    #$1F
+        BNE     $D939
+        JMP     $D358
+        CMPA    #$40
+        BCC     $D940
+        JMP     $D349
+        CMPA    #$80
+        BCS     $D947
+        JMP     $D349
+        LSRA
+        ROR     $04C1
+        LSRA
+        ROR     $04C2
+        LSRA
+        ROR     $04C3
+        LSRA
+        ROR     $04C1
+        LSRA
+        ROR     $04C2
+        LSRA
+        ROR     $04C3
+        LDAA    $04C6
+        LSRA
+        ROR     $04C1
+        LSRA
+        ROR     $04C2
+        LSRA
+        ROR     $04C3
+        LSRA
+        ROR     $04C1
+        LSRA
+        ROR     $04C2
+        LSRA
+        ROR     $04C3
+        LDAA    #$00
+        STAA    $04C5
+        LDAA    #$04
+        ASL     $04C1
+        ROL     $04C5
+        DECA
+        BNE     $D981
+        LDAA    #$04
+        ASL     $04C2
+        ROL     $04C4
+        DECA
+        BNE     $D98C
+        LDAA    #$04
+        ASL     $04C3
+        ROL     $04C4
+        DECA
+        BNE     $D997
+        LDAA    $0420
+        ASLA
+        TAB
+        LDAA    $04C4
+        LDX     #$05F6
+        ABX
+        STAA    $01,X
+        LDAA    $04C5
+        STAA    $00,X
+        JSR     $D9FE
+        INC     $0420
+        LDAB    $0420
+        CMPB    #$10
+        BCS     $D9C3
+        JMP     $D34C
+        JMP     $D914
+        JSR     $F081
+        CMPA    #$1F
+        BNE     $D9D0
+        JMP     $D358
+        CMPA    #$40
+        BCC     $D9D7
+        JMP     $D349
+        CMPA    #$60
+        BCS     $D9DE
+        JMP     $D349
+        ANDA    #$1F
+        LDAB    $0420
+        LDX     #$1B2A
+        ABX
+        STAA    $00,X
+        INC     $0420
+        JSR     $DA1C
+        LDAB    $0420
+        CMPB    #$04
+        BCS     $D9FB
+        LDAA    #$05
+        STAA    $0420
+        JMP     $D9C6
         PSHA
         PSHB
         PSHX
@@ -3083,189 +3636,1164 @@ reset:
         STAA    $1B2A
         PULA
         RTS
-        FCB     $7E,$E9,$A2,$7A,$1B,$1F,$BD,$EC,$16,$7E,$D3,$55,$7C,$1B,$1F,$BD
-        FCB     $EC,$16,$7E,$D3,$55,$7D,$04,$AF,$2A,$03,$7E,$D3,$55,$BD,$EE,$3A
-        FCB     $7D,$04,$A3,$2A,$0E,$B6,$1B,$1E,$B1,$1B,$1D,$26,$06,$BD,$EA,$44
-        FCB     $7E,$D3,$55,$7C,$1B,$1E,$BD,$EC,$16,$BD,$E9,$A5,$7E,$D3,$55,$7D
-        FCB     $04,$AF,$2A,$03,$7E,$D3,$55,$BD,$EE,$3A,$7D,$04,$A3,$2A,$0E,$B6
-        FCB     $1B,$1E,$B1,$1B,$1C,$26,$06,$BD,$EB,$28,$7E,$D3,$55,$7A,$1B,$1E
-        FCB     $BD,$EC,$16,$BD,$E9,$A5,$7E,$D3,$55,$7D,$04,$AF,$2A,$03,$7E,$D3
-        FCB     $55,$86,$FF,$B7,$1B,$1C,$B7,$1B,$1D,$B7,$04,$A3,$BD,$EE,$4B,$86
-        FCB     $18,$B7,$1B,$1E,$7F,$1B,$1F,$BD,$E9,$A5,$B6,$1B,$25,$B7,$1B,$23
-        FCB     $7F,$04,$95,$7F,$1B,$24,$7F,$1B,$25,$7E,$DB,$F2,$7F,$1B,$1F,$BD
-        FCB     $EC,$16,$BD,$E9,$A5,$7E,$D3,$55,$7D,$04,$AF,$2A,$03,$7E,$D3,$55
-        FCB     $86,$01,$B7,$04,$9D,$B7,$04,$A2,$7E,$D3,$55,$7D,$04,$AF,$2A,$03
-        FCB     $7E,$D3,$55,$86,$00,$B7,$04,$9D,$B7,$04,$A2,$7E,$D3,$55,$7D,$04
-        FCB     $AF,$2A,$03,$7E,$D3,$55,$86,$FF,$B7,$1B,$20,$FE,$1B,$21,$F6,$1B
-        FCB     $1F,$3A,$A6,$00,$8A,$80,$A7,$00,$7E,$D3,$55,$7D,$04,$AF,$2A,$03
-        FCB     $7E,$D3,$55,$BD,$E9,$8C,$84,$3F,$B7,$04,$90,$B6,$04,$A0,$B7,$04
-        FCB     $A1,$B6,$04,$90,$27,$12,$B6,$04,$A1,$B7,$04,$9F,$B6,$04,$B5,$BD
-        FCB     $E7,$81,$7A,$04,$90,$7E,$DB,$41,$7E,$D3,$55,$7D,$04,$AF,$2A,$03
-        FCB     $7E,$D3,$55,$7F,$1B,$20,$7E,$D3,$55,$FE,$04,$0A,$A6,$00,$2B,$F6
-        FCB     $F6,$1B,$1F,$F7,$04,$90,$58,$58,$FE,$04,$0A,$3A,$A6,$00,$B7,$04
-        FCB     $17,$A6,$01,$84,$F7,$B7,$04,$18,$A6,$02,$B7,$04,$19,$A6,$03,$84
-        FCB     $BF,$B7,$04,$1A,$86,$A0,$FE,$1B,$21,$F6,$1B,$1F,$3A,$A7,$00,$FE
-        FCB     $04,$0E,$3A,$6F,$00,$58,$58,$FE,$04,$0A,$3A,$B6,$04,$17,$A7,$00
-        FCB     $B6,$04,$18,$A7,$01,$B6,$04,$19,$A7,$02,$B6,$04,$1A,$A7,$03,$7C
-        FCB     $1B,$1F,$B6,$1B,$1F,$81,$28,$25,$CB,$B6,$04,$90,$B7,$1B,$1F,$7E
-        FCB     $D3,$55,$7D,$04,$AF,$2A,$03,$7E,$D3,$55,$86,$02,$B7,$04,$9F,$7E
-        FCB     $D3,$55,$7D,$04,$AF,$2A,$03,$7E,$D3,$55,$86,$03,$B7,$04,$9F,$7E
-        FCB     $D3,$55,$7F,$1B,$1E,$7F,$1B,$1F,$BD,$EC,$B5,$BD,$E9,$A5,$BD,$EE
-        FCB     $3A,$7E,$D3,$55,$7D,$04,$AF,$2A,$03,$BD,$E7,$44,$BD,$E9,$8C,$81
-        FCB     $23,$26,$03,$7E,$D4,$0A,$81,$26,$26,$03,$7E,$D8,$08,$81,$2D,$26
-        FCB     $03,$7E,$E5,$FA,$81,$2F,$26,$03,$7E,$E6,$37,$81,$3F,$26,$03,$7E
-        FCB     $DC,$6A,$B7,$04,$8D,$84,$F0,$81,$30,$26,$03,$7E,$E9,$9F,$81,$40
-        FCB     $24,$03,$7E,$D3,$4C,$7F,$1B,$20,$BD,$EC,$B5,$BD,$EE,$3A,$B6,$04
-        FCB     $8D,$84,$3F,$B7,$1B,$1E,$7A,$1B,$1E,$BD,$E9,$8C,$84,$3F,$B7,$1B
-        FCB     $1F,$7A,$1B,$1F,$BD,$E9,$A5,$7E,$D3,$55,$7E,$D3,$4C,$86,$00,$B5
-        FCB     $86,$01,$B5,$86,$02,$B5,$86,$03,$B5,$86,$04,$B5,$86,$05,$B5,$86
-        FCB     $06,$B5,$86,$07,$BD,$E9,$CE,$B6,$04,$A2,$B7,$04,$9D,$7E,$DD,$FB
-        FCB     $CE,$10,$03,$C6,$80,$86,$00,$BD,$E4,$FF,$CE,$10,$01,$C6,$C0,$86
-        FCB     $80,$BD,$E4,$FF,$CE,$10,$03,$C6,$30,$86,$10,$BD,$E4,$FF,$7E,$DD
-        FCB     $FB,$CE,$10,$03,$C6,$80,$17,$BD,$E4,$FF,$CE,$10,$01,$C6,$C0,$86
-        FCB     $80,$BD,$E4,$FF,$CE,$10,$03,$C6,$30,$86,$10,$BD,$E4,$FF,$7E,$DD
-        FCB     $FB,$CE,$40,$00,$C6,$04,$86,$00,$BD,$E4,$FF,$7E,$DD,$FB,$CE,$40
-        FCB     $00,$C6,$04,$86,$04,$BD,$E4,$FF,$7E,$DD,$FB,$CE,$04,$00,$C6,$03
-        FCB     $86,$00,$BD,$E4,$FF,$7E,$DD,$FB,$FE,$04,$0A,$A6,$00,$2B,$3F,$CE
-        FCB     $04,$00,$C6,$03,$86,$01,$BD,$E4,$FF,$7E,$DD,$2A,$CE,$04,$00,$C6
-        FCB     $03,$86,$02,$BD,$E4,$FF,$7E,$DD,$FB,$FE,$04,$0A,$A6,$00,$2B,$1E
-        FCB     $CE,$04,$00,$C6,$03,$86,$03,$BD,$E4,$FF,$B6,$1B,$1E,$B1,$1B,$1D
-        FCB     $26,$0C,$BD,$EA,$44,$7A,$1B,$1E,$BD,$EC,$16,$BD,$E9,$A5,$7E,$DD
-        FCB     $FB,$86,$00,$B5,$86,$01,$B5,$86,$02,$B5,$86,$03,$B5,$86,$04,$B5
-        FCB     $86,$05,$B5,$86,$06,$B5,$86,$07,$B7,$04,$8D,$7D,$04,$AF,$2A,$03
-        FCB     $7E,$D3,$55,$B6,$04,$8D,$BD,$E9,$CE,$B6,$04,$9D,$B7,$04,$A2,$86
-        FCB     $FF,$B7,$04,$9D,$7E,$DD,$FB,$CE,$20,$03,$C6,$08,$86,$00,$BD,$E4
-        FCB     $FF,$7E,$DD,$FB,$CE,$08,$00,$C6,$08,$86,$00,$BD,$E4,$FF,$7E,$DD
-        FCB     $FB,$CE,$08,$00,$C6,$08,$86,$08,$BD,$E4,$FF,$7E,$DD,$FB,$7E,$E9
-        FCB     $A2,$86,$00,$BD,$E9,$FF,$7E,$DD,$FB,$F6,$1B,$1F,$58,$58,$FE,$04
-        FCB     $0A,$3A,$A6,$02,$B7,$04,$8C,$46,$46,$46,$84,$03,$CE,$02,$03,$C6
-        FCB     $03,$BD,$E4,$FF,$B6,$04,$8C,$46,$46,$46,$46,$84,$E0,$C6,$E0,$CE
-        FCB     $02,$02,$BD,$E4,$FF,$7E,$DD,$FB,$7D,$04,$AF,$2A,$03,$7E,$D3,$55
-        FCB     $B6,$04,$9D,$2A,$06,$B6,$04,$B5,$B7,$04,$98,$7E,$DD,$FB,$7D,$04
-        FCB     $AF,$2A,$03,$7E,$D3,$55,$86,$09,$B7,$04,$98,$B6,$04,$98,$7E,$D3
-        FCB     $58,$86,$00,$B5,$86,$01,$B5,$86,$02,$B5,$86,$03,$B5,$86,$04,$B5
-        FCB     $86,$05,$B5,$86,$06,$B5,$86,$07,$BD,$E9,$CE,$7E,$D3,$55,$B6,$04
-        FCB     $B4,$84,$4F,$8A,$10,$B7,$04,$B4,$86,$00,$B7,$04,$B0,$B6,$04,$B2
-        FCB     $84,$3F,$8A,$80,$B7,$04,$B2,$7E,$D3,$55,$86,$00,$B7,$04,$B0,$B6
-        FCB     $04,$B2,$84,$3F,$8A,$80,$B7,$04,$B2,$B6,$04,$B4,$84,$DF,$8A,$B0
-        FCB     $B7,$04,$B4,$7E,$D3,$55,$B6,$04,$B1,$84,$FB,$B7,$04,$B1,$7E,$D3
-        FCB     $55,$B6,$04,$B1,$8A,$04,$B7,$04,$B1,$7E,$D3,$55,$B6,$04,$B1,$84
-        FCB     $FC,$B7,$04,$B1,$7E,$D3,$55,$B6,$04,$B1,$84,$FC,$8A,$01,$B7,$04
-        FCB     $B1,$7E,$D3,$55,$B6,$04,$B1,$84,$FC,$8A,$02,$B7,$04,$B1,$7E,$D3
-        FCB     $55,$B6,$04,$B1,$8A,$03,$B7,$04,$B1,$7E,$D3,$55,$86,$00,$B5,$86
-        FCB     $01,$B5,$86,$02,$B5,$86,$03,$B5,$86,$04,$B5,$86,$05,$B5,$86,$06
-        FCB     $B5,$86,$07,$BD,$E9,$FF,$7E,$D3,$55,$B6,$04,$B4,$84,$F7,$B7,$04
-        FCB     $B4,$7E,$D3,$55,$B6,$04,$B1,$84,$F7,$B7,$04,$B1,$7E,$D3,$55,$B6
-        FCB     $04,$B1,$8A,$08,$B7,$04,$B1,$7E,$D3,$55,$7E,$E9,$A2,$B6,$04,$B4
-        FCB     $84,$FB,$B7,$04,$B4,$7E,$D3,$55,$B6,$04,$B4,$8A,$04,$B7,$04,$B4
-        FCB     $7E,$D3,$55,$B6,$04,$B4,$84,$FC,$8A,$01,$B7,$04,$B4,$B6,$04,$B3
-        FCB     $84,$1F,$B7,$04,$B3,$7E,$D3,$55,$B6,$04,$B4,$8A,$08,$B7,$04,$B4
-        FCB     $7E,$D3,$55,$86,$01,$B7,$04,$9E,$7E,$D3,$55,$86,$02,$B7,$04,$9E
-        FCB     $7E,$D3,$55,$86,$03,$B7,$04,$9E,$7E,$D3,$55,$86,$02,$B7,$04,$9D
-        FCB     $B7,$04,$A2,$7E,$D3,$55,$86,$03,$B7,$04,$9D,$B7,$04,$A2,$7E,$D3
-        FCB     $55,$BD,$E9,$8C,$81,$20,$26,$0B,$86,$05,$B7,$04,$99,$BD,$E9,$8C
-        FCB     $7E,$D3,$55,$84,$0F,$27,$01,$4A,$B7,$04,$99,$7E,$D3,$55,$BD,$E9
-        FCB     $8C,$81,$20,$26,$0B,$86,$05,$B7,$04,$9A,$BD,$E9,$8C,$7E,$D3,$55
-        FCB     $84,$0F,$27,$01,$4A,$B7,$04,$9A,$7E,$D3,$55,$BD,$E9,$8C,$81,$20
-        FCB     $26,$0B,$86,$05,$B7,$04,$9B,$BD,$E9,$8C,$7E,$D3,$55,$84,$0F,$27
-        FCB     $01,$4A,$B7,$04,$9B,$7E,$D3,$55,$BD,$E9,$8C,$81,$20,$26,$0B,$86
-        FCB     $05,$B7,$04,$9C,$BD,$E9,$8C,$7E,$D3,$55,$84,$0F,$27,$01,$4A,$B7
-        FCB     $04,$9C,$7E,$D3,$55,$BD,$E9,$8C,$84,$01,$27,$0B,$B6,$04,$A2,$B7
-        FCB     $04,$9D,$86,$FF,$7E,$DF,$C9,$86,$00,$B7,$04,$97,$7E,$D3,$55,$86
-        FCB     $00,$B5,$86,$01,$B5,$86,$02,$B5,$86,$03,$B7,$04,$95,$7E,$D3,$55
-        FCB     $C6,$00,$B5,$C6,$01,$B5,$C6,$02,$B5,$C6,$03,$B5,$C6,$04,$B5,$C6
-        FCB     $05,$B5,$C6,$06,$B5,$C6,$07,$B5,$C6,$08,$B5,$C6,$09,$F7,$04,$8D
-        FCB     $81,$3B,$27,$21,$84,$0F,$78,$04,$8D,$BB,$04,$8D,$78,$04,$8D,$78
-        FCB     $04,$8D,$BB,$04,$8D,$B7,$1B,$1C,$7A,$1B,$1C,$BD,$E9,$8C,$81,$3B
-        FCB     $27,$07,$7E,$E9,$A2,$5A,$F7,$1B,$1C,$BD,$E9,$8C,$84,$0F,$B7,$04
-        FCB     $8D,$B7,$1B,$1D,$7A,$1B,$1D,$BD,$E9,$8C,$81,$55,$27,$37,$81,$56
-        FCB     $27,$25,$84,$0F,$78,$04,$8D,$BB,$04,$8D,$78,$04,$8D,$78,$04,$8D
-        FCB     $BB,$04,$8D,$B7,$1B,$1D,$7A,$1B,$1D,$BD,$E9,$8C,$81,$55,$27,$15
-        FCB     $81,$56,$27,$03,$7E,$E9,$A2,$86,$FF,$B7,$1B,$1C,$B7,$1B,$1D,$B7
-        FCB     $1B,$23,$7E,$D3,$55,$86,$FF,$B7,$1B,$23,$B6,$1B,$1C,$27,$E8,$B6
-        FCB     $1B,$1D,$B1,$1B,$00,$27,$E0,$7E,$D3,$55,$86,$00,$B5,$86,$FF,$B7
-        FCB     $04,$A3,$7E,$D3,$55,$BD,$EA,$44,$7E,$D3,$55,$BD,$EB,$28,$7E,$D3
-        FCB     $55,$CE,$10,$03,$C6,$B0,$86,$30,$BD,$E5,$73,$CE,$10,$01,$C6,$C0
-        FCB     $86,$80,$BD,$E5,$73,$7F,$04,$B0,$7E,$E4,$F4,$CE,$10,$01,$C6,$C0
-        FCB     $17,$BD,$E5,$73,$CE,$10,$03,$C6,$B0,$86,$10,$BD,$E5,$73,$7F,$04
-        FCB     $B0,$7E,$E4,$F4,$CE,$10,$01,$C6,$80,$86,$00,$BD,$E5,$73,$CE,$10
-        FCB     $03,$C6,$90,$86,$00,$BD,$E5,$73,$7F,$04,$B0,$7E,$E4,$F4,$CE,$10
-        FCB     $01,$C6,$80,$86,$80,$BD,$E5,$73,$CE,$10,$03,$C6,$90,$86,$00,$BD
-        FCB     $E5,$73,$7F,$04,$B0,$7E,$E4,$F4,$CE,$10,$01,$C6,$80,$86,$00,$BD
-        FCB     $E5,$73,$CE,$10,$03,$C6,$90,$86,$10,$BD,$E5,$73,$7F,$04,$B0,$7E
-        FCB     $E4,$F4,$7D,$04,$97,$2A,$1C,$86,$01,$B7,$04,$B0,$CE,$00,$01,$C6
-        FCB     $80,$86,$00,$BD,$E5,$7B,$CE,$00,$03,$C6,$90,$86,$00,$BD,$E5,$7B
-        FCB     $7E,$E4,$FC,$F6,$1B,$1F,$FE,$04,$0E,$3A,$A6,$00,$8A,$10,$A7,$00
-        FCB     $7F,$04,$8D,$7F,$04,$8E,$B6,$1B,$1F,$B7,$04,$90,$F6,$04,$90,$58
-        FCB     $58,$FE,$04,$0A,$3A,$A6,$01,$84,$7F,$BA,$04,$8D,$A7,$01,$A6,$03
-        FCB     $84,$6F,$BA,$04,$8E,$A7,$03,$B6,$04,$8D,$8B,$80,$B7,$04,$8D,$24
-        FCB     $08,$B6,$04,$8E,$88,$10,$B7,$04,$8E,$B6,$04,$8E,$BA,$04,$8D,$81
-        FCB     $90,$27,$E4,$A6,$00,$84,$02,$27,$03,$7C,$04,$90,$7C,$04,$90,$F6
-        FCB     $04,$90,$C1,$28,$24,$0D,$FE,$04,$0E,$3A,$A6,$00,$84,$10,$26,$03
-        FCB     $7E,$E1,$5C,$86,$FF,$B7,$1B,$23,$7E,$E4,$F4,$7D,$04,$97,$2A,$1C
-        FCB     $86,$FF,$B7,$04,$B0,$CE,$00,$01,$C6,$80,$86,$00,$BD,$E5,$7B,$CE
-        FCB     $00,$03,$C6,$90,$86,$00,$BD,$E5,$7B,$7E,$E4,$FC,$F6,$1B,$1F,$FE
-        FCB     $04,$0E,$3A,$A6,$00,$8A,$10,$A7,$00,$7F,$04,$8D,$7F,$04,$8E,$B6
-        FCB     $1B,$1F,$B7,$04,$90,$F6,$04,$90,$58,$58,$FE,$04,$0A,$3A,$A6,$01
-        FCB     $84,$7F,$BA,$04,$8D,$A7,$01,$A6,$03,$84,$6F,$BA,$04,$8E,$A7,$03
-        FCB     $B6,$04,$8D,$80,$80,$B7,$04,$8D,$24,$08,$B6,$04,$8E,$88,$10,$B7
-        FCB     $04,$8E,$B6,$04,$8E,$BA,$04,$8D,$81,$90,$27,$E4,$A6,$00,$84,$02
-        FCB     $27,$03,$7C,$04,$90,$7C,$04,$90,$F6,$04,$90,$C1,$28,$24,$0D,$FE
-        FCB     $04,$0E,$3A,$A6,$00,$84,$10,$26,$03,$7E,$E1,$F5,$86,$FF,$B7,$1B
-        FCB     $23,$7E,$E4,$F4,$BD,$E9,$8C,$81,$40,$26,$03,$7E,$DF,$CF,$81,$60
-        FCB     $26,$03,$7E,$E0,$95,$81,$41,$26,$03,$7E,$E0,$A1,$81,$30,$25,$03
-        FCB     $7E,$DF,$E0,$7E,$E9,$A2,$BD,$E9,$8C,$81,$40,$26,$03,$7E,$DF,$D2
-        FCB     $81,$60,$26,$03,$7E,$E0,$9B,$81,$41,$26,$03,$7E,$E0,$BB,$81,$50
-        FCB     $26,$03,$7E,$E4,$46,$81,$51,$26,$03,$7E,$E4,$54,$81,$30,$25,$03
-        FCB     $7E,$DF,$E3,$7E,$E9,$A2,$BD,$E9,$8C,$81,$40,$26,$03,$7E,$DF,$D5
-        FCB     $81,$60,$26,$03,$7E,$E0,$8D,$81,$41,$26,$03,$7E,$E0,$D4,$81,$53
-        FCB     $26,$03,$7E,$E4,$63,$81,$54,$26,$03,$7E,$E4,$70,$81,$30,$25,$03
-        FCB     $7E,$DF,$E6,$7E,$E9,$A2,$BD,$E9,$8C,$81,$40,$26,$03,$7E,$DF,$D8
-        FCB     $81,$60,$26,$03,$7E,$E0,$8A,$81,$41,$26,$03,$7E,$E0,$EE,$81,$30
-        FCB     $25,$03,$7E,$DF,$E9,$7E,$E9,$A2,$BD,$E9,$8C,$81,$41,$26,$03,$7E
-        FCB     $E1,$08,$81,$30,$25,$03,$7E,$DF,$EC,$7E,$E9,$A2,$BD,$E9,$8C,$81
-        FCB     $41,$26,$03,$7E,$E1,$22,$81,$30,$25,$03,$7E,$DF,$EF,$7E,$E9,$A2
-        FCB     $BD,$E9,$8C,$81,$41,$26,$03,$7E,$E1,$BB,$81,$30,$25,$03,$7E,$DF
-        FCB     $F2,$7E,$E9,$A2,$BD,$E9,$8C,$81,$30,$25,$03,$7E,$DF,$F5,$7E,$E9
-        FCB     $A2,$BD,$E9,$8C,$81,$30,$25,$03,$7E,$DF,$F8,$7E,$E9,$A2,$BD,$E9
-        FCB     $8C,$81,$30,$25,$03,$7E,$DF,$FB,$7E,$E9,$A2,$CE,$20,$03,$C6,$08
-        FCB     $17,$BD,$E5,$73,$7E,$E4,$F4,$BD,$E9,$8C,$81,$20,$26,$03,$7E,$E4
-        FCB     $C7,$81,$21,$27,$03,$7E,$E9,$A2,$BD,$E9,$8C,$B7,$04,$8D,$81,$5E
-        FCB     $27,$0D,$84,$F8,$81,$40,$26,$03,$7E,$E4,$83,$81,$50,$26,$03,$7E
-        FCB     $E4,$9F,$B6,$04,$8D,$81,$5A,$27,$2B,$81,$59,$27,$30,$81,$4C,$27
-        FCB     $36,$81,$49,$27,$41,$81,$48,$27,$5A,$81,$58,$27,$60,$81,$5F,$27
-        FCB     $66,$81,$4B,$27,$6B,$81,$4A,$27,$70,$81,$5C,$27,$76,$81,$5D,$27
-        FCB     $7C,$7E,$E9,$A2,$CE,$00,$00,$C6,$08,$17,$7E,$E4,$7D,$CE,$00,$00
-        FCB     $C6,$08,$86,$00,$7E,$E4,$7D,$86,$FF,$B7,$1B,$23,$CE,$00,$00,$C6
-        FCB     $03,$86,$00,$7E,$E4,$7D,$CE,$00,$03,$C6,$80,$17,$7E,$E4,$7D,$CE
-        FCB     $00,$01,$C6,$C0,$86,$00,$BD,$ED,$F7,$CE,$00,$03,$C6,$B0,$86,$00
-        FCB     $7E,$E4,$7D,$CE,$00,$03,$C6,$A0,$86,$20,$7E,$E4,$7D,$CE,$00,$03
-        FCB     $C6,$08,$86,$00,$7E,$E4,$7D,$CE,$00,$03,$C6,$08,$17,$7E,$E4,$7D
-        FCB     $CE,$00,$00,$C6,$04,$17,$7E,$E4,$7D,$CE,$00,$00,$C6,$04,$86,$00
-        FCB     $7E,$E4,$7D,$CE,$00,$03,$C6,$04,$86,$00,$7E,$E4,$7D,$CE,$00,$03
-        FCB     $C6,$04,$17,$7E,$E4,$7D,$86,$FF,$B7,$1B,$23,$CE,$00,$00,$C6,$80
-        FCB     $17,$7E,$E4,$7D,$86,$FF,$B7,$1B,$23,$C6,$80,$CE,$00,$00,$86,$00
-        FCB     $7E,$E4,$7D,$86,$10,$C6,$30,$CE,$00,$00,$BD,$E5,$73,$7E,$E4,$F4
-        FCB     $86,$00,$C6,$10,$CE,$00,$00,$BD,$E5,$73,$7E,$E4,$F4,$BD,$ED,$F7
-        FCB     $7E,$D3,$55,$B6,$04,$8D,$84,$07,$B7,$04,$8D,$B6,$04,$95,$48,$48
-        FCB     $48,$BA,$04,$8D,$C6,$1F,$CE,$00,$02,$BD,$ED,$F7,$7E,$D3,$55,$B6
-        FCB     $04,$8D,$81,$5E,$26,$05,$86,$88,$7E,$E4,$BB,$84,$07,$B7,$04,$8D
-        FCB     $B6,$04,$95,$48,$48,$48,$BA,$04,$8D,$8A,$80,$F6,$1B,$1E,$CE,$1B
-        FCB     $03,$3A,$A7,$00,$7E,$D3,$55,$BD,$E9,$8C,$81,$5E,$26,$05,$86,$88
-        FCB     $7E,$E4,$E3,$84,$07,$B7,$04,$8D,$B6,$04,$95,$48,$48,$48,$BA,$04
-        FCB     $8D,$8A,$80,$B7,$1B,$02,$CE,$1B,$03,$A7,$00,$08,$8C,$1B,$1B,$26
-        FCB     $F8,$7E,$D3,$55,$7D,$04,$97,$2B,$03,$7E,$DD,$FB,$7E,$D3,$55,$B7
-        FCB     $04,$B9,$F7,$04,$B8,$53,$F7,$04,$8E,$FF,$04,$B6,$FE,$04,$0A,$A6
-        FCB     $00,$2A,$01,$39,$FE,$04,$0E,$F6,$1B,$1F,$3A,$A6,$00,$BA,$04,$B6
-        FCB     $A7,$00,$7F,$04,$8F,$7C,$04,$8F,$5C,$C1,$28,$27,$08,$08,$A6,$00
-        FCB     $B4,$04,$B6,$27,$F0,$F6,$1B,$1F,$FE,$1B,$21,$3A,$F6,$04,$8F,$A6
-        FCB     $00,$8A,$80,$A7,$00,$08,$5A,$26,$F6,$F6,$1B,$1F,$58,$58,$FB,$04
-        FCB     $B7,$FE,$04,$0A,$3A,$F6,$04,$8F,$A6,$00,$B4,$04,$8E,$BA,$04,$B9
-        FCB     $A7,$00,$08,$08,$08,$08,$5A,$26,$EF,$B6,$04,$B9,$F6,$04,$B8,$FE
-        FCB     $04,$B6,$39,$7D,$04,$97,$2B,$03,$7E,$E4,$FF,$B7,$04,$B9,$53,$F7
-        FCB     $04,$B8,$FF,$04,$B6,$CE,$04,$B1,$F6,$04,$B7,$3A,$A6,$00,$B4,$04
-        FCB     $B8,$BA,$04,$B9,$A7,$00,$FE,$04,$B6,$F6,$04,$B8,$53,$B6,$04,$B9
-        FCB     $39
+
+ctrlIgnored:
+        JMP     $E9A2
+        DEC     $1B1F
+        JSR     $EC16
+        JMP     parseNextByte
+        INC     $1B1F
+        JSR     $EC16
+        JMP     parseNextByte
+        TST     $04AF
+        BPL     $DA5D
+        JMP     parseNextByte
+        JSR     $EE3A
+        TST     $04A3
+        BPL     $DA73
+        LDAA    $1B1E
+        CMPA    $1B1D
+        BNE     $DA73
+        JSR     $EA44
+        JMP     parseNextByte
+        INC     $1B1E
+        JSR     $EC16
+        JSR     $E9A5
+        JMP     parseNextByte
+        TST     $04AF
+        BPL     $DA87
+        JMP     parseNextByte
+        JSR     $EE3A
+        TST     $04A3
+        BPL     $DA9D
+        LDAA    $1B1E
+        CMPA    $1B1C
+        BNE     $DA9D
+        JSR     $EB28
+        JMP     parseNextByte
+        DEC     $1B1E
+        JSR     $EC16
+        JSR     $E9A5
+        JMP     parseNextByte
+        TST     $04AF
+        BPL     $DAB1
+        JMP     parseNextByte
+        LDAA    #$FF
+        STAA    $1B1C
+        STAA    $1B1D
+        STAA    $04A3
+        JSR     $EE4B
+        LDAA    #$18
+        STAA    $1B1E
+        CLR     $1B1F
+        JSR     $E9A5
+        LDAA    $1B25
+        STAA    $1B23
+        CLR     $0495
+        CLR     $1B24
+        CLR     $1B25
+        JMP     $DBF2
+        CLR     $1B1F
+        JSR     $EC16
+        JSR     $E9A5
+        JMP     parseNextByte
+        TST     $04AF
+        BPL     $DAF0
+        JMP     parseNextByte
+        LDAA    #$01
+        STAA    $049D
+        STAA    $04A2
+        JMP     parseNextByte
+        TST     $04AF
+        BPL     $DB03
+        JMP     parseNextByte
+        LDAA    #$00
+        STAA    $049D
+        STAA    $04A2
+        JMP     parseNextByte
+        TST     $04AF
+        BPL     $DB16
+        JMP     parseNextByte
+        LDAA    #$FF
+        STAA    $1B20
+        LDX     $1B21
+        LDAB    $1B1F
+        ABX
+        LDAA    $00,X
+        ORAA    #$80
+        STAA    $00,X
+        JMP     parseNextByte
+        TST     $04AF
+        BPL     $DB33
+        JMP     parseNextByte
+        JSR     $E98C
+        ANDA    #$3F
+        STAA    $0490
+        LDAA    $04A0
+        STAA    $04A1
+        LDAA    $0490
+        BEQ     $DB58
+        LDAA    $04A1
+        STAA    $049F
+        LDAA    $04B5
+        JSR     $E781
+        DEC     $0490
+        JMP     $DB41
+        JMP     parseNextByte
+        TST     $04AF
+        BPL     $DB63
+        JMP     parseNextByte
+        CLR     $1B20
+        JMP     parseNextByte
+        LDX     $040A
+        LDAA    $00,X
+        BMI     $DB66
+        LDAB    $1B1F
+        STAB    $0490
+        ASLB
+        ASLB
+        LDX     $040A
+        ABX
+        LDAA    $00,X
+        STAA    $0417
+        LDAA    $01,X
+        ANDA    #$F7
+        STAA    $0418
+        LDAA    $02,X
+        STAA    $0419
+        LDAA    $03,X
+        ANDA    #$BF
+        STAA    $041A
+        LDAA    #$A0
+        LDX     $1B21
+        LDAB    $1B1F
+        ABX
+        STAA    $00,X
+        LDX     $040E
+        ABX
+        CLR     $00,X
+        ASLB
+        ASLB
+        LDX     $040A
+        ABX
+        LDAA    $0417
+        STAA    $00,X
+        LDAA    $0418
+        STAA    $01,X
+        LDAA    $0419
+        STAA    $02,X
+        LDAA    $041A
+        STAA    $03,X
+        INC     $1B1F
+        LDAA    $1B1F
+        CMPA    #$28
+        BCS     $DB94
+        LDAA    $0490
+        STAA    $1B1F
+        JMP     parseNextByte
+        TST     $04AF
+        BPL     $DBDA
+        JMP     parseNextByte
+        LDAA    #$02
+        STAA    $049F
+        JMP     parseNextByte
+        TST     $04AF
+        BPL     $DBEA
+        JMP     parseNextByte
+        LDAA    #$03
+        STAA    $049F
+        JMP     parseNextByte
+        CLR     $1B1E
+        CLR     $1B1F
+        JSR     $ECB5
+        JSR     $E9A5
+        JSR     $EE3A
+        JMP     parseNextByte
+        TST     $04AF
+        BPL     $DC0C
+        JSR     $E744
+        JSR     $E98C
+        CMPA    #$23
+        BNE     $DC16
+        JMP     $D40A
+        CMPA    #$26
+        BNE     $DC1D
+        JMP     $D808
+        CMPA    #$2D
+        BNE     $DC24
+        JMP     $E5FA
+        CMPA    #$2F
+        BNE     $DC2B
+        JMP     $E637
+        CMPA    #$3F
+        BNE     $DC32
+        JMP     $DC6A
+        STAA    $048D
+        ANDA    #$F0
+        CMPA    #$30
+        BNE     $DC3E
+        JMP     $E99F
+        CMPA    #$40
+        BCC     $DC45
+        JMP     $D34C
+        CLR     $1B20
+        JSR     $ECB5
+        JSR     $EE3A
+        LDAA    $048D
+        ANDA    #$3F
+        STAA    $1B1E
+        DEC     $1B1E
+        JSR     $E98C
+        ANDA    #$3F
+        STAA    $1B1F
+        DEC     $1B1F
+        JSR     $E9A5
+        JMP     parseNextByte
+        JMP     $D34C
+        LDAA    #$00
+        BITA    $8601
+        BITA    $8602
+        BITA    $8603
+        BITA    $8604
+        BITA    $8605
+        BITA    $8606
+        BITA    $8607
+        JSR     $E9CE
+        LDAA    $04A2
+        STAA    $049D
+        JMP     $DDFB
+        LDX     #$1003
+        LDAB    #$80
+        LDAA    #$00
+        JSR     $E4FF
+        LDX     #$1001
+        LDAB    #$C0
+        LDAA    #$80
+        JSR     $E4FF
+        LDX     #$1003
+        LDAB    #$30
+        LDAA    #$10
+        JSR     $E4FF
+        JMP     $DDFB
+        LDX     #$1003
+        LDAB    #$80
+        TBA
+        JSR     $E4FF
+        LDX     #$1001
+        LDAB    #$C0
+        LDAA    #$80
+        JSR     $E4FF
+        LDX     #$1003
+        LDAB    #$30
+        LDAA    #$10
+        JSR     $E4FF
+        JMP     $DDFB
+        LDX     #$4000
+        LDAB    #$04
+        LDAA    #$00
+        JSR     $E4FF
+        JMP     $DDFB
+        LDX     #$4000
+        LDAB    #$04
+        LDAA    #$04
+        JSR     $E4FF
+        JMP     $DDFB
+        LDX     #$0400
+        LDAB    #$03
+        LDAA    #$00
+        JSR     $E4FF
+        JMP     $DDFB
+        LDX     $040A
+        LDAA    $00,X
+        BMI     $DD3E
+        LDX     #$0400
+        LDAB    #$03
+        LDAA    #$01
+        JSR     $E4FF
+        JMP     $DD2A
+        LDX     #$0400
+        LDAB    #$03
+        LDAA    #$02
+        JSR     $E4FF
+        JMP     $DDFB
+        LDX     $040A
+        LDAA    $00,X
+        BMI     $DD3E
+        LDX     #$0400
+        LDAB    #$03
+        LDAA    #$03
+        JSR     $E4FF
+        LDAA    $1B1E
+        CMPA    $1B1D
+        BNE     $DD3E
+        JSR     $EA44
+        DEC     $1B1E
+        JSR     $EC16
+        JSR     $E9A5
+        JMP     $DDFB
+        LDAA    #$00
+        BITA    $8601
+        BITA    $8602
+        BITA    $8603
+        BITA    $8604
+        BITA    $8605
+        BITA    $8606
+        BITA    $8607
+        STAA    $048D
+        TST     $04AF
+        BPL     $DD63
+        JMP     parseNextByte
+        LDAA    $048D
+        JSR     $E9CE
+        LDAA    $049D
+        STAA    $04A2
+        LDAA    #$FF
+        STAA    $049D
+        JMP     $DDFB
+        LDX     #$2003
+        LDAB    #$08
+        LDAA    #$00
+        JSR     $E4FF
+        JMP     $DDFB
+        LDX     #$0800
+        LDAB    #$08
+        LDAA    #$00
+        JSR     $E4FF
+        JMP     $DDFB
+        LDX     #$0800
+        LDAB    #$08
+        LDAA    #$08
+        JSR     $E4FF
+        JMP     $DDFB
+        JMP     $E9A2
+        LDAA    #$00
+        JSR     $E9FF
+        JMP     $DDFB
+        LDAB    $1B1F
+        ASLB
+        ASLB
+        LDX     $040A
+        ABX
+        LDAA    $02,X
+        STAA    $048C
+        RORA
+        RORA
+        RORA
+        ANDA    #$03
+        LDX     #$0203
+        LDAB    #$03
+        JSR     $E4FF
+        LDAA    $048C
+        RORA
+        RORA
+        RORA
+        RORA
+        ANDA    #$E0
+        LDAB    #$E0
+        LDX     #$0202
+        JSR     $E4FF
+        JMP     $DDFB
+        TST     $04AF
+        BPL     $DDE0
+        JMP     parseNextByte
+        LDAA    $049D
+        BPL     $DDEB
+        LDAA    $04B5
+        STAA    $0498
+        JMP     $DDFB
+        TST     $04AF
+        BPL     $DDF6
+        JMP     parseNextByte
+        LDAA    #$09
+        STAA    $0498
+        LDAA    $0498
+        JMP     $D358
+        LDAA    #$00
+        BITA    $8601
+        BITA    $8602
+        BITA    $8603
+        BITA    $8604
+        BITA    $8605
+        BITA    $8606
+        BITA    $8607
+        JSR     $E9CE
+        JMP     parseNextByte
+        LDAA    $04B4
+        ANDA    #$4F
+        ORAA    #$10
+        STAA    $04B4
+        LDAA    #$00
+        STAA    $04B0
+        LDAA    $04B2
+        ANDA    #$3F
+        ORAA    #$80
+        STAA    $04B2
+        JMP     parseNextByte
+        LDAA    #$00
+        STAA    $04B0
+        LDAA    $04B2
+        ANDA    #$3F
+        ORAA    #$80
+        STAA    $04B2
+        LDAA    $04B4
+        ANDA    #$DF
+        ORAA    #$B0
+        STAA    $04B4
+        JMP     parseNextByte
+        LDAA    $04B1
+        ANDA    #$FB
+        STAA    $04B1
+        JMP     parseNextByte
+        LDAA    $04B1
+        ORAA    #$04
+        STAA    $04B1
+        JMP     parseNextByte
+        LDAA    $04B1
+        ANDA    #$FC
+        STAA    $04B1
+        JMP     parseNextByte
+        LDAA    $04B1
+        ANDA    #$FC
+        ORAA    #$01
+        STAA    $04B1
+        JMP     parseNextByte
+        LDAA    $04B1
+        ANDA    #$FC
+        ORAA    #$02
+        STAA    $04B1
+        JMP     parseNextByte
+        LDAA    $04B1
+        ORAA    #$03
+        STAA    $04B1
+        JMP     parseNextByte
+        LDAA    #$00
+        BITA    $8601
+        BITA    $8602
+        BITA    $8603
+        BITA    $8604
+        BITA    $8605
+        BITA    $8606
+        BITA    $8607
+        JSR     $E9FF
+        JMP     parseNextByte
+        LDAA    $04B4
+        ANDA    #$F7
+        STAA    $04B4
+        JMP     parseNextByte
+        LDAA    $04B1
+        ANDA    #$F7
+        STAA    $04B1
+        JMP     parseNextByte
+        LDAA    $04B1
+        ORAA    #$08
+        STAA    $04B1
+        JMP     parseNextByte
+        JMP     $E9A2
+        LDAA    $04B4
+        ANDA    #$FB
+        STAA    $04B4
+        JMP     parseNextByte
+        LDAA    $04B4
+        ORAA    #$04
+        STAA    $04B4
+        JMP     parseNextByte
+        LDAA    $04B4
+        ANDA    #$FC
+        ORAA    #$01
+        STAA    $04B4
+        LDAA    $04B3
+        ANDA    #$1F
+        STAA    $04B3
+        JMP     parseNextByte
+        LDAA    $04B4
+        ORAA    #$08
+        STAA    $04B4
+        JMP     parseNextByte
+        LDAA    #$01
+        STAA    $049E
+        JMP     parseNextByte
+        LDAA    #$02
+        STAA    $049E
+        JMP     parseNextByte
+        LDAA    #$03
+        STAA    $049E
+        JMP     parseNextByte
+        LDAA    #$02
+        STAA    $049D
+        STAA    $04A2
+        JMP     parseNextByte
+        LDAA    #$03
+        STAA    $049D
+        STAA    $04A2
+        JMP     parseNextByte
+        JSR     $E98C
+        CMPA    #$20
+        BNE     $DF53
+        LDAA    #$05
+        STAA    $0499
+        JSR     $E98C
+        JMP     parseNextByte
+        ANDA    #$0F
+        BEQ     $DF58
+        DECA
+        STAA    $0499
+        JMP     parseNextByte
+        JSR     $E98C
+        CMPA    #$20
+        BNE     $DF70
+        LDAA    #$05
+        STAA    $049A
+        JSR     $E98C
+        JMP     parseNextByte
+        ANDA    #$0F
+        BEQ     $DF75
+        DECA
+        STAA    $049A
+        JMP     parseNextByte
+        JSR     $E98C
+        CMPA    #$20
+        BNE     $DF8D
+        LDAA    #$05
+        STAA    $049B
+        JSR     $E98C
+        JMP     parseNextByte
+        ANDA    #$0F
+        BEQ     $DF92
+        DECA
+        STAA    $049B
+        JMP     parseNextByte
+        JSR     $E98C
+        CMPA    #$20
+        BNE     $DFAA
+        LDAA    #$05
+        STAA    $049C
+        JSR     $E98C
+        JMP     parseNextByte
+        ANDA    #$0F
+        BEQ     $DFAF
+        DECA
+        STAA    $049C
+        JMP     parseNextByte
+        JSR     $E98C
+        ANDA    #$01
+        BEQ     $DFC7
+        LDAA    $04A2
+        STAA    $049D
+        LDAA    #$FF
+        JMP     $DFC9
+        LDAA    #$00
+        STAA    $0497
+        JMP     parseNextByte
+        LDAA    #$00
+        BITA    $8601
+        BITA    $8602
+        BITA    $8603
+        STAA    $0495
+        JMP     parseNextByte
+        LDAB    #$00
+        BITA    $C601
+        BITA    $C602
+        BITA    $C603
+        BITA    $C604
+        BITA    $C605
+        BITA    $C606
+        BITA    $C607
+        BITA    $C608
+        BITA    $C609
+        STAB    $048D
+        CMPA    #$3B
+        BEQ     $E025
+        ANDA    #$0F
+        ASL     $048D
+        ADDA    $048D
+        ASL     $048D
+        ASL     $048D
+        ADDA    $048D
+        STAA    $1B1C
+        DEC     $1B1C
+        JSR     $E98C
+        CMPA    #$3B
+        BEQ     $E029
+        JMP     $E9A2
+        DECB
+        STAB    $1B1C
+        JSR     $E98C
+        ANDA    #$0F
+        STAA    $048D
+        STAA    $1B1D
+        DEC     $1B1D
+        JSR     $E98C
+        CMPA    #$55
+        BEQ     $E075
+        CMPA    #$56
+        BEQ     $E067
+        ANDA    #$0F
+        ASL     $048D
+        ADDA    $048D
+        ASL     $048D
+        ASL     $048D
+        ADDA    $048D
+        STAA    $1B1D
+        DEC     $1B1D
+        JSR     $E98C
+        CMPA    #$55
+        BEQ     $E075
+        CMPA    #$56
+        BEQ     $E067
+        JMP     $E9A2
+        LDAA    #$FF
+        STAA    $1B1C
+        STAA    $1B1D
+        STAA    $1B23
+        JMP     parseNextByte
+        LDAA    #$FF
+        STAA    $1B23
+        LDAA    $1B1C
+        BEQ     $E067
+        LDAA    $1B1D
+        CMPA    $1B00
+        BEQ     $E067
+        JMP     parseNextByte
+        LDAA    #$00
+        BITA    $86FF
+        STAA    $04A3
+        JMP     parseNextByte
+        JSR     $EA44
+        JMP     parseNextByte
+        JSR     $EB28
+        JMP     parseNextByte
+        LDX     #$1003
+        LDAB    #$B0
+        LDAA    #$30
+        JSR     $E573
+        LDX     #$1001
+        LDAB    #$C0
+        LDAA    #$80
+        JSR     $E573
+        CLR     $04B0
+        JMP     $E4F4
+        LDX     #$1001
+        LDAB    #$C0
+        TBA
+        JSR     $E573
+        LDX     #$1003
+        LDAB    #$B0
+        LDAA    #$10
+        JSR     $E573
+        CLR     $04B0
+        JMP     $E4F4
+        LDX     #$1001
+        LDAB    #$80
+        LDAA    #$00
+        JSR     $E573
+        LDX     #$1003
+        LDAB    #$90
+        LDAA    #$00
+        JSR     $E573
+        CLR     $04B0
+        JMP     $E4F4
+        LDX     #$1001
+        LDAB    #$80
+        LDAA    #$80
+        JSR     $E573
+        LDX     #$1003
+        LDAB    #$90
+        LDAA    #$00
+        JSR     $E573
+        CLR     $04B0
+        JMP     $E4F4
+        LDX     #$1001
+        LDAB    #$80
+        LDAA    #$00
+        JSR     $E573
+        LDX     #$1003
+        LDAB    #$90
+        LDAA    #$10
+        JSR     $E573
+        CLR     $04B0
+        JMP     $E4F4
+        TST     $0497
+        BPL     $E143
+        LDAA    #$01
+        STAA    $04B0
+        LDX     #$0001
+        LDAB    #$80
+        LDAA    #$00
+        JSR     $E57B
+        LDX     #$0003
+        LDAB    #$90
+        LDAA    #$00
+        JSR     $E57B
+        JMP     $E4FC
+        LDAB    $1B1F
+        LDX     $040E
+        ABX
+        LDAA    $00,X
+        ORAA    #$10
+        STAA    $00,X
+        CLR     $048D
+        CLR     $048E
+        LDAA    $1B1F
+        STAA    $0490
+        LDAB    $0490
+        ASLB
+        ASLB
+        LDX     $040A
+        ABX
+        LDAA    $01,X
+        ANDA    #$7F
+        ORAA    $048D
+        STAA    $01,X
+        LDAA    $03,X
+        ANDA    #$6F
+        ORAA    $048E
+        STAA    $03,X
+        LDAA    $048D
+        ADDA    #$80
+        STAA    $048D
+        BCC     $E189
+        LDAA    $048E
+        EORA    #$10
+        STAA    $048E
+        LDAA    $048E
+        ORAA    $048D
+        CMPA    #$90
+        BEQ     $E177
+        LDAA    $00,X
+        ANDA    #$02
+        BEQ     $E19C
+        INC     $0490
+        INC     $0490
+        LDAB    $0490
+        CMPB    #$28
+        BCC     $E1B3
+        LDX     $040E
+        ABX
+        LDAA    $00,X
+        ANDA    #$10
+        BNE     $E1B3
+        JMP     $E15C
+        LDAA    #$FF
+        STAA    $1B23
+        JMP     $E4F4
+        TST     $0497
+        BPL     $E1DC
+        LDAA    #$FF
+        STAA    $04B0
+        LDX     #$0001
+        LDAB    #$80
+        LDAA    #$00
+        JSR     $E57B
+        LDX     #$0003
+        LDAB    #$90
+        LDAA    #$00
+        JSR     $E57B
+        JMP     $E4FC
+        LDAB    $1B1F
+        LDX     $040E
+        ABX
+        LDAA    $00,X
+        ORAA    #$10
+        STAA    $00,X
+        CLR     $048D
+        CLR     $048E
+        LDAA    $1B1F
+        STAA    $0490
+        LDAB    $0490
+        ASLB
+        ASLB
+        LDX     $040A
+        ABX
+        LDAA    $01,X
+        ANDA    #$7F
+        ORAA    $048D
+        STAA    $01,X
+        LDAA    $03,X
+        ANDA    #$6F
+        ORAA    $048E
+        STAA    $03,X
+        LDAA    $048D
+        SUBA    #$80
+        STAA    $048D
+        BCC     $E222
+        LDAA    $048E
+        EORA    #$10
+        STAA    $048E
+        LDAA    $048E
+        ORAA    $048D
+        CMPA    #$90
+        BEQ     $E210
+        LDAA    $00,X
+        ANDA    #$02
+        BEQ     $E235
+        INC     $0490
+        INC     $0490
+        LDAB    $0490
+        CMPB    #$28
+        BCC     $E24C
+        LDX     $040E
+        ABX
+        LDAA    $00,X
+        ANDA    #$10
+        BNE     $E24C
+        JMP     $E1F5
+        LDAA    #$FF
+        STAA    $1B23
+        JMP     $E4F4
+        JSR     $E98C
+        CMPA    #$40
+        BNE     $E25E
+        JMP     $DFCF
+        CMPA    #$60
+        BNE     $E265
+        JMP     $E095
+        CMPA    #$41
+        BNE     $E26C
+        JMP     $E0A1
+        CMPA    #$30
+        BCS     $E273
+        JMP     $DFE0
+        JMP     $E9A2
+        JSR     $E98C
+        CMPA    #$40
+        BNE     $E280
+        JMP     $DFD2
+        CMPA    #$60
+        BNE     $E287
+        JMP     $E09B
+        CMPA    #$41
+        BNE     $E28E
+        JMP     $E0BB
+        CMPA    #$50
+        BNE     $E295
+        JMP     $E446
+        CMPA    #$51
+        BNE     $E29C
+        JMP     $E454
+        CMPA    #$30
+        BCS     $E2A3
+        JMP     $DFE3
+        JMP     $E9A2
+        JSR     $E98C
+        CMPA    #$40
+        BNE     $E2B0
+        JMP     $DFD5
+        CMPA    #$60
+        BNE     $E2B7
+        JMP     $E08D
+        CMPA    #$41
+        BNE     $E2BE
+        JMP     $E0D4
+        CMPA    #$53
+        BNE     $E2C5
+        JMP     $E463
+        CMPA    #$54
+        BNE     $E2CC
+        JMP     $E470
+        CMPA    #$30
+        BCS     $E2D3
+        JMP     $DFE6
+        JMP     $E9A2
+        JSR     $E98C
+        CMPA    #$40
+        BNE     $E2E0
+        JMP     $DFD8
+        CMPA    #$60
+        BNE     $E2E7
+        JMP     $E08A
+        CMPA    #$41
+        BNE     $E2EE
+        JMP     $E0EE
+        CMPA    #$30
+        BCS     $E2F5
+        JMP     $DFE9
+        JMP     $E9A2
+        JSR     $E98C
+        CMPA    #$41
+        BNE     $E302
+        JMP     $E108
+        CMPA    #$30
+        BCS     $E309
+        JMP     $DFEC
+        JMP     $E9A2
+        JSR     $E98C
+        CMPA    #$41
+        BNE     $E316
+        JMP     $E122
+        CMPA    #$30
+        BCS     $E31D
+        JMP     $DFEF
+        JMP     $E9A2
+        JSR     $E98C
+        CMPA    #$41
+        BNE     $E32A
+        JMP     $E1BB
+        CMPA    #$30
+        BCS     $E331
+        JMP     $DFF2
+        JMP     $E9A2
+        JSR     $E98C
+        CMPA    #$30
+        BCS     $E33E
+        JMP     $DFF5
+        JMP     $E9A2
+        JSR     $E98C
+        CMPA    #$30
+        BCS     $E34B
+        JMP     $DFF8
+        JMP     $E9A2
+        JSR     $E98C
+        CMPA    #$30
+        BCS     $E358
+        JMP     $DFFB
+        JMP     $E9A2
+        LDX     #$2003
+        LDAB    #$08
+        TBA
+        JSR     $E573
+        JMP     $E4F4
+        JSR     $E98C
+        CMPA    #$20
+        BNE     $E371
+        JMP     $E4C7
+        CMPA    #$21
+        BEQ     $E378
+        JMP     $E9A2
+        JSR     $E98C
+        STAA    $048D
+        CMPA    #$5E
+        BEQ     $E38F
+        ANDA    #$F8
+        CMPA    #$40
+        BNE     $E38B
+        JMP     $E483
+        CMPA    #$50
+        BNE     $E392
+        JMP     $E49F
+        LDAA    $048D
+        CMPA    #$5A
+        BEQ     $E3C4
+        CMPA    #$59
+        BEQ     $E3CD
+        CMPA    #$4C
+        BEQ     $E3D7
+        CMPA    #$49
+        BEQ     $E3E6
+        CMPA    #$48
+        BEQ     $E403
+        CMPA    #$58
+        BEQ     $E40D
+        CMPA    #$5F
+        BEQ     $E417
+        CMPA    #$4B
+        BEQ     $E420
+        CMPA    #$4A
+        BEQ     $E429
+        CMPA    #$5C
+        BEQ     $E433
+        CMPA    #$5D
+        BEQ     $E43D
+        JMP     $E9A2
+        LDX     #$0000
+        LDAB    #$08
+        TBA
+        JMP     $E47D
+        LDX     #$0000
+        LDAB    #$08
+        LDAA    #$00
+        JMP     $E47D
+        LDAA    #$FF
+        STAA    $1B23
+        LDX     #$0000
+        LDAB    #$03
+        LDAA    #$00
+        JMP     $E47D
+        LDX     #$0003
+        LDAB    #$80
+        TBA
+        JMP     $E47D
+        FCB     $CE,$00,$01,$C6,$C0,$86,$00,$BD,$ED,$F7,$CE,$00,$03,$C6,$B0,$86
+        FCB     $00,$7E,$E4,$7D
+        LDX     #$0003
+        LDAB    #$A0
+        LDAA    #$20
+        JMP     $E47D
+        LDX     #$0003
+        LDAB    #$08
+        LDAA    #$00
+        JMP     $E47D
+        LDX     #$0003
+        LDAB    #$08
+        TBA
+        JMP     $E47D
+        LDX     #$0000
+        LDAB    #$04
+        TBA
+        JMP     $E47D
+        LDX     #$0000
+        LDAB    #$04
+        LDAA    #$00
+        JMP     $E47D
+        LDX     #$0003
+        LDAB    #$04
+        LDAA    #$00
+        JMP     $E47D
+        LDX     #$0003
+        LDAB    #$04
+        TBA
+        JMP     $E47D
+        LDAA    #$FF
+        STAA    $1B23
+        LDX     #$0000
+        LDAB    #$80
+        TBA
+        JMP     $E47D
+        LDAA    #$FF
+        STAA    $1B23
+        LDAB    #$80
+        LDX     #$0000
+        LDAA    #$00
+        JMP     $E47D
+        LDAA    #$10
+        LDAB    #$30
+        LDX     #$0000
+        JSR     $E573
+        JMP     $E4F4
+        LDAA    #$00
+        LDAB    #$10
+        LDX     #$0000
+        JSR     $E573
+        JMP     $E4F4
+        JSR     $EDF7
+        JMP     parseNextByte
+        LDAA    $048D
+        ANDA    #$07
+        STAA    $048D
+        LDAA    $0495
+        ASLA
+        ASLA
+        ASLA
+        ORAA    $048D
+        LDAB    #$1F
+        LDX     #$0002
+        JSR     $EDF7
+        JMP     parseNextByte
+        LDAA    $048D
+        CMPA    #$5E
+        BNE     $E4AB
+        LDAA    #$88
+        JMP     $E4BB
+        ANDA    #$07
+        STAA    $048D
+        LDAA    $0495
+        ASLA
+        ASLA
+        ASLA
+        ORAA    $048D
+        ORAA    #$80
+        LDAB    $1B1E
+        LDX     #$1B03
+        ABX
+        STAA    $00,X
+        JMP     parseNextByte
+        JSR     $E98C
+        CMPA    #$5E
+        BNE     $E4D3
+        LDAA    #$88
+        JMP     $E4E3
+        ANDA    #$07
+        STAA    $048D
+        LDAA    $0495
+        ASLA
+        ASLA
+        ASLA
+        ORAA    $048D
+        ORAA    #$80
+        STAA    $1B02
+        LDX     #$1B03
+        STAA    $00,X
+        INX
+        CPX     #$1B1B
+        BNE     $E4E9
+        JMP     parseNextByte
+        TST     $0497
+        BMI     $E4FC
+        JMP     $DDFB
+        JMP     parseNextByte
+        STAA    $04B9
+        STAB    $04B8
+        COMB
+        STAB    $048E
+        STX     $04B6
+        LDX     $040A
+        LDAA    $00,X
+        BPL     $E514
+        RTS
+        LDX     $040E
+        LDAB    $1B1F
+        ABX
+        LDAA    $00,X
+        ORAA    $04B6
+        STAA    $00,X
+        CLR     $048F
+        INC     $048F
+        INCB
+        CMPB    #$28
+        BEQ     $E535
+        INX
+        LDAA    $00,X
+        ANDA    $04B6
+        BEQ     $E525
+        LDAB    $1B1F
+        LDX     $1B21
+        ABX
+        LDAB    $048F
+        LDAA    $00,X
+        ORAA    #$80
+        STAA    $00,X
+        INX
+        DECB
+        BNE     $E53F
+        LDAB    $1B1F
+        ASLB
+        ASLB
+        ADDB    $04B7
+        LDX     $040A
+        ABX
+        LDAB    $048F
+        LDAA    $00,X
+        ANDA    $048E
+        ORAA    $04B9
+        STAA    $00,X
+        INX
+        INX
+        INX
+        INX
+        DECB
+        BNE     $E558
+        LDAA    $04B9
+        LDAB    $04B8
+        LDX     $04B6
+        RTS
+        TST     $0497
+        BMI     $E57B
+        JMP     $E4FF
+        STAA    $04B9
+        COMB
+        STAB    $04B8
+        STX     $04B6
+        LDX     #$04B1
+        LDAB    $04B7
+        ABX
+        LDAA    $00,X
+        ANDA    $04B8
+        ORAA    $04B9
+        STAA    $00,X
+        LDX     $04B6
+        LDAB    $04B8
+        COMB
+        LDAA    $04B9
+        RTS
         LDAA    $1B1E
         PSHA
         LDAA    $1B1F
@@ -3307,31 +4835,155 @@ reset:
         STAA    $1B1E
         JSR     $E9A5
         RTS
-        FCB     $86,$FF,$B7,$04,$A4,$B7,$1B,$23,$86,$17,$B7,$1B,$00,$BD,$E9,$8C
-        FCB     $B7,$04,$8D,$84,$F0,$81,$20,$26,$03,$7E,$E6,$34,$B6,$04,$8D,$81
-        FCB     $42,$26,$0D,$86,$13,$B7,$1B,$00,$86,$FF,$B7,$1B,$23,$BD,$E9,$8C
-        FCB     $81,$71,$26,$06,$7F,$04,$A4,$7E,$D3,$55,$7E,$E9,$A2,$BD,$E9,$8C
-        FCB     $16,$81,$4F,$26,$03,$7E,$E7,$3E,$81,$40,$26,$03,$7E,$E6,$C6,$44
-        FCB     $25,$07,$86,$FF,$B7,$04,$97,$20,$03,$7F,$04,$97,$C1,$41,$27,$0F
-        FCB     $C1,$42,$27,$0B,$C1,$43,$27,$43,$C1,$44,$27,$3F,$7E,$E9,$A2,$7F
-        FCB     $04,$99,$7F,$04,$9D,$7F,$04,$A2,$7F,$1B,$20,$C6,$01,$F7,$04,$9B
-        FCB     $5C,$F7,$04,$9A,$F7,$04,$9E,$5C,$F7,$04,$9C,$86,$17,$B7,$1B,$00
-        FCB     $86,$FF,$B7,$1B,$23,$B7,$04,$A4,$86,$80,$B7,$1B,$02,$CE,$1B,$03
-        FCB     $A7,$00,$08,$8C,$1B,$1C,$26,$F8,$7E,$DA,$A9,$7F,$04,$99,$7F,$04
-        FCB     $9D,$7F,$04,$A2,$C6,$01,$F7,$04,$9B,$5C,$F7,$04,$9A,$F7,$04,$9E
-        FCB     $5C,$F7,$04,$9C,$86,$FF,$B7,$1B,$23,$7E,$D3,$55,$86,$FF,$B7,$04
-        FCB     $AF,$B6,$1B,$1F,$B7,$04,$A6,$B6,$1B,$1E,$B7,$04,$A5,$B6,$04,$A4
-        FCB     $B7,$04,$A7,$B6,$04,$95,$B7,$04,$A8,$B6,$04,$97,$B7,$04,$A9,$B6
-        FCB     $04,$99,$B7,$04,$AC,$B6,$04,$9A,$B7,$04,$AD,$B6,$04,$9D,$B7,$04
-        FCB     $AA,$B6,$04,$9E,$B7,$04,$AB,$7F,$1B,$1F,$7F,$04,$A4,$7F,$04,$95
-        FCB     $7F,$04,$97,$BD,$E9,$8C,$84,$1F,$B7,$1B,$1E,$7A,$1B,$1E,$BD,$E9
-        FCB     $A5,$BD,$EE,$3A,$7F,$04,$99,$86,$01,$B7,$04,$9A,$7F,$04,$9D,$7F
-        FCB     $04,$A2,$86,$01,$B7,$04,$9E,$CE,$00,$00,$C6,$80,$86,$00,$BD,$ED
-        FCB     $F7,$7E,$D3,$55,$BD,$E7,$44,$7E,$D3,$55,$7F,$04,$AF,$B6,$04,$A6
-        FCB     $B7,$1B,$1F,$B6,$04,$A5,$B7,$1B,$1E,$BD,$E9,$A5,$B6,$04,$A7,$B7
-        FCB     $04,$A4,$B6,$04,$A8,$B7,$04,$95,$B6,$04,$A9,$B7,$04,$97,$B6,$04
-        FCB     $AA,$B7,$04,$9D,$B6,$04,$AB,$B7,$04,$9E,$B6,$04,$AC,$B7,$04,$99
-        FCB     $B6,$04,$AD,$B7,$04,$9A,$39
+        LDAA    #$FF
+        STAA    $04A4
+        STAA    $1B23
+        LDAA    #$17
+        STAA    $1B00
+        JSR     $E98C
+        STAA    $048D
+        ANDA    #$F0
+        CMPA    #$20
+        BNE     $E616
+        JMP     $E634
+        LDAA    $048D
+        CMPA    #$42
+        BNE     $E62A
+        LDAA    #$13
+        STAA    $1B00
+        LDAA    #$FF
+        STAA    $1B23
+        JSR     $E98C
+        CMPA    #$71
+        BNE     $E634
+        CLR     $04A4
+        JMP     parseNextByte
+        JMP     $E9A2
+        JSR     $E98C
+        TAB
+        CMPA    #$4F
+        BNE     $E642
+        JMP     $E73E
+        CMPA    #$40
+        BNE     $E649
+        JMP     $E6C6
+        LSRA
+        BCS     $E653
+        LDAA    #$FF
+        STAA    $0497
+        BRA     $E656
+        CLR     $0497
+        CMPB    #$41
+        BEQ     $E669
+        CMPB    #$42
+        BEQ     $E669
+        CMPB    #$43
+        BEQ     $E6A5
+        CMPB    #$44
+        BEQ     $E6A5
+        JMP     $E9A2
+        CLR     $0499
+        CLR     $049D
+        CLR     $04A2
+        CLR     $1B20
+        LDAB    #$01
+        STAB    $049B
+        INCB
+        STAB    $049A
+        STAB    $049E
+        INCB
+        STAB    $049C
+        LDAA    #$17
+        STAA    $1B00
+        LDAA    #$FF
+        STAA    $1B23
+        STAA    $04A4
+        LDAA    #$80
+        STAA    $1B02
+        LDX     #$1B03
+        STAA    $00,X
+        INX
+        CPX     #$1B1C
+        BNE     $E69A
+        JMP     $DAA9
+        CLR     $0499
+        CLR     $049D
+        CLR     $04A2
+        LDAB    #$01
+        STAB    $049B
+        INCB
+        STAB    $049A
+        STAB    $049E
+        INCB
+        STAB    $049C
+        LDAA    #$FF
+        STAA    $1B23
+        JMP     parseNextByte
+        LDAA    #$FF
+        STAA    $04AF
+        LDAA    $1B1F
+        STAA    $04A6
+        LDAA    $1B1E
+        STAA    $04A5
+        LDAA    $04A4
+        STAA    $04A7
+        LDAA    $0495
+        STAA    $04A8
+        LDAA    $0497
+        STAA    $04A9
+        LDAA    $0499
+        STAA    $04AC
+        LDAA    $049A
+        STAA    $04AD
+        LDAA    $049D
+        STAA    $04AA
+        LDAA    $049E
+        STAA    $04AB
+        CLR     $1B1F
+        CLR     $04A4
+        CLR     $0495
+        CLR     $0497
+        JSR     $E98C
+        ANDA    #$1F
+        STAA    $1B1E
+        DEC     $1B1E
+        JSR     $E9A5
+        JSR     $EE3A
+        CLR     $0499
+        LDAA    #$01
+        STAA    $049A
+        CLR     $049D
+        CLR     $04A2
+        LDAA    #$01
+        STAA    $049E
+        LDX     #$0000
+        LDAB    #$80
+        LDAA    #$00
+        JSR     $EDF7
+        JMP     parseNextByte
+        JSR     $E744
+        JMP     parseNextByte
+        CLR     $04AF
+        LDAA    $04A6
+        STAA    $1B1F
+        LDAA    $04A5
+        STAA    $1B1E
+        JSR     $E9A5
+        LDAA    $04A7
+        STAA    $04A4
+        LDAA    $04A8
+        STAA    $0495
+        LDAA    $04A9
+        STAA    $0497
+        LDAA    $04AA
+        STAA    $049D
+        LDAA    $04AB
+        STAA    $049E
+        LDAA    $04AC
+        STAA    $0499
+        LDAA    $04AD
+        STAA    $049A
+        RTS
         STAA    $04B5
         LDAA    $0497
         BEQ     $E7CB
@@ -3560,10 +5212,19 @@ reset:
         STAA    $0496
         RTS
         JSR     $E781
-        JMP     $D355
-        FCB     $BD,$F0,$81,$81,$00,$27,$F9,$81,$1F,$26,$07,$32,$32,$86,$1F,$7E
-        FCB     $D3,$58,$39,$7E,$D3,$4C
-        JMP     $D355
+        JMP     parseNextByte
+        JSR     $F081
+        CMPA    #$00
+        BEQ     $E98C
+        CMPA    #$1F
+        BNE     $E99E
+        PULA
+        PULA
+        LDAA    #$1F
+        JMP     $D358
+        RTS
+        JMP     $D34C
+        JMP     parseNextByte
         LDAB    $1B1E
         ASLB
         LDX     #$FC77
@@ -3583,14 +5244,60 @@ reset:
         LDX     $00,X
         STX     $040E
         RTS
-        FCB     $B7,$04,$8D,$7D,$04,$97,$2B,$11,$B6,$04,$95,$48,$48,$48,$BA,$04
-        FCB     $8D,$CE,$01,$02,$C6,$1F,$7E,$E4,$FF,$B6,$04,$95,$48,$48,$48,$BA
-        FCB     $04,$8D,$B7,$04,$8D,$B6,$04,$B3,$84,$E0,$BA,$04,$8D,$B7,$04,$B3
-        FCB     $39,$B7,$04,$8D,$7D,$04,$97,$2B,$1B,$B6,$04,$95,$CE,$02,$03,$C6
-        FCB     $03,$BD,$E4,$FF,$B6,$04,$8D,$48,$48,$48,$48,$48,$CE,$02,$02,$C6
-        FCB     $E0,$7E,$E4,$FF,$B6,$04,$B4,$84,$FC,$BA,$04,$95,$B7,$04,$B4,$B6
-        FCB     $04,$8D,$48,$48,$48,$48,$48,$B7,$04,$8D,$B6,$04,$B3,$84,$1F,$BA
-        FCB     $04,$8D,$B7,$04,$B3,$39
+        STAA    $048D
+        TST     $0497
+        BMI     $E9E7
+        LDAA    $0495
+        ASLA
+        ASLA
+        ASLA
+        ORAA    $048D
+        LDX     #$0102
+        LDAB    #$1F
+        JMP     $E4FF
+        LDAA    $0495
+        ASLA
+        ASLA
+        ASLA
+        ORAA    $048D
+        STAA    $048D
+        LDAA    $04B3
+        ANDA    #$E0
+        ORAA    $048D
+        STAA    $04B3
+        RTS
+        STAA    $048D
+        TST     $0497
+        BMI     $EA22
+        LDAA    $0495
+        LDX     #$0203
+        LDAB    #$03
+        JSR     $E4FF
+        LDAA    $048D
+        ASLA
+        ASLA
+        ASLA
+        ASLA
+        ASLA
+        LDX     #$0202
+        LDAB    #$E0
+        JMP     $E4FF
+        LDAA    $04B4
+        ANDA    #$FC
+        ORAA    $0495
+        STAA    $04B4
+        LDAA    $048D
+        ASLA
+        ASLA
+        ASLA
+        ASLA
+        ASLA
+        STAA    $048D
+        LDAA    $04B3
+        ANDA    #$1F
+        ORAA    $048D
+        STAA    $04B3
+        RTS
         TST     $1B1C
         BPL     $EA4A
         RTS
@@ -3883,8 +5590,15 @@ reset:
         JMP     $EA44
         INC     $1B1E
         RTS
-        FCB     $7F,$04,$B0,$7F,$04,$B1,$86,$80,$B7,$04,$B2,$86,$07,$B7,$04,$B3
-        FCB     $86,$99,$B7,$04,$B4,$39
+        CLR     $04B0
+        CLR     $04B1
+        LDAA    #$80
+        STAA    $04B2
+        LDAA    #$07
+        STAA    $04B3
+        LDAA    #$99
+        STAA    $04B4
+        RTS
         CLR     $04DA
         CLR     $04DB
         CLR     $1B26
@@ -5299,7 +7013,10 @@ nullHandler:
         JSR     $F979
         RTS
         FCB     $BD,$F7,$5F,$25,$05,$84,$7F,$BD,$F7,$E4,$3B,$40,$80,$7B,$81,$7C
-        FCB     $82,$7D,$83,$7E,$84,$5B,$85,$5C,$86,$5D,$87,$00,$00,$7E,$E9,$A2
+        FCB     $82,$7D,$83,$7E,$84,$5B,$85,$5C,$86,$5D,$87,$00,$00
+
+seqIgnored:
+        JMP     $E9A2
         FCB     $58,$00,$58,$28,$58,$50,$58,$78,$58,$A0,$58,$C8,$58,$F0,$59,$18
         FCB     $59,$40,$59,$68,$59,$90,$59,$B8,$59,$E0,$5A,$08,$5A,$30,$5A,$58
         FCB     $5A,$80,$5A,$A8,$5A,$D0,$5A,$F8,$5B,$20,$5B,$48,$5B,$70,$5B,$98
