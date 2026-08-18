@@ -445,9 +445,35 @@ of a row is its RIGHT half, the second its LEFT half. Reading them in the
 is what makes this data look like garbage at first.
 
 Ink occupies columns 4-15 of the swapped 16-bit word - the 12-pixel CEPT cell.
-The top four bits (columns 0-3) are not ink: bit 15 is set on every row of
-every glyph in the mosaic set at $8F00 and clear throughout the G0 set, so it
-carries a flag whose meaning is not yet established.
+Bits 14-12 are always zero. Bit 15 is not ink: it is a per-glyph flag, uniform
+across all ten rows of a glyph, and it marks CONTIGUOUS GRAPHICS - glyphs the
+video hardware must draw edge to edge with no inter-character gap, as opposed
+to normally spaced text.
+
+Evidence is distributional rather than from code, because the firmware never
+reads the character generator (its only references to the font area are two
+LDD #$84D0 that are not even glyph-aligned), so the video hardware fetches it
+directly and consumes this bit. Across the 349 live glyphs the flag agrees
+with set membership 345 times, 98.9%:
+
+  G0        95/96 clear
+  accents   96/96 clear
+  mosaic    94/96 set
+  set3      60/61 set   (35 unused placeholder slots excluded)
+
+All four exceptions are individually sensible, which is what makes the reading
+convincing:
+
+  G0 $7C      set. The full-height vertical bar - a line-drawing character
+              that has to join the cells above and below, so it is contiguous
+              even though it sits in the text set. Its neighbours { and } leave
+              row 9 blank; $7C has ink in all ten rows.
+  mosaic $4E  clear, and $5E likewise. These are the only two mosaic glyphs
+  mosaic $5E  that leave rows 0 and 9 blank - separated rather than contiguous
+              variants.
+  set3 $20    clear. The space.
+
+Not proven from firmware; a schematic or the display hardware would settle it.
 
   $8000  fontG0       96 glyphs  Latin alphanumerics and punctuation
   $8780  fontAccents  96 glyphs  non-spacing diacriticals and symbols (CEPT G2)
