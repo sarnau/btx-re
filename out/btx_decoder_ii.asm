@@ -34,6 +34,12 @@ softVecOcf  EQU     $F4
 softVecIcf  EQU     $F6
 softVecIrq1 EQU     $F8
 softVecSwi  EQU     $FA
+c64FifoWr   EQU     $6009
+c64FifoRd   EQU     $600A
+c64XferEn   EQU     $600B
+c64Status   EQU     $600C
+c64XferDone EQU     $6010
+c64Fifo     EQU     $6080
 
         ORG     $8000
 
@@ -687,8 +693,8 @@ fontNarrow:
         ABX
         CPX     #$5FFF
         BLS     $A2A5
-        LDAA    $6080
-        CMPA    $6080
+        LDAA    c64Fifo
+        CMPA    c64Fifo
         BNE     $A2AD
         TSTA
         BEQ     $A2DF
@@ -977,8 +983,8 @@ fontNarrow:
         LDAA    $A7,X
         ORAA    #$40
         STAA    $A7,X
-        LDAA    $6080
-        CMPA    $6080
+        LDAA    c64Fifo
+        CMPA    c64Fifo
         BNE     $A550
         TSTA
         BEQ     $A5AF
@@ -2296,11 +2302,41 @@ reset:
         STAA    $61FC
         LDX     #$B3A5
         STX     $0406
+
+; Ship the C64 payload across the dual-port interface.
+;
+;     LDAA #$FF / STAA c64XferEn      enable transfer
+;     TST c64Status (twice)           wait for the C64, double-read for stability
+;   loop:
+;     LDX $0406 / INX
+;     CPX #$D109 / BEQ done           payload ends at $D108
+;     LDAA 0,X                        next payload byte
+;     LDAB c64FifoWr                  our write index
+;     LDX #c64Fifo / ABX              slot = $6080 + index
+;     INCB / ANDB #$0F                advance, 16-slot ring
+;     CMPB c64FifoRd (twice)          spin while full
+;     STAA 0,X / STAB c64FifoWr       store byte, publish index
+;     BRA loop
+;   done:
+;     CLR c64XferEn / wait c64Status / STAA c64XferDone
+;
+; $0406 is the source pointer, seeded with LDX #$B3A5 at $B2DC; the INX before
+; each fetch makes $B3A6 the first byte sent - the two-byte load address the C64
+; loader consumes. So $B32D-$B3A5 is NOT streamed: the C64 executes it directly
+; from cartridge ROM at $8000. Only $B3A6-$D108 goes through the FIFO.
+;
+; Both sides guard against metastability the same way, reading a shared index
+; twice and acting only when the two reads agree - CMPB c64FifoRd here, and
+; LDA $8009 / CMP $8009 / BNE in the C64 bootstrap.
+;
+; $0406 is a shared scratch pointer, reused at $EA54 and elsewhere for pointer
+; tables at $FC45/$FC77/$FCA9/$FCDB.
+sendPayloadToC64:
         LDAA    #$FF
-        STAA    $600B
-        TST     $600C
+        STAA    c64XferEn
+        TST     c64Status
         BEQ     $B2E7
-        TST     $600C
+        TST     c64Status
         BEQ     $B2E7
         LDX     $0406
         INX
@@ -2308,25 +2344,25 @@ reset:
         BEQ     $B31A
         STX     $0406
         LDAA    $00,X
-        LDAB    $6009
+        LDAB    c64FifoWr
         LDX     #$6080
         ABX
         INCB
         ANDB    #$0F
-        CMPB    $600A
+        CMPB    c64FifoRd
         BEQ     $B2FF
-        CMPB    $600A
+        CMPB    c64FifoRd
         BEQ     $B2FF
         STAA    $00,X
-        STAB    $6009
+        STAB    c64FifoWr
         BRA     $B2F1
-        CLR     $600B
-        TST     $600C
+        CLR     c64XferEn
+        TST     c64Status
         BNE     $B31D
-        TST     $600C
+        TST     c64Status
         BNE     $B31D
         LDAA    #$FF
-        STAA    $6010
+        STAA    c64XferDone
         RTS
 
 ; C64-side 6502 code, $B32D-$D108. Not 6801 - the cartridge carries the C64's
@@ -6371,12 +6407,12 @@ nullHandler:
         BNE     $F3A6
         LDAA    #$FF
         STAA    $04DF
-        STAA    $600B
+        STAA    c64XferEn
         JMP     $F409
         CMPA    #$6D
         BNE     $F3B3
         CLR     $04DF
-        CLR     $600B
+        CLR     c64XferEn
         JMP     $F409
         CMPA    #$4C
         BNE     $F3BF
@@ -6567,7 +6603,7 @@ nullHandler:
         LDAA    #$28
         STAA    $0492
         LDAA    #$FF
-        STAA    $600B
+        STAA    c64XferEn
         LDX     $0410
         LDAA    $00,X
         JSR     $F979
@@ -6594,7 +6630,7 @@ nullHandler:
         STX     $0412
         DEC     $0492
         BNE     $F55E
-        CLR     $600B
+        CLR     c64XferEn
         JMP     $F59F
         CLR     $04DC
         CLC
@@ -6872,17 +6908,17 @@ nullHandler:
         PSHA
         PSHB
         PSHX
-        LDAB    $6009
+        LDAB    c64FifoWr
         LDX     #$6020
         ABX
         INCB
         ANDB    #$1F
-        CMPB    $600A
+        CMPB    c64FifoRd
         BEQ     $F97C
-        CMPB    $600A
+        CMPB    c64FifoRd
         BEQ     $F97C
         STAA    $00,X
-        STAB    $6009
+        STAB    c64FifoWr
         PULX
         PULB
         PULA

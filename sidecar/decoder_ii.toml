@@ -139,6 +139,7 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 
 
 [labels]
+"0xB2E2" = "sendPayloadToC64"
 "0xB32D" = "c64Bootstrap"
 "0xB3A6" = "c64LoadAddr"
 "0xB3A8" = "c64Payload"
@@ -178,6 +179,53 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xFFF0" = "vectors"
 
 [block_comments]
+"0xB2E2" = """
+Ship the C64 payload across the dual-port interface.
+
+    LDAA #$FF / STAA c64XferEn      enable transfer
+    TST c64Status (twice)           wait for the C64, double-read for stability
+  loop:
+    LDX $0406 / INX
+    CPX #$D109 / BEQ done           payload ends at $D108
+    LDAA 0,X                        next payload byte
+    LDAB c64FifoWr                  our write index
+    LDX #c64Fifo / ABX              slot = $6080 + index
+    INCB / ANDB #$0F                advance, 16-slot ring
+    CMPB c64FifoRd (twice)          spin while full
+    STAA 0,X / STAB c64FifoWr       store byte, publish index
+    BRA loop
+  done:
+    CLR c64XferEn / wait c64Status / STAA c64XferDone
+
+$0406 is the source pointer, seeded with LDX #$B3A5 at $B2DC; the INX before
+each fetch makes $B3A6 the first byte sent - the two-byte load address the C64
+loader consumes. So $B32D-$B3A5 is NOT streamed: the C64 executes it directly
+from cartridge ROM at $8000. Only $B3A6-$D108 goes through the FIFO.
+
+Both sides guard against metastability the same way, reading a shared index
+twice and acting only when the two reads agree - CMPB c64FifoRd here, and
+LDA $8009 / CMP $8009 / BNE in the C64 bootstrap.
+
+$0406 is a shared scratch pointer, reused at $EA54 and elsewhere for pointer
+tables at $FC45/$FC77/$FCA9/$FCDB."""
+"0x0000" = """
+Hardware memory map, as established from the addresses the firmware touches.
+
+  $0000-$001F  6801 internal register file
+  $0080-$00FF  6801 internal RAM; interrupt soft vectors at $00F0-$00FB
+  $0400-$07FF  external RAM, ~1 KB of variables; the stack grows down from
+               $0400 (LDS #$0400 at reset), so $0000-$03FF is stack space
+  $1B00-$1B2D  peripheral, 20 registers, all read/write with read-modify-write
+               access; function not yet established
+  $6009-$6011  C64 dual-port control and status
+  $6080-$608F  16-byte shared FIFO to the C64
+  $61F9-$61FD  write-only control registers
+  $8000-$FFFF  this ROM
+
+Internal register usage shows PORT3 (43 accesses) as the busiest port, the
+timer (TCSR/OCRH) in use, and the SCI active on RMCR, TRCSR and RDR. TDR is
+never written by traced code, so the serial path looks receive-oriented in
+what has been reached so far."""
 "0xB32D" = """
 C64-side 6502 code, $B32D-$D108. Not 6801 - the cartridge carries the C64's
 BTX terminal application in the same 32 KB image as the 68B01 firmware, which
@@ -342,6 +390,15 @@ vectors before entering the main firmware."""
 "0x0012" = "RDR"
 "0x0013" = "TDR"
 "0x0014" = "RAMCR"
+# C64 interface: a dual-port window. The 6801 sees it at $6000, the C64 at
+# $8000 - the low offsets match ($x009/$x00A/$x00B).
+"0x6009" = "c64FifoWr"
+"0x600A" = "c64FifoRd"
+"0x600B" = "c64XferEn"
+"0x600C" = "c64Status"
+"0x6010" = "c64XferDone"
+"0x6080" = "c64Fifo"
+
 # Interrupt soft vectors in internal RAM.
 "0x00F0" = "softVecSci"
 "0x00F2" = "softVecTof"
