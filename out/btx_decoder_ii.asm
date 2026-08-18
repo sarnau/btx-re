@@ -94,6 +94,7 @@ attrMask       EQU     $04B8
 attrValue      EQU     $04B9
 txRingHead     EQU     $04D0
 txRingTail     EQU     $04D1
+pendingByte    EQU     $04DC
 txCurBit       EQU     $04EA
 txShift        EQU     $04EB
 txBitsLeft     EQU     $04EC
@@ -2721,7 +2722,7 @@ LB280:
         CLR     $1B29
         JSR     LEE9A
         JSR     LEED2
-        CLR     $04DC
+        CLR     pendingByte
         JSR     LED9D
         JMP     parseNextByte
 
@@ -6799,7 +6800,7 @@ LECCB:
         CLR     $04DA
         CLR     $04DB
         CLR     $1B26
-        CLR     $04DC
+        CLR     pendingByte
         CLR     $04DD
         CLR     $04DE
         CLR     redrawReq
@@ -7201,8 +7202,8 @@ strStatusMsgs:
         FCC     "Belegt              "
 
 LF081:
-        JSR     LF1D8
-        JSR     LF45B
+        JSR     fetchHostByte
+        JSR     execHostByte
         JSR     LF7FE
         CMPA    #$00
         BNE     LF0A9
@@ -7210,8 +7211,8 @@ LF081:
         JSR     redrawScreen
 
 LF094:
-        JSR     LF1D8
-        JSR     LF45B
+        JSR     fetchHostByte
+        JSR     execHostByte
         LDAA    redrawReq
         ORAA    $04AE
         BNE     LF081
@@ -7333,7 +7334,7 @@ stubSwi:
 
 nullHandler:
         RTI                             ; null interrupt handler
-        JSR     LF1D8
+        JSR     fetchHostByte
         RTI
 
 ; 75-baud transmit: a software UART clocked by the timer output compare.
@@ -7416,7 +7417,7 @@ LF1B0:
         JMP     LF1D7
 
 LF1B3:
-        JSR     LF1D8
+        JSR     fetchHostByte
         TST     $04D9
         BEQ     LF1D7
         TST     $04C8
@@ -7435,16 +7436,34 @@ LF1B3:
 LF1D7:
         RTI
 
-LF1D8:
+; Take the next byte the C64 sent, if there is one.
+;
+; pendingByte is the latch between this and execHostByte: TST pendingByte means
+; "is one already waiting", STAA pendingByte parks it, and CLR pendingByte is how
+; the consumer says it is done. All 14 sites are that one role.
+;
+;     TPA / PSHA / SEI              run masked, restore CC on the way out
+;     TST pendingByte / BEQ         already holding one? nothing to do
+;     JSR hostFifoGet               the 64-byte ring at $6040, which the C64
+;                                   fills through btxTxFifo at $8040
+;     JSR $F459                     SEC / RTS - the second source is a stub, so
+;                                   the C64 link is the only one left
+;     CMPA #$2C / CMPA #$2E         ',' and '.' set $0494 instead of latching
+;     STAA pendingByte
+;
+; $45 is the code execHostByte and the connect sequences at $F881 and $F8BD all
+; test for, which is what makes pendingByte worth following: it is the one byte
+; of state between the host link and everything the firmware does about it.
+fetchHostByte:
         TPA
         PSHA
         SEI
-        TST     $04DC
+        TST     pendingByte
         BEQ     LF1E3
         JMP     LF409
 
 LF1E3:
-        JSR     LF434
+        JSR     hostFifoGet
         BCC     LF1F0
         JSR     LF459
         BCC     LF1F0
@@ -7757,7 +7776,7 @@ LF3FA:
         JMP     LF409
 
 LF406:
-        STAA    $04DC
+        STAA    pendingByte
 
 LF409:
         PULA
@@ -7800,10 +7819,10 @@ LF431:
         LDAA    #$14
         RTS
 
-LF434:
+hostFifoGet:
         LDAB    $600D
         CMPB    $600D
-        BNE     LF434
+        BNE     hostFifoGet
         CMPB    $600E
         BEQ     LF455
         LDX     #$6040
@@ -7832,7 +7851,7 @@ LF459:
         SEC
         RTS
 
-LF45B:
+execHostByte:
         LDX     $04CB
         BNE     LF463
         JSR     LF0C2
@@ -7840,14 +7859,14 @@ LF45B:
 LF463:
         TST     $04DD
         BNE     LF487
-        LDAA    $04DC
+        LDAA    pendingByte
         BNE     LF470
         JMP     LF5A2
 
 LF470:
         CMPA    #$45
         BNE     LF49D
-        CLR     $04DC
+        CLR     pendingByte
         TST     $04D9
         BNE     LF487
         JSR     LEE9A
@@ -7871,7 +7890,7 @@ LF49D:
         BNE     LF4AF
         TST     $04D9
         BMI     LF4AC
-        CLR     $04DC
+        CLR     pendingByte
         JSR     LF5A4
 
 LF4AC:
@@ -8004,7 +8023,7 @@ LF55E:
         JMP     LF59F
 
 LF59F:
-        CLR     $04DC
+        CLR     pendingByte
 
 LF5A2:
         CLC
@@ -8435,9 +8454,9 @@ LF83E:
 LF881:
         LDD     #$00C8
         STD     $04E7
-        CLR     $04DC
-        JSR     LF1D8
-        LDAA    $04DC
+        CLR     pendingByte
+        JSR     fetchHostByte
+        LDAA    pendingByte
         CMPA    #$45
         BNE     LF897
         JMP     LF942
@@ -8461,9 +8480,9 @@ LF897:
         RTS
 
 LF8BD:
-        CLR     $04DC
-        JSR     LF1D8
-        LDAA    $04DC
+        CLR     pendingByte
+        JSR     fetchHostByte
+        LDAA    pendingByte
         CMPA    #$45
         BNE     LF8CD
         JMP     LF942
@@ -8489,8 +8508,8 @@ LF8D0:
         STD     $04E3
 
 LF8F4:
-        JSR     LF1D8
-        LDAA    $04DC
+        JSR     fetchHostByte
+        LDAA    pendingByte
         CMPA    #$45
         BNE     LF901
         JMP     LF942
@@ -8588,7 +8607,7 @@ LF999:
         JSR     clearPlanes
         JSR     LEED2
         CLR     $1B20
-        CLR     $04DC
+        CLR     pendingByte
         LDAA    #$80
         STAA    $1B02
         LDX     #$1B03
@@ -8923,8 +8942,8 @@ LFC01:
         JSR     LF7FE
         TSTA
         BNE     LFC1C
-        JSR     LF1D8
-        JSR     LF45B
+        JSR     fetchHostByte
+        JSR     execHostByte
         TST     redrawReq
         BNE     LFC17
         TST     $04AE

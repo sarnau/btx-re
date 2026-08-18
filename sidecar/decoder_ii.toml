@@ -447,6 +447,9 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xE35B" = "csiFinalB"
 "0xE367" = "escDefine"
 "0xA210" = "redrawScreen"
+"0xF1D8" = "fetchHostByte"
+"0xF434" = "hostFifoGet"
+"0xF45B" = "execHostByte"
 "0xD4C4" = "drcsDefineChar"
 "0xD527" = "drcsStartChar"
 "0xD5B5" = "drcsStoreRow"
@@ -569,6 +572,25 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xFFF0" = "vectors"
 
 [block_comments]
+"0xF1D8" = """
+Take the next byte the C64 sent, if there is one.
+
+pendingByte is the latch between this and execHostByte: TST pendingByte means
+"is one already waiting", STAA pendingByte parks it, and CLR pendingByte is how
+the consumer says it is done. All 14 sites are that one role.
+
+    TPA / PSHA / SEI              run masked, restore CC on the way out
+    TST pendingByte / BEQ         already holding one? nothing to do
+    JSR hostFifoGet               the 64-byte ring at $6040, which the C64
+                                  fills through btxTxFifo at $8040
+    JSR $F459                     SEC / RTS - the second source is a stub, so
+                                  the C64 link is the only one left
+    CMPA #$2C / CMPA #$2E         ',' and '.' set $0494 instead of latching
+    STAA pendingByte
+
+$45 is the code execHostByte and the connect sequences at $F881 and $F8BD all
+test for, which is what makes pendingByte worth following: it is the one byte
+of state between the host link and everything the firmware does about it."""
 "0xA2F2" = """
 renderRow and renderCol - where the raster walk currently is.
 
@@ -1796,6 +1818,7 @@ vectors before entering the main firmware."""
 "0xE222" = "attrFillHi"
 
 [symbols]
+"0x04DC" = "pendingByte"
 "0x07B0" = "renderRow"
 "0x07B1" = "renderCol"
 "0x0406" = "scrollEnd"
