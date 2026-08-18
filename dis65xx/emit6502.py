@@ -130,7 +130,9 @@ def _operand(insn, labels: dict[int, str], symbols: dict[int, str] | None = None
         name = sym(v, 3) or labels.get(v)
         if name is None and interiors is not None and v in interiors:
             name = _interior_name(v, labels)
-    pre = ">" if v < 0x100 and name is None else ""
+    # A zero-page address reached in absolute mode needs the force whether or
+    # not it has a name, or the assembler picks the shorter encoding back.
+    pre = ">" if v < 0x100 else ""
     body = name or f"${v:04X}"
     if m is Mode.ABS:
         return pre + body
@@ -293,12 +295,17 @@ def emit_block(data: bytes, base: int, block: C64Block, sidecar: Sidecar) -> str
     for _rt, insn, _b in _decode_block(data, base, block, labels, sidecar):
         if insn is None or insn.operand is None:
             continue
-        if insn.mode not in (Mode.ABS, Mode.IND) or insn.mnemonic not in _JUMPS:
+        jump = insn.mode in (Mode.ABS, Mode.IND) and insn.mnemonic in _JUMPS
+        data_ref = insn.mode in (Mode.ABS, Mode.ABX, Mode.ABY)
+        if not (jump or data_ref):
             continue
         v = insn.operand
         if v in labels:
             continue
-        name = c64kernal.name_for(v)
+        # A call target may fall back to KERNAL_<addr>, since landing in ROM
+        # says it is a routine. A data operand only takes a name the ROM source
+        # actually gives, or every stray address would gain an invented one.
+        name = c64kernal.name_for(v) if jump else c64kernal.known_name(v)
         if name:
             # A name like SIZE+8 is an offset into a labelled routine, so what
             # needs declaring is the base symbol, not the expression.
@@ -353,7 +360,7 @@ def emit_block(data: bytes, base: int, block: C64Block, sidecar: Sidecar) -> str
             lines.append(f"{touched[addr]:<{max(width, 8)}} EQU     ${addr:04X}")
         lines.append("")
     if external:
-        lines.append("; C64 ROM entry points.")
+        lines.append("; C64 ROM entry points and tables.")
         width = max(len(n) for n in external.values())
         for addr in sorted(external):
             lines.append(f"{external[addr]:<{max(width, 8)}} EQU     ${addr:04X}")

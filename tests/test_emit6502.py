@@ -500,3 +500,25 @@ def test_macro_filename_template():
     assert 'FCC     "@:BTX-MAK-"' in body
     assert "c64MacroId:" in body
     assert '",S,W"' in body
+
+
+def test_screen_line_tables_use_their_rom_names():
+    """c64PlotChar indexes the KERNAL's two screen-line tables. Only call
+    targets were being named, so a data operand in ROM stayed a bare address."""
+    src = (OUT / "c64_payload.asm").read_text()
+    assert "LDA     LDTB2,Y" in src
+    assert re.search(r"^LDTB2\s+EQU\s+\$ECF0$", src, re.M)
+    # A zero-page address reached in absolute mode keeps the force, or the
+    # assembler encodes it short and the round-trip breaks.
+    assert "LDA     >LDTB1,Y" in src
+    assert re.search(r"^LDTB1\s+EQU\s+\$00D9$", src, re.M)
+
+
+def test_data_operands_do_not_invent_kernal_names():
+    """A call landing in ROM says it is a routine, so KERNAL_<addr> is fair.
+    A data operand does not, so it takes only names the ROM source gives."""
+    from dis65xx import c64kernal
+    assert c64kernal.name_for(0xEC00) == "KERNAL_EC00"
+    assert c64kernal.known_name(0xEC00) is None
+    assert c64kernal.known_name(0xECF0) == "LDTB2"
+    assert c64kernal.known_name(0xFD90) == "SIZE+8"

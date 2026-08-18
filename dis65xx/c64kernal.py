@@ -17,6 +17,7 @@ ROM without claiming to know what it is.
 from __future__ import annotations
 
 NAMES: dict[int, str] = {
+    0xECF0: "LDTB2",
     0xFD88: "SIZE",
     0xE3BF: "INITCZ",
     0xE56C: "STUPT",
@@ -55,6 +56,18 @@ NAMES: dict[int, str] = {
 INTERIOR: dict[int, tuple[str, int]] = {
     0xFD90: ("SIZE", 0xFD88),
 }
+
+
+def known_name(addr: int) -> str | None:
+    """The ROM source's own name, or None. Unlike name_for this never invents
+    a KERNAL_<addr>, so it is safe to apply to any operand rather than only to
+    call targets."""
+    if addr in NAMES:
+        return NAMES[addr]
+    if addr in INTERIOR:
+        name, base = INTERIOR[addr]
+        return f"{name}+{addr - base}"
+    return None
 
 
 def name_for(addr: int) -> str | None:

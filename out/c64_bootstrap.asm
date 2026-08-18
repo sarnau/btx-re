@@ -15,7 +15,7 @@ btxXferEn EQU     $800B
 btxStatus EQU     $800C
 btxFifo00 EQU     $8080
 
-; C64 ROM entry points.
+; C64 ROM entry points and tables.
 RESTOR      EQU     $FD15
 SIZE        EQU     $FD88
 IOINIT      EQU     $FDA3

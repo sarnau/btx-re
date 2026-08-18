@@ -27,6 +27,7 @@ FNADR       EQU     $00BB
 BLNSW       EQU     $00CC
 PNTR        EQU     $00D3
 TBLX        EQU     $00D6
+LDTB1       EQU     $00D9
 BUF         EQU     $0200
 IERROR      EQU     $0300
 CINV        EQU     $0314
@@ -61,10 +62,11 @@ btxReg1F9   EQU     $81F9
 btxReg1FC   EQU     $81FC
 btxReg1FD   EQU     $81FD
 
-; C64 ROM entry points.
+; C64 ROM entry points and tables.
 INITCZ       EQU     $E3BF
 STUPT        EQU     $E56C
 KEY          EQU     $EA31
+LDTB2        EQU     $ECF0
 TALK         EQU     $ED09
 LISTN        EQU     $ED0C
 SECND        EQU     $EDB9
@@ -2962,15 +2964,15 @@ c64SplashText:
         CHARSET
 
 c64PlotChar:
-; vector 55 $10A5 - poke screen code A at column Y of row X, using the KERNAL line-address tables at $ECF0 and LDTB1
+; vector 55 $10A5 - poke screen code A at column Y of row X, using the KERNAL screen-line tables LDTB2 (low bytes) and LDTB1 (line flags, whose low nibble carries the page)
         PHP
         SEI
         PHA
         TXA
         PHA
-        LDA     $ECF0,Y
+        LDA     LDTB2,Y
         STA     INBIT
-        LDA     >$00D9,Y
+        LDA     >LDTB1,Y
         AND     #$0F
         STA     BITCI
         PLA
