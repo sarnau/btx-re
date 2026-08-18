@@ -138,9 +138,9 @@ def test_dw_is_little_endian_and_fdb_is_big():
 
 def test_text_block_through_screen_init_is_data():
     """ROM $B552-$BA55 is records and their pointer table; code resumes at
-    c64ScreenInit."""
+    c64ColdStart."""
     src = (OUT / "c64_payload.asm").read_text()
-    head, tail = src.split("c64ScreenInit:", 1)
+    head, tail = src.split("c64ColdStart:", 1)
     table = head.split("c64StrTable:", 1)[1]
     assert not re.search(r"^\s+(LDA|STA|JSR|JMP)\s", table, re.M), \
         "the pointer table must not be disassembled as code"
@@ -205,7 +205,7 @@ def test_btx_io_window_is_declared():
 def test_splash_text_is_data_not_code():
     """$C84C-$C94C is the PETSCII startup screen, opening with $0E $08 $93."""
     src = (OUT / "c64_payload.asm").read_text()
-    body = src.split("c64SplashText:", 1)[1].split("c64Vec55:", 1)[0]
+    body = src.split("c64SplashText:", 1)[1].split("c64PlotChar:", 1)[0]
     assert "FCB     $0E,$08,$93" in body
     assert not re.search(r"^\s+(JSR|JMP|LDA)\s", body, re.M), \
         "the splash text must not be disassembled as code"
@@ -216,7 +216,7 @@ def test_petscii_mode_renders_mixed_case_text():
     $41-$5A, so CHARSET lets the text be written as ordinary letters. Without
     it BILDSCHIRMTEXT looked like shouting; it is really 'Bildschirmtext'."""
     src = (OUT / "c64_payload.asm").read_text()
-    body = src.split("c64SplashText:", 1)[1].split("c64Vec55:", 1)[0]
+    body = src.split("c64SplashText:", 1)[1].split("c64PlotChar:", 1)[0]
     assert "CHARSET $41,$5A,$C1" in body
     assert "CHARSET $61,$7A,$41" in body
     assert 'FCC     "            Bildschirmtext"' in body
@@ -432,7 +432,7 @@ def test_pointer_setups_work_for_every_register():
 
 def test_key_table_is_data_not_code():
     src = (OUT / "c64_payload.asm").read_text()
-    body = src.split("c64KeyTable:", 1)[1].split("c64Vec06:", 1)[0]
+    body = src.split("c64KeyTable:", 1)[1].split("c64SendByte:", 1)[0]
     assert not re.search(r"^\s+(LDA|STA|JSR|JMP|RTI|TSX)\s", body, re.M)
     assert 'FCC     "#@;{:|@}+~][["' in body
 

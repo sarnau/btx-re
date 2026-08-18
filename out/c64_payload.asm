@@ -95,22 +95,53 @@ c64LoadAddr:
         DW      c64Payload
 
 ; C64 payload: a 61-entry JMP dispatch table at runtime $1000-$10B6, then code at
-; $174C-$2943 with data below it. The table is the module's whole API surface and
-; the natural place to start reading.
+; $174C-$2943 with data below it. The table is the module's whole API surface, and
+; the C64 side of the module is entirely built out of it - nothing calls a routine
+; except through its slot.
 ;
-; Entries are labelled c64Vec00..c64Vec60 at their ROM addresses. Vectors 44 and
-; 45 share a target ($220B), so 60 distinct addresses carry labels. Three have
-; evidenced names rather than structural ones:
+; Vectors 44 and 45 share a target ($220B), so 60 distinct addresses carry labels.
 ;
-;   c64ScreenInit  vector 0   CLALL and $D016/$D021/$D800
-;   c64ScreenOut1  vector 1   BSOUT with $D021/$D800/$D900
-;   c64ShowSplash  vector 54  prints c64SplashText, then sets the colours
+; The menu at vector 4 is what unlocks the rest. It reads one letter and looks it
+; up in c64MenuKeys. The two menu lines it displays are messages 3 and 4 of
+; the string table -
 ;
-; The rest keep structural names because tracing them transitively is not
-; discriminating: almost every entry reaches a shared input loop, so GETIN and
-; STOP appear nearly everywhere and say nothing about the individual routine.
-; Naming them means reading them one at a time - a task the size of the 6801
-; side, not a sweep.
+;     Load Capture Display Macro Xfer Screen
+;     ASCII Btx Keybd Telesoft Edit Pause Quit
+;
+; Each letter therefore names its handler, and the German status messages in
+; c64StrTable confirm what each one does:
+;
+;   L  vector 15  c64MenuLoad       msg 0  "von Diskette: File?"
+;   C  vector 20  c64MenuCapture    msg 5  "Capture-Modus ein - Ende: STOP-Taste"
+;   D  vector 22  c64MenuDisplay    msg 6  "Capture-Puffer anzeigen"
+;   M  vector 19  c64MenuMacro      msg 11 "Macro ausfuehren: Kennung?"
+;   X  vector 23  c64MenuXfer       msg 14 "Drucker oder File"
+;   S  vector 24  c64MenuScreen     msg 17 "C-64-Monitor zugeschaltet"
+;   A  vector 12  c64MenuAscii
+;   B  vector 13  c64MenuBtx
+;   K  vector 26  c64MenuKeybd      msg 16 "Keyboard: deutsch oder ASCII?"
+;   T  vector 57  c64MenuTelesoft   msg 26 "Telesoftware: File?"
+;   E  vector 28  c64MenuEdit       msg 21 "Macro anlegen: Kennung?"
+;   P  vector 27  c64MenuPause      msg 19 "Pause: wieviele Sekunden (1-9)?"
+;   Q  vector 14  c64MenuQuit       ceptMonitorMsg, then JMP (KERNAL_RESET)
+;
+; The splash text matches: it tells the user to reach the menu with <F7>, and
+; c64MainLoop opens it on PETSCII $88, which is F7.
+;
+; The remaining vectors group into six layers:
+;
+;   transport   6 8 7        the two rings shared with the 6801 (btxReg040 out,
+;                            btxReg020 in) plus a blocking read
+;   keyboard    53 5 3 29    GETIN or macro playback -> QWERTZ fixup -> CEPT
+;   display     31 30 40 9   the status-line overlay, drawn from c64StrTable
+;   rendering   46 43 44 55  one cell (6 bytes) -> a character, then to the C64
+;               56 25        screen, the printer, or the cursor; 25 is the CINV
+;                            hook the decoder raises when it posts a cell
+;   disk        16 17 18 33  device 8: read channel 4, write channel 4,
+;               38 39 48 59  error channel 15, and the shared OPEN primitive
+;               60 49        49 is the device 4 printer instead
+;   macro       34 35 36 37  "@:BTX-MAK-<id>" on channels 5 (record) and 6
+;               47 50 51 52  (play), plus the "Makro-Verzeichnis" listing
 ;
 ; Two findings for anyone continuing:
 ;
@@ -118,185 +149,185 @@ c64LoadAddr:
 ;     which is what separates it from the string records that follow. The ROM
 ;     image holds their initial values, which is why that area first reads as
 ;     unprintable filler in front of the text.
-;   - Text records are 40 columns followed by a 5-byte trailer
-;     ($2C $00 $C0 $01 $98). Nothing addresses them directly, so they are reached
-;     by index; the only LDA #$2D in the payload is at runtime $287B.
+;   - The c64StrTable records are length-prefixed: a count byte, four parameter
+;     bytes ($00 $C0/$80 $01/$07 $98) and then the text. c64ShowMsgPtr sends
+;     exactly count bytes, which is what fixes the framing.
 c64Payload:
-        JMP     c64ScreenInit
-        JMP     c64ScreenOut1
-        JMP     c64Vec02
+        JMP     c64ColdStart
+        JMP     c64StartSession
+        JMP     c64MainLoop
 
 L1009:
-        JMP     c64Vec03
+        JMP     c64SendKey
 
 L100C:
-        JMP     c64Vec04
+        JMP     c64Menu
 
 L100F:
-        JMP     c64Vec05
+        JMP     c64XlatKey
 
 L1012:
-        JMP     c64Vec06
+        JMP     c64SendByte
 
 L1015:
-        JMP     c64Vec07
+        JMP     c64GetByteWait
 
 L1018:
-        JMP     c64Vec08
+        JMP     c64GetByte
 
 L101B:
-        JMP     c64Vec09
+        JMP     c64HideMsg
 
 L101E:
-        JMP     c64Vec10
+        JMP     c64CaptureEnd
 
 L1021:
-        JMP     c64Vec11
+        JMP     c64CtrlThrottle
 
 L1024:
-        JMP     c64Vec12
+        JMP     c64MenuAscii
 
 L1027:
-        JMP     c64Vec13
+        JMP     c64MenuBtx
 
 L102A:
-        JMP     c64Vec14
+        JMP     c64MenuQuit
 
 L102D:
-        JMP     c64Vec15
+        JMP     c64MenuLoad
 
 L1030:
-        JMP     c64Vec16
+        JMP     c64DiskOpenRead
 
 L1033:
-        JMP     c64Vec17
+        JMP     c64DiskGetByte
 
 L1036:
-        JMP     c64Vec18
+        JMP     c64DiskCloseRead
 
 L1039:
-        JMP     c64Vec19
+        JMP     c64MenuMacro
 
 L103C:
-        JMP     c64Vec20
+        JMP     c64MenuCapture
 
 L103F:
-        JMP     c64Vec21
+        JMP     c64CaptureRun
 
 L1042:
-        JMP     c64Vec22
+        JMP     c64MenuDisplay
 
 L1045:
-        JMP     c64Vec23
+        JMP     c64MenuXfer
 
 L1048:
-        JMP     c64Vec24
+        JMP     c64MenuScreen
 
 L104B:
-        JMP     c64Vec25
+        JMP     c64IrqPlotCell
 
 L104E:
-        JMP     c64Vec26
+        JMP     c64MenuKeybd
 
 L1051:
-        JMP     c64Vec27
+        JMP     c64MenuPause
 
 L1054:
-        JMP     c64Vec28
+        JMP     c64MenuEdit
 
 L1057:
-        JMP     c64Vec29
-        JMP     c64Vec30
+        JMP     c64InputLine
+        JMP     c64ShowMsgPtr
 
 L105D:
-        JMP     c64Vec31
+        JMP     c64ShowMsg
 
 L1060:
-        JMP     c64Vec32
+        JMP     c64SaveBuffer
 
 L1063:
-        JMP     c64Vec33
+        JMP     c64CloseWrite
 
 L1066:
-        JMP     c64Vec34
+        JMP     c64MacroRecOpen
 
 L1069:
-        JMP     c64Vec35
+        JMP     c64MacroTalk
 
 L106C:
-        JMP     c64Vec36
+        JMP     c64MacroRecClose
 
 L106F:
-        JMP     c64Vec37
+        JMP     c64MacroCloseRead
 
 L1072:
-        JMP     c64Vec38
+        JMP     c64DiskShowError
 
 L1075:
-        JMP     c64Vec39
+        JMP     c64DiskCheckError
 
 L1078:
-        JMP     c64Vec40
+        JMP     c64ClearMsg
 
 L107B:
-        JMP     c64Vec41
+        JMP     c64WaitDecoder
 
 L107E:
-        JMP     c64Vec42
+        JMP     c64DelaySecs
 
 L1081:
-        JMP     c64Vec43
+        JMP     c64CellToScreen
 
 L1084:
-        JMP     c64Vec44
+        JMP     c64CellOut
 
 L1087:
-        JMP     c64Vec44
+        JMP     c64CellOut
 
 L108A:
-        JMP     c64Vec46
+        JMP     c64CellToChar
 
 L108D:
-        JMP     c64Vec47
+        JMP     c64MacroRecStart
 
 L1090:
-        JMP     c64Vec48
+        JMP     c64OpenSeqWrite
 
 L1093:
-        JMP     c64Vec49
+        JMP     c64OpenPrinter
 
 L1096:
-        JMP     c64Vec50
+        JMP     c64MacroOpenRead
 
 L1099:
-        JMP     c64Vec51
+        JMP     c64MacroDir
 
 L109C:
-        JMP     c64Vec52
+        JMP     c64MacroDirLine
 
 L109F:
-        JMP     c64Vec53
+        JMP     c64GetKey
 
 L10A2:
         JMP     c64ShowSplash
 
 L10A5:
-        JMP     c64Vec55
+        JMP     c64PlotChar
 
 L10A8:
-        JMP     c64Vec56
+        JMP     c64SetCursor
 
 L10AB:
-        JMP     c64Vec57
+        JMP     c64MenuTelesoft
 
 L10AE:
-        JMP     c64Vec58
+        JMP     c64TelesoftByte
 
 L10B1:
-        JMP     c64Vec59
+        JMP     c64OpenChannel
 
 L10B4:
-        JMP     c64Vec60
+        JMP     c64OpenPrgWrite
         FCB     $00,$00,$00,$00,$00,$00,$00,$00,$00
 
 ; 16-bit pointers, runtime $10C0-$10CD.
@@ -649,8 +680,8 @@ c64StrTable:
         DW      L140A,L1437,L1464,L1491,L14BE,L14EB,L1507,L151B
         DW      L1548,L1575,L15A2,L15BB,L15E9,L1616,L1643
 
-c64ScreenInit:
-; vector 0 at runtime $16AE - CLALL and $D016/$D021/$D800 - screen and colour RAM setup
+c64ColdStart:
+; vector 0 $1000 - cold start: IOINIT/RESTOR/PCINT/INITCZ/CLALL, clear zero page, hook CINV to the decoder IRQ, enable the decoder interrupt
         LDA     #$00
         STA     $D016
         JSR     IOINIT
@@ -686,8 +717,8 @@ L16B9:
         CLI
         JSR     L2404
 
-c64ScreenOut1:
-; vector 1 at runtime $16FF - BSOUT with $D021/$D800/$D900
+c64StartSession:
+; vector 1 $1003 - show the splash, send ceptStartPage to the decoder, reset the capture-buffer pointers and mode flags
         JSR     L10A2
         LDA     btxReg012
         BNE     L172D
@@ -725,8 +756,8 @@ L172D:
         STA     L11D8
         STA     L11F7
 
-c64Vec02:
-; vector 2 at runtime $174C - jump-table entry 2
+c64MainLoop:
+; vector 2 $1006 - main loop: fetch a key, STOP ends a capture, F7 ($88) opens the menu, anything else goes to c64SendKey
         LDA     #$FF
         STA     btxReg00F
 
@@ -760,8 +791,8 @@ L177C:
 L177F:
         JMP     L1751
 
-c64Vec03:
-; vector 3 at runtime $1782 - jump-table entry 3
+c64SendKey:
+; vector 3 $1009 - translate one key with c64XlatKey and send the resulting 1-3 CEPT bytes to the decoder
         CMP     #$8B
         BNE     L1789
         JSR     L101E
@@ -794,8 +825,8 @@ L17AD:
 L17B5:
         RTS
 
-c64Vec05:
-; vector 5 at runtime $17B6 - jump-table entry 5
+c64XlatKey:
+; vector 5 $100F - PETSCII key -> CEPT, via c64KeyTable (2-byte, alpha mode), $10C8 or $10C6 (4-byte). C=1 when the key has no mapping
         LDX     #$00
         STX     L11E9
         STX     L11EA
@@ -953,13 +984,13 @@ c64KeyTable:
         FCB     $5C,$BA,$5D,$2D,$00,$DD,$00,$5E,$00,$DE,$00,$5C,$00,$A9,$00,$00
         FCB     $00
 
-c64Vec06:
-; vector 6 at runtime $188F - jump-table entry 6
+c64SendByte:
+; vector 6 $1012 - push A into the 64-byte C64->decoder ring at btxReg040, spinning while it is full, then run c64CtrlThrottle
         LDX     btxXferDone
         CPX     btxXferDone
-        BNE     c64Vec06
+        BNE     c64SendByte
         CPX     #$00
-        BEQ     c64Vec06
+        BEQ     c64SendByte
 
 L189B:
         LDX     btxReg00D
@@ -979,14 +1010,14 @@ L18A5:
         JSR     L1021
         RTS
 
-c64Vec07:
-; vector 7 at runtime $18BC - jump-table entry 7
+c64GetByteWait:
+; vector 7 $1015 - c64GetByte in a loop: block until the decoder delivers a byte
         JSR     L1018
-        BCS     c64Vec07
+        BCS     c64GetByteWait
         RTS
 
-c64Vec08:
-; vector 8 at runtime $18C2 - jump-table entry 8
+c64GetByte:
+; vector 8 $1018 - pull one byte from the 32-byte decoder->C64 ring at btxReg020. C=1 when empty. Read pointers twice to ride out metastability
         LDA     btxFifoRd
         CMP     btxFifoWr
         BEQ     L18CF
@@ -1010,8 +1041,8 @@ L18DC:
         CLC
         RTS
 
-c64Vec09:
-; vector 9 at runtime $18E1 - jump-table entry 9
+c64HideMsg:
+; vector 9 $101B - send $10 $7A $10 $55: close the status-line overlay and put the BTX page back
         LDA     #$10
         JSR     L1012
         LDA     #$7A
@@ -1022,8 +1053,8 @@ c64Vec09:
         JSR     L1012
         RTS
 
-c64Vec10:
-; vector 10 at runtime $18F6 - jump-table entry 10
+c64CaptureEnd:
+; vector 10 $101E - STOP during a capture: send $10 $6D, wait for the transfer to drain, record the end pointer and offer c64SaveBuffer
         BIT     L11D9
         BPL     L192F
         LDA     #$10
@@ -1052,8 +1083,8 @@ L190A:
 L192F:
         RTS
 
-c64Vec11:
-; vector 11 at runtime $1930 - jump-table entry 11
+c64CtrlThrottle:
+; vector 11 $1021 - poll keyboard row 7 for CTRL ($DC01 = $FB) and burn ~2000 cycles while it is held: the classic hold-to-slow-output
         LDA     #$7F
         STA     $DC00
         LDA     $DC01
@@ -1077,8 +1108,8 @@ L1947:
 L194D:
         RTS
 
-c64Vec04:
-; vector 4 at runtime $194E - jump-table entry 4
+c64Menu:
+; vector 4 $100C - the <F7> menu: shows msg 3/4, reads a letter and dispatches through c64MenuKeys; any other key toggles the two menu lines
         LDA     #$00
         STA     L11E7
 
@@ -1164,8 +1195,8 @@ c64MenuKeys:
         DW      L10AB
         FCB     $00
 
-c64Vec12:
-; vector 12 at runtime $19BF - jump-table entry 12
+c64MenuAscii:
+; vector 12 $1024 - menu 'A' (ASCII): send $10 $67 and set the alpha-mode flag, which switches c64XlatKey to c64KeyTable
         LDA     #$10
         JSR     L1012
         LDA     #$67
@@ -1174,8 +1205,8 @@ c64Vec12:
         STA     L11F7
         RTS
 
-c64Vec13:
-; vector 13 at runtime $19CF - jump-table entry 13
+c64MenuBtx:
+; vector 13 $1027 - menu 'B' (Btx): send $10 $66 and clear the alpha-mode flag
         LDA     #$10
         JSR     L1012
         LDA     #$66
@@ -1184,8 +1215,8 @@ c64Vec13:
         STA     L11F7
         RTS
 
-c64Vec14:
-; vector 14 at runtime $19DF - jump-table entry 14
+c64MenuQuit:
+; vector 14 $102A - menu 'Q' (Quit): send ceptMonitorMsg ("C-64 - Betrieb ... Monitor an den Rechner umstecken"), close the drive command channel and JMP (KERNAL_RESET)
         JSR     L101B
         LDA     #$00
         STA     btxFifo00
@@ -1275,8 +1306,8 @@ ceptMonitorMsg:
         FCC     "OOumstecken"
         FCB     $00
 
-c64Vec15:
-; vector 15 at runtime $1A9B - jump-table entry 15
+c64MenuLoad:
+; vector 15 $102D - menu 'L' (Load): msg 0 "von Diskette: File?", then stream the file to the decoder through c64DiskOpenRead/GetByte/CloseRead
         JSR     L1078
         LDA     #$00
         JSR     L105D
@@ -1351,8 +1382,8 @@ L1B05:
         JSR     L101B
         JMP     L1AF4
 
-c64Vec19:
-; vector 19 at runtime $1B22 - jump-table entry 19
+c64MenuMacro:
+; vector 19 $1039 - menu 'M' (Macro): msg $0B, read a macro id ('0'-'9','A'-'Z') or '?' for c64MacroDir, then send $08 $20 <id> $00 to the decoder and play the macro back
         LDA     #$00
         STA     STATUS
         LDA     #$08
@@ -1484,8 +1515,8 @@ L1BEA:
         JSR     UNTLK
         RTS
 
-c64Vec20:
-; vector 20 at runtime $1C1A - jump-table entry 20
+c64MenuCapture:
+; vector 20 $103C - menu 'C' (Capture): send $10 $4D, msg 5 "Capture-Modus ein - Ende: STOP-Taste", arm the capture flag and point the write pointer at c64PtrTable
         JSR     L101B
         LDA     #$10
         JSR     L1012
@@ -1502,8 +1533,8 @@ c64Vec20:
         STA     FACSGN
         RTS
 
-c64Vec21:
-; vector 21 at runtime $1C3F - jump-table entry 21
+c64CaptureRun:
+; vector 21 $103F - the capture engine: drain c64GetByte into the buffer until page $80 is reached, then msg 8 "Puffer voll - File?" and c64SaveBuffer
         JSR     L1018
         BCS     L1C94
         LDY     #$00
@@ -1516,7 +1547,7 @@ c64Vec21:
         BEQ     L1C58
 
 L1C55:
-        JMP     c64Vec21
+        JMP     c64CaptureRun
 
 L1C58:
         LDA     #$00
@@ -1550,8 +1581,8 @@ L1C86:
 L1C94:
         RTS
 
-c64Vec22:
-; vector 22 at runtime $1C95 - jump-table entry 22
+c64MenuDisplay:
+; vector 22 $1042 - menu 'D' (Display): msg 6 "Capture-Puffer anzeigen", replay the captured bytes to the decoder, STOP aborts
         LDA     #$10
         JSR     L1012
         LDA     #$4C
@@ -1602,8 +1633,8 @@ L1CE0:
 L1CF0:
         JMP     L1CB3
 
-c64Vec23:
-; vector 23 at runtime $1CF3 - jump-table entry 23
+c64MenuXfer:
+; vector 23 $1045 - menu 'X' (Xfer): read all 40x25 cells back from the decoder six bytes at a time and hardcopy them; msg $0E asks Drucker ('D') or File ('F')
         LDA     #$FF
         STA     btxStatus
         LDA     #$93
@@ -1768,11 +1799,11 @@ L1E24:
         JSR     L101B
         RTS
 
-c64Vec24:
-; vector 24 at runtime $1E39 - jump-table entry 24
+c64MenuScreen:
+; vector 24 $1048 - menu 'S' (Screen): toggle the reduced C64 text display, send $10 $78, msg $11/$12 "C-64-Monitor zu-/abgeschaltet"
         LDA     btxFifo00
         CMP     btxFifo00
-        BNE     c64Vec24
+        BNE     c64MenuScreen
         EOR     #$FF
         STA     btxFifo00
         BEQ     L1E57
@@ -1795,8 +1826,8 @@ L1E5C:
         JSR     L101B
         RTS
 
-c64Vec25:
-; vector 25 at runtime $1E65 - jump-table entry 25
+c64IrqPlotCell:
+; vector 25 $104B - the CINV hook body: if the decoder posted a cell in btxFifo01-0B, translate it with c64CellToChar and plot it, or move the cursor with c64SetCursor
         PHP
         SEI
 
@@ -1876,8 +1907,8 @@ L1EDC:
         PLP
         RTS
 
-c64Vec26:
-; vector 26 at runtime $1EEF - jump-table entry 26
+c64MenuKeybd:
+; vector 26 $104E - menu 'K' (Keybd): msg $10 "Keyboard: deutsch oder ASCII?"; 'D' sends $10 $4E and sets the German flag, 'A' sends $10 $6E and clears it
         LDA     #$10
         JSR     L105D
 
@@ -1911,8 +1942,8 @@ L1F18:
         JSR     L101B
         RTS
 
-c64Vec27:
-; vector 27 at runtime $1F2B - jump-table entry 27
+c64MenuPause:
+; vector 27 $1051 - menu 'P' (Pause): msg $13 asks for 1-9 seconds, msg $14 "bitte warten...", then c64DelaySecs
         LDA     #$13
         JSR     L105D
 
@@ -1938,8 +1969,8 @@ L1F3B:
         JSR     L101B
         RTS
 
-c64Vec28:
-; vector 28 at runtime $1F54 - jump-table entry 28
+c64MenuEdit:
+; vector 28 $1054 - menu 'E' (Edit): start recording a macro (msg $15, c64MacroRecStart) or finish the one in progress (msg $18 "Macro abgeschlossen", c64MacroRecClose)
         BIT     L11EC
         BPL     L1F5D
         JSR     L101B
@@ -2074,8 +2105,8 @@ L2036:
         JSR     L1012
         RTS
 
-c64Vec29:
-; vector 29 at runtime $205F - jump-table entry 29
+c64InputLine:
+; vector 29 $1057 - read a line of at most A characters into the filename buffer, echoing through c64SendKey. DEL erases, RETURN accepts, STOP returns C=1
         STA     L11BD
         LDY     #$00
         STY     L11BC
@@ -2156,8 +2187,8 @@ L20A8:
 L20EA:
         JMP     L2067
 
-c64Vec31:
-; vector 31 at runtime $20ED - jump-table entry 31
+c64ShowMsg:
+; vector 31 $105D - look message A up in c64StrTable and fall through into c64ShowMsgPtr
         ASL     A
         TAY
         LDA     L10CC
@@ -2171,8 +2202,8 @@ c64Vec31:
         STX     FACMOH
         STA     FACMO
 
-c64Vec30:
-; vector 30 at runtime $2103 - jump-table entry 30
+c64ShowMsgPtr:
+; vector 30 $105A - send $10 $75 $10 $5A then the length-prefixed CEPT record at (FACMOH): draw the status-line overlay
         LDA     #$10
         JSR     L1012
         LDA     #$75
@@ -2197,8 +2228,8 @@ L2122:
         BNE     L2122
         RTS
 
-c64Vec32:
-; vector 32 at runtime $2136 - jump-table entry 32
+c64SaveBuffer:
+; vector 32 $1060 - msg 7 "Auf Diskette: File?", open a SEQ file and CIOUT the capture buffer to it; msg $0A offers a retry ("nochmal (J/N)?")
         LDA     #$13
         JSR     L1057
         BCC     L213E
@@ -2255,14 +2286,14 @@ L2179:
 L218F:
         RTS
 
-c64Vec40:
-; vector 40 at runtime $2190 - jump-table entry 40
+c64ClearMsg:
+; vector 40 $1078 - show msg 1, the all-blank 40-column record: blank the status line without closing the overlay
         LDA     #$01
         JSR     L105D
         RTS
 
-c64Vec41:
-; vector 41 at runtime $2196 - jump-table entry 41
+c64WaitDecoder:
+; vector 41 $107B - spin until the decoder's line counter btxReg011 changes, servicing an active capture, so a macro waits for the page to arrive
         LDA     btxReg011
         STA     btxReg1FC
         STA     L11ED
@@ -2289,8 +2320,8 @@ L21B9:
 L21BF:
         RTS
 
-c64Vec42:
-; vector 42 at runtime $21C0 - jump-table entry 42
+c64DelaySecs:
+; vector 42 $107E - delay A units (A*5 inner passes of ~40 ms); STOP aborts, and CTRL held at the end extends it
         STA     L11DE
         ASL     A
         ASL     A
@@ -2328,8 +2359,8 @@ L21E0:
 L21F3:
         RTS
 
-c64Vec43:
-; vector 43 at runtime $21F4 - jump-table entry 43
+c64CellToScreen:
+; vector 43 $1081 - translate the six cell bytes with c64CellToChar and plot the result at column $11EE / row $11EF
         JSR     L108A
         CMP     #$60
         BCC     L21FF
@@ -2345,8 +2376,8 @@ L2201:
         JSR     L10A5
         RTS
 
-c64Vec44:
-; vector 44 at runtime $220B - jump-table entry 44
+c64CellOut:
+; vectors 44 $1084 and 45 $1087 - the same routine under two entries: translate one cell to ASCII and CIOUT it. Maps the CEPT umlaut composition to the printer codes $BB-$DD
         LDA     L11E1
         CMP     #$7B
         BNE     L2220
@@ -2413,8 +2444,8 @@ L2269:
         JSR     CIOUT
         RTS
 
-c64Vec46:
-; vector 46 at runtime $226D - jump-table entry 46
+c64CellToChar:
+; vector 46 $108A - the core translator: six decoder bytes (code plus the four attribute bytes and the accent byte) in $11E1-$11E6 -> one character code
         PHP
         SEI
         LDA     L11E4
@@ -2514,8 +2545,8 @@ L230A:
         PLP
         RTS
 
-c64Vec49:
-; vector 49 at runtime $230C - jump-table entry 49
+c64OpenPrinter:
+; vector 49 $1093 - OPEN 1,4,7 and send ESC @ / ESC 3 $18: the hardcopy printer channel; msg $0F "Kein Drucker" on failure
         LDA     #$01
         STA     LA
         LDA     #$04
@@ -2579,8 +2610,8 @@ L2364:
         PLA
         RTI
 
-c64Vec53:
-; vector 53 at runtime $236D - jump-table entry 53
+c64GetKey:
+; vector 53 $109F - fetch the next key: from the macro file during playback, otherwise GETIN. Applies the QWERTZ Y/Z swap and echoes to the macro file while recording. C=1 when nothing is pending
         LDA     L11EC
         BNE     L23BE
         JSR     GETIN
@@ -2750,7 +2781,7 @@ c64ExtraFile:
         FCB     $00
 
 c64ShowSplash:
-; vector 54 - print c64SplashText, then set background and colour RAM
+; vector 54 $10A2 - print c64SplashText on the C64 screen, then set the background and fill colour RAM
         LDA     #c64SplashText&255
         STA     INBIT
         LDA     #c64SplashText>>8
@@ -2825,8 +2856,8 @@ c64SplashText:
         FCB     $00
         CHARSET
 
-c64Vec55:
-; vector 55 at runtime $25A5 - jump-table entry 55
+c64PlotChar:
+; vector 55 $10A5 - poke screen code A at column Y of row X, using the KERNAL line-address tables at $ECF0 and LDTB1
         PHP
         SEI
         PHA
@@ -2844,8 +2875,8 @@ c64Vec55:
         PLP
         RTS
 
-c64Vec56:
-; vector 56 at runtime $25BD - jump-table entry 56
+c64SetCursor:
+; vector 56 $10A8 - set PNTR/TBLX and call STUPT; X = $FF instead re-enables the cursor blink
         PHP
         SEI
         CPX     #$FF
@@ -2864,8 +2895,8 @@ L25D0:
         PLP
         RTS
 
-c64Vec38:
-; vector 38 at runtime $25D6 - jump-table entry 38
+c64DiskShowError:
+; vector 38 $1072 - read the DOS error channel, msg 9, and forward the message text to the decoder for display. C=1 when the code is not 00
         LDA     #$00
         STA     STATUS
         LDA     #$08
@@ -2941,8 +2972,8 @@ L2652:
         CLC
         RTS
 
-c64Vec39:
-; vector 39 at runtime $2654 - jump-table entry 39
+c64DiskCheckError:
+; vector 39 $1075 - read and discard the DOS error channel; C=1 when the code is not 00
         LDA     #$00
         STA     STATUS
         LDA     #$08
@@ -2993,8 +3024,8 @@ L26A7:
         CLC
         RTS
 
-c64Vec47:
-; vector 47 at runtime $26A9 - jump-table entry 47
+c64MacroRecStart:
+; vector 47 $108D - OPEN "@:BTX-MAK-<id>,S,W" on device 8 channel 5 to begin recording a macro; msg $0D on failure
         LDY     #$0F
         STY     FNLEN
         LDA     #$02
@@ -3025,8 +3056,8 @@ L26D7:
         SEC
         RTS
 
-c64Vec34:
-; vector 34 at runtime $26D9 - jump-table entry 34
+c64MacroRecOpen:
+; vector 34 $1066 - LISTN device 8 channel 5, the macro record file, and emit a $01 filler whenever the decoder's line counter btxReg011 has advanced
         LDA     #$02
         STA     LA
         LDA     #$08
@@ -3065,8 +3096,8 @@ L2709:
 L271E:
         RTS
 
-c64Vec35:
-; vector 35 at runtime $271F - jump-table entry 35
+c64MacroTalk:
+; vector 35 $1069 - TALK device 8 channel 6: make the macro file the talker for playback
         LDA     #$00
         STA     STATUS
         LDA     #$08
@@ -3077,8 +3108,8 @@ c64Vec35:
         JSR     TKSA
         RTS
 
-c64Vec60:
-; vector 60 at runtime $2732 - jump-table entry 60
+c64OpenPrgWrite:
+; vector 60 $10B4 - append ",P,W" to the filename and OPEN it on device 8 channel 4, then share c64OpenSeqWrite's tail
         LDY     L11BC
         LDA     #$2C
         STA     L11BE,Y
@@ -3095,8 +3126,8 @@ c64Vec60:
         STY     FNLEN
         JMP     L276F
 
-c64Vec48:
-; vector 48 at runtime $2752 - jump-table entry 48
+c64OpenSeqWrite:
+; vector 48 $1090 - append ",S,W" to the filename and OPEN it on device 8 channel 4
         LDY     L11BC
         LDA     #$2C
         STA     L11BE,Y
@@ -3153,8 +3184,8 @@ L27AD:
         SEC
         RTS
 
-c64Vec50:
-; vector 50 at runtime $27B7 - jump-table entry 50
+c64MacroOpenRead:
+; vector 50 $1096 - open "@:BTX-MAK-<id>" on device 8 channel 6 for reading, via the shared tail of c64DiskOpenRead
         LDA     #$00
         STA     STATUS
         LDA     #$03
@@ -3171,8 +3202,8 @@ c64Vec50:
         STA     FNLEN
         JMP     L28C3
 
-c64Vec51:
-; vector 51 at runtime $27D6 - jump-table entry 51
+c64MacroDir:
+; vector 51 $1099 - send ceptMacroDir ("Makro-Verzeichnis") and list every macro '0'-'9' then 'A'-'Z' with c64MacroDirLine
         BIT     L11EC
         BMI     L2845
         LDA     #$10
@@ -3232,8 +3263,8 @@ L2833:
 L2845:
         RTS
 
-c64Vec52:
-; vector 52 at runtime $2846 - jump-table entry 52
+c64MacroDirLine:
+; vector 52 $109C - one directory line: "<id>: " followed by the first 17 characters of that macro file, padded with spaces, or dashes when it does not exist
         LDA     c64MacroId
         JSR     L1012
         LDA     #$3A
@@ -3289,8 +3320,8 @@ L28A5:
         SEC
         RTS
 
-c64Vec16:
-; vector 16 at runtime $28AA - jump-table entry 16
+c64DiskOpenRead:
+; vector 16 $1030 - open the named file on device 8 channel 4 for reading, TALK/TKSA, return the first byte in X. Shares the tail with c64MacroOpenRead
         LDA     #$00
         STA     STATUS
         LDA     #$08
@@ -3327,8 +3358,8 @@ L28EB:
         SEC
         RTS
 
-c64Vec17:
-; vector 17 at runtime $28ED - jump-table entry 17
+c64DiskGetByte:
+; vector 17 $1033 - ACPTR one byte with a STOP check; C=1 on abort, V mirrors the EOI bit of STATUS
         LDA     #$00
         STA     STATUS
 
@@ -3353,8 +3384,8 @@ L290B:
         SEC
         RTS
 
-c64Vec33:
-; vector 33 at runtime $290D - jump-table entry 33
+c64CloseWrite:
+; vector 33 $1063 - CLOSE device 8 channel 4: finish the file opened by c64OpenSeqWrite or c64OpenPrgWrite
         JSR     UNLSN
         LDA     #$08
         JSR     LISTN
@@ -3363,8 +3394,8 @@ c64Vec33:
         JSR     UNLSN
         RTS
 
-c64Vec36:
-; vector 36 at runtime $291E - jump-table entry 36
+c64MacroRecClose:
+; vector 36 $106C - terminate the macro record file with a $00 and CLOSE device 8 channel 5
         JSR     L1066
         LDA     #$00
         JSR     CIOUT
@@ -3376,8 +3407,8 @@ c64Vec36:
         JSR     UNLSN
         RTS
 
-c64Vec37:
-; vector 37 at runtime $2937 - jump-table entry 37
+c64MacroCloseRead:
+; vector 37 $106F - CLOSE device 8 channel 6: end macro playback
         LDA     #$66
         STA     SA
         LDA     #$08
@@ -3385,8 +3416,8 @@ c64Vec37:
         JSR     CLSEI
         RTS
 
-c64Vec18:
-; vector 18 at runtime $2943 - jump-table entry 18
+c64DiskCloseRead:
+; vector 18 $1036 - UNTLK and CLOSE device 8 channel 4
         JSR     UNTLK
         LDA     #$08
         STA     FA
@@ -3395,8 +3426,8 @@ c64Vec18:
         JSR     CLSEI
         RTS
 
-c64Vec59:
-; vector 59 at runtime $2952 - jump-table entry 59
+c64OpenChannel:
+; vector 59 $10B1 - the shared open primitive: LISTN, SECND with SA | $F0, then fall into the KERNAL OPEN body at OP35
         LDA     #$00
         STA     STATUS
         LDA     FA
@@ -3423,8 +3454,8 @@ ceptMacroDir:
         FCC     "Makro-Verzeichnis"
         FCB     $0D,$0A,$0A,$0A,$0A,$00
 
-c64Vec57:
-; vector 57 at runtime $299B - jump-table entry 57
+c64MenuTelesoft:
+; vector 57 $10AB - menu 'T' (Telesoft): msg $1A "Telesoftware: File?", open a PRG file and run the telesoftware download decoder
         LDA     L11EC
         ORA     L11D8
         BEQ     L29B1
@@ -3637,23 +3668,23 @@ L2B0B:
         STA     btxFifoRd
         RTS
 
-c64Vec58:
-; vector 58 at runtime $2B17 - jump-table entry 58
+c64TelesoftByte:
+; vector 58 $10AE - the telesoftware reader: fill the ring buffer from the decoder and hand out one decoded byte, tracking the '<'/'>' framing and the 6-bit pair encoding
         JSR     L1018
         BCS     L2B3A
         LDY     #$00
         STA     (FACLO),Y
         INC     FACLO
-        BNE     c64Vec58
+        BNE     c64TelesoftByte
         INC     FACSGN
         LDA     FACSGN
         CMP     L10C3
-        BNE     c64Vec58
+        BNE     c64TelesoftByte
         LDA     c64PtrTable
         STA     FACLO
         LDA     c64PtrTable+1
         STA     FACSGN
-        JMP     c64Vec58
+        JMP     c64TelesoftByte
 
 L2B3A:
         LDA     btxReg090
@@ -3678,7 +3709,7 @@ L2B55:
         LDA     FACSGN
         CMP     ARGSGN
         BNE     L2B64
-        JMP     c64Vec58
+        JMP     c64TelesoftByte
 
 L2B64:
         LDY     #$00
