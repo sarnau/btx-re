@@ -19,7 +19,6 @@ FAC2SGN     EQU     $006E
 STATUS      EQU     $0090
 DFLTO       EQU     $009A
 TIMEHI      EQU     $00A0
-TIMEMID     EQU     $00A1
 INBIT       EQU     $00A7
 BITCI       EQU     $00A8
 FNLEN       EQU     $00B7
@@ -68,7 +67,6 @@ btxReg1FC   EQU     $81FC
 btxReg1FD   EQU     $81FD
 
 ; C64 ROM entry points.
-KERNAL_C86E  EQU     $C86E
 KERNAL_E3BF  EQU     $E3BF
 KERNAL_E56C  EQU     $E56C
 IRQ_ENTRY    EQU     $EA31
@@ -120,9 +118,9 @@ c64LoadAddr:
 ; Two findings for anyone continuing:
 ;
 ;   - $11D7-$11FC is a VARIABLE block, not text. Code stores into $11D8-$11F7,
-;     which is what separates it from the German strings beginning at $11FD
-;     ("von Diskette: File? "). The ROM image holds their initial values, which
-;     is why that area first reads as unprintable filler in front of the text.
+;     which is what separates it from the string records that follow. The ROM
+;     image holds their initial values, which is why that area first reads as
+;     unprintable filler in front of the text.
 ;   - Text records are 40 columns followed by a 5-byte trailer
 ;     ($2C $00 $C0 $01 $98). Nothing addresses them directly, so they are reached
 ;     by index; the only LDA #$2D in the payload is at runtime $287B.
@@ -295,16 +293,13 @@ c64VecTableEnd:
         FCB     $0B,$00,$00,$11,$0A,$00,$00,$1D,$09,$00,$00,$14,$08,$00,$00,$9D
         FCB     $08,$00,$00,$13,$1E,$00,$00,$93,$0C,$00,$00,$85,$13,$00,$00,$86
         FCB     $1C,$00,$00,$87,$1A,$00,$00,$89,$10,$52,$00,$8B,$10,$41,$00,$8A
-        FCB     $10
-
-c64VarBlock:
-        FCB     $54,$00,$8C,$10,$45,$00,$90,$80,$00,$00,$05,$87,$00,$00,$1C,$81
-        FCB     $00,$00,$9F,$86,$00,$00,$9C,$85,$00,$00,$1E,$82,$00,$00,$1F,$84
-        FCB     $00,$00,$9E,$83,$00,$00,$5F,$11,$00,$00,$06,$14,$00,$00,$AE,$13
-        FCB     $00,$00,$AB,$11,$00,$00,$24,$A4,$00,$00,$5C,$A3,$00,$00,$00,$00
-        FCB     $00,$00,$23,$19,$27,$00,$27,$2F,$00,$00,$2B,$19,$7B,$00,$DB,$3F
-        FCB     $00,$00,$2D,$19,$42,$20,$DD,$19,$41,$20,$5C,$5B,$00,$00,$A9,$19
-        FCB     $2D,$00,$40,$19,$48,$75,$BA,$19
+        FCB     $10,$54,$00,$8C,$10,$45,$00,$90,$80,$00,$00,$05,$87,$00,$00,$1C
+        FCB     $81,$00,$00,$9F,$86,$00,$00,$9C,$85,$00,$00,$1E,$82,$00,$00,$1F
+        FCB     $84,$00,$00,$9E,$83,$00,$00,$5F,$11,$00,$00,$06,$14,$00,$00,$AE
+        FCB     $13,$00,$00,$AB,$11,$00,$00,$24,$A4,$00,$00,$5C,$A3,$00,$00,$00
+        FCB     $00,$00,$00,$23,$19,$27,$00,$27,$2F,$00,$00,$2B,$19,$7B,$00,$DB
+        FCB     $3F,$00,$00,$2D,$19,$42,$20,$DD,$19,$41,$20,$5C,$5B,$00,$00,$A9
+        FCB     $19,$2D,$00,$40,$19,$48,$75,$BA,$19
         FCC     "HU*+"
         FCB     $00,$00,$C0,$2A,$00,$00,$5E,$5D,$00,$00,$DE,$5C,$00,$00,$3A,$19
         FCB     $48,$6F,$5B,$19,$48,$4F,$3B,$19,$48,$61,$5D,$19
@@ -326,8 +321,6 @@ L11BE:
 
 L11F8:
         FCB     $18,$00,$C0,$01,$98
-
-c64TextBlock:
         FCC     "von Diskette: File? "
 
 L1211:
@@ -913,8 +906,6 @@ L195F:
         JSR     L109F
         AND     #$7F
         BEQ     L195F
-
-L1966:
         CMP     #$03
         BNE     L196D
         JMP     L101B
@@ -1049,50 +1040,50 @@ L1A15:
         LDA     #$00
         STA     btxReg005
         JMP     (KERNAL_FFFC)
-        FCB     $1F,$2F
-        EOR     ($9B,X)
-        AND     ($40),Y
-        FCB     $1B,$23
-        JSR     $9B57
-        BMI     L1A8E
-        FCB     $1F
-        EOR     $41
-        JSR     L2020
-        FCB     $8F
-        PHP
-        JSR     L2D43
-        ROL     $34,X
-        JSR     L202D
-        FCB     $42
-        ADC     $74
-        FCB     $72
-        ADC     #$65
-        FCB     $62,$1F,$4B
-        LSR     $6166
-        JMP     ($736C)
-        JSR     KERNAL_C86E
-        FCB     $6F,$74
-        ADC     #$67
-        BIT     $4D1F
-        EOR     #$4D
-        FCB     $6F
-        ROR     $7469
-        FCB     $6F,$72
-        JSR     $6E61
-        JSR     $6564
-        ROR     $5220
-        ADC     FAC1MAN2
-        PLA
-        ROR     $7265
 
-L1A8E:
-        FCB     $1F,$4F,$4F
-        ADC     $6D,X
-        FCB     $73,$74
-        ADC     FAC1MAN2
-        FCB     $6B
-        ADC     FAC2SGN
-        BRK
+; CEPT datastream, not C64 screen text.
+;
+; The payload composes pages in the decoder's own protocol and sends them across
+; rather than drawing on the C64 screen, so these blocks read as control codes
+; mixed with text:
+;
+;     $1F r c   US, then row and column - CEPT cursor positioning
+;     $9B ...   CSI, the C1 introducer the firmware dispatches at $D289
+;     $1B ...   ESC, dispatched at $D1C9
+;     $12 c n   RPT, repeat a character - ctlRPT at $DB2B in the firmware
+;
+; Three of them exist:
+;
+;   ceptMonitorMsg  $BDE9  "C-64 - Betrieb", then positioned lines
+;                          "falls noetig,", "Monitor an den Rechner",
+;                          "umstecken"
+;   ceptMacroDir    $CD17  "Makro-Verzeichnis"
+;   ceptStartPage   $CF65  the startup page: "commodore" in text followed by
+;                          G1 mosaic characters ($A0-$DF) drawn with RPT runs,
+;                          which is why it looks like noise as bytes. It ends
+;                          with "V1.6 141087wr" - the C64 payload's own version
+;                          and a date, 14 October 1987, plus what look like
+;                          author initials. That is a different version line
+;                          from the firmware's "Decodersoftware V3.3" at $EFF5,
+;                          so the two halves are versioned separately.
+;
+; That the C64 side speaks CEPT to the decoder is what makes ctlRPT and the
+; mosaic set visible from both directions - the firmware decodes exactly what
+; this data encodes.
+ceptMonitorMsg:
+        FCB     $1F,$2F,$41,$9B,$31,$40,$1B,$23,$20,$57,$9B,$30,$40,$1F
+        FCC     "EA   "
+        FCB     $8F,$08
+        FCC     " C-64 - Betrieb"
+        FCB     $1F
+        FCC     "KNfalls n"
+        FCB     $C8
+        FCC     "otig,"
+        FCB     $1F
+        FCC     "MIMonitor an den Rechner"
+        FCB     $1F
+        FCC     "OOumstecken"
+        FCB     $00
 
 c64Vec15:
 ; vector 15 at runtime $1A9B - jump-table entry 15
@@ -1864,19 +1855,14 @@ L1FF8:
         LDA     #$00
         STA     $11BF
         LDA     #$02
-
-L2020:
         STA     $11BC
 
 L2023:
         LDA     btxReg011
         CMP     btxReg011
         BNE     L2023
-        FCB     $8D,$ED
-
-L202D:
-        ORA     ($20),Y
-        ROR     $10
+        STA     $11ED
+        JSR     L1066
         LDY     #$00
         STY     $11B9
 
@@ -3204,11 +3190,8 @@ c64Vec18:
         STA     FA
         LDA     #$64
         STA     SA
-        FCB     $20
-
-L294F:
-        FCB     $42
-        INC     $60,X
+        JSR     KERNAL_CLOSE
+        RTS
 
 c64Vec59:
 ; vector 59 at runtime $2952 - jump-table entry 59
@@ -3230,29 +3213,13 @@ L296A:
 
 L296C:
         JMP     KERNAL_F3F6
-        FCB     $1F,$2F
-        EOR     ($9B,X)
-        AND     ($40),Y
-        FCB     $1B,$23
-        JSR     $9B57
-        BMI     L29BC
-        FCB     $1F
-        EOR     ($41,X)
-        JSR     L2020
-        FCB     $8F
-        PHP
-        EOR     $6B61
-        FCB     $72,$6F
-        AND     $6556
-        FCB     $72,$7A
-        ADC     FAC2EXP
-        FCB     $63
-        PLA
-        ROR     $7369
-        ORA     $0A0A
-        ASL     A
-        ASL     A
-        BRK
+
+ceptMacroDir:
+        FCB     $1F,$2F,$41,$9B,$31,$40,$1B,$23,$20,$57,$9B,$30,$40,$1F
+        FCC     "AA   "
+        FCB     $8F,$08
+        FCC     "Makro-Verzeichnis"
+        FCB     $0D,$0A,$0A,$0A,$0A,$00
 
 c64Vec57:
 ; vector 57 at runtime $299B - jump-table entry 57
@@ -3273,14 +3240,12 @@ L29B1:
         LDA     #$1A
         JSR     L105D
         LDA     #$13
-        FCB     $20
-
-L29BC:
-        FCB     $57
-        BPL     L294F
-        FCB     $04
+        JSR     L1057
+        BCC     L29C4
         JSR     L101B
         RTS
+
+L29C4:
         JSR     L10B4
         BCC     L29D7
         LDA     #$17
@@ -3551,8 +3516,6 @@ L2B96:
         INC     $11F1
         LDX     $11F1
         CPX     #$04
-
-L2BB2:
         BNE     L2BB9
         LDX     #$00
         STX     $11F1
@@ -3564,221 +3527,39 @@ L2BB9:
 L2BBB:
         SEC
         RTS
+
+ceptStartPage:
         FCB     $1F,$2F,$43,$0C,$1F,$2F,$44,$1F
-        EOR     ($41,X)
-        JSR     $8E20
-        PHP
-        JSR     L2020
-        JSR     $6320
-        FCB     $6F
-        ADC     $6F6D
-        FCB     $64,$6F,$72
-        ADC     $9B
-        AND     ($40),Y
-        FCB     $1B,$23
-        JSR     c64Vec28
-        FCB     $42,$41
-
-L2BE3:
-        FCB     $9B
-        BMI     L2C26
-        FCB     $83
-        JSR     $4712
-        TXS
-        JSR     $5712
-        STA     $1220,Y
-        LSR     $7E1B
-        CLV
-        FCB     $A3,$12,$57
-        CPX     $20
-        FCB     $12
-        JMP     L20EA
-        FCB     $12
-        EOR     $20B5,Y
-        FCB     $12,$4B
-        NOP
-        JSR     $4412
-        CPX     #$F8
-        FCB     $FC,$DF,$12
-        EOR     #$FC
-        FCB     $F4
-        BCS     L2BB2
-        FCB     $12,$44
-        LDA     $20,X
-        FCB     $12,$4B
-        NOP
-        JSR     $4312
-        INX
-        FCB     $DF,$12,$43,$BF,$A3,$12
-        EOR     $EF
-        FCB     $DF
-
-L2C26:
-        FCB     $12,$43
-        LDY     $A0,X
-        FCB     $12,$43
-        LDA     $20,X
-        FCB     $12,$4B
-        NOP
-        JSR     $4312
-        TAX
-        FCB     $DF,$DF,$DF,$AF
-        LDA     ($E0,X)
-        FCB     $FC,$DF,$DF,$FC
-        BCS     L2BE3
-        FCB     $AF,$DF,$DF,$DF
-        LDA     TIMEHI
-        FCB     $12,$43
-        LDA     $20,X
-        FCB     $12,$4B
-        NOP
-        JSR     $4412
-        LDX     #$E3
-        SED
-        INC     $EADF,X
-        FCB     $DF,$12,$43
-        LDA     $DF,X
-        SBC     $B3F4,X
-        LDA     ($A0,X)
-        FCB     $12,$44
-        LDA     $20,X
-        FCB     $12,$4B
-        NOP
-        JSR     $4512
-        FCB     $DF,$12,$43
-        NOP
-        FCB     $DF,$12,$43
-
-L2C72:
-        LDA     $DF,X
-        FCB     $12,$43
-        LDY     #$12
-        EOR     $B5
-        JSR     $4B12
-        NOP
-        JSR     $4512
-        FCB     $DF,$12,$43
-        SBC     $AFF3,X
-        FCB     $AF,$F3
-        INC     $12DF,X
-        FCB     $43
-        LDY     #$12
-        EOR     $B5
-        JSR     $4B12
-        NOP
-        JSR     $4512
-        FCB     $DF,$12
-        EOR     $12A0
-        EOR     $B5
-        JSR     $4B12
-        NOP
-        JSR     $5912
-
-L2CA6:
-        LDA     $20,X
-        FCB     $12,$4B
-        NOP
-        LDY     #$EA
-        FCB     $EB,$E2
-        NOP
-
-L2CB0:
-        CPX     #$FA
-        CPX     #$F0
-        CPX     #$B0
-        SBC     $B0,X
-
-L2CB8:
-        LDA     ($F0),Y
-        CPX     #$F0
-        BEQ     L2CA6
-        BCS     L2CB0
-        BCS     L2C72
-        BCS     L2CB8
-        LDY     #$B5
-        JSR     $4B12
-        NOP
-        LDY     #$EA
-        SBC     #$EA
-        FCB     $12,$43
-        TAX
-        CPX     $A0EA
-        LDA     $12,X
-        FCB     $43
-        NOP
-        FCB     $12,$43
-        LDY     #$BD
-        LDA     SA
-        LDA     ($B5),Y
-        LDY     #$B5
-        JSR     $4B12
-        NOP
-        LDY     #$A2
-        FCB     $A3
-        LDX     #$A2
-        LDX     #$A3
-        LDX     #$A3
-        LDX     #$A1
-        FCB     $12,$44
-        LDX     #$12
-        FCB     $43
-        LDA     ($A3,X)
-        LDA     ($A1,X)
-        LDA     ($A3,X)
-        LDY     #$B5
-        JSR     $4B12
-        LDX     #$E4
-        TXS
-        LDY     #$12
-        FCB     $57
-        STA     $A1B8,Y
-        JSR     $4D12
-        FCB     $A3,$12,$57
-        JSR     $6F12
-        FCB     $87,$1B
-        ADC     $12D0,X
-        FCB     $67
-        JSR     $6D12
-        FCB     $9B
-        BMI     L2D5F
-        FCB     $83
-        JSR     $6544
-        FCB     $63,$6F,$64
-        ADC     $72
-        ADC     $646F
-        ADC     $6C,X
-        JSR     L1966
-        PHA
-        ADC     $72,X
-        JSR     L2D43
-        ROL     $34,X
-        FCB     $2F
-        AND     ($32),Y
-        SEC
-        ROL     $1220
-        ROR     $309B
-        RTI
-
-L2D43:
-        FCB     $87
-        BNE     L2D58
-        FCB     $67
-        JSR     $6712
-        FCB     $1F
-        CLI
-        EOR     ($83,X)
-        TYA
-        LSR     $31,X
-        ROL     L2036
-        AND     ($34),Y
-        AND     ($30),Y
-
-L2D58:
-        SEC
-        FCB     $37,$77,$72,$1F,$2F,$43
-
-L2D5F:
-        FCB     $1E
-        BRK
+        FCC     "AA  "
+        FCB     $8E,$08
+        FCC     "     commodore"
+        FCB     $9B,$31,$40,$1B,$23,$20,$54,$1F,$42,$41,$9B,$30,$40,$83,$20,$12
+        FCB     $47,$9A,$20,$12,$57,$99,$20,$12,$4E,$1B,$7E,$B8,$A3,$12,$57,$E4
+        FCB     $20,$12,$4C,$EA,$20,$12,$59,$B5,$20,$12,$4B,$EA,$20,$12,$44,$E0
+        FCB     $F8,$FC,$DF,$12,$49,$FC,$F4,$B0,$A0,$12,$44,$B5,$20,$12,$4B,$EA
+        FCB     $20,$12,$43,$E8,$DF,$12,$43,$BF,$A3,$12,$45,$EF,$DF,$12,$43,$B4
+        FCB     $A0,$12,$43,$B5,$20,$12,$4B,$EA,$20,$12,$43,$AA,$DF,$DF,$DF,$AF
+        FCB     $A1,$E0,$FC,$DF,$DF,$FC,$B0,$A2,$AF,$DF,$DF,$DF,$A5,$A0,$12,$43
+        FCB     $B5,$20,$12,$4B,$EA,$20,$12,$44,$A2,$E3,$F8,$FE,$DF,$EA,$DF,$12
+        FCB     $43,$B5,$DF,$FD,$F4,$B3,$A1,$A0,$12,$44,$B5,$20,$12,$4B,$EA,$20
+        FCB     $12,$45,$DF,$12,$43,$EA,$DF,$12,$43,$B5,$DF,$12,$43,$A0,$12,$45
+        FCB     $B5,$20,$12,$4B,$EA,$20,$12,$45,$DF,$12,$43,$FD,$F3,$AF,$AF,$F3
+        FCB     $FE,$DF,$12,$43,$A0,$12,$45,$B5,$20,$12,$4B,$EA,$20,$12,$45,$DF
+        FCB     $12,$4D,$A0,$12,$45,$B5,$20,$12,$4B,$EA,$20,$12,$59,$B5,$20,$12
+        FCB     $4B,$EA,$A0,$EA,$EB,$E2,$EA,$E0,$FA,$E0,$F0,$E0,$B0,$F5,$B0,$B1
+        FCB     $F0,$E0,$F0,$F0,$E8,$B0,$F0,$B0,$B0,$B0,$F4,$A0,$B5,$20,$12,$4B
+        FCB     $EA,$A0,$EA,$E9,$EA,$12,$43,$AA,$EC,$EA,$A0,$B5,$12,$43,$EA,$12
+        FCB     $43,$A0,$BD,$A5,$B9,$B1,$B5,$A0,$B5,$20,$12,$4B,$EA,$A0,$A2,$A3
+        FCB     $A2,$A2,$A2,$A3,$A2,$A3,$A2,$A1,$12,$44,$A2,$12,$43,$A1,$A3,$A1
+        FCB     $A1,$A1,$A3,$A0,$B5,$20,$12,$4B,$A2,$E4,$9A,$A0,$12,$57,$99,$B8
+        FCB     $A1,$20,$12,$4D,$A3,$12,$57,$20,$12,$6F,$87,$1B,$7D,$D0,$12,$67
+        FCB     $20,$12,$6D,$9B,$30,$40,$83
+        FCC     " Decodermodul f"
+        FCB     $19
+        FCC     "Hur C-64/128. "
+        FCB     $12,$6E,$9B,$30,$40,$87,$D0,$12,$67,$20,$12,$67,$1F,$58,$41,$83
+        FCB     $98
+        FCC     "V1.6 141087wr"
+        FCB     $1F,$2F,$43,$1E,$00
 
         END

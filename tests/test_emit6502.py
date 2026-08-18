@@ -283,3 +283,30 @@ def test_sa_fa_are_not_treated_as_a_pointer_pair():
     i = lines.index("JSR     KERNAL_CLOSE")
     assert lines[i - 4:i] == ["LDA     #$66", "STA     SA",
                               "LDA     #$08", "STA     FA"]
+
+
+def test_cept_blocks_are_data_not_code():
+    """The payload composes pages in the decoder's own protocol, so these read
+    as CEPT control codes mixed with text, not as 6502 instructions."""
+    src = (OUT / "c64_payload.asm").read_text()
+    for label in ("ceptMonitorMsg", "ceptMacroDir", "ceptStartPage"):
+        assert f"{label}:" in src, label
+    # bound the block at the next label, not by a character count
+    after = src.split("ceptMonitorMsg:", 1)[1]
+    body = re.split(r"^[A-Za-z_][A-Za-z0-9_]*:", after, maxsplit=1, flags=re.M)[0]
+    assert "C-64 - Betrieb" in body
+    assert not re.search(r"^\s+(JSR|JMP|LDA|STA)\s", body, re.M)
+    tail = src.split("ceptStartPage:", 1)[1]
+    assert "commodore" in tail
+    assert '"V1.6 141087wr"' in tail, "the payload's own version stamp"
+    assert not re.search(r"^\s+(JSR|JMP|LDA|STA)\s", tail, re.M)
+
+
+def test_string_records_start_at_their_header():
+    """The first record begins at its 5-byte header, so a label five bytes in
+    would split it - which is what the removed c64TextBlock did."""
+    src = (OUT / "c64_payload.asm").read_text()
+    body = src.split("L11F8:", 1)[1][:200]
+    assert "FCB     $18,$00,$C0,$01,$98" in body
+    assert 'FCC     "von Diskette: File? "' in body
+    assert "c64TextBlock" not in src

@@ -166,13 +166,14 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 
 
 [labels]
+"0xBDE9" = "ceptMonitorMsg"
+"0xCD17" = "ceptMacroDir"
+"0xCF65" = "ceptStartPage"
 "0xC80C" = "c64ExtraFile"
 "0xC84C" = "c64SplashText"
 "0xB331" = "c64CartSignature"
 "0xBA18" = "c64StrTable"
 "0xB45F" = "c64VecTableEnd"
-"0xB4B0" = "c64VarBlock"
-"0xB5A5" = "c64TextBlock"
 "0xBA56" = "c64ScreenInit"
 "0xBAA7" = "c64ScreenOut1"
 "0xBAF4" = "c64Vec02"
@@ -394,6 +395,36 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xFFF0" = "vectors"
 
 [block_comments]
+"0xBDE9" = """
+CEPT datastream, not C64 screen text.
+
+The payload composes pages in the decoder's own protocol and sends them across
+rather than drawing on the C64 screen, so these blocks read as control codes
+mixed with text:
+
+    $1F r c   US, then row and column - CEPT cursor positioning
+    $9B ...   CSI, the C1 introducer the firmware dispatches at $D289
+    $1B ...   ESC, dispatched at $D1C9
+    $12 c n   RPT, repeat a character - ctlRPT at $DB2B in the firmware
+
+Three of them exist:
+
+  ceptMonitorMsg  $BDE9  "C-64 - Betrieb", then positioned lines
+                         "falls noetig,", "Monitor an den Rechner",
+                         "umstecken"
+  ceptMacroDir    $CD17  "Makro-Verzeichnis"
+  ceptStartPage   $CF65  the startup page: "commodore" in text followed by
+                         G1 mosaic characters ($A0-$DF) drawn with RPT runs,
+                         which is why it looks like noise as bytes. It ends
+                         with "V1.6 141087wr" - the C64 payload's own version
+                         and a date, 14 October 1987, plus what look like
+                         author initials. That is a different version line
+                         from the firmware's "Decodersoftware V3.3" at $EFF5,
+                         so the two halves are versioned separately.
+
+That the C64 side speaks CEPT to the decoder is what makes ctlRPT and the
+mosaic set visible from both directions - the firmware decodes exactly what
+this data encodes."""
 "0x0061" = """
 Low memory is named with the C64 ROM's own names.
 
@@ -497,9 +528,9 @@ side, not a sweep.
 Two findings for anyone continuing:
 
   - $11D7-$11FC is a VARIABLE block, not text. Code stores into $11D8-$11F7,
-    which is what separates it from the German strings beginning at $11FD
-    ("von Diskette: File? "). The ROM image holds their initial values, which
-    is why that area first reads as unprintable filler in front of the text.
+    which is what separates it from the string records that follow. The ROM
+    image holds their initial values, which is why that area first reads as
+    unprintable filler in front of the text.
   - Text records are 40 columns followed by a 5-byte trailer
     ($2C $00 $C0 $01 $98). Nothing addresses them directly, so they are reached
     by index; the only LDA #$2D in the payload is at runtime $287B."""
@@ -1280,6 +1311,16 @@ kind = "ptr_table"
 
 [[regions]]
 start = 0xBA56
+end = 0xBDE9
+kind = "code6502"
+
+[[regions]]
+start = 0xBDE9
+end = 0xBE43
+kind = "string"
+
+[[regions]]
+start = 0xBE43
 end = 0xC80C
 kind = "code6502"
 
@@ -1300,8 +1341,23 @@ kind = "petscii"
 
 [[regions]]
 start = 0xC94D
-end = 0xD109
+end = 0xCD17
 kind = "code6502"
+
+[[regions]]
+start = 0xCD17
+end = 0xCD43
+kind = "string"
+
+[[regions]]
+start = 0xCD43
+end = 0xCF65
+kind = "code6502"
+
+[[regions]]
+start = 0xCF65
+end = 0xD109
+kind = "string"
 
 
 # Screen line-address tables. See the block comment at $FCDB.
