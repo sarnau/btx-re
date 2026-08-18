@@ -2791,9 +2791,6 @@ c64CartHeader:
         BINCLUDE "c64_bootstrap.bin"
 
 
-c64LoadAddr:
-        FCB     $00,$10
-
 ; C64 payload: a 61-entry JMP dispatch table at runtime $1000-$10B6, then code at
 ; $174C-$2943 with data below it. The table is the module's whole API surface and
 ; the natural place to start reading.

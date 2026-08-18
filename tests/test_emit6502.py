@@ -27,13 +27,32 @@ def test_each_block_assembles_to_exactly_its_rom_bytes():
     check; this pins the sizes and load addresses too."""
     result = build.run(write=True)
     rom = result.rom
-    for name, start, end, org in (("bootstrap", 0xB32D, 0xB3A6, 0x8000),
+    for name, start, end, org in (("bootstrap", 0xB32D, 0xB3A8, 0x8000),
                                   ("payload", 0xB3A8, 0xD109, 0x1000)):
         blob = (OUT / f"c64_{name}.bin").read_bytes()
         assert blob == rom[start - 0x8000:end - 0x8000], name
         src = (OUT / f"c64_{name}.asm").read_text()
         assert f"ORG     ${org:04X}" in src, name
         assert "CPU     6502" in src, name
+
+
+def test_blocks_are_contiguous_and_leave_no_loose_bytes():
+    """The PRG load-address word belongs to the bootstrap binary, so the two
+    BINCLUDEs sit back to back with nothing emitted between them."""
+    import build as _b
+    sc = __import__("dis65xx.sidecar", fromlist=["load_sidecar"]).load_sidecar(
+        pathlib.Path(__file__).resolve().parent.parent / "sidecar" / "decoder_ii.toml")
+    boot, payload = sc.c64_blocks
+    assert boot.end == payload.start, (hex(boot.end), hex(payload.start))
+    src = (OUT / "c64_bootstrap.asm").read_text()
+    assert "c64LoadAddr:" in src
+    assert "FCB     $00,$10" in src
+
+
+def test_data_regions_render_as_fcb_not_instructions():
+    """The German text and the tables must not be disassembled as code."""
+    src = (OUT / "c64_payload.asm").read_text()
+    assert re.search(r"^\s+FCB\s+\$", src, re.M)
 
 
 def test_block_sources_use_real_labels_at_real_addresses():

@@ -22,11 +22,15 @@ fi
 
 cd "$OUT"
 
-# 1. the 6502 blocks, each at its own load address
-for block in bootstrap:8000:8078 payload:1000:2D60; do
-    name="${block%%:*}"; rest="${block#*:}"; lo="${rest%%:*}"; hi="${rest##*:}"
+# 1. the 6502 blocks, each at its own load address. The range is derived from
+# the source's ORG and the block's size, so it cannot drift out of step with
+# the sidecar the way a hardcoded one did.
+for name in bootstrap payload; do
+    org=$(sed -n 's/^ *ORG *\$\([0-9A-F]*\).*/\1/p' "c64_$name.asm" | head -1)
+    size=$(wc -c < "c64_$name.bin")
+    end=$(printf '%04X' $(( 0x$org + size - 1 )))
     "$ASL" -q -o "$WORK/$name.p" "c64_$name.asm"
-    "$P2BIN" "$WORK/$name.p" "$WORK/c64_$name.bin" -r "\$$lo-\$$hi" >/dev/null
+    "$P2BIN" "$WORK/$name.p" "$WORK/c64_$name.bin" -r "\$$org-\$$end" >/dev/null
     if ! cmp -s "$WORK/c64_$name.bin" "c64_$name.bin"; then
         echo "FAIL  asl and dis65xx disagree on the $name block" >&2
         exit 1

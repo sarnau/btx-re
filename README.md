@@ -54,9 +54,12 @@ and mixing them made every operand a special case.
 Each 6502 block is assembled on its own at the address it really runs at, and
 the result is linked back into the 6801 listing as binary:
 
-    out/c64_bootstrap.asm   ORG $8000   ->  c64_bootstrap.bin    121 bytes
+    out/c64_bootstrap.asm   ORG $8000   ->  c64_bootstrap.bin    123 bytes
     out/c64_payload.asm     ORG $1000   ->  c64_payload.bin     7521 bytes
     out/btx_decoder_ii.asm  ORG $8000   ->  BINCLUDEs both      32768 bytes
+
+The two blocks are contiguous - the PRG load-address word belongs to the
+bootstrap binary - so the 6801 listing carries nothing but the two BINCLUDEs.
 
 `build.py` checks each block against the ROM bytes it came from before the 6801
 listing pulls it in, so a failure says which block broke rather than giving one

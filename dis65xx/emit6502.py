@@ -52,12 +52,26 @@ def _operand(insn, labels: dict[int, str]) -> str:
     raise AssertionError(m)  # pragma: no cover
 
 
-def _decode_block(data: bytes, base: int, block: C64Block, labels: dict[int, str]):
-    """Yield (runtime_addr, insn_or_None, byte) walking the block."""
+_DATA_KINDS = {"bytes", "string", "words", "ptr_table", "chargen"}
+
+
+def _decode_block(data: bytes, base: int, block: C64Block, labels: dict[int, str],
+                  sidecar: Sidecar | None = None):
+    """Yield (runtime_addr, insn_or_None, byte) walking the block.
+
+    A byte covered by a data region is never disassembled - that is what keeps
+    the German text and the tables after the jump table from being rendered as
+    nonsense instructions.
+    """
     addr = block.start
     while addr < block.end:
         rt = addr - block.offset
         split = None
+        region = sidecar.region_at(addr) if sidecar is not None else None
+        if region is not None and region.kind in _DATA_KINDS:
+            yield rt, None, data[addr - base]
+            addr += 1
+            continue
         try:
             insn = codec6502.decode(data, addr - base, rt)
         except ValueError:
@@ -80,7 +94,7 @@ def collect_labels(data: bytes, base: int, block: C64Block,
     labels = dict(named)
     for _ in range(8):
         targets: set[int] = set()
-        for rt, insn, _b in _decode_block(data, base, block, labels):
+        for rt, insn, _b in _decode_block(data, base, block, labels, sidecar):
             if insn is None:
                 continue
             if insn.mode is Mode.REL:
@@ -104,7 +118,7 @@ def emit_block(data: bytes, base: int, block: C64Block, sidecar: Sidecar) -> str
 
     # External references: C64 ROM entry points and anything outside this block.
     external: dict[int, str] = {}
-    for _rt, insn, _b in _decode_block(data, base, block, labels):
+    for _rt, insn, _b in _decode_block(data, base, block, labels, sidecar):
         if insn is None or insn.operand is None:
             continue
         if insn.mode not in (Mode.ABS, Mode.IND) or insn.mnemonic not in _JUMPS:
@@ -144,7 +158,7 @@ def emit_block(data: bytes, base: int, block: C64Block, sidecar: Sidecar) -> str
             lines.append(f"{'':{_INDENT}}{'FCB':{_MNEM_WIDTH}}"
                          + ",".join(f"${b:02X}" for b in chunk))
 
-    for rt, insn, byte in _decode_block(data, base, block, labels):
+    for rt, insn, byte in _decode_block(data, base, block, labels, sidecar):
         if rt in labels:
             flush()
             rom_addr = rt + block.offset

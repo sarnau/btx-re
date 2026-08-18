@@ -1253,7 +1253,7 @@ kind = "ptr_table"
 [[c64_blocks]]
 name = "bootstrap"
 start = 0xB32D
-end = 0xB3A6
+end = 0xB3A8
 org = 0x8000
 
 [[c64_blocks]]
