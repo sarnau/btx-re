@@ -28,6 +28,18 @@ TRCSR          EQU     $11
 RDR            EQU     $12
 TDR            EQU     $13
 RAMCR          EQU     $14
+dbtLatch       EQU     $40
+curAttr0       EQU     $E0
+curSet         EQU     $E1
+curAttr2       EQU     $E2
+curAttr3       EQU     $E3
+walkAttr       EQU     $E4
+walkChar       EQU     $E6
+walkAccent     EQU     $E8
+colourWord     EQU     $EA
+savedS         EQU     $EC
+rowMode10      EQU     $EE
+blitFlag       EQU     $EF
 softVecSci     EQU     $F0
 softVecTof     EQU     $F2
 softVecOcf     EQU     $F4
@@ -885,13 +897,13 @@ LA213:
         LDAA    #$0A
         STAA    glyphRows
         LDAA    #$FF
-        STAA    >$00EE
+        STAA    >rowMode10
         LDAA    cursorRowMax
         CMPA    #$17
         BEQ     LA23E
         LDAA    #$0C
         STAA    glyphRows
-        CLR     $00EE
+        CLR     rowMode10
 
 LA23E:
         TST     cursorVisible
@@ -942,7 +954,7 @@ LA26F:
         LDAA    #$17
         STAA    >PORT3
         SEI
-        STS     >$00EC
+        STS     >savedS
         LDS     #rowFlags
         LDX     #videoRam
 
@@ -960,7 +972,7 @@ LA28F:
         BNE     LA28F
         DEC     blitLines
         BNE     LA284
-        LDS     >$00EC
+        LDS     >savedS
         CLI
         LDAA    rowFlags
         ANDA    #$7F
@@ -1029,21 +1041,47 @@ LA2E4:
         STAA    renderRow
         STAA    renderCol
         LDD     #planeChar
-        STD     >$00E6
+        STD     >walkChar
         LDD     #planeAttr
-        STD     >$00E4
+        STD     >walkAttr
         LDD     #planeAccent
-        STD     >$00E8
+        STD     >walkAccent
         TST     modeAscii
         BEQ     LA312
         JMP     LA797
 
+; The current cell, unpacked into internal RAM.
+;
+; walkChar, walkAttr and walkAccent are the three plane pointers the redraw walks
+; with, set up at $A2F2 from planeChar, planeAttr and planeAccent. For each cell
+; the four attribute bytes are copied out of planeAttr into curAttr0..curAttr3:
+;
+;     LDX walkChar  / LDAB $00,X          the character code
+;     LDX walkAttr  / LDAA $00,X / STAA curAttr0
+;                     LDAA $01,X / STAA curSet
+;                     LDAA $02,X / STAA curAttr2
+;                     LDAA $03,X / STAA curAttr3
+;
+; which is why the rest of the render path tests curSet and curAttr0 rather than
+; indexing the plane again - four bytes in internal RAM are cheaper to reach than
+; four indexed loads, and every glyph decision reads them several times.
+;
+; These are exactly what the mailbox forwards to the C64 as cellAttr0, cellSet,
+; cellAttr2 and cellAttr3, so curSet and the payload's c64CellSet are the same
+; byte two processors apart. Its low three bits are the G-set code: 5 sets
+; drcsCell, and non-zero is one of the three conditions for applying
+; separationMask.
+;
+; They are addressed in extended mode - LDAA >curAttr0 assembles as B6 00 E0,
+; three bytes, where direct mode would do it in two. The listing carries the >
+; to force that, or a shortest-fit assembler would emit 96 E0 and the round trip
+; would break.
 LA312:
-        LDX     >$00E6
+        LDX     >walkChar
         LDAB    $00,X
-        LDX     >$00E4
+        LDX     >walkAttr
         LDAA    $00,X
-        STAA    >$00E0
+        STAA    >curAttr0
         TSTB
         BMI     LA32A
         TST     redrawKind
@@ -1052,17 +1090,17 @@ LA312:
 
 LA32A:
         LDAA    $01,X
-        STAA    >$00E1
+        STAA    >curSet
         LDAA    $02,X
-        STAA    >$00E2
+        STAA    >curAttr2
         LDAA    $03,X
-        STAA    >$00E3
+        STAA    >curAttr3
         ANDA    #$40
         BEQ     LA351
-        LDAA    >$00E0
+        LDAA    >curAttr0
         ANDA    #$FD
-        STAA    >$00E0
-        LDX     >$00E6
+        STAA    >curAttr0
+        LDX     >walkChar
         LDAA    $00,X
         ORAA    #$80
         STAA    $00,X
@@ -1071,7 +1109,7 @@ LA32A:
 LA351:
         TST     redrawT
         BEQ     LA377
-        LDAA    >$00E0
+        LDAA    >curAttr0
         BITA    #$10
         BEQ     LA361
         ANDA    #$33
@@ -1081,17 +1119,17 @@ LA361:
         CLRA
 
 LA362:
-        STAA    >$00E0
-        LDAA    >$00E1
+        STAA    >curAttr0
+        LDAA    >curSet
         ANDA    #$0F
-        STAA    >$00E1
+        STAA    >curSet
         LDAA    #$07
-        STAA    >$00E2
+        STAA    >curAttr2
         LDAA    #$99
-        STAA    >$00E3
+        STAA    >curAttr3
 
 LA377:
-        LDAA    >$00E0
+        LDAA    >curAttr0
         ANDA    #$03
         BEQ     LA3DC
         ANDA    #$02
@@ -1101,10 +1139,10 @@ LA377:
         BEQ     LA3A6
         LDAA    renderRow
         BEQ     LA3AE
-        LDD     >$00E4
+        LDD     >walkAttr
         SUBD    #$00A0
-        STD     >$00EC
-        LDX     >$00EC
+        STD     >savedS
+        LDX     >savedS
         LDAA    $04,X
         ANDA    #$01
         BEQ     LA3AE
@@ -1113,12 +1151,12 @@ LA377:
         BNE     LA3AE
 
 LA3A6:
-        LDAA    >$00E0
+        LDAA    >curAttr0
         ANDA    #$FD
-        STAA    >$00E0
+        STAA    >curAttr0
 
 LA3AE:
-        LDAA    >$00E0
+        LDAA    >curAttr0
         ANDA    #$01
         BEQ     LA3DC
         LDAA    renderRow
@@ -1131,7 +1169,7 @@ LA3AE:
         DECA
         CMPA    scrollBottom
         BEQ     LA3D9
-        LDX     >$00E4
+        LDX     >walkAttr
         LDAA    $00,X
         ANDA    #$80
         EORA    $A0,X
@@ -1139,16 +1177,16 @@ LA3AE:
         BRA     LA3DC
 
 LA3D9:
-        DEC     $00E0
+        DEC     curAttr0
 
 LA3DC:
-        LDAA    >$00E1
+        LDAA    >curSet
         TAB
         ANDB    #$F8
         ANDA    #$07
         CMPA    #$04
         BNE     LA402
-        LDX     >$00E6
+        LDX     >walkChar
         LDAA    $00,X
         ANDA    #$7F
         CMPA    #$7F
@@ -1163,7 +1201,7 @@ LA3F7:
         ORAB    #$02
 
 LA3FF:
-        STAB    >$00E1
+        STAB    >curSet
 
 LA402:
         TST     redrawW
@@ -1175,8 +1213,8 @@ LA402:
         BRA     LA427
 
 LA413:
-        LDAB    >$00E2
-        LDAA    >$00E3
+        LDAB    >curAttr2
+        LDAA    >curAttr3
         ASLD
         ASLD
         ASLD
@@ -1188,7 +1226,7 @@ LA413:
         STAA    bgColour
 
 LA427:
-        LDAA    >$00E0
+        LDAA    >curAttr0
         ANDA    #$04
         BEQ     LA446
         LDAA    bgColour
@@ -1205,40 +1243,40 @@ LA43A:
         STAA    fgColour
 
 LA446:
-        LDAA    >$00E1
+        LDAA    >curSet
         ANDA    #$07
         CMPA    #$05
         BEQ     LA46A
-        LDAA    >$00E3
+        LDAA    >curAttr3
         ANDA    #$04
         BEQ     LA46A
         LDAA    fgColour
         LDAB    bgColour
         STAB    fgColour
         STAA    bgColour
-        LDAA    >$00E3
+        LDAA    >curAttr3
         EORA    #$20
-        STAA    >$00E3
+        STAA    >curAttr3
 
 LA46A:
         TST     modeR
         BEQ     LA479
-        LDAA    >$00E3
+        LDAA    >curAttr3
         ORAA    #$08
-        STAA    >$00E3
+        STAA    >curAttr3
         BRA     LA486
 
 LA479:
-        LDAA    >$00E3
+        LDAA    >curAttr3
         ANDA    #$08
         BNE     LA486
         LDAA    bgColour
         STAA    fgColour
 
 LA486:
-        TST     $00E3
+        TST     curAttr3
         BMI     LA49A
-        LDAA    >$00E1
+        LDAA    >curSet
         BITA    #$40
         BEQ     LA49A
         LDAA    fgColour
@@ -1252,18 +1290,18 @@ LA49A:
         ASLB
         LSRD
         LSRD
-        STAB    >$00EA
+        STAB    >colourWord
         STAA    >$00EB
-        LDAA    >$00E3
+        LDAA    >curAttr3
         BMI     LA4E2
         LDAA    #$20
-        LDAB    >$00E3
+        LDAB    >curAttr3
         BITB    #$20
         BEQ     LA4BA
         LDAA    #$10
 
 LA4BA:
-        LDAB    >$00E1
+        LDAB    >curSet
         BITB    #$40
         BEQ     LA4C3
         LDAA    #$30
@@ -1271,10 +1309,10 @@ LA4BA:
 LA4C3:
         ORAA    >$00EB
         STAA    >$00EB
-        LDAA    >$00E1
+        LDAA    >curSet
         LSRA
         ANDA    #$40
-        LDAB    >$00E3
+        LDAB    >curAttr3
         BITB    #$10
         BEQ     LA4DA
         ORAA    #$80
@@ -1288,25 +1326,25 @@ LA4DC:
         STAA    >$00EB
 
 LA4E2:
-        LDX     >$00E6
+        LDX     >walkChar
         LDAA    $00,X
         ANDA    #$7F
         STAA    glyphCode
         STAA    $00,X
-        LDAB    >$00E1
+        LDAB    >curSet
         ANDB    #$10
         BEQ     LA4F9
         ORAA    #$80
         STAA    $00,X
 
 LA4F9:
-        LDX     >$00E8
+        LDX     >walkAccent
         LDAA    $00,X
         STAA    accentCode
-        LDAB    >$00E0
+        LDAB    >curAttr0
         ANDB    #$03
         BEQ     LA550
-        LDX     >$00E6
+        LDX     >walkChar
         LDAA    $00,X
         ORAA    #$80
         STAA    $00,X
@@ -1331,7 +1369,7 @@ LA525:
         STAA    $29,X
 
 LA52F:
-        LDX     >$00E4
+        LDX     >walkAttr
         BITB    #$01
         BEQ     LA53C
         LDAA    $A3,X
@@ -1375,13 +1413,13 @@ LA55B:
         STAA    cellChar
         LDAA    accentCode
         STAA    cellAccent
-        LDAA    >$00E0
+        LDAA    >curAttr0
         STAA    cellAttr0
-        LDAA    >$00E1
+        LDAA    >curSet
         STAA    cellSet
-        LDAA    >$00E2
+        LDAA    >curAttr2
         STAA    cellAttr2
-        LDAA    >$00E3
+        LDAA    >curAttr3
         STAA    cellAttr3
         LDAA    renderRow
         STAA    cellRow
@@ -1408,7 +1446,7 @@ LA55B:
 ; blitRows is the row counter of the blit loop itself, loaded from glyphRows or
 ; from the $0C above and counted down to zero. All 16 of its sites are that.
 LA5AF:
-        LDAB    >$00E1
+        LDAB    >curSet
         ANDB    #$07
         CMPB    #$05
         BNE     LA5C0
@@ -1418,7 +1456,7 @@ LA5AF:
 
 LA5C0:
         CLR     drcsCell
-        LDAB    >$00E0
+        LDAB    >curAttr0
         ANDB    #$33
         CMPB    #$13
         BNE     LA5D6
@@ -1444,16 +1482,16 @@ LA5C0:
 ; accent from planeAccent is merged onto its base character before either
 ; reaches videoRam through videoPtr.
 LA5D6:
-        LDAB    >$00E1
+        LDAB    >curSet
         ANDB    #$07
         CMPB    #$06
         BNE     LA5F3
         LDX     #$AF8E
         STX     glyphPtr
         CLR     glyphPass
-        LDAB    >$00E1
+        LDAB    >curSet
         ANDB    #$FC
-        STAB    >$00E1
+        STAB    >curSet
         JMP     LA69B
 
 LA5F3:
@@ -1470,7 +1508,7 @@ LA5F3:
         MUL
         ADDD    glyphPtr
         STD     glyphPtr
-        LDAA    >$00E1
+        LDAA    >curSet
         ANDA    #$08
         BNE     LA618
         JMP     LA69B
@@ -1507,7 +1545,7 @@ LA639:
         ADDD    glyphPtr2
         STD     glyphPtr2
         SEI
-        STS     >$00EC
+        STS     >savedS
         LDS     glyphPtr                ; the glyph is read with PUL, so S becomes the source pointer and the real stack is parked in $00EC
         LDX     #glyphBuf
         LDAB    #$0A
@@ -1551,7 +1589,7 @@ LA681:
         INX
         DECB
         BNE     LA681
-        LDS     >$00EC
+        LDS     >savedS
         CLI
         LDX     #glyphBuf
         DEX
@@ -1561,22 +1599,22 @@ LA69B:
         LDX     glyphPtr
         TST     $02,X                   ; bit 15 of row 0 - glyphPtr is base-1, so $02,X is glyph byte 1
         BPL     LA6F8
-        LDAA    >$00E1
+        LDAA    >curSet
         BITA    #$07
         BEQ     LA6F8
-        LDAA    >$00E0
+        LDAA    >curAttr0
         BITA    #$08
         BNE     LA6B7
-        LDAA    >$00E1
+        LDAA    >curSet
         ANDA    #$20
         BEQ     LA6F8
 
 LA6B7:
-        LDAA    >$00E0
+        LDAA    >curAttr0
         ANDA    #$F7
-        STAA    >$00E0
+        STAA    >curAttr0
         SEI
-        STS     >$00EC
+        STS     >savedS
         LDS     glyphPtr
         LDX     #glyphBuf
         LDAB    #$0A
@@ -1605,14 +1643,14 @@ LA6DE:
         INX
         DECB
         BNE     LA6DE
-        LDS     >$00EC
+        LDS     >savedS
         CLI
         LDX     #glyphBuf
         DEX
         STX     glyphPtr
 
 LA6F8:
-        LDAA    >$00E0
+        LDAA    >curAttr0
         ANDA    #$03
         CMPA    #$00
         BEQ     LA70E
@@ -1659,21 +1697,21 @@ LA71D:
         STD     $24,X
         LDD     #$C4D0
         STD     $26,X
-        LDX     >$00E6
+        LDX     >walkChar
         LDAA    $00,X
         ORAA    #$80
         STAA    $00,X
 
 LA75F:
-        LDX     >$00E6
+        LDX     >walkChar
         INX
-        STX     >$00E6
-        LDX     >$00E8
+        STX     >walkChar
+        LDX     >walkAccent
         INX
-        STX     >$00E8
-        LDD     >$00E4
+        STX     >walkAccent
+        LDD     >walkAttr
         ADDD    #$0004
-        STD     >$00E4
+        STD     >walkAttr
         INC     renderCol
         LDAA    renderCol
         CMPA    $AEFA
@@ -1694,13 +1732,13 @@ LA797:
         LDAA    #$0A
         STAA    glyphRows
         LDAA    #$FF
-        STAA    >$00EE
+        STAA    >rowMode10
         LDX     #$57C0
-        STX     >$00E6
+        STX     >walkChar
         LDX     #$5BC0
-        STX     >$00E8
+        STX     >walkAccent
         LDX     #$5300
-        STX     >$00E4
+        STX     >walkAttr
         JMP     LA312
 
 LA7BB:
@@ -1710,11 +1748,11 @@ LA7BB:
         BLT     LA7D5
 
 LA7C4:
-        LDAA    >$00E0
+        LDAA    >curAttr0
         ANDA    #$02
         BEQ     LA7D2
         LDAA    #$00
-        STAA    >$00E0
+        STAA    >curAttr0
         BRA     LA75F
 
 LA7D2:
@@ -1773,29 +1811,29 @@ LA830:
 LA837:
         CLR     invMaskHi
         CLR     invMaskLo
-        LDAA    >$00E3
+        LDAA    >curAttr3
         BPL     LA845
         JMP     LA8C5
 
 LA845:
         LDAA    #$20
-        LDAB    >$00E3
+        LDAB    >curAttr3
         BITB    #$20
         BEQ     LA850
         LDAA    #$10
 
 LA850:
-        LDAB    >$00E1
+        LDAB    >curSet
         BITB    #$40
         BEQ     LA859
         LDAA    #$30
 
 LA859:
         STAA    invMaskLo
-        LDAA    >$00E1
+        LDAA    >curSet
         LSRA
         ANDA    #$40
-        LDAB    >$00E3
+        LDAB    >curAttr3
         BITB    #$10
         BEQ     LA86D
         ORAA    #$80
@@ -1845,7 +1883,7 @@ LA894:
         STAA    videoReg0
 
 LA8C5:
-        LDAA    >$00E3
+        LDAA    >curAttr3
         TST     modeR
         BEQ     LA8CF
         ORAA    #$08
@@ -1853,7 +1891,7 @@ LA8C5:
 LA8CF:
         ANDA    #$0C
         BEQ     LA8E4
-        TST     $00E3
+        TST     curAttr3
         BMI     LA8DA
         ANDA    #$FB
 
@@ -1884,7 +1922,7 @@ LA900:
         JMP     LA6F8
 
 LA903:
-        LDAA    >$00E0
+        LDAA    >curAttr0
         ANDA    #$02
         BEQ     LA90D
         JMP     LA98A
@@ -1900,11 +1938,11 @@ LA90D:
         MUL
         ADDD    #videoRam
         STD     videoPtr
-        LDAB    >$00E0
+        LDAB    >curAttr0
         ANDB    #$01
         BEQ     LA95B
         SEI
-        STS     >$00EC
+        STS     >savedS
         LDX     videoPtr
         LDS     glyphPtr
         LDAB    glyphRows
@@ -1925,13 +1963,13 @@ LA93B:
         ABX
         DEC     blitRows
         BNE     LA93B
-        LDS     >$00EC
+        LDS     >savedS
         CLI
         JMP     LA71D
 
 LA95B:
         SEI
-        STS     >$00EC
+        STS     >savedS
         LDX     videoPtr
         LDS     glyphPtr
         LDAB    glyphRows
@@ -1951,7 +1989,7 @@ LA96B:
         ABX
         DEC     blitRows
         BNE     LA96B
-        LDS     >$00EC
+        LDS     >savedS
         CLI
         JMP     LA71D
 
@@ -1967,14 +2005,14 @@ LA98A:
         ADDD    #videoRam
         STD     videoPtr
         CLR     tallCell
-        LDAB    >$00E0
+        LDAB    >curAttr0
         ANDB    #$01
         BEQ     LA9AE
         DEC     tallCell
 
 LA9AE:
         SEI
-        STS     >$00EC
+        STS     >savedS
         LDS     glyphPtr
         LDAB    glyphRows
         STAB    blitRows
@@ -2166,7 +2204,7 @@ LAAF3:
         JMP     LA9BB
 
 LAAFE:
-        LDS     >$00EC
+        LDS     >savedS
         CLI
         JMP     LA71D
 
@@ -2182,7 +2220,7 @@ LAB05:
         ADDD    #videoRam
         STD     videoPtr
         LDX     videoPtr
-        LDD     >$00EA
+        LDD     >colourWord
         STD     $02,X
         STD     $06,X
         STD     $0A,X
@@ -2193,16 +2231,16 @@ LAB05:
         STD     $1E,X
         STD     $22,X
         STD     $26,X
-        TST     $00EE
+        TST     rowMode10
         BNE     LAB3F
         STD     $2A,X
         STD     $2E,X
 
 LAB3F:
         SEI
-        STS     >$00EC
+        STS     >savedS
         LDS     glyphPtr
-        TST     $00EE
+        TST     rowMode10
         BEQ     LAB76
         PULA
         PULB
@@ -2297,9 +2335,9 @@ LABBA:
         CLR     $2D,X
 
 LABC8:
-        LDS     >$00EC
+        LDS     >savedS
         CLI
-        LDAA    >$00E0
+        LDAA    >curAttr0
         ANDA    #$08
         BEQ     LABD8
         LDD     #$FF0F
@@ -2320,7 +2358,7 @@ LABD9:
         ADDD    #videoRam
         STD     videoPtr
         LDX     videoPtr
-        LDD     >$00EA
+        LDD     >colourWord
         STD     $02,X
         STD     $06,X
         STD     $0A,X
@@ -2341,7 +2379,7 @@ LABD9:
         STD     $46,X
         STD     $4A,X
         STD     $4E,X
-        TST     $00EE
+        TST     rowMode10
         BNE     LAC2B
         STD     $52,X
         STD     $56,X
@@ -2350,9 +2388,9 @@ LABD9:
 
 LAC2B:
         SEI
-        STS     >$00EC
+        STS     >savedS
         LDS     glyphPtr
-        TST     $00EE
+        TST     rowMode10
         BEQ     LAC76
         PULA
         PULB
@@ -2473,9 +2511,9 @@ LACD4:
         CLR     $5D,X
 
 LACE8:
-        LDS     >$00EC
+        LDS     >savedS
         CLI
-        LDAA    >$00E0
+        LDAA    >curAttr0
         ANDA    #$08
         BEQ     LACFA
         LDD     #$FF0F
@@ -2496,15 +2534,15 @@ LACFB:
         MUL
         ADDD    #videoRam
         STD     videoPtr
-        CLR     $00EF
+        CLR     blitFlag
         LDX     videoPtr
         PSHX
         SEI
-        STS     >$00EC
+        STS     >savedS
         LDS     glyphPtr
         LDAB    #$0A
         STAB    blitRows
-        LDAA    >$00EE
+        LDAA    >rowMode10
         BNE     LAD55
         LDAA    drcsCell
         BEQ     LAD36
@@ -2527,7 +2565,7 @@ LAD36:
 
 LAD50:
         LDAA    #$FF
-        STAA    >$00EF
+        STAA    >blitFlag
 
 LAD55:
         PULB
@@ -2555,7 +2593,7 @@ LAD55:
         STD     $00,X
 
 LAD7E:
-        LDD     >$00EA
+        LDD     >colourWord
         STD     $02,X
         INC     PORT3
         STD     $02,X
@@ -2563,18 +2601,18 @@ LAD7E:
         LDAB    #$04
         ABX
         STX     videoPtr
-        TST     $00EF
+        TST     blitFlag
         BEQ     LAD9D
         DES
         DES
-        CLR     $00EF
+        CLR     blitFlag
         BRA     LAD55
 
 LAD9D:
         DEC     blitRows
         BMI     LADCE
         BNE     LAD55
-        LDAB    >$00EE
+        LDAB    >rowMode10
         BNE     LADCE
         LDAB    drcsCell
         BNE     LADCE
@@ -2586,7 +2624,7 @@ LAD9D:
         STD     $00,X
         INC     PORT3
         STD     $00,X
-        LDD     >$00EA
+        LDD     >colourWord
         STD     $02,X
         DEC     PORT3
         STD     $02,X
@@ -2598,10 +2636,10 @@ LADC9:
         JMP     LAD55
 
 LADCE:
-        LDS     >$00EC
+        LDS     >savedS
         CLI
         PULX
-        LDAA    >$00E0
+        LDAA    >curAttr0
         ANDA    #$08
         BEQ     LADE7
         LDD     #$FF0F
@@ -2624,15 +2662,15 @@ LADE8:
         MUL
         ADDD    #videoRam
         STD     videoPtr
-        CLR     $00EF
+        CLR     blitFlag
         LDX     videoPtr
         PSHX
         SEI
-        STS     >$00EC
+        STS     >savedS
         LDS     glyphPtr
         LDAB    #$0A
         STAB    blitRows
-        LDAB    >$00EE
+        LDAB    >rowMode10
         BNE     LAE46
         LDAB    drcsCell
         BEQ     LAE23
@@ -2657,7 +2695,7 @@ LAE23:
 
 LAE41:
         LDAA    #$FF
-        STAA    >$00EF
+        STAA    >blitFlag
 
 LAE46:
         PULB
@@ -2687,7 +2725,7 @@ LAE46:
         STD     $04,X
 
 LAE73:
-        LDD     >$00EA
+        LDD     >colourWord
         STD     $02,X
         STD     $06,X
         INC     PORT3
@@ -2697,18 +2735,18 @@ LAE73:
         LDAB    #$08
         ABX
         STX     videoPtr
-        TST     $00EF
+        TST     blitFlag
         BEQ     LAE96
         DES
         DES
-        CLR     $00EF
+        CLR     blitFlag
         BRA     LAE46
 
 LAE96:
         DEC     blitRows
         BMI     LAED2
         BNE     LAE46
-        LDAB    >$00EE
+        LDAB    >rowMode10
         BNE     LAED2
         LDAB    drcsCell
         BNE     LAED2
@@ -2716,7 +2754,7 @@ LAE96:
         PULB
         TSTB
         BMI     LAECD
-        LDD     >$00EA
+        LDD     >colourWord
         STD     $02,X
         STD     $06,X
         LDD     #$0000
@@ -2725,7 +2763,7 @@ LAE96:
         INC     PORT3
         STD     $00,X
         STD     $04,X
-        LDD     >$00EA
+        LDD     >colourWord
         STD     $02,X
         STD     $06,X
         DEC     PORT3
@@ -2737,10 +2775,10 @@ LAECD:
         JMP     LAE46
 
 LAED2:
-        LDS     >$00EC
+        LDS     >savedS
         CLI
         PULX
-        LDAA    >$00E0
+        LDAA    >curAttr0
         ANDA    #$08
         BEQ     LAEEF
         LDD     #$FF0F
@@ -2847,8 +2885,8 @@ reset:
         LDAA    #$AB
         STAA    P4DDR
         LDD     #$0395
-        STAA    >$0040
-        STAB    >$0040
+        STAA    >dbtLatch
+        STAB    >dbtLatch
         LDAA    #$08
         STAA    TCSR
         LDD     COUNTH

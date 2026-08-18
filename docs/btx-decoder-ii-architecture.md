@@ -665,13 +665,13 @@ leftmost. Bits 12–14 are zero in all 3840 rows of all four sets.
 LA69B:  LDX     glyphPtr
         TST     $02,X           bit 15 of row 0 - glyphPtr is base-1,
         BPL     LA6F8           so $02,X is glyph byte 1
-        LDAA    >$00E1
+        LDAA    >curSet
         BITA    #$07            only for a graphics set
         BEQ     LA6F8
-        LDAA    >$00E0
+        LDAA    >curAttr0
         BITA    #$08            separated by attribute
         BNE     LA6B7
-        LDAA    >$00E1
+        LDAA    >curSet
         ANDA    #$20            or by set
         BEQ     LA6F8
 ```
@@ -723,7 +723,15 @@ columns, the CEPT page plus a status line:
 | `planeAccent` | `$5800` | 1 byte | 40 | combining-accent overlay |
 
 `$E9A5` reloads all four row pointers whenever the cursor row changes, from the
-four tables at `$FC45`–`$FD0C`. Those strides are the clearest statement of the
+four tables at `$FC45`–`$FD0C`.
+
+The redraw walks the planes with a second set of pointers in internal RAM —
+`walkChar`, `walkAttr` and `walkAccent` — and unpacks each cell's four
+attribute bytes into `curAttr0`, `curSet`, `curAttr2` and `curAttr3` before
+deciding anything about it. Four bytes in internal RAM are cheaper to reach
+than four indexed loads, and every glyph decision reads them repeatedly. They
+are also exactly what the mailbox forwards to the C64, so `curSet` and the
+payload's `c64CellSet` are the same byte two processors apart. Those strides are the clearest statement of the
 layout anywhere in the image: three planes are one byte per cell across 40
 columns, and `planeAttr` is four, which is exactly why its rows sit 160 apart.
 

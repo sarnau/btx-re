@@ -586,6 +586,33 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xFFF0" = "vectors"
 
 [block_comments]
+"0xA312" = """
+The current cell, unpacked into internal RAM.
+
+walkChar, walkAttr and walkAccent are the three plane pointers the redraw walks
+with, set up at $A2F2 from planeChar, planeAttr and planeAccent. For each cell
+the four attribute bytes are copied out of planeAttr into curAttr0..curAttr3:
+
+    LDX walkChar  / LDAB $00,X          the character code
+    LDX walkAttr  / LDAA $00,X / STAA curAttr0
+                    LDAA $01,X / STAA curSet
+                    LDAA $02,X / STAA curAttr2
+                    LDAA $03,X / STAA curAttr3
+
+which is why the rest of the render path tests curSet and curAttr0 rather than
+indexing the plane again - four bytes in internal RAM are cheaper to reach than
+four indexed loads, and every glyph decision reads them several times.
+
+These are exactly what the mailbox forwards to the C64 as cellAttr0, cellSet,
+cellAttr2 and cellAttr3, so curSet and the payload's c64CellSet are the same
+byte two processors apart. Its low three bits are the G-set code: 5 sets
+drcsCell, and non-zero is one of the three conditions for applying
+separationMask.
+
+They are addressed in extended mode - LDAA >curAttr0 assembles as B6 00 E0,
+three bytes, where direct mode would do it in two. The listing carries the >
+to force that, or a shortest-fit assembler would emit 96 E0 and the round trip
+would break."""
 "0xF0B1" = """
 pageCount, and why the C64 watches it.
 
@@ -1961,6 +1988,18 @@ vectors before entering the main firmware."""
 "0xE222" = "attrFillHi"
 
 [symbols]
+"0x0040" = "dbtLatch"
+"0x00E0" = "curAttr0"
+"0x00E1" = "curSet"
+"0x00E2" = "curAttr2"
+"0x00E3" = "curAttr3"
+"0x00E4" = "walkAttr"
+"0x00E6" = "walkChar"
+"0x00E8" = "walkAccent"
+"0x00EA" = "colourWord"
+"0x00EC" = "savedS"
+"0x00EE" = "rowMode10"
+"0x00EF" = "blitFlag"
 "0x6081" = "cellCurCol"
 "0x6082" = "cellCurRow"
 "0x6083" = "cellChar"
