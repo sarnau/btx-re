@@ -69,3 +69,28 @@ Bootstrap trace from the reset vector and the seven interrupt stubs classifies
 25% of the image, with 12 unresolved computed jumps and no decode failures.
 `$8000`–`$9FFF` is character-generator bitmap data; the `$D374`–`$D3E3` cluster
 of computed jumps looks like table dispatch and is the obvious next target.
+
+## Independent verification
+
+`tools/check_asl.sh` reassembles the generated listing with asl (Macro Assembler
+AS) and compares against the ROM. `dis6801/asm.py` shares an opcode table with the
+disassembler, so a wrong table entry round-trips cleanly through it; asl does not
+share that table and will catch such an error.
+
+asl is not packaged in Homebrew and must be built from source:
+<http://john.ccac.rwth-aachen.de:8000/as/>
+
+    curl -O http://john.ccac.rwth-aachen.de:8000/ftp/as/source/c_version/asl-current.tar.gz
+    tar xzf asl-current.tar.gz && cd asl-current
+    cp Makefile.def-samples/Makefile.def-arm-osx Makefile.def   # or -x86_64-osx
+    make
+
+Then:
+
+    ASL=/path/to/asl P2BIN=/path/to/p2bin AS_MSGPATH=/path/to/asl-current \
+        ./tools/check_asl.sh
+
+Exit code 77 means asl was not found and the check was skipped.
+
+Status: **passing** — asl assembles the listing with 0 errors and 0 warnings and
+its output is byte-identical to the ROM, independently confirming the opcode table.
