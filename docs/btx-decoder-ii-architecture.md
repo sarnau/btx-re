@@ -9,6 +9,11 @@ Companion material: `sidecar/decoder_ii.toml` holds the annotations,
 and `out/c64_payload.asm` the C64-side 6502 sources, and
 `docs/cv30113-revision-diff.md` the comparison against the other ROM revision.
 
+This document is checked against those sources by `tools/checkdoc.py`, which
+the test suite runs: every name it cites must still be one the listings define.
+Prose goes stale quietly when a rename lands underneath it, and that is the
+failure it exists to catch.
+
 ---
 
 ## 1. What the module is
@@ -522,13 +527,13 @@ decoding a 1200-baud stream.
 
 Received bytes land in `rxBuffer`, a 4 KB ring at `$2000` walked by `rxBufPut`
 and `rxBufGet` through `rxBufRd`, `rxBufWr` and `rxBufMark`. The third pointer
-is what makes it more than a queue: `modemToggle` decides whether `rxBufMark`
-follows `rxBufWr`, so a block can be re-read after a failed check.
+is what makes it more than a queue: while `inBlock` is set, `rxBufMark` stays
+put and `rxBufWr` runs ahead of it, so everything written since STX can be
+thrown away in one assignment. The next section is what does the throwing.
 
-That check is `modemCrc` at `$F818`. `modemByte` goes in, `modemShift` carries
-the running value, and eight rounds of `LSRD` with `EORA #$A0 / EORB #$01` on a
-set bit is a **reflected CRC-16, polynomial `$8005`** — the one X.25 and the
-DBT-03 datex link use.
+The check is `modemCrc` at `$F818`. `modemByte` goes in, `crcShift` carries the
+running value, and eight rounds of `LSRD` with `EORA #$A0 / EORB #$01` on a set
+bit is a **reflected CRC-16, polynomial `$8005`**.
 
 Three 16-bit counters at `timerA`, `timerB` and `timerC` are decremented on
 every timer interrupt by `timerHandlerAlt` and waited on by testing their high

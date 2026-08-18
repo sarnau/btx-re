@@ -226,3 +226,12 @@ def test_every_named_routine_is_documented():
         if addr not in documented:
             missing.append(f"${addr:04X} {name}")
     assert not missing, missing
+
+
+def test_architecture_document_matches_the_sources():
+    """Prose goes stale silently while the listings are regenerated under it,
+    so the document is checked the same way the listings are."""
+    import subprocess
+    r = subprocess.run(["python3", str(ROOT / "tools" / "checkdoc.py")],
+                       capture_output=True, text=True, cwd=ROOT)
+    assert r.returncode == 0, r.stdout
