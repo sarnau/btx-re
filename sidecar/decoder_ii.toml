@@ -171,7 +171,7 @@ entry_points = [
 ]
 
 [meta]
-rom = "../C64 BTX Decoder/c64_btx_decoder_ii.bin"
+rom = "c64_btx_decoder_ii.bin"
 base = 0x8000
 sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 

@@ -5,3 +5,13 @@ __pycache__/
 # asl listing artifact from tools/check_asl.sh -L
 *.lst
 third_party/build/
+
+# .DS_Store, carried over from the parent's rules along with the two below.
+.DS_Store
+
+# Large third-party archives, 113 MB in total. Excluded for the reason the
+# parent repository gave: committing them is effectively irreversible, since
+# they stay in the history forever, whereas adding them later is trivial.
+other/bildschirmtrix.tar
+other/dist/gcc/cross.tar
+other/dist/gcc/avr-gcc_patched.tar

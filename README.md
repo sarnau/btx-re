@@ -121,6 +121,15 @@ Ghidra would produce plausible-looking but wrong disassembly.
     tools/diffrom.py     compare the two ROM revisions
     build.py             regenerate, assemble, compare, report
 
+    c64_btx_decoder_ii.bin                     the ROM this project reads
+    c64_BTX_decoder_CV30113 C375-B1-1 (EX).BIN the other revision
+    third_party/         asl and c64rom sources, see third_party/README.md
+
+Both ROM images live in this repository, so nothing here depends on a path
+outside it. `sidecar/decoder_ii.toml` names the primary one under `meta.rom`
+and pins it by SHA-256, which is what makes a swapped or truncated image a
+build failure rather than a silently different disassembly.
+
 `conftest.py` at the repository root is load-bearing: its presence is what puts
 the repository root on `sys.path` for pytest. Deleting it breaks every test.
 

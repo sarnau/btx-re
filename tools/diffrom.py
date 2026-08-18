@@ -12,7 +12,7 @@ from __future__ import annotations
 import pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-ROMS = ROOT.parent / "C64 BTX Decoder"
+ROMS = ROOT
 A = ROMS / "c64_btx_decoder_ii.bin"
 B = ROMS / "c64_BTX_decoder_CV30113 C375-B1-1 (EX).BIN"
 BASE = 0x8000

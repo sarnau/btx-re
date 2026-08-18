@@ -11,7 +11,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 ASL="${ASL:-asl}"
 P2BIN="${P2BIN:-p2bin}"
 OUT="$ROOT/out"
-ROM="$ROOT/../C64 BTX Decoder/c64_btx_decoder_ii.bin"
+ROM="$ROOT/c64_btx_decoder_ii.bin"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 

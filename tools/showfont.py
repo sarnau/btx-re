@@ -17,7 +17,7 @@ import pathlib
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-ROM = ROOT.parent / "C64 BTX Decoder" / "c64_btx_decoder_ii.bin"
+ROM = ROOT / "c64_btx_decoder_ii.bin"
 BASE = 0x8000
 ROWS = 10
 
