@@ -196,7 +196,7 @@ def test_btx_io_window_is_declared():
     """The C64 sees the decoder registers at $8000-$81FF; the 6801 sees the
     same ones $2000 lower. Named where established, address-derived otherwise."""
     src = (OUT / "c64_payload.asm").read_text()
-    for name, addr in (("btxFifoWr", 0x8009), ("btxFifoRd", 0x800A),
+    for name, addr in (("btxRxWr", 0x8009), ("btxRxRd", 0x800A),
                        ("btxXferEn", 0x800B), ("btxStatus", 0x800C),
                        ("btxFifo00", 0x8080), ("btxReg1F8", 0x81F8)):
         assert re.search(rf"^{name}\s+EQU\s+\${addr:04X}$", src, re.M), name
@@ -341,7 +341,7 @@ def test_hardware_registers_keep_their_own_names():
     header apart. They are hardware and already named."""
     boot = (OUT / "c64_bootstrap.asm").read_text()
     assert "L8005" not in boot and "L8009" not in boot
-    assert "btxFifoWr" in boot
+    assert "btxRxWr" in boot
     head = boot.split("c64CartSignature:", 1)[1].split("c64ColdStart:", 1)[0]
     assert len([ln for ln in head.splitlines() if ln.strip().startswith("FCB")]) == 1
 

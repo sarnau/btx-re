@@ -9,8 +9,8 @@ c64Ptr    EQU     $0061
 c64PtrHi  EQU     $0062
 btxLoadLo EQU     $8000
 btxLoadHi EQU     $8001
-btxFifoWr EQU     $8009
-btxFifoRd EQU     $800A
+btxRxWr   EQU     $8009
+btxRxRd   EQU     $800A
 btxXferEn EQU     $800B
 btxStatus EQU     $800C
 btxFifo00 EQU     $8080
@@ -155,10 +155,10 @@ c64StartPayload:
 
 c64BootGetByte:
 ; the bootstrap's own c64GetByte: one byte from the transfer FIFO, C=1 when the decoder has finished sending
-        LDA     btxFifoWr
-        CMP     btxFifoWr
+        LDA     btxRxWr
+        CMP     btxRxWr
         BNE     c64BootGetByte
-        CMP     btxFifoRd
+        CMP     btxRxRd
         BNE     c64BootTake
         BIT     btxXferEn
         BMI     c64BootGetByte
@@ -169,7 +169,7 @@ c64BootGetByte:
 
 c64BootTake:
 ; a byte is waiting - the two index reads agreed and the ring is not empty
-        LDA     btxFifoRd
+        LDA     btxRxRd
         TAX
         LDA     btxFifo00,X
         INX
@@ -179,7 +179,7 @@ c64BootTake:
 
 c64BootAdvance:
 ; publish the advanced read index, which is what frees the slot for the decoder
-        STX     btxFifoRd
+        STX     btxRxRd
         CLC
         RTS
 

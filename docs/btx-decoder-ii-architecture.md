@@ -16,7 +16,7 @@ and `out/c64_payload.asm` the C64-side 6502 sources, and
 A cartridge that turns a Commodore 64 into a terminal for **Bildschirmtext**,
 the German videotex service. It is not a passive ROM: the cartridge carries its
 own processor, its own screen memory and its own video output, and drives the
-modem itself. The C64 supplies the keyboard, the display and mass storage.
+modem itself. The C64 supplies the keyboard, mass storage and a printer.
 
 Two processors are involved, and the single 32 KB ROM serves both:
 
@@ -24,6 +24,14 @@ Two processors are involved, and the single 32 KB ROM serves both:
 |---|---|
 | **MC68B01** | on the cartridge. Runs the decoder firmware: modem, CEPT interpretation, screen generation |
 | **C64's 6502** | runs a terminal application that the cartridge feeds to it at power-on |
+
+The split is unusual and worth stating plainly: **the picture the user looks at
+comes out of the cartridge, not the C64.** The manual tells them to move the
+monitor cable over to the module, and the splash screen the C64 prints says so
+in as many words — *"Bitte stecken Sie Ihren Monitor an das Btx-Modul an."* The
+C64's own screen carries a reduced text-only rendering, offered as a fallback
+for people with one monitor, and the menu item that toggles it is called
+Screen.
 
 The firmware also implements PRESTEL, ANTIOPE and a plain ASCII terminal mode,
 named in the mode strings at `$EF67`.
@@ -56,9 +64,10 @@ $0000-$03FF   stack (LDS #$0400 at reset; it grows down)
 $0080-$00FF   6801 internal RAM; interrupt soft vectors at $00F0-$00FB
 $0400-$07FF   external RAM, ~110 distinct variables
 $1B00-$1B2D   display and cursor state
-$4000-$5BC7   display memory, four planes
-$6009-$6011   C64 dual-port control and status
-$6080-$608F   16-byte FIFO shared with the C64
+$6009-$6011   C64 interface control and status
+$6020-$603F   32-byte ring, decoder to C64
+$6040-$607F   64-byte ring, C64 to decoder
+$6080-$608F   16-byte ring used only while the payload is being sent
 $61F9-$61FD   write-only control registers
 $8000-$FFFF   this ROM
 ```
@@ -70,7 +79,7 @@ vectors, then initialises the subsystems and hands the C64 its software.
 
 ---
 
-## 3. The C64 relationship
+## 3. Bringing the C64 up
 
 ### The cartridge announces itself
 
@@ -79,50 +88,74 @@ sitting there:
 
 ```
 $B32D  13 80              cold start vector  $8013
-$B32F  72 FE              warm start vector  $FE72
+$B32F  72 FE              warm start vector  $FE72, the KERNAL's NNMI20
 $B331  C3 C2 CD 38 30     "CBM80"
 ```
 
-`$8013` resolves to ROM `$B340`, exactly where the cold-start code begins.
+`$8013` resolves to ROM `$B340`, exactly where `c64CartStart` begins.
 
 ### The C64 pulls its own software across
 
-The cold-start routine runs from cartridge ROM. It initialises the KERNAL and
-VIC, then fetches a two-byte destination pointer and copies a byte stream into
-it:
+`c64CartStart` runs from cartridge ROM. It runs the C64's cold-start sequence,
+then fetches a two-byte destination pointer and copies a byte stream into it:
 
 ```
-JSR $FDA3 / $FD90 / $FD15 / $FF5B    KERNAL init, restore vectors, CINT
-LDX #$00 / STX $D016                 VIC setup
-JSR $804D / STA $61                  destination low byte
-JSR $804D / STA $62                  destination high byte
+JSR IOINIT / SIZE+8 / RESTOR / PCINT   KERNAL init
+LDX #$00 / STX $D016                   VIC setup
+JSR c64BootGetByte / STA c64Ptr        destination low byte
+JSR c64BootGetByte / STA c64PtrHi      destination high byte
 LDY #$00
-loop: JSR $804D / BCS done / STA ($61),Y
-      INY / BNE loop / INC $62 / JMP loop
+c64CopyLoop:
+  JSR c64BootGetByte / BCS c64StartPayload / STA (c64Ptr),Y
+  INY / BNE c64CopyLoop / INC c64PtrHi / JMP c64CopyLoop
 ```
 
-The two bytes it reads first are the `$00 $10` at ROM `$B3A6` — **load address
-`$1000`**. The payload proper is `$B3A8`–`$D108`, 7521 bytes, landing at
-`$1000`–`$2D60`, and it opens with a 61-entry `JMP` dispatch table at `$1000`.
+`SIZE+8` is an entry eight bytes into the KERNAL's memory sizing, at the tail
+that sets `MEMSTR` to `$0800` and `HIBASE` to `$0400`. It skips the
+top-of-memory scan, which would otherwise walk into the cartridge window. Both
+the bootstrap and the payload's own cold start enter there.
 
-Because the payload runs at a different address than it is stored, its absolute
-operands name runtime locations with no position in this ROM.
+The two bytes the loop reads first are the `$00 $10` at ROM `$B3A6` — **load
+address `$1000`**. The payload proper is `$B3A8`–`$D108`, 7521 bytes, landing at
+`$1000`–`$2D60`.
+
+Handing over is the last thing `c64StartPayload` does:
+
+```
+LDA #$00 / STA btxStatus     bank the cartridge out
+JMP (btxLoadLo)              jump through $8000
+```
+
+`$8000` is cartridge ROM while the cartridge is mapped, holding the cold-start
+vector `$8013`. The loader has already written the fetched load address into
+`$8000`/`$8001` — stores land in the RAM underneath the ROM — so once the
+cartridge is banked out, the same indirect read returns `$1000`. That is why
+the loader stores the load address twice: to `$61`/`$62` for its own copy loop
+and to `$8000`/`$8001` for this jump.
 
 ### The dual-port interface
 
 The same hardware window appears at different addresses on each side — the 6801
-at `$6000`, the C64 at `$8000`, with matching low offsets:
+at `$6000`, the C64 at `$8000`, with matching low offsets. There are **three
+rings**, and the boot one is not the one used afterwards:
 
-| 6801 | C64 | Role |
-|---|---|---|
-| `$6080-$608F` | — | 16-byte ring FIFO |
-| `$6009` | `$8009` | write index (6801 → C64) |
-| `$600A` | `$800A` | read index (C64 → 6801) |
-| `$600B` | `$800B` | transfer enable |
-| `$600C` | — | status |
-| `$6010` | — | completion flag |
+| 6801 | C64 | Size | Direction |
+|---|---|---|---|
+| `$6020` | `btxRxFifo` `$8020` | 32 | decoder → C64, indices `$8009`/`$800A` |
+| `$6040` | `btxTxFifo` `$8040` | 64 | C64 → decoder, indices `$800D`/`$800E` |
+| `$6080` | `btxFifo00` `$8080` | 16 | payload transfer only |
 
-`sendPayloadToC64` (`$B2E2`) drives it:
+The masks prove the sizes on both sides independently: the 6801 uses
+`ANDB #$1F` at `$6020` and `CMPB #$40` at `$6040`, the C64 `CPX #$20` on
+`btxRxFifo` and `CPX #$40` on `btxTxFifo`. `sendPayloadToC64` uses `ANDB #$0F`
+over `$6080`, and `c64BootGetByte` `CPX #$10` — a third, smaller ring that
+exists only during the transfer.
+
+Once the payload is running, `$8080`–`$808B` is reused as a **mailbox**: the
+decoder posts one display cell there and raises `$808B`, and the payload's IRQ
+handler picks it up. `$8080` itself becomes the reduced-display toggle.
+
+`sendPayloadToC64` (`$B2E2`) drives the boot transfer:
 
 ```
 LDAA #$FF / STAA c64XferEn
@@ -139,12 +172,103 @@ loop: LDX $0406 / INX
 ```
 
 Both sides guard against metastability identically: read a shared index twice
-and act only when the two reads agree — `CMPB c64FifoRd` here, `LDA $8009 /
-CMP $8009 / BNE` in the C64 bootstrap.
+and act only when the two reads agree — `CMPB c64FifoRd` here, `LDA btxRxWr /
+CMP btxRxWr / BNE` in the C64 bootstrap. The idiom recurs everywhere the two
+processors share a byte, including the cell mailbox and the line counter.
 
 ---
 
-## 4. The line: 1200 down, 75 up
+## 4. The C64 terminal application
+
+7521 bytes at `$1000`–`$2D60`. Everything it does is reached through a
+**61-entry `JMP` table** at `$1000`–`$10B6` — no routine is called except
+through its slot, so the table is the whole API surface. Entries are labelled
+`vec<Name>` and their bodies `c64<Name>`; vectors 44 and 45 share one body under
+two slots.
+
+### The menu is what unlocks it
+
+Vector 4 reads one letter and looks it up in `c64MenuKeys`. The two lines it
+displays are messages 3 and 4 of the string table:
+
+```
+Load Capture Display Macro Xfer Screen
+ASCII Btx Keybd Telesoft Edit Pause Quit
+```
+
+Each letter therefore names its handler, and the 31 German status records
+confirm what each one does:
+
+| Key | Vector | Handler | Status message |
+|---|---|---|---|
+| L | 15 | `c64MenuLoad` | "von Diskette: File?" |
+| C | 20 | `c64MenuCapture` | "Capture-Modus ein - Ende: STOP-Taste" |
+| D | 22 | `c64MenuDisplay` | "Capture-Puffer anzeigen" |
+| M | 19 | `c64MenuMacro` | "Macro ausfuehren: Kennung?" |
+| X | 23 | `c64MenuXfer` | "Drucker oder File" |
+| S | 24 | `c64MenuScreen` | "C-64-Monitor zugeschaltet" |
+| A | 12 | `c64MenuAscii` | — |
+| B | 13 | `c64MenuBtx` | — |
+| K | 26 | `c64MenuKeybd` | "Keyboard: deutsch oder ASCII?" |
+| T | 57 | `c64MenuTelesoft` | "Telesoftware: File?" |
+| E | 28 | `c64MenuEdit` | "Macro anlegen: Kennung?" |
+| P | 27 | `c64MenuPause` | "Pause: wieviele Sekunden (1-9)?" |
+| Q | 14 | `c64MenuQuit` | — |
+
+The splash text agrees: it tells the user to reach the menu with `<F7>`, and
+`c64MainLoop` opens it on PETSCII `$88`, which is F7.
+
+### The other six layers
+
+| Layer | Vectors | |
+|---|---|---|
+| transport | 6, 8, 7 | the two rings, plus a blocking read |
+| keyboard | 53, 5, 3, 29 | GETIN or macro playback → QWERTZ fixup → CEPT |
+| display | 31, 30, 40, 9 | the status-line overlay |
+| rendering | 46, 43, 44, 55, 56, 25 | one cell → a character → screen, printer or cursor |
+| disk | 16–18, 33, 38, 39, 48, 59, 60, 49 | device 8 channels 4 and 15; 49 is the device 4 printer |
+| macro | 34–37, 47, 50–52 | `@:BTX-MAK-<id>` on channels 5 and 6 |
+
+### Its state
+
+Five flags decide how a keystroke is handled, and between them they explain
+most of the branching:
+
+| Flag | Set by | Effect |
+|---|---|---|
+| `c64GermanFlag` | Keybd | search `c64GermanKeys`; swap Y and Z |
+| `c64AlphaFlag` | ASCII / Btx | put `c64AsciiKeys` first in the search chain |
+| `c64CapFlag` | Capture | route incoming bytes into the buffer |
+| `c64RecFlag` | Edit | echo every key to the macro file |
+| `c64PlayFlag` | Macro | read keys from the macro file, not the keyboard |
+
+`c64XlatKey` searches up to three tables in order — `c64AsciiKeys` (2-byte
+records, ASCII mode only), `c64GermanKeys` (4-byte, umlauts composed with the
+CEPT diaeresis `$19 $48` plus a base letter), then `c64CtrlKeys` (4-byte,
+cursor and colour and function keys). A key expands to at most three CEPT
+bytes.
+
+The capture buffer runs from `c64BufStart` — which is where the startup page
+happens to sit, so the first capture overwrites it — up to `$8000`, the
+cartridge window. `c64CapEnd` records how far it is filled.
+
+### Character-cell rendering
+
+The decoder hands the C64 six bytes per cell: the character, a combining
+accent, an attribute byte whose low three bits select the character set and
+whose bit 3 marks an accent, another attribute byte carrying reverse and
+conceal, and two more that the payload stores and never reads.
+`c64CellToChar` turns those into one code; `c64CellToScreen` plots it and
+`c64CellOut` sends it to the printer or a file, mapping the umlaut compositions
+onto the printer's `$BB`–`$DD`.
+
+Two paths deliver cells. Under the IRQ, `c64IrqPlotCell` takes one from the
+mailbox whenever the decoder posts it. For a hardcopy, `c64MenuXfer` walks rows
+`$11`–`$29` and asks for all 40 columns of each.
+
+---
+
+## 5. The line: 1200 down, 75 up
 
 BTX is asymmetric, and the two directions use entirely different hardware.
 
@@ -168,7 +292,7 @@ decoding a 1200-baud stream.
 
 ---
 
-## 5. CEPT interpretation
+## 6. CEPT interpretation
 
 ### Dispatch
 
@@ -201,6 +325,11 @@ are the locking shifts LS2/LS3, `$7C`–`$7E` the single shifts. The distinction
 shows in the code — `escLS2` sets both the current and the saved G-set
 (`$049D`, `$04A2`), while `ctlSS2` sets only `$049F`.
 
+The C64 side speaks the same protocol back: `c64XlatKey`'s tables emit CEPT
+sequences directly, and the pages the payload sends — the startup page, the
+"Makro-Verzeichnis" listing, the "C-64-Betrieb" notice — are CEPT records the
+firmware then decodes through exactly these tables.
+
 ### A second interpreter
 
 `$F9FA` is a 32-entry C0 table with its own dispatcher at `$FBA9`, serving the
@@ -208,7 +337,7 @@ ASCII terminal mode. Nine handlers cover its 32 slots.
 
 ---
 
-## 6. Display
+## 7. Display
 
 ### Character generators
 
@@ -266,6 +395,10 @@ character picks up an attribute bit from `accentPending` and goes to `$5400`
 normally. The firmware never reads `$5800`, so the video hardware composites
 the mark over the base glyph.
 
+The C64 side shows the same design from the other end: the cell it receives has
+the accent in its own byte, and `c64CellOut` recombines accent plus base letter
+into a single printer code.
+
 ### Cursor and scrolling
 
 `cursorCol` (`$1B1F`) wraps against 40 and 39; `cursorRow` (`$1B1E`) is clamped
@@ -278,7 +411,7 @@ are the index with each bit duplicated.
 
 ---
 
-## 7. ROM map
+## 8. ROM map
 
 ```
 $8000-$877F   G0 character set            96 glyphs x 20 bytes
@@ -291,9 +424,9 @@ $AEF0-$AEFB   font base addresses
 $AEFC-$B1FF   bit-doubling table
 $B200-$B32C   reset and payload transfer
 $B32D-$B33F   C64 cartridge header ("CBM80")
-$B340-$B3A5   C64 cold-start loader        executed at C64 $8000
+$B340-$B3A5   c64CartStart, executed at C64 $8000
 $B3A6-$B3A7   payload load address ($1000)
-$B3A8-$D108   C64 6502 terminal application, runs at $1000-$2D60
+$B3A8-$D108   C64 terminal application, runs at $1000-$2D60
 $D109-$D348   CEPT dispatch tables
 $D419-$D460   format-parameter tables
 $E000-$EF66   firmware
@@ -305,13 +438,40 @@ $FD21-$FFEF   unused ($FF fill, 719 bytes)
 $FFF0-$FFFF   hardware vectors
 ```
 
+The payload's own layout, in runtime addresses:
+
+```
+$1000-$10B6   61-entry JMP dispatch table
+$10B7-$10BF   nine bytes of alignment padding
+$10C0-$10CD   seven pointer slots
+$10CE-$1149   c64CtrlKeys      cursor, colour and function keys
+$114A-$11A9   c64GermanKeys    the German layout and its umlauts
+$11AA-$11B8   c64MacroFile     "@:BTX-MAK-<id>,S,W"
+$11B9-$11F7   variables
+$11F8-$166F   31 CEPT status records
+$1670-$16AD   c64StrTable, indexing them
+$16AE-$2D60   code, with data islands in it
+```
+
+The data below `$16AE` is one contiguous block; above it, data sits wherever
+the routine that owns it happens to be:
+
+```
+$1871  c64AsciiKeys     $1997  c64MenuKeys      $1A41  ceptMonitorMsg
+$2464  c64ExtraFile     $24A4  c64SplashText    $296F  ceptMacroDir
+$2BBD  ceptStartPage
+```
+
+`ceptStartPage` is last, and that is not a coincidence: `c64BufStart` points at
+it, so the capture buffer begins where the startup page ends the image.
+
 100% of the image is accounted for: 13663 bytes of code, 19105 of typed data.
 43 bytes in four fragments are unreachable dead code — no reference anywhere in
 the image, no branch target, and each preceded by an instruction that ends flow.
 
 ---
 
-## 8. Revisions
+## 9. Revisions
 
 Two ROM images exist. Both carry a version string at `$EFF5`:
 
@@ -327,18 +487,26 @@ entire C64 payload is byte-for-byte identical. See
 
 ---
 
-## 9. Not established
+## 10. Not established
 
 - **Font bit 15.** The contiguous-graphics reading is an inference from
   distribution; the firmware never reads the font, so nothing in the ROM tests
   the bit. A schematic would settle it.
 - **`$1B22`–`$1B2D`.** Part of the display-state block, individually unnamed.
 - **`$61F9`–`$61FD`.** Write-only control registers whose function is unknown.
+  Their C64-side counterparts `$81F8`–`$81FD` are touched by the payload's cold
+  start and its IRQ handler, which says they carry an interrupt enable and
+  acknowledge, but not which bit is which.
+- **Seven interface registers.** `$8005`, `$800F`, `$8011`, `$8012` and `$8090`
+  are read or written by the payload without their meaning being established.
+  `$8011` is a counter the decoder advances — `c64WaitDecoder` spins on it and
+  `c64MacroRecOpen` paces the macro file against it — and `$8090` reads `$28`
+  or `$50` at points where the payload is deciding about line width, but
+  neither is proven.
 - **The `$D419` no-match path.** Reachable, but harmless: two of its three
   outputs are read only for bit 7 and the third is clamped. Documented in the
   sidecar rather than treated as a bug.
-- **The C64 payload's internals.** Its 61-entry jump table is labelled and its
-  variable/text split is established, but only three routines carry evidenced
-  names; the other 57 are structural. Tracing entries transitively is not
-  discriminating - nearly all reach a shared input loop - so naming them means
-  reading each one, a task the size of the 6801 side.
+- **Two cell bytes.** Both cell readers store `c64Cell3` and `c64Cell5`, and
+  nothing in the payload reads them back.
+- **String-record header bytes 2 and 3.** `$C0`/`$80` and `$01`/`$07` vary
+  across the 31 records and look like display parameters.

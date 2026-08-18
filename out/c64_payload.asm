@@ -32,18 +32,18 @@ BUF         EQU     $0200
 IERROR      EQU     $0300
 CINV        EQU     $0314
 btxReg005   EQU     $8005
-btxFifoWr   EQU     $8009
-btxFifoRd   EQU     $800A
+btxRxWr     EQU     $8009
+btxRxRd     EQU     $800A
 btxXferEn   EQU     $800B
 btxStatus   EQU     $800C
-btxReg00D   EQU     $800D
-btxReg00E   EQU     $800E
+btxTxWr     EQU     $800D
+btxTxRd     EQU     $800E
 btxReg00F   EQU     $800F
 btxXferDone EQU     $8010
 btxReg011   EQU     $8011
 btxReg012   EQU     $8012
-btxReg020   EQU     $8020
-btxReg040   EQU     $8040
+btxRxFifo   EQU     $8020
+btxTxFifo   EQU     $8040
 btxFifo00   EQU     $8080
 btxFifo01   EQU     $8081
 btxFifo02   EQU     $8082
@@ -136,8 +136,8 @@ c64LoadAddr:
 ;
 ; The remaining vectors group into six layers:
 ;
-;   transport   6 8 7        the two rings shared with the 6801 (btxReg040 out,
-;                            btxReg020 in) plus a blocking read
+;   transport   6 8 7        the two rings shared with the 6801 (btxTxFifo out,
+;                            btxRxFifo in) plus a blocking read
 ;   keyboard    53 5 3 29    GETIN or macro playback -> QWERTZ fixup -> CEPT
 ;   display     31 30 40 9   the status-line overlay, drawn from c64StrTable
 ;   rendering   46 43 44 55  one cell (6 bytes) -> a character, then to the C64
@@ -1085,7 +1085,7 @@ c64AsciiKeys:
         FCB     $00
 
 c64SendByte:
-; vector 6 $1012 - push A into the 64-byte C64->decoder ring at btxReg040, spinning while it is full, then run c64CtrlThrottle
+; vector 6 $1012 - push A into the 64-byte C64->decoder ring at btxTxFifo, spinning while it is full, then run c64CtrlThrottle
         LDX     btxXferDone
         CPX     btxXferDone
         BNE     c64SendByte
@@ -1093,20 +1093,20 @@ c64SendByte:
         BEQ     c64SendByte
 
 L189B:
-        LDX     btxReg00D
+        LDX     btxTxWr
         INX
         CPX     #$40
         BNE     L18A5
         LDX     #$00
 
 L18A5:
-        CPX     btxReg00E
+        CPX     btxTxRd
         BEQ     L189B
-        CPX     btxReg00E
+        CPX     btxTxRd
         BEQ     L189B
-        LDY     btxReg00D
-        STA     btxReg040,Y
-        STX     btxReg00D
+        LDY     btxTxWr
+        STA     btxTxFifo,Y
+        STX     btxTxWr
         JSR     vecCtrlThrottle
         RTS
 
@@ -1117,11 +1117,11 @@ c64GetByteWait:
         RTS
 
 c64GetByte:
-; vector 8 $1018 - pull one byte from the 32-byte decoder->C64 ring at btxReg020. C=1 when empty. Read pointers twice to ride out metastability
-        LDA     btxFifoRd
-        CMP     btxFifoWr
+; vector 8 $1018 - pull one byte from the 32-byte decoder->C64 ring at btxRxFifo. C=1 when empty. Read pointers twice to ride out metastability
+        LDA     btxRxRd
+        CMP     btxRxWr
         BEQ     L18CF
-        CMP     btxFifoWr
+        CMP     btxRxWr
         BNE     L18D1
 
 L18CF:
@@ -1130,14 +1130,14 @@ L18CF:
 
 L18D1:
         TAX
-        LDA     btxReg020,X
+        LDA     btxRxFifo,X
         INX
         CPX     #$20
         BNE     L18DC
         LDX     #$00
 
 L18DC:
-        STX     btxFifoRd
+        STX     btxRxRd
         CLC
         RTS
 
@@ -1674,10 +1674,10 @@ L1C7C:
         BNE     L1C7C
 
 L1C86:
-        LDA     btxFifoWr
-        CMP     btxFifoWr
+        LDA     btxRxWr
+        CMP     btxRxWr
         BNE     L1C86
-        STA     btxFifoRd
+        STA     btxRxRd
         JSR     vecHideMsg
 
 L1C94:
@@ -3770,10 +3770,10 @@ L2B01:
         BNE     L2B01
 
 L2B0B:
-        LDA     btxFifoWr
-        CMP     btxFifoWr
+        LDA     btxRxWr
+        CMP     btxRxWr
         BNE     L2B0B
-        STA     btxFifoRd
+        STA     btxRxRd
         RTS
 
 c64TelesoftByte:

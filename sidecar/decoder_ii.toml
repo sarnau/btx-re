@@ -910,8 +910,8 @@ c64MainLoop opens it on PETSCII $88, which is F7.
 
 The remaining vectors group into six layers:
 
-  transport   6 8 7        the two rings shared with the 6801 (btxReg040 out,
-                           btxReg020 in) plus a blocking read
+  transport   6 8 7        the two rings shared with the 6801 (btxTxFifo out,
+                           btxRxFifo in) plus a blocking read
   keyboard    53 5 3 29    GETIN or macro playback -> QWERTZ fixup -> CEPT
   display     31 30 40 9   the status-line overlay, drawn from c64StrTable
   rendering   46 43 44 55  one cell (6 bytes) -> a character, then to the C64
@@ -1427,9 +1427,9 @@ vectors before entering the main firmware."""
 "0xBAF4" = "vector 2 $1006 - main loop: fetch a key, STOP ends a capture, F7 ($88) opens the menu, anything else goes to c64SendKey"
 "0xBB2A" = "vector 3 $1009 - translate one key with c64XlatKey and send the resulting 1-3 CEPT bytes to the decoder"
 "0xBB5E" = "vector 5 $100F - PETSCII key -> CEPT, via c64AsciiKeys (2-byte records, alpha mode), then c64GermanKeys, then c64CtrlKeys (4-byte records). C=1 when the key has no mapping"
-"0xBC37" = "vector 6 $1012 - push A into the 64-byte C64->decoder ring at btxReg040, spinning while it is full, then run c64CtrlThrottle"
+"0xBC37" = "vector 6 $1012 - push A into the 64-byte C64->decoder ring at btxTxFifo, spinning while it is full, then run c64CtrlThrottle"
 "0xBC64" = "vector 7 $1015 - c64GetByte in a loop: block until the decoder delivers a byte"
-"0xBC6A" = "vector 8 $1018 - pull one byte from the 32-byte decoder->C64 ring at btxReg020. C=1 when empty. Read pointers twice to ride out metastability"
+"0xBC6A" = "vector 8 $1018 - pull one byte from the 32-byte decoder->C64 ring at btxRxFifo. C=1 when empty. Read pointers twice to ride out metastability"
 "0xBC89" = "vector 9 $101B - send $10 $7A $10 $55: close the status-line overlay and put the BTX page back"
 "0xBC9E" = "vector 10 $101E - STOP during a capture: send $10 $6D, wait for the transfer to drain, record the end pointer and offer c64SaveBuffer"
 "0xBCD8" = "vector 11 $1021 - poll keyboard row 7 for CTRL ($DC01 = $FB) and burn ~2000 cycles while it is held: the classic hold-to-slow-output"
@@ -1994,18 +1994,18 @@ org = 0x0FFE
 "0x8000" = "btxLoadLo"
 "0x8001" = "btxLoadHi"
 "0x8005" = "btxReg005"
-"0x8009" = "btxFifoWr"
-"0x800A" = "btxFifoRd"
+"0x8009" = "btxRxWr"
+"0x800A" = "btxRxRd"
 "0x800B" = "btxXferEn"
 "0x800C" = "btxStatus"
-"0x800D" = "btxReg00D"
-"0x800E" = "btxReg00E"
+"0x800D" = "btxTxWr"
+"0x800E" = "btxTxRd"
 "0x800F" = "btxReg00F"
 "0x8010" = "btxXferDone"
 "0x8011" = "btxReg011"
 "0x8012" = "btxReg012"
-"0x8020" = "btxReg020"
-"0x8040" = "btxReg040"
+"0x8020" = "btxRxFifo"
+"0x8040" = "btxTxFifo"
 "0x8080" = "btxFifo00"
 "0x8081" = "btxFifo01"
 "0x8082" = "btxFifo02"
