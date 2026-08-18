@@ -60,8 +60,13 @@ def test_blocks_are_contiguous_and_leave_no_loose_bytes():
     listing = build.run(write=False).listing
     between = listing.split('BINCLUDE "c64_bootstrap.bin"')[1].split(
         'BINCLUDE "c64_payload.bin"')[0]
-    assert not [ln for ln in between.splitlines()
-                if ln.strip() and not ln.lstrip().startswith(";")], between
+    # A comment or a label emits nothing; anything else would put bytes
+    # between the two blocks.
+    emits = [ln for ln in between.splitlines()
+             if ln.strip()
+             and not ln.lstrip().startswith(";")
+             and not ln.rstrip().endswith(":")]
+    assert not emits, emits
 
 
 def test_data_regions_render_as_fcb_not_instructions():

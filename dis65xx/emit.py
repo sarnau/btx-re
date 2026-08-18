@@ -293,6 +293,9 @@ def emit(data: bytes, result: TraceResult, sidecar: Sidecar) -> str:
         if c64 is not None and addr == c64.start:
             flush()
             lines.append("")
+            # A label so the block has a name in this listing too - the 6502
+            # source defines its own, but they live in a separate assembly.
+            lines.append(f"c64{c64.name.capitalize()}Block:")
             lines.append(f"; {c64.name}: 6502 code, assembled separately at "
                          f"${c64.org:04X}. See out/c64_{c64.name}.asm.")
             lines.append(f"{'':{_INDENT}}BINCLUDE \"c64_{c64.name}.bin\"")

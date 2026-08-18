@@ -191,3 +191,13 @@ def test_site_symbols_reject_an_address_that_is_not_an_instruction():
     bad = dataclasses.replace(sc, site_symbols={**sc.site_symbols, 0x8001: "nope"})
     with pytest.raises(ValueError, match="not an instruction"):
         emit(rom, res, bad)
+
+
+def test_c64_blocks_carry_a_label():
+    """The 6502 sources define their own labels, but those live in a separate
+    assembly - so the 6801 listing names each block itself."""
+    src = (OUT / "btx_decoder_ii.asm").read_text()
+    for label, inc in (("c64BootstrapBlock:", "c64_bootstrap.bin"),
+                       ("c64PayloadBlock:", "c64_payload.bin")):
+        i = src.index(label)
+        assert f'BINCLUDE "{inc}"' in src[i:i + 200], label

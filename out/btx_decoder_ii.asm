@@ -3093,10 +3093,12 @@ LB31D:
         STAA    c64XferDone
         RTS
 
+c64BootstrapBlock:
 ; bootstrap: 6502 code, assembled separately at $8000. See out/c64_bootstrap.asm.
         BINCLUDE "c64_bootstrap.bin"
 
 
+c64PayloadBlock:
 ; payload: 6502 code, assembled separately at $0FFE. See out/c64_payload.asm.
         BINCLUDE "c64_payload.bin"
 
