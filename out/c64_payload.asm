@@ -800,9 +800,9 @@ c64Vec05:
         BEQ     L180D
         LDX     L11F7
         BEQ     L17EF
-        LDX     #$71
+        LDX     #c64KeyTable&255
         STX     FAC2EXP
-        LDX     #$18
+        LDX     #c64KeyTable>>8
         STX     FAC2MAN1
         LDY     #$00
 
@@ -921,22 +921,33 @@ L185D:
         STA     L11EB
         CLC
         RTS
-        FCB     $23
-        RTI
-        FCC     ";{:|"
-        RTI
-        ADC     $7E2B,X
-        EOR     $5B5B,X
-        FCB     $5C
-        TSX
-        EOR     >$002D,X
-        CMP     $5E00,X
-        BRK
-        DEC     $5C00,X
-        BRK
-        LDA     #$00
-        BRK
-        BRK
+
+; Character table, runtime $1871-$188E, sitting straight after an RTS so a
+; linear sweep runs into it and disassembles the bytes as instructions.
+;
+;     23 40 3B 7B 3A 7C 40 7D 2B 7E 5D 5B 5B 5C BA 5D 2D
+;     00 DD 00 5E 00 DE 00 5C 00 A9 00 00 00
+;
+; The first run is # @ ; { : | @ } + ~ ] [ [ \ : ] - which are precisely the
+; positions where the German and ASCII keyboard layouts differ - the same choice
+; the "Keyboard: deutsch oder ASCII?" prompt offers. The tail pairs each $00 with
+; a high-bit code ($DD, $DE, $A9), which look like the PETSCII characters those
+; positions map to.
+;
+; Read as a layout translation table on that basis, and the code confirms the
+; shape: $17D2 points FAC2EXP/FAC2MAN1 here and then walks it with
+;
+;     LDA (FAC2EXP),Y / BEQ done      $00 ends the table
+;     TXA / CMP (FAC2EXP),Y / BEQ hit
+;     INY / INY                       two bytes per entry
+;
+; so it is a two-byte-per-entry lookup terminated by $00. Which byte is the
+; input and which the output is not established, and the pairing across the
+; whole table has not been decoded.
+c64KeyTable:
+        FCC     "#@;{:|@}+~][["
+        FCB     $5C,$BA,$5D,$2D,$00,$DD,$00,$5E,$00,$DE,$00,$5C,$00,$A9,$00,$00
+        FCB     $00
 
 c64Vec06:
 ; vector 6 at runtime $188F - jump-table entry 6

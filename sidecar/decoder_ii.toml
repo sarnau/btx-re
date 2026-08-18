@@ -10,7 +10,7 @@
 # not two unrelated constants. $0314 is CINV, the C64's IRQ vector, which is
 # set the same way but with absolute stores. Top-level, like entry_points: a
 # bare key written after a table header would belong to that table.
-c64_pointers = [0xA7, 0xBB, 0x0314]
+c64_pointers = [0x69, 0xA7, 0xBB, 0x0314]
 
 entry_points = [
     0xB200,  # RESET
@@ -167,6 +167,7 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 
 
 [labels]
+"0xBC19" = "c64KeyTable"
 "0xB468" = "c64PtrTable"
 "0xBD3F" = "c64MenuKeys"
 "0xBDE9" = "ceptMonitorMsg"
@@ -398,6 +399,29 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xFFF0" = "vectors"
 
 [block_comments]
+"0xBC19" = """
+Character table, runtime $1871-$188E, sitting straight after an RTS so a
+linear sweep runs into it and disassembles the bytes as instructions.
+
+    23 40 3B 7B 3A 7C 40 7D 2B 7E 5D 5B 5B 5C BA 5D 2D
+    00 DD 00 5E 00 DE 00 5C 00 A9 00 00 00
+
+The first run is # @ ; { : | @ } + ~ ] [ [ \\ : ] - which are precisely the
+positions where the German and ASCII keyboard layouts differ - the same choice
+the "Keyboard: deutsch oder ASCII?" prompt offers. The tail pairs each $00 with
+a high-bit code ($DD, $DE, $A9), which look like the PETSCII characters those
+positions map to.
+
+Read as a layout translation table on that basis, and the code confirms the
+shape: $17D2 points FAC2EXP/FAC2MAN1 here and then walks it with
+
+    LDA (FAC2EXP),Y / BEQ done      $00 ends the table
+    TXA / CMP (FAC2EXP),Y / BEQ hit
+    INY / INY                       two bytes per entry
+
+so it is a two-byte-per-entry lookup terminated by $00. Which byte is the
+input and which the output is not established, and the pairing across the
+whole table has not been decoded."""
 "0xC701" = """
 The payload's IRQ handler, installed into CINV.
 
@@ -1372,6 +1396,16 @@ kind = "ptr_table"
 
 [[regions]]
 start = 0xBA56
+end = 0xBC19
+kind = "code6502"
+
+[[regions]]
+start = 0xBC19
+end = 0xBC37
+kind = "string"
+
+[[regions]]
+start = 0xBC37
 end = 0xBD3F
 kind = "code6502"
 

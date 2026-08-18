@@ -419,3 +419,18 @@ def test_irq_vector_names_its_handler():
     assert lines[i + 1] == "LDA     #L2359>>8"
     assert lines[i + 2] == "STA     CINVH"
     assert "L2359:" in src
+
+
+def test_pointer_setups_work_for_every_register():
+    """The pointer can be built with LDX/STX or LDY/STY as well as LDA/STA -
+    matching only the accumulator form missed the key table entirely."""
+    src = (OUT / "c64_payload.asm").read_text()
+    assert "LDX     #c64KeyTable&255" in src
+    assert "LDX     #c64KeyTable>>8" in src
+
+
+def test_key_table_is_data_not_code():
+    src = (OUT / "c64_payload.asm").read_text()
+    body = src.split("c64KeyTable:", 1)[1].split("c64Vec06:", 1)[0]
+    assert not re.search(r"^\s+(LDA|STA|JSR|JMP|RTI|TSX)\s", body, re.M)
+    assert 'FCC     "#@;{:|@}+~][["' in body

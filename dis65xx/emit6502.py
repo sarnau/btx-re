@@ -229,7 +229,12 @@ def _pointer_targets(decoded: list, pairs: set[int]) -> dict[tuple[int, int], in
         a, b, c, d = decoded[i:i + 4]
         if not all(x is not None for x in (a, b, c, d)):
             continue
-        if (a.mnemonic, b.mnemonic, c.mnemonic, d.mnemonic) != ("LDA", "STA", "LDA", "STA"):
+        # Any register will do, as long as each load is followed by the store
+        # of the same one: LDA/STA, LDX/STX or LDY/STY.
+        if a.mnemonic not in ("LDA", "LDX", "LDY"):
+            continue
+        reg = a.mnemonic[2]
+        if (b.mnemonic, c.mnemonic, d.mnemonic) != (f"ST{reg}", a.mnemonic, f"ST{reg}"):
             continue
         if a.mode is not Mode.IMM or c.mode is not Mode.IMM:
             continue
