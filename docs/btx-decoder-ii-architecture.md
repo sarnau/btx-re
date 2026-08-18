@@ -115,8 +115,27 @@ vectors, then initialises the subsystems and hands the C64 its software.
 
 ### The cartridge announces itself
 
-`$B32D` in ROM is what the C64 sees at `$8000`, proved by the autostart header
-sitting there:
+The C64 sees an autostart cartridge at `$8000`, but not by an address decode
+onto this ROM. `copyBootstrapToC64` at `$B2B4` puts it there:
+
+```
+        LDS     #c64BootstrapBlock-1
+        LDX     #c64Window
+loop:   PULA
+        STAA    $00,X
+        INX
+        CPX     #$6079
+        BCS     loop
+```
+
+`$6079 - $6000` is 121 bytes — exactly the size of the bootstrap block,
+`$B32D`–`$B3A5`. So the decoder **copies** the whole thing, CBM80 header
+included, into the dual-port window it shares with the C64. The C64 autostarts
+out of RAM the decoder filled a moment earlier, which is also what makes
+`btxLoadLo`/`btxLoadHi` writable at all.
+
+Everything the header proves still holds, because the bytes are the same either
+way:
 
 ```
 $B32D  13 80              cold start vector  $8013
@@ -124,7 +143,8 @@ $B32F  72 FE              warm start vector  $FE72, the KERNAL's NNMI20
 $B331  C3 C2 CD 38 30     "CBM80"
 ```
 
-`$8013` resolves to ROM `$B340`, exactly where `c64CartStart` begins.
+`$8013` resolves to ROM `$B340`, exactly where `c64CartStart` begins, and the
+`JMP $8036` at `$B36D` lands on `c64CopyLoop`.
 
 ### The C64 pulls its own software across
 

@@ -93,9 +93,12 @@ def test_dispatch_tables_name_their_handlers():
             if r["kind"] != "code"]
     labels = {v: int(k, 16) for k, v in sidecar["labels"].items()}
     symbols = set(sidecar["symbols"].values())
+    # the emitter names each 6502 block itself; a block is BINCLUDEd data
+    from dis65xx.emit import c64_block_label
+    blocks = {c64_block_label(b["name"]): b["start"] for b in sidecar["c64_blocks"]}
     body = "\n".join(ln.split(";")[0] for ln in src.splitlines())
     for base in set(re.findall(r"\b([A-Za-z_][A-Za-z0-9_]*)[+-]\d+", body)):
-        if base in symbols:
+        if base in symbols or base in blocks:
             continue
         a = labels.get(base)
         assert a is not None, base

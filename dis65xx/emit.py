@@ -83,9 +83,12 @@ def format_operand(insn: Insn, sidecar: Sidecar) -> str:
                 # is loaded one byte early. NAME-1 is what that means.
                 after = sidecar.symbols.get(value + 1) or sidecar.labels.get(value + 1)
                 # A C64 block is assembled separately and linked in as binary,
-                # so its labels do not exist in this listing.
-                if sidecar.c64_block_at(value + 1) is not None:
-                    after = None
+                # so its own labels do not exist here - but the block start
+                # does, because this listing emits a label for it.
+                blk = sidecar.c64_block_at(value + 1)
+                if blk is not None:
+                    after = (c64_block_label(blk.name)
+                             if value + 1 == blk.start else None)
                 if after is not None:
                     name = f"{after}-1"
             if name is None:
@@ -202,6 +205,11 @@ def _fdb_line(words: list[int], names: dict[int, str] | None = None,
     return f"{'':{_INDENT}}{'FDB':{_MNEM_WIDTH}}{values}"
 
 
+def c64_block_label(name: str) -> str:
+    """The label this listing gives a separately-assembled 6502 block."""
+    return f"c64{name.capitalize()}Block"
+
+
 def _printable(b: int) -> bool:
     """Safe inside an FCC run.
 
@@ -295,7 +303,7 @@ def emit(data: bytes, result: TraceResult, sidecar: Sidecar) -> str:
             lines.append("")
             # A label so the block has a name in this listing too - the 6502
             # source defines its own, but they live in a separate assembly.
-            lines.append(f"c64{c64.name.capitalize()}Block:")
+            lines.append(f"{c64_block_label(c64.name)}:")
             lines.append(f"; {c64.name}: 6502 code, assembled separately at "
                          f"${c64.org:04X}. See out/c64_{c64.name}.asm.")
             lines.append(f"{'':{_INDENT}}BINCLUDE \"c64_{c64.name}.bin\"")

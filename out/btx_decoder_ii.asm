@@ -239,6 +239,7 @@ planeChar      EQU     $5400
 planeAccent    EQU     $5800
 videoRam       EQU     $5C00
 videoRamTop    EQU     $5FFF
+c64Window      EQU     $6000
 c64FifoWr      EQU     $6009
 c64FifoRd      EQU     $600A
 c64XferEn      EQU     $600B
@@ -2992,17 +2993,39 @@ LB2A3:
         STAA    PORT1
         LDAA    #$0B
         TST     PORT1
-        BPL     LB2B4
+        BPL     copyBootstrapToC64
         LDAA    #$8B
 
-LB2B4:
+; How the C64 comes to see a cartridge at $8000.
+;
+;     LDS #c64BootstrapBlock-1
+;     LDX #c64Window
+;   loop:
+;     PULA / STAA 0,X / INX
+;     CPX #$6079 / BCS loop
+;
+; $6079 - $6000 is 121 bytes, which is exactly the size of the bootstrap block,
+; $B32D-$B3A5. So the 6801 COPIES the whole thing - the CBM80 header included -
+; into the dual-port window, which the C64 sees at $8000. It is not a second
+; address decode onto this ROM.
+;
+; Everything the header proves still holds, because the bytes are the same
+; either way: the cold-start vector still reads $8013, that still resolves to
+; $B340, and the JMP $8036 at $B36D still lands on c64CopyLoop. What changes is
+; the mechanism - the C64 autostarts out of RAM the decoder filled a moment
+; earlier, which is also why btxLoadLo and btxLoadHi can be written at all.
+;
+; The read walks the source with PUL, so S is loaded one byte early and the real
+; stack is parked in scrollEnd for the duration. That is the same trick the glyph
+; fetch and the message printers use.
+copyBootstrapToC64:
         STAA    P4DDR
         TPA
         PSHA
         SEI
         STS     scrollEnd               ; scrollEnd is scratch here - nothing scrolls until the payload has been sent
-        LDS     #$B32C
-        LDX     #$6000
+        LDS     #c64BootstrapBlock-1
+        LDX     #c64Window
 
 LB2C2:
         PULA
@@ -3018,7 +3041,7 @@ LB2C2:
         STAA    PORT1
         STAA    c64IrqArmB
         STAA    c64IrqArmA
-        LDX     #$B3A5
+        LDX     #c64PayloadBlock-1
         STX     scrollEnd
 
 ; Ship the C64 payload across the dual-port interface.
@@ -7310,7 +7333,7 @@ LEEBC:
         CLR     $02,X
         STAA    $03,X
         ABX
-        CPX     #$6000
+        CPX     #c64Window
         BCS     LEEBC
         LDAA    PORT3
         INCA
