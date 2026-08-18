@@ -23,7 +23,7 @@ Bildschirmtext Decoder II ROM (`c64_btx_decoder_ii.bin`, MC6801, 32 KB at
 | `line_comments` | Address → trailing `;` comment on that instruction. |
 | `block_comments` | Address → multi-line banner above that address. |
 | `symbols` | Address → name for hardware registers and RAM locations. |
-| `regions` | Typed data ranges: `bytes`, `words`, `string`, `ptr_table`, `chargen`. |
+| `regions` | Typed data ranges: `bytes`, `words`, `string`, `ptr_table`, `chargen`, `code6502`. |
 
 `entry_points` must appear **above** the `[meta]` header. TOML assigns bare keys
 written after a table header to that table, so putting it below silently makes it
@@ -39,6 +39,18 @@ Use `--report` to find the next thing to work on: unresolved computed jumps are
 where code coverage is being lost, and the largest unreached regions are either
 undiscovered code or data that needs a region entry.
 
+## Two instruction sets
+
+The image holds a C64-side 6502 program as well as the 68B01 firmware, so the
+listing carries both. A `code6502` region is linear-disassembled as 6502 and
+bracketed with `CPU 6502` / `CPU 6801`, which asl and `dis6801/asm.py` both
+honour. Undecodable bytes inside such a region fall back to `FCB`.
+
+The payload is stored at one address and runs at another, so its absolute
+operands are runtime addresses with no position in this ROM. They are emitted
+verbatim rather than relabelled - that is what keeps the round-trip exact. The
+block comment at `$B32D` records the mapping.
+
 ## Why not Ghidra
 
 Ghidra ships no 6800/6801 processor module. Its `MC6800/data/languages/6800.ldefs`
@@ -48,9 +60,11 @@ Ghidra would produce plausible-looking but wrong disassembly.
 
 ## Layout
 
-    dis6801/opcodes.py   MC6801 opcode table (pure data)
-    dis6801/decode.py    bytes -> one instruction
-    dis6801/encode.py    one instruction -> bytes
+    dis6801/opcodes.py     MC6801 opcode table (pure data)
+    dis6801/decode.py      bytes -> one 6801 instruction
+    dis6801/encode.py      one 6801 instruction -> bytes
+    dis6801/opcodes6502.py NMOS 6502 opcode table (151 documented opcodes)
+    dis6801/codec6502.py   6502 decode and encode
     dis6801/trace.py     recursive-descent code discovery
     dis6801/emit.py      code/data map + sidecar -> listing text
     dis6801/asm.py       listing text -> bytes (the round-trip verifier)

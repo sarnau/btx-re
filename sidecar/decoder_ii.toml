@@ -149,7 +149,8 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xF61F" = "sciRxHandler"
 "0x04EE" = "txRing"
 "0xB2E2" = "sendPayloadToC64"
-"0xB32D" = "c64Bootstrap"
+"0xB32D" = "c64CartHeader"
+"0xB340" = "c64ColdStart"
 "0xB3A6" = "c64LoadAddr"
 "0xB3A8" = "c64Payload"
 "0xB552" = "c64Strings"
@@ -334,12 +335,22 @@ C64-side 6502 code, $B32D-$D108. Not 6801 - the cartridge carries the C64's
 BTX terminal application in the same 32 KB image as the 68B01 firmware, which
 is why a 6801 trace never reaches it.
 
-$B32D-$B3A5  c64Bootstrap  cartridge cold-start, runs at C64 $8000
+$B32D-$B33F  c64CartHeader C64 autostart cartridge header
+$B340-$B3A5  c64ColdStart  cartridge cold-start, runs at C64 $8000
 $B3A6-$B3A7  c64LoadAddr   $00 $10 - little-endian load address $1000
 $B3A8-$D108  c64Payload    7521 bytes, loaded to C64 $1000-$2D60
 
-The bootstrap runs from cartridge ROM at C64 $8000 (ROM $B32D maps to $8000,
-confirmed by the JMP $8036 at $B36D landing exactly on $B363):
+ROM $B32D maps to C64 $8000, proved by the cartridge header itself:
+
+    $B32D  13 80              cold start vector  $8013
+    $B32F  72 FE              warm start vector  $FE72
+    $B331  C3 C2 CD 38 30     "CBM80" autostart signature
+    $B336  00 00 00 FF 00...  padding
+
+$8013 resolves to ROM $B32D + $13 = $B340, exactly where the cold-start code
+begins - and independently, the JMP $8036 at $B36D lands exactly on $B363.
+
+The bootstrap then runs from cartridge ROM at C64 $8000:
 
     JSR $FDA3 / $FD90 / $FD15 / $FF5B   KERNAL init, restore vectors, CINT
     LDX #$00 / STX $D016                VIC setup
@@ -661,6 +672,11 @@ kind = "bytes"
 # C64-side 6502 code. See the block comment at $B32D.
 [[regions]]
 start = 0xB32D
+end = 0xB340
+kind = "bytes"
+
+[[regions]]
+start = 0xB340
 end = 0xB3A6
 kind = "code6502"
 

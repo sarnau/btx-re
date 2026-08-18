@@ -6,8 +6,10 @@ dis6801.asm, which is what enforces byte-identity.
 
 from __future__ import annotations
 
+from dis6801 import codec6502
 from dis6801.decode import Insn
 from dis6801.opcodes import Mode, modes_for
+from dis6801.opcodes6502 import Mode as M65
 from dis6801.sidecar import Sidecar
 from dis6801.trace import CODE, TraceResult
 
@@ -39,6 +41,89 @@ def format_operand(insn: Insn, sidecar: Sidecar) -> str:
         return prefix + (name if name else f"${value:04X}")
 
     raise AssertionError(f"unhandled mode {mode}")  # pragma: no cover
+
+
+def format_operand_6502(insn) -> str:
+    """6502 operand syntax. Absolute operands stay literal - the payload runs at
+    a different address than it is stored, so its references name runtime
+    locations with no position in this ROM."""
+    m, v = insn.mode, insn.operand
+    if m is M65.IMP:
+        return ""
+    if m is M65.ACC:
+        return "A"
+    if m is M65.IMM:
+        return f"#${v:02X}"
+    if m is M65.ZP:
+        return f"${v:02X}"
+    if m is M65.ZPX:
+        return f"${v:02X},X"
+    if m is M65.ZPY:
+        return f"${v:02X},Y"
+    if m is M65.IZX:
+        return f"(${v:02X},X)"
+    if m is M65.IZY:
+        return f"(${v:02X}),Y"
+    if m is M65.IND:
+        return f"(${v:04X})"
+    if m is M65.REL:
+        return f"${v:04X}"
+    # Absolute forms need > when a shortest-fit assembler would pick zero page.
+    pre = ">" if v < 0x100 else ""
+    if m is M65.ABS:
+        return f"{pre}${v:04X}"
+    if m is M65.ABX:
+        return f"{pre}${v:04X},X"
+    if m is M65.ABY:
+        return f"{pre}${v:04X},Y"
+    raise AssertionError(m)  # pragma: no cover
+
+
+def _emit_6502(data: bytes, base: int, start: int, end: int,
+               sidecar: Sidecar, lines: list[str]) -> None:
+    """Linear-disassemble a code6502 region. Undecodable bytes become FCB."""
+    lines.append("")
+    lines.append(f"{'':{_INDENT}}{'CPU':{_MNEM_WIDTH}}6502")
+    addr = start
+    pending: list[int] = []
+
+    def flush() -> None:
+        while pending:
+            chunk = bytes(pending[:BYTES_PER_FCB])
+            del pending[:BYTES_PER_FCB]
+            lines.append(_fcb_line(chunk))
+
+    while addr < end:
+        # The caller already emitted any label and banner at the region start;
+        # re-emitting here would define the symbol twice.
+        label = sidecar.labels.get(addr) if addr != start else None
+        block = sidecar.block_comments.get(addr) if addr != start else None
+        if label or block:
+            flush()
+            lines.append("")
+            if block:
+                for line in block.strip().splitlines():
+                    lines.append(f"; {line}" if line else ";")
+            if label:
+                lines.append(f"{label}:")
+        try:
+            insn = codec6502.decode(data, addr - base, addr)
+        except ValueError:
+            pending.append(data[addr - base])
+            addr += 1
+            continue
+        if insn.end > end:
+            pending.append(data[addr - base])
+            addr += 1
+            continue
+        flush()
+        body = f"{'':{_INDENT}}{insn.mnemonic:{_MNEM_WIDTH}}{format_operand_6502(insn)}".rstrip()
+        comment = sidecar.line_comments.get(addr)
+        lines.append(f"{body:<40}; {comment}" if comment else body)
+        addr = insn.end
+    flush()
+    lines.append(f"{'':{_INDENT}}{'CPU':{_MNEM_WIDTH}}6801")
+    lines.append("")
 
 
 def _instruction_line(insn: Insn, sidecar: Sidecar) -> str:
@@ -118,6 +203,12 @@ def emit(data: bytes, result: TraceResult, sidecar: Sidecar) -> str:
                     lines.append(f"; {line}" if line else ";")
             if label:
                 lines.append(f"{label}:")
+
+        if region is not None and region.kind == "code6502" and addr == region.start:
+            flush()
+            _emit_6502(data, base, region.start, min(region.end, end), sidecar, lines)
+            addr = min(region.end, end)
+            continue
 
         if region is not None and region.kind in ("words", "ptr_table") and not is_code:
             flush()

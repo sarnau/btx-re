@@ -9,8 +9,12 @@ from __future__ import annotations
 
 import re
 
+from dis6801 import codec6502
 from dis6801.encode import encode
 from dis6801.opcodes import SIZE, Mode, modes_for
+from dis6801.opcodes6502 import SIZE as SIZE65
+from dis6801.opcodes6502 import Mode as M65
+from dis6801.opcodes6502 import modes_for as modes_for_65
 
 _LABEL = re.compile(r"^(?P<label>[A-Za-z_][A-Za-z0-9_]*):?\s*(?P<rest>.*)$")
 
@@ -64,7 +68,18 @@ def _value(token: str, symbols: dict[str, int], line_no: int) -> int:
     raise ValueError(f"line {line_no}: undefined symbol {token!r}")
 
 
-def _sizeof(line: _Line, symbols: dict[str, int], strict: bool) -> int:
+def _cpu_per_line(lines: list[_Line]) -> list[str]:
+    """Which CPU each line assembles under. The listing switches with CPU."""
+    cpus = []
+    current = "6801"
+    for line in lines:
+        if line.op == "CPU":
+            current = line.operand.strip()
+        cpus.append(current)
+    return cpus
+
+
+def _sizeof(line: _Line, symbols: dict[str, int], strict: bool, cpu: str) -> int:
     """Byte length of one line. On pass 1 unknown symbols are assumed 16-bit."""
     op = line.op
     if op in (None, "CPU", "ORG", "END", "EQU"):
@@ -74,6 +89,9 @@ def _sizeof(line: _Line, symbols: dict[str, int], strict: bool) -> int:
     if op == "FDB":
         return 2 * len(_split_values(line.operand))
 
+    if cpu == "6502":
+        mode, _ = _resolve_mode_6502(line, symbols, strict=strict)
+        return SIZE65[mode]
     mode, _ = _resolve_mode(line, symbols, strict=strict)
     return SIZE[mode]
 
@@ -129,6 +147,62 @@ def _resolve_mode(line: _Line, symbols: dict[str, int], *, strict: bool) -> tupl
     raise ValueError(f"line {line.no}: {mnemonic} takes no memory operand")
 
 
+def _resolve_mode_6502(line: _Line, symbols: dict[str, int], *, strict: bool):
+    """Determine 6502 addressing mode and operand for an instruction line."""
+    mnemonic = line.op
+    available = modes_for_65(mnemonic)
+    if not available:
+        raise ValueError(f"line {line.no}: unknown mnemonic {mnemonic!r}")
+    text = line.operand
+
+    if not text:
+        if M65.IMP in available:
+            return M65.IMP, None
+        if M65.ACC in available:
+            return M65.ACC, None
+        raise ValueError(f"line {line.no}: {mnemonic} requires an operand")
+    if text.upper() == "A" and M65.ACC in available:
+        return M65.ACC, None
+    if M65.REL in available:
+        return M65.REL, _resolve_value(text, symbols, line, strict)
+    if text.startswith("#"):
+        return M65.IMM, _resolve_value(text[1:], symbols, line, strict)
+
+    if text.startswith("("):
+        body = text[1:]
+        if body.upper().endswith(",X)"):
+            return M65.IZX, _resolve_value(body[:-3], symbols, line, strict)
+        if body.upper().endswith("),Y"):
+            return M65.IZY, _resolve_value(body[:-3], symbols, line, strict)
+        if body.endswith(")"):
+            return M65.IND, _resolve_value(body[:-1], symbols, line, strict)
+        raise ValueError(f"line {line.no}: cannot parse {text!r}")
+
+    index = ""
+    if text.upper().endswith(",X"):
+        index, text = "X", text[:-2]
+    elif text.upper().endswith(",Y"):
+        index, text = "Y", text[:-2]
+
+    forced = text.startswith(">")
+    value = _resolve_value(text[1:] if forced else text, symbols, line, strict)
+    short = value is not None and value < 0x100 and not forced
+
+    if index == "X":
+        if short and M65.ZPX in available:
+            return M65.ZPX, value
+        return M65.ABX, value
+    if index == "Y":
+        if short and M65.ZPY in available:
+            return M65.ZPY, value
+        if M65.ABY in available:
+            return M65.ABY, value
+        return M65.ZPY, value
+    if short and M65.ZP in available:
+        return M65.ZP, value
+    return M65.ABS, value
+
+
 def _resolve_value(token: str, symbols: dict[str, int], line: _Line, strict: bool) -> int | None:
     try:
         return _value(token, symbols, line.no)
@@ -141,12 +215,13 @@ def _resolve_value(token: str, symbols: dict[str, int], line: _Line, strict: boo
 def assemble(source: str) -> tuple[int, bytes]:
     """Assemble `source`, returning (origin, bytes)."""
     lines = _parse(source)
+    cpus = _cpu_per_line(lines)
     symbols: dict[str, int] = {}
 
     # Pass 1: assign addresses to labels.
     pc = 0
     origin = None
-    for line in lines:
+    for line, cpu in zip(lines, cpus):
         if line.op == "ORG":
             pc = _value(line.operand, symbols, line.no)
             if origin is None:
@@ -158,7 +233,7 @@ def assemble(source: str) -> tuple[int, bytes]:
             symbols[line.label] = pc
         if line.op == "EQU":
             continue
-        pc += _sizeof(line, symbols, strict=False)
+        pc += _sizeof(line, symbols, strict=False, cpu=cpu)
 
     if origin is None:
         raise ValueError("no ORG directive")
@@ -166,7 +241,7 @@ def assemble(source: str) -> tuple[int, bytes]:
     # Pass 2: emit.
     out = bytearray()
     pc = origin
-    for line in lines:
+    for line, cpu in zip(lines, cpus):
         op = line.op
         if op == "ORG":
             target = _value(line.operand, symbols, line.no)
@@ -192,6 +267,14 @@ def assemble(source: str) -> tuple[int, bytes]:
                 pc += 2
             continue
 
+        if cpu == "6502":
+            mode, operand = _resolve_mode_6502(line, symbols, strict=True)
+            try:
+                out.extend(codec6502.encode(op, mode, operand, addr=pc))
+            except ValueError as exc:
+                raise ValueError(f"line {line.no}: {exc}") from exc
+            pc += SIZE65[mode]
+            continue
         mode, operand = _resolve_mode(line, symbols, strict=True)
         try:
             out.extend(encode(op, mode, operand, addr=pc))
