@@ -197,7 +197,7 @@ plus a status line.
   $FCDB  $4000     40    $4000-$43C7  rowRender   derived render byte per cell
   $FCA9  $4400    160    $4400-$539F  rowAttr     four attribute bytes per cell
   $FC77  $5400     40    $5400-$57C7  rowChar     character codes
-  $FC45  $5800     40    $5800-$5BC7  rowCharAlt  character codes, secondary
+  $FC45  $5800     40    $5800-$5BC7  rowAccent   combining diacritical overlay
 
 $E9A5 reloads all four row pointers into rowChar/rowAttr/rowCharAlt/rowRender
 whenever the cursor row changes. Roles established from the write sites:
@@ -216,14 +216,32 @@ whenever the cursor row changes. Roles established from the write sites:
               (BITA #$03 -> ORAB #$02, BITA #$04 -> ORAB #$80, and so on), so
               this plane is derived state for the display hardware, not
               content.
-  rowCharAlt  $E972, a separate routine off the main path, stores
-              charCode AND $7F and then sets $0496 = $FF.
+  rowAccent   $E972, reached only when the character is a G2 non-spacing
+              diacritical. Stores charCode AND $7F and sets accentPending.
 
-OPEN: why the character code is kept in two planes. rowChar carries bit 7 and
-rowCharAlt masks it off, and rowCharAlt is written from its own routine rather
-than the main output path - plausibly a shadow copy for the concealed-text
-reveal or for the serial/parallel attribute modes, but that is not
-established."""
+The second character plane is NOT a duplicate: $5800 is the combining-accent
+overlay. $E91D gates it on two conditions -
+
+    LDAA gSetSelector / CMPA #$01      character came from G2
+    LDAA charCode / ANDA #$70 / CMPA #$40   code in $40-$4F
+
+which is exactly where CEPT G2 puts the non-spacing diacriticals, matching the
+accent glyphs rendered from the $8780 font set. $E972 stores the mark and
+returns WITHOUT advancing the cursor - the defining property of a combining
+character - whereas the normal path at $E94E does INC cursorCol / JSR $EC16.
+
+The sequence is:
+
+  1. a G2 mark $40-$4F arrives: stored in the $5800 plane at the current cell,
+     cursor unmoved, accentPending = $FF;
+  2. the next character arrives: $E8D5 ORs bit 3 of accentPending into that
+     cell's attribute byte, then clears accentPending;
+  3. the base character goes to the $5400 plane and the cursor advances.
+
+The firmware only ever writes $5800 - the sole reads of its row pointer are
+the write at $E972 and the setup at $E9C1 - so the video hardware consumes it,
+compositing the mark from $5800 over the glyph from $5400 with the attribute
+bit as the enable."""
 "0xF14C" = """
 75-baud transmit: a software UART clocked by the timer output compare.
 
@@ -484,7 +502,7 @@ vectors before entering the main firmware."""
 
 # Current-row pointers, reloaded by $E9A5 whenever the cursor row changes.
 "0x040A" = "rowAttr"
-"0x040C" = "rowCharAlt"
+"0x040C" = "rowAccent"
 "0x040E" = "rowRender"
 "0x1B21" = "rowChar"
 # Pending character and its four attribute bytes.
@@ -493,6 +511,8 @@ vectors before entering the main firmware."""
 "0x04B3" = "attr2"
 "0x04B4" = "attr3"
 "0x04B5" = "charCode"
+"0x0496" = "accentPending"
+"0x048F" = "gSetSelector"
 
 # 75-baud software UART state. See the block comment at $F14C.
 "0x04D0" = "txRingHead"

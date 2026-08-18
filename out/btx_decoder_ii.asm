@@ -7,58 +7,60 @@
 
 ; Hardware registers and RAM locations referenced below.
 
-P1DDR        EQU     $00
-P2DDR        EQU     $01
-PORT1        EQU     $02
-PORT2        EQU     $03
-P3DDR        EQU     $04
-P4DDR        EQU     $05
-PORT3        EQU     $06
-PORT4        EQU     $07
-TCSR         EQU     $08
-COUNTH       EQU     $09
-COUNTL       EQU     $0A
-OCRH         EQU     $0B
-OCRL         EQU     $0C
-ICRH         EQU     $0D
-ICRL         EQU     $0E
-P3CSR        EQU     $0F
-RMCR         EQU     $10
-TRCSR        EQU     $11
-RDR          EQU     $12
-TDR          EQU     $13
-RAMCR        EQU     $14
-softVecSci   EQU     $F0
-softVecTof   EQU     $F2
-softVecOcf   EQU     $F4
-softVecIcf   EQU     $F6
-softVecIrq1  EQU     $F8
-softVecSwi   EQU     $FA
-rowAttr      EQU     $040A
-rowCharAlt   EQU     $040C
-rowRender    EQU     $040E
-attr0        EQU     $04B1
-attr1        EQU     $04B2
-attr2        EQU     $04B3
-attr3        EQU     $04B4
-charCode     EQU     $04B5
-txRingHead   EQU     $04D0
-txRingTail   EQU     $04D1
-txCurBit     EQU     $04EA
-txShift      EQU     $04EB
-txBitsLeft   EQU     $04EC
-cursorRowMax EQU     $1B00
-scrollTop    EQU     $1B1C
-scrollBottom EQU     $1B1D
-cursorRow    EQU     $1B1E
-cursorCol    EQU     $1B1F
-rowChar      EQU     $1B21
-c64FifoWr    EQU     $6009
-c64FifoRd    EQU     $600A
-c64XferEn    EQU     $600B
-c64Status    EQU     $600C
-c64XferDone  EQU     $6010
-c64Fifo      EQU     $6080
+P1DDR         EQU     $00
+P2DDR         EQU     $01
+PORT1         EQU     $02
+PORT2         EQU     $03
+P3DDR         EQU     $04
+P4DDR         EQU     $05
+PORT3         EQU     $06
+PORT4         EQU     $07
+TCSR          EQU     $08
+COUNTH        EQU     $09
+COUNTL        EQU     $0A
+OCRH          EQU     $0B
+OCRL          EQU     $0C
+ICRH          EQU     $0D
+ICRL          EQU     $0E
+P3CSR         EQU     $0F
+RMCR          EQU     $10
+TRCSR         EQU     $11
+RDR           EQU     $12
+TDR           EQU     $13
+RAMCR         EQU     $14
+softVecSci    EQU     $F0
+softVecTof    EQU     $F2
+softVecOcf    EQU     $F4
+softVecIcf    EQU     $F6
+softVecIrq1   EQU     $F8
+softVecSwi    EQU     $FA
+rowAttr       EQU     $040A
+rowAccent     EQU     $040C
+rowRender     EQU     $040E
+gSetSelector  EQU     $048F
+accentPending EQU     $0496
+attr0         EQU     $04B1
+attr1         EQU     $04B2
+attr2         EQU     $04B3
+attr3         EQU     $04B4
+charCode      EQU     $04B5
+txRingHead    EQU     $04D0
+txRingTail    EQU     $04D1
+txCurBit      EQU     $04EA
+txShift       EQU     $04EB
+txBitsLeft    EQU     $04EC
+cursorRowMax  EQU     $1B00
+scrollTop     EQU     $1B1C
+scrollBottom  EQU     $1B1D
+cursorRow     EQU     $1B1E
+cursorCol     EQU     $1B1F
+rowChar       EQU     $1B21
+c64FifoWr     EQU     $6009
+c64FifoRd     EQU     $600A
+c64XferEn     EQU     $600B
+c64Status     EQU     $600C
+c64XferDone   EQU     $6010
+c64Fifo       EQU     $6080
 
         ORG     $8000
 
@@ -4882,8 +4884,8 @@ ctrlIgnored:
         LDAA    $00,X
         ORAA    $04B6
         STAA    $00,X
-        CLR     $048F
-        INC     $048F
+        CLR     gSetSelector
+        INC     gSetSelector
         INCB
         CMPB    #$28
         BEQ     $E535
@@ -4894,7 +4896,7 @@ ctrlIgnored:
         LDAB    cursorCol
         LDX     rowChar
         ABX
-        LDAB    $048F
+        LDAB    gSetSelector
         LDAA    $00,X
         ORAA    #$80
         STAA    $00,X
@@ -4907,7 +4909,7 @@ ctrlIgnored:
         ADDB    $04B7
         LDX     rowAttr
         ABX
-        LDAB    $048F
+        LDAB    gSetSelector
         LDAA    $00,X
         ANDA    $048E
         ORAA    $04B9
@@ -5284,25 +5286,25 @@ ctrlIgnored:
         LDAA    $00,X
         ANDA    #$F7
         STAA    $00,X
-        LDAA    $0496
+        LDAA    accentPending
         ANDA    #$08
         ORAA    $00,X
         STAA    $00,X
-        CLR     $0496
+        CLR     accentPending
         LDAB    $049F
         STAB    $04A0
         BMI     $E8FA
         LDX     #$0499
         ABX
         LDAA    $00,X
-        STAA    $048F
+        STAA    gSetSelector
         LDAA    #$FF
         STAA    $049F
         JMP     $E91D
         TST     $049D
         BPL     $E907
         LDAA    #$04
-        STAA    $048F
+        STAA    gSetSelector
         JMP     $E91D
         TST     charCode
         BMI     $E911
@@ -5312,8 +5314,8 @@ ctrlIgnored:
         LDX     #$0499
         ABX
         LDAA    $00,X
-        STAA    $048F
-        LDAA    $048F
+        STAA    gSetSelector
+        LDAA    gSetSelector
         CMPA    #$01
         BNE     $E930
         LDAA    charCode
@@ -5326,7 +5328,7 @@ ctrlIgnored:
         ABX
         LDAA    $01,X
         ANDA    #$F8
-        ORAA    $048F
+        ORAA    gSetSelector
         STAA    $01,X
         LDAB    cursorCol
         LDX     rowChar
@@ -5349,14 +5351,14 @@ ctrlIgnored:
         JSR     $EC16
         JSR     $E9A5
         RTS
-        LDX     rowCharAlt
+        LDX     rowAccent
         LDAB    cursorCol
         ABX
         LDAA    charCode
         ANDA    #$7F
         STAA    $00,X
         LDAA    #$FF
-        STAA    $0496
+        STAA    accentPending
         RTS
         JSR     $E781
         JMP     parseNextByte
@@ -5385,7 +5387,7 @@ ctrlIgnored:
         LDX     #$FC45
         ABX
         LDX     $00,X
-        STX     rowCharAlt
+        STX     rowAccent
         LDX     #$FCDB
         ABX
         LDX     $00,X
@@ -5795,7 +5797,7 @@ ctrlIgnored:
         STAA    cursorRowMax
         LDAA    #$FF
         STAA    $04A4
-        CLR     $0496
+        CLR     accentPending
         CLR     cursorRow
         CLR     cursorCol
         JSR     $E9A5
@@ -5845,7 +5847,7 @@ ctrlIgnored:
         STAA    cursorRowMax
         LDAA    #$FF
         STAA    $04A4
-        CLR     $0496
+        CLR     accentPending
         CLR     $0495
         LDAA    #$FF
         STAA    scrollTop
@@ -7378,7 +7380,7 @@ lineAddr4400:
 ;   $FCDB  $4000     40    $4000-$43C7  rowRender   derived render byte per cell
 ;   $FCA9  $4400    160    $4400-$539F  rowAttr     four attribute bytes per cell
 ;   $FC77  $5400     40    $5400-$57C7  rowChar     character codes
-;   $FC45  $5800     40    $5800-$5BC7  rowCharAlt  character codes, secondary
+;   $FC45  $5800     40    $5800-$5BC7  rowAccent   combining diacritical overlay
 ;
 ; $E9A5 reloads all four row pointers into rowChar/rowAttr/rowCharAlt/rowRender
 ; whenever the cursor row changes. Roles established from the write sites:
@@ -7397,14 +7399,32 @@ lineAddr4400:
 ;               (BITA #$03 -> ORAB #$02, BITA #$04 -> ORAB #$80, and so on), so
 ;               this plane is derived state for the display hardware, not
 ;               content.
-;   rowCharAlt  $E972, a separate routine off the main path, stores
-;               charCode AND $7F and then sets $0496 = $FF.
+;   rowAccent   $E972, reached only when the character is a G2 non-spacing
+;               diacritical. Stores charCode AND $7F and sets accentPending.
 ;
-; OPEN: why the character code is kept in two planes. rowChar carries bit 7 and
-; rowCharAlt masks it off, and rowCharAlt is written from its own routine rather
-; than the main output path - plausibly a shadow copy for the concealed-text
-; reveal or for the serial/parallel attribute modes, but that is not
-; established.
+; The second character plane is NOT a duplicate: $5800 is the combining-accent
+; overlay. $E91D gates it on two conditions -
+;
+;     LDAA gSetSelector / CMPA #$01      character came from G2
+;     LDAA charCode / ANDA #$70 / CMPA #$40   code in $40-$4F
+;
+; which is exactly where CEPT G2 puts the non-spacing diacriticals, matching the
+; accent glyphs rendered from the $8780 font set. $E972 stores the mark and
+; returns WITHOUT advancing the cursor - the defining property of a combining
+; character - whereas the normal path at $E94E does INC cursorCol / JSR $EC16.
+;
+; The sequence is:
+;
+;   1. a G2 mark $40-$4F arrives: stored in the $5800 plane at the current cell,
+;      cursor unmoved, accentPending = $FF;
+;   2. the next character arrives: $E8D5 ORs bit 3 of accentPending into that
+;      cell's attribute byte, then clears accentPending;
+;   3. the base character goes to the $5400 plane and the cursor advances.
+;
+; The firmware only ever writes $5800 - the sole reads of its row pointer are
+; the write at $E972 and the setup at $E9C1 - so the video hardware consumes it,
+; compositing the mark from $5800 over the glyph from $5400 with the attribute
+; bit as the enable.
 lineAddr4000:
         FDB     $4000,$4028,$4050,$4078,$40A0,$40C8,$40F0,$4118
         FDB     $4140,$4168,$4190,$41B8,$41E0,$4208,$4230,$4258
