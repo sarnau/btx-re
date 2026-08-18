@@ -251,9 +251,11 @@ def test_pointer_pairs_name_their_target():
     # the low/high halves must pair with the right zero-page bytes
     lines = [ln.strip() for ln in src.splitlines()]
     i = lines.index("LDA     #c64SplashText&255")
-    assert lines[i + 1] == "STA     $A7"
+    # $A7/$A8 carry the ROM's names, INBIT/BITCI, even though the payload is
+    # reusing them as a pointer rather than for serial input.
+    assert lines[i + 1] == "STA     INBIT"
     assert lines[i + 2] == "LDA     #c64SplashText>>8"
-    assert lines[i + 3] == "STA     $A8"
+    assert lines[i + 3] == "STA     BITCI"
 
 
 def test_low_high_byte_expressions_assemble():
@@ -262,3 +264,22 @@ def test_low_high_byte_expressions_assemble():
            '        LDA #T&255\n        LDA #T>>8\n        END\n')
     _, out = assemble(src)
     assert out == bytes([0xA9, 0xA4, 0xA9, 0x24])
+
+
+def test_low_memory_uses_c64_rom_names():
+    """Named after the C64 ROM so the listing lines up with a memory map."""
+    src = (OUT / "c64_payload.asm").read_text()
+    for name, addr in (("FAC1EXP", 0x61), ("STATUS", 0x90), ("FNLEN", 0xB7),
+                       ("SA", 0xB9), ("FA", 0xBA), ("FNADR", 0xBB),
+                       ("CINV", 0x0314), ("BUF", 0x0200)):
+        assert re.search(rf"^{name}\s+EQU\s+\${addr:04X}$", src, re.M), name
+
+
+def test_sa_fa_are_not_treated_as_a_pointer_pair():
+    """LDA #$66 / STA SA / LDA #$08 / STA FA / JSR KERNAL_CLOSE sets a
+    secondary address and device 8, so it only looked like a pointer setup."""
+    src = (OUT / "c64_payload.asm").read_text()
+    lines = [ln.strip() for ln in src.splitlines()]
+    i = lines.index("JSR     KERNAL_CLOSE")
+    assert lines[i - 4:i] == ["LDA     #$66", "STA     SA",
+                              "LDA     #$08", "STA     FA"]

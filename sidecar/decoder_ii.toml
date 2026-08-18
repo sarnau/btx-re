@@ -9,7 +9,7 @@
 # / LDA #hi / STA zp+1 sequence into one of these is an address being set up,
 # not two unrelated constants. Top-level, like entry_points: a bare key written
 # after a table header would belong to that table.
-c64_pointers = [0xA7, 0xB9, 0xBB]
+c64_pointers = [0xA7, 0xBB]
 
 entry_points = [
     0xB200,  # RESET
@@ -394,6 +394,21 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xFFF0" = "vectors"
 
 [block_comments]
+"0x0061" = """
+Low memory is named with the C64 ROM's own names.
+
+The payload does no floating-point arithmetic, so FAC1EXP..FAC2SGN are being
+reused as scratch rather than used for their documented purpose; the names
+still identify the locations, which is what makes the listing comparable with
+a C64 memory map.
+
+The KERNAL file variables are used as intended: FNLEN, LA, SA, FA and the
+FNADR pointer are set up before OPEN, LOAD and CLOSE, and the payload drives
+the IEC bus through the routines behind them.
+
+Only locations with well-established names are listed. The rest of the zero
+page the payload touches - the BASIC workspace below $60 and a scattering
+above $B0 - is left as addresses, since a name there would be a guess."""
 "0xC80C" = """
 Filename of the extra software: "BTX-EXTRA.MAS", null-terminated.
 
@@ -1371,6 +1386,37 @@ org = 0x0FFE
 # $6000; see the block comment at $B2E2 for the pairing. $8000/$8001 are RAM
 # under the cartridge ROM, used to stash the load address.
 [c64_symbols]
+"0x0061" = "FAC1EXP"
+"0x0062" = "FAC1MAN1"
+"0x0063" = "FAC1MAN2"
+"0x0064" = "FAC1MAN3"
+"0x0065" = "FAC1MAN4"
+"0x0066" = "FAC1SGN"
+"0x0069" = "FAC2EXP"
+"0x006A" = "FAC2MAN1"
+"0x006C" = "FAC2MAN3"
+"0x006D" = "FAC2MAN4"
+"0x006E" = "FAC2SGN"
+"0x0090" = "STATUS"
+"0x009A" = "DFLTO"
+"0x00A0" = "TIMEHI"
+"0x00A1" = "TIMEMID"
+"0x00A7" = "INBIT"
+"0x00A8" = "BITCI"
+"0x00B7" = "FNLEN"
+"0x00B8" = "LA"
+"0x00B9" = "SA"
+"0x00BA" = "FA"
+"0x00BB" = "FNADR"
+"0x00BC" = "FNADRH"
+"0x00CC" = "BLNSW"
+"0x00D0" = "CRSW"
+"0x00D3" = "PNTR"
+"0x00D6" = "TBLX"
+"0x0200" = "BUF"
+"0x0300" = "IERROR"
+"0x0314" = "CINV"
+"0x0315" = "CINVH"
 "0x8000" = "btxLoadLo"
 "0x8001" = "btxLoadHi"
 "0x8005" = "btxReg005"
