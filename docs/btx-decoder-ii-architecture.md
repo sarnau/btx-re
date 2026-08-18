@@ -62,15 +62,37 @@ installs into the vectors it does not need. That the soft vectors live in
 $0000-$001F   6801 internal register file
 $0000-$03FF   stack (LDS #$0400 at reset; it grows down)
 $0080-$00FF   6801 internal RAM; interrupt soft vectors at $00F0-$00FB
-$0400-$07FF   external RAM, ~110 distinct variables
+$0400-$07FF   external RAM - every location named, see below
+$0800-$1AFF   drcsStore, 96 redefinable characters of 48 bytes
 $1B00-$1B2D   display and cursor state
+$2000-$2FFF   rxBuffer, the 4 KB receive ring
+$4000-$5BC7   display memory, four planes
+$5C00-...     videoRam, the pixels the hardware scans
 $6009-$6011   C64 interface control and status
 $6020-$603F   32-byte ring, decoder to C64
 $6040-$607F   64-byte ring, C64 to decoder
-$6080-$608F   16-byte ring used only while the payload is being sent
+$6080-$608F   16-byte ring during payload transfer, cell mailbox afterwards
+$6090         c64StatusMsg - the status message index, mirrored for the C64
 $61F9-$61FD   write-only control registers
 $8000-$FFFF   this ROM
 ```
+
+External RAM divides into six groups, and naming them is what made the rest of
+this document possible:
+
+| Range | |
+|---|---|
+| `$0402`–`$0425` | DRCS reception — the row being assembled and its four plane buffers |
+| `$0487`–`$04B9` | CEPT display state — colour, character sets, attributes, the status line |
+| `$04BE`–`$04ED` | modem and host-link state |
+| `$05EF`–`$05F5` | the receive ring's pointers |
+| `$0616`–`$0627` | the ASCII terminal renderer |
+| `$07B0`–`$07E3` | the glyph renderer |
+
+Three bytes are reused for unrelated jobs in different routines and carry a
+name per site rather than per address: `$048E` is a mask complement, a cell
+offset and a fill value; `$0490` is a repeat count, a saved column and a fill
+index; `$0488` and `$0489` each split two ways.
 
 ### Reset
 
@@ -266,6 +288,32 @@ Two paths deliver cells. Under the IRQ, `c64IrqPlotCell` takes one from the
 mailbox whenever the decoder posts it. For a hardcopy, `c64MenuXfer` walks rows
 `$11`–`$29` and asks for all 40 columns of each.
 
+### What the C64 says back
+
+Everything the C64 sends arrives through one byte. `fetchHostByte` at `$F1D8`
+runs masked, returns at once if `pendingByte` is already occupied, and
+otherwise pulls from `hostFifoGet` — the `$6040` end of the ring the C64 fills
+through `c64SendByte`. `execHostByte` at `$F45B` is the consumer, and `CLR
+pendingByte` is how it says it is done.
+
+The commands are the `$10 xx` pairs the payload's menu handlers send, so the
+two listings read against each other directly:
+
+| Sent by | Bytes | Effect on the decoder |
+|---|---|---|
+| `c64MenuCapture` / `c64CaptureEnd` | `$10 $4D` / `$10 $6D` | `captureMode` — forward every received byte to the C64 |
+| `c64MenuLoad` / `c64MenuDisplay` | `$10 $4C` / `$10 $6C` | `hostFeedMode` — the C64 is supplying the page |
+| `c64MenuKeybd` | `$10 $4E` / `$10 $6E` | `germanFont` — which font the reduced display uses |
+| `c64ShowMsgPtr` / `c64HideMsg` | `$10 $75` / `$10 $55` | `blinkOff` — stop the cursor blinking over the overlay |
+
+The `$5A` and `$7A` the same two routines send alongside those are not in this
+dispatch chain and remain unresolved.
+
+`captureMode` is the clearest of them: `TST captureMode / JSR $F979` in two
+different loops, and `$F979` is the routine that pushes a byte into the
+decoder-to-C64 ring. Capture is implemented by the decoder echoing its input,
+not by the C64 listening in.
+
 ---
 
 ## 5. The line: 1200 down, 75 up
@@ -289,6 +337,55 @@ anywhere in the image by any addressing mode; the SCI transmitter is unused.
 Letting the timer drive the pin rather than the ISR keeps the bit timing free
 of interrupt-latency jitter — which matters when the CPU is simultaneously
 decoding a 1200-baud stream.
+
+### Above the bits
+
+Received bytes land in `rxBuffer`, a 4 KB ring at `$2000` walked by `rxBufPut`
+and `rxBufGet` through `rxBufRd`, `rxBufWr` and `rxBufMark`. The third pointer
+is what makes it more than a queue: `modemToggle` decides whether `rxBufMark`
+follows `rxBufWr`, so a block can be re-read after a failed check.
+
+That check is `modemCrc` at `$F818`. `modemByte` goes in, `modemShift` carries
+the running value, and eight rounds of `LSRD` with `EORA #$A0 / EORB #$01` on a
+set bit is a **reflected CRC-16, polynomial `$8005`** — the one X.25 and the
+DBT-03 datex link use.
+
+Three 16-bit counters at `timerA`, `timerB` and `timerC` are decremented on
+every timer interrupt by `timerHandlerAlt` and waited on by testing their high
+byte for `$FF`. The connect sequence loads `timerA` with `$07D0` and later
+`$84D0`, `timerB` with `$10AE`, and `timerC` with `$00C8` before each of its
+short waits.
+
+`connected` is set when the sequence succeeds, and it gates everything above —
+`execHostByte`, the blink, the abort path.
+
+### Saying so on screen
+
+`statusMsg` holds a byte offset into `strStatusMsgs`, and `showStatusMsg` at
+`$EFCB` prints the record there — parking S in `savedSP` and using `PUL` to
+walk the text, the same trick the glyph fetch uses.
+
+Every write to `statusMsg` is followed by the same write to `$6090`, which is
+`c64StatusMsg` — the byte the C64 reads as `btxStatusMsg`. So the two
+processors share the connection state through the message index itself, and
+the C64's tests name themselves:
+
+| Value | Record | Where the C64 tests it |
+|---|---|---|
+| `$28` | "Verbindung" | `c64GetKey`, before translating a carriage return |
+| `$50` | "Abbruch" | `c64TelesoftByte`, to abandon a download |
+
+`showModeName` at `$EF1C` does the same for `strModeNames`, and it is what
+identifies the terminal-mode flags — it tests each in turn and loads S with
+that record's address:
+
+| Flag | Record |
+|---|---|
+| — | "CEPT Bildschirmtext " |
+| `modePrestel` | "PRESTEL Videotex   " |
+| `modeAscii` | "ASCII Terminal-Mode" |
+| `modeAntiope` | "ANTIOPE            " |
+| `modeHex` | "HEX-Tastatureingabe" |
 
 ---
 
@@ -331,6 +428,41 @@ The C64 side speaks the same protocol back: `c64XlatKey`'s tables emit CEPT
 sequences directly, and the pages the payload sends — the startup page, the
 "Makro-Verzeichnis" listing, the "C-64-Betrieb" notice — are CEPT records the
 firmware then decodes through exactly these tables.
+
+### The state a page builds up
+
+`gsetG0`–`gsetG3` hold the four designations, `gsetGL` and `gsetGR` the two
+halves currently in force, `gsetSS` a pending single shift and `gsetGLDefault`
+what a single shift falls back to. Colour is two variables: `colourIndex`, three
+bits, and `clutIndex`, two. `applyColour` at `$E9CE` shows how they combine —
+`attr2` takes `(clutIndex << 3) | colourIndex` in its low five bits and `attr3`
+takes `clutIndex` in its low two.
+
+Attributes reach the planes through `setAttrSpan` at `$E4FF`, which takes four
+parameters:
+
+```
+        A -> attrValue      the bits to set
+        B -> attrMask       which bits they replace
+        X -> attrSpanBit    the render-plane bit marking this span
+             attrByteIndex  which of the cell's four attribute bytes
+```
+
+It finds the span by walking `planeRender` from the cursor until `attrSpanBit`
+stops being set, and writes at `cursorCol * 4 + attrByteIndex`.
+
+### The status line
+
+The bottom row is not part of the page, and `enterStatusLine` at `$E6C6` is how
+the firmware borrows it. It sets `inStatusLine`, copies nine variables into
+`savedRow`, `savedCol`, `savedClut`, `savedParallel`, `savedGL`, `savedGR`,
+`savedG0`, `savedG1` and `saved04A4`, resets the ones it needs neutral, and
+moves the cursor to the last row. `leaveStatusLine` at `$E744` puts all nine
+back.
+
+`inStatusLine` is then tested by sixteen CEPT handlers, which is how the page's
+own control codes are kept from disturbing the overlay — and it is the `$04AF`
+guard the CV30113 revision still has on `CAN`.
 
 ### A second interpreter
 
@@ -438,12 +570,15 @@ and the 16-bit pair leaves its top four bits clear — the same shape as the ROM
 character sets, whose ink occupies columns 4–15 of a 16-bit row. A DRCS
 character and a built-in glyph are the same 12-pixel cell.
 
-The planes at `$0426` are staging only. A finished definition lives above
-`$0800`, 48 bytes per character, and `drcsGlyphPtr` at `$A7E7` addresses it as
-`(glyphCode & $7F - $20) * 48 + $07FF`. The renderer decides which store to use
-from `drcsCell`, set when the current G-set code is 5 — the ESC 2/8 2/0
-designation. A DRCS cell is also **12 rows rather than 10**, which is what
-`blitRows` carries into the blit loop.
+The planes at `$0426` are staging only. A finished definition lives in
+`drcsStore` above `$0800`, 48 bytes per character, written by `drcsWriteRow`
+through `drcsStorePtr` and cleared 96 characters at a time by
+`drcsClearStore`. `drcsGlyphPtr` at `$A7E7` addresses it as
+`(glyphCode & $7F - $20) * 48 + $07FF`.
+
+The renderer decides which store to use from `drcsCell`, set when the current
+G-set code is 5 — the ESC 2/8 2/0 designation. A DRCS cell is also **12 rows
+rather than 10**, which is what `blitRows` carries into the blit loop.
 
 ### Combining accents
 
@@ -604,9 +739,12 @@ entire C64 payload is byte-for-byte identical. See
   a counter the decoder advances — `c64WaitDecoder` spins on it and
   `c64MacroRecOpen` paces the macro file against it.
 
-  `$8090` is settled: it is `c64StatusMsg` at `$6090`, the decoder's copy of
-  `statusMsg`, the byte offset into `strStatusMsgs`. The C64's `$28` and `$50`
-  tests are records 2 and 4 — "Verbindung" and "Abbruch".
+  `$8090` is settled and now called `btxStatusMsg`: it is `c64StatusMsg` at
+  `$6090`, the decoder's copy of `statusMsg`. The C64's `$28` and `$50` tests
+  are records 2 and 4 — "Verbindung" and "Abbruch".
+- **`videoReg0`–`videoReg3`.** Four bytes at `$1B2A` written to `P3CSR` with
+  `AND #$1F`, initialised to 0, 1, 2, 3. They select something in the video
+  hardware; nothing in the ROM says what.
 - **The `$D419` no-match path.** Reachable, but harmless: two of its three
   outputs are read only for bit 7 and the third is clamped. Documented in the
   sidecar rather than treated as a bug.
@@ -614,3 +752,24 @@ entire C64 payload is byte-for-byte identical. See
   nothing in the payload reads them back.
 - **String-record header bytes 2 and 3.** `$C0`/`$80` and `$01`/`$07` vary
   across the 31 records and look like display parameters.
+
+---
+
+## 11. Where this stands
+
+100% of the 32 KB is classified, the listing reassembles byte-identical under
+two independent assemblers, and no operand anywhere in either processor's
+source is a bare address: every location in external RAM, every zero-page
+variable on both sides, every dispatch-table entry and every C64 ROM entry
+point carries a name.
+
+The names are not uniformly strong, and the difference matters when reading
+them. Most are evidenced — `inStatusLine` by the routine pair that saves and
+restores around it, `modeAscii` by the record `showModeName` prints for it,
+`drcsCell` by the G-set code that sets it and the 12 rows that follow. A few
+are structural: `modeR`, `modeT` and `modeW` are named after the host command
+letters that toggle them because what they switch is not established, and
+`spare0616` and `spare04D3` are cleared at reset and never touched again.
+
+The open questions above are what is left, and they share a shape: they need
+either a schematic or a specification, not more reading of this ROM.
