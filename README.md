@@ -142,24 +142,26 @@ of computed jumps looks like table dispatch and is the obvious next target.
 ## Independent verification
 
 `tools/check_asl.sh` reassembles the generated listing with asl (Macro Assembler
-AS) and compares against the ROM. `dis65xx/asm.py` shares an opcode table with the
-disassembler, so a wrong table entry round-trips cleanly through it; asl does not
-share that table and will catch such an error.
+AS) and compares the result against the ROM. `dis65xx/asm.py` shares an opcode
+table with the disassembler, so a wrong entry round-trips cleanly through both;
+asl does not share it, which is what makes it worth running. It has caught real
+errors — that `DW` follows the target's endianness on a 6801, and four cases
+where `asm.py` accepted syntax asl rejects.
 
-asl is not packaged in Homebrew and must be built from source:
-<http://john.ccac.rwth-aachen.de:8000/as/>
+asl is not in Homebrew and its source URL is unversioned, so a copy lives in
+`third_party/`. If asl is not on PATH the script builds it from there, once,
+into `third_party/build/` — which means the cross-check needs no network and no
+setup:
 
-    curl -O http://john.ccac.rwth-aachen.de:8000/ftp/as/source/c_version/asl-current.tar.gz
-    tar xzf asl-current.tar.gz && cd asl-current
-    cp Makefile.def-samples/Makefile.def-arm-osx Makefile.def   # or -x86_64-osx
-    make
+    ./tools/check_asl.sh
 
-Then:
+To use an asl you built yourself instead:
 
     ASL=/path/to/asl P2BIN=/path/to/p2bin AS_MSGPATH=/path/to/asl-current \
         ./tools/check_asl.sh
 
-Exit code 77 means asl was not found and the check was skipped.
+Exit code 77 means asl was neither on PATH nor buildable, and the check was
+skipped rather than silently passing.
 
 Status: **passing** — asl assembles the listing with 0 errors and 0 warnings and
 its output is byte-identical to the ROM, independently confirming the opcode table.

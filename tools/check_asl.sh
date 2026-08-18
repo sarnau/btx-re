@@ -15,9 +15,38 @@ ROM="$ROOT/../C64 BTX Decoder/c64_btx_decoder_ii.bin"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
+# asl is not packaged anywhere and its source URL is unversioned and was
+# unreachable for minutes at a time, so a copy lives in third_party/. Build it
+# there on demand rather than making the cross-check depend on the network.
 if ! command -v "$ASL" >/dev/null 2>&1; then
-    echo "asl not found; set ASL=/path/to/asl. Skipping cross-check." >&2
-    exit 77
+    BUILT="$ROOT/third_party/build/asl-current"
+    if [ ! -x "$BUILT/asl" ]; then
+        TARBALL="$ROOT/third_party/asl-current.tar.gz"
+        if [ ! -f "$TARBALL" ]; then
+            echo "asl not found and $TARBALL is missing." >&2
+            echo "Set ASL=/path/to/asl. Skipping cross-check." >&2
+            exit 77
+        fi
+        case "$(uname -s)/$(uname -m)" in
+            Darwin/arm64) DEF=Makefile.def-arm-osx ;;
+            Darwin/*)     DEF=Makefile.def-x86_64-osx ;;
+            *)            DEF=Makefile.def-x86_64-unknown-linux ;;
+        esac
+        echo "building asl from third_party (one time, ~1 min)..." >&2
+        mkdir -p "$ROOT/third_party/build"
+        tar xzf "$TARBALL" -C "$ROOT/third_party/build"
+        ( cd "$BUILT" \
+          && cp "Makefile.def-samples/$DEF" Makefile.def \
+          && make -j"$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 4)" ) >/dev/null 2>&1
+        if [ ! -x "$BUILT/asl" ]; then
+            echo "asl build failed; see $BUILT. Skipping cross-check." >&2
+            exit 77
+        fi
+    fi
+    ASL="$BUILT/asl"
+    P2BIN="$BUILT/p2bin"
+    export AS_MSGPATH="${AS_MSGPATH:-$BUILT}"
+    PATH="$BUILT:$PATH"
 fi
 
 cd "$OUT"

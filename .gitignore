@@ -4,3 +4,4 @@ __pycache__/
 
 # asl listing artifact from tools/check_asl.sh -L
 *.lst
+third_party/build/
