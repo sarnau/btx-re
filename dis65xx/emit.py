@@ -61,6 +61,9 @@ def collect_targets(data: bytes, result: TraceResult, sidecar: Sidecar) -> dict[
 def format_operand(insn: Insn, sidecar: Sidecar) -> str:
     mode = insn.mode
     value = insn.operand
+    # A site name wins over the global one: the same byte is a mask here and an
+    # index there, and only the call site knows which.
+    site = sidecar.site_symbols.get(insn.addr)
 
     if mode is Mode.INH:
         return ""
@@ -81,9 +84,9 @@ def format_operand(insn: Insn, sidecar: Sidecar) -> str:
     if mode is Mode.REL:
         return sidecar.labels.get(value) or f"${value:04X}"
     if mode is Mode.DIR:
-        return sidecar.symbols.get(value) or f"${value:02X}"
+        return site or sidecar.symbols.get(value) or f"${value:02X}"
     if mode is Mode.EXT:
-        name = sidecar.symbols.get(value) or sidecar.labels.get(value)
+        name = site or sidecar.symbols.get(value) or sidecar.labels.get(value)
         # Force extended when a shortest-fit assembler would choose direct.
         prefix = ">" if value < 0x100 and Mode.DIR in modes_for(insn.mnemonic) else ""
         return prefix + (name if name else f"${value:04X}")
@@ -103,18 +106,19 @@ def _fcb_line(chunk: bytes) -> str:
     return f"{'':{_INDENT}}{'FCB':{_MNEM_WIDTH}}{values}"
 
 
-def _equ_lines(sidecar: Sidecar) -> list[str]:
+def _equ_lines(sidecar: Sidecar, aliases: dict[str, int]) -> list[str]:
     """Declare sidecar symbols so the listing is self-contained.
 
     format_operand() renders hardware registers and RAM locations by name. Those
     addresses live outside the ROM image, so unlike code labels nothing in the
     listing defines them — without these EQUs the listing does not assemble.
     """
-    if not sidecar.symbols:
+    named = {**{n: a for a, n in sidecar.symbols.items()}, **aliases}
+    if not named:
         return []
-    width = max(len(n) for n in sidecar.symbols.values())
+    width = max(len(n) for n in named)
     lines = ["; Hardware registers and RAM locations referenced below.", ""]
-    for addr, name in sorted(sidecar.symbols.items()):
+    for name, addr in sorted(named.items(), key=lambda kv: (kv[1], kv[0])):
         value = f"${addr:02X}" if addr < 0x100 else f"${addr:04X}"
         lines.append(f"{name:{max(width, _INDENT - 1)}} EQU     {value}")
     lines.append("")
@@ -184,7 +188,17 @@ def emit(data: bytes, result: TraceResult, sidecar: Sidecar) -> str:
         f"{'':{_INDENT}}{'CPU':{_MNEM_WIDTH}}6801",
         "",
     ]
-    lines += _equ_lines(sidecar)
+    # A site name needs an EQU of its own, and its value comes from the
+    # instruction it names - so a site address that is not a decoded
+    # instruction is an error rather than a silent no-op.
+    aliases: dict[str, int] = {}
+    for addr, name in sidecar.site_symbols.items():
+        insn = result.insns.get(addr)
+        if insn is None or insn.operand is None:
+            raise ValueError(f"site_symbols: ${addr:04X} is not an instruction "
+                             f"with an operand")
+        aliases[name] = insn.operand
+    lines += _equ_lines(sidecar, aliases)
     lines += [
         f"{'':{_INDENT}}{'ORG':{_MNEM_WIDTH}}${base:04X}",
         "",

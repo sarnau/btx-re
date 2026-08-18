@@ -59,6 +59,10 @@ class Sidecar:
     # Instructions whose 16-bit immediate is a constant that happens to
     # collide with a named address, so it must not be printed as the name.
     literal_immediates: frozenset[int] = frozenset()
+    # Per-instruction operand names, for a location the firmware reuses. One
+    # address cannot carry one honest name when it is a mask in one routine and
+    # an index in another, so the name is attached to the site instead.
+    site_symbols: dict[int, str] = dataclasses.field(default_factory=dict)
     c64_blocks: list[C64Block] = dataclasses.field(default_factory=list)
     c64_symbols: dict[int, str] = dataclasses.field(default_factory=dict)
     c64_pointers: list[int] = dataclasses.field(default_factory=list)
@@ -127,6 +131,7 @@ def load_sidecar(path: str | pathlib.Path) -> Sidecar:
         symbols=_int_keys(raw.get("symbols", {})),
         regions=regions,
         literal_immediates=frozenset(raw.get("literal_immediates", [])),
+        site_symbols=_int_keys(raw.get("site_symbols", {})),
         c64_blocks=blocks,
         c64_symbols=_int_keys(raw.get("c64_symbols", {})),
         c64_pointers=list(raw.get("c64_pointers", [])),

@@ -7,7 +7,8 @@ from dis65xx.opcodes import Mode
 from dis65xx.sidecar import Sidecar
 from dis65xx.trace import trace
 
-OUT = pathlib.Path(__file__).resolve().parent.parent / "out"
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+OUT = ROOT / "out"
 
 
 def _sidecar(**kw) -> Sidecar:
@@ -135,3 +136,33 @@ def test_drcs_buffers_are_named_across_their_whole_span():
         assert re.search(rf"^{name}\s+EQU\s+\${addr:04X}$", src, re.M), name
     assert "LDX     #drcsPlane1" in src
     assert "ROR     drcsRowLo" in src and "ASR     drcsRowLo" in src
+
+
+def test_site_symbols_name_each_use_of_a_shared_byte():
+    """$048E is a mask complement, a cell offset and a fill value in three
+    different routines, so the name is attached to the site."""
+    src = (OUT / "btx_decoder_ii.asm").read_text()
+    for name in ("attrMaskInv", "attrCellOffset", "attrFillHi"):
+        assert re.search(rf"^{name}\s+EQU\s+\$048E$", src, re.M), name
+    # no operand is left as the bare address - only the three EQUs mention it
+    bare = [ln for ln in src.splitlines()
+            if "$048E" in ln and not ln.lstrip().startswith(";")
+            and "EQU" not in ln]
+    assert not bare, bare
+    assert "COMB\n        STAB    attrMaskInv" in src
+    assert "ASLB\n        STAB    attrCellOffset" in src
+
+
+def test_site_symbols_reject_an_address_that_is_not_an_instruction():
+    """A wrong site address must announce itself rather than silently doing
+    nothing - the same failure mode a mid-instruction label has."""
+    import dataclasses
+    import pytest
+    from dis65xx.sidecar import load_sidecar
+    sc = load_sidecar(ROOT / "sidecar" / "decoder_ii.toml")
+    rom = (ROOT / sc.rom).resolve().read_bytes()
+    res = trace(rom, base=sc.base, entry_points=sc.entry_points)
+    # $8000 is the middle of the font, never decoded as an instruction
+    bad = dataclasses.replace(sc, site_symbols={**sc.site_symbols, 0x8001: "nope"})
+    with pytest.raises(ValueError, match="not an instruction"):
+        emit(rom, res, bad)

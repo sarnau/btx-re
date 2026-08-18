@@ -626,7 +626,7 @@ DRCS character and a built-in glyph are the same 12-pixel cell."""
 Apply one attribute across the span that starts at the cursor.
 
     A -> attrValue      the bits to set
-    B -> attrMask       which bits they replace ($048E keeps the complement)
+    B -> attrMask       which bits they replace (attrMaskInv keeps the complement)
     X -> attrSpanBit    high byte: the render-plane bit marking this span
          attrByteIndex  low byte: which of the cell's four attribute bytes
 
@@ -1723,6 +1723,36 @@ vectors before entering the main firmware."""
 "0xF147" = "null interrupt handler"
 
 # MC6801 internal register file. Names from the MC6801 Reference Manual.
+# One byte, three jobs. $048E has no single honest name, so each site carries
+# its own and all three EQU to the same address:
+#
+#   attrMaskInv     setAttrSpan and $EDF7 store COM of attrMask here, then AND
+#                   with it to clear the bits attrValue is about to set
+#   attrCellOffset  cursorCol * 4, the byte offset of the cell inside the
+#                   attribute row, added to rowAttr
+#   attrFillHi      the bits going into attribute byte 3 while $E143 and $E1DC
+#                   walk a row, toggling $10 each time colourIndex wraps
+[site_symbols]
+"0xE506" = "attrMaskInv"
+"0xE55A" = "attrMaskInv"
+"0xEE04" = "attrMaskInv"
+"0xEE12" = "attrMaskInv"
+"0xE7D0" = "attrCellOffset"
+"0xE7E9" = "attrCellOffset"
+"0xE8CA" = "attrCellOffset"
+"0xE933" = "attrCellOffset"
+"0xE951" = "attrCellOffset"
+"0xE153" = "attrFillHi"
+"0xE172" = "attrFillHi"
+"0xE181" = "attrFillHi"
+"0xE186" = "attrFillHi"
+"0xE189" = "attrFillHi"
+"0xE1EC" = "attrFillHi"
+"0xE20B" = "attrFillHi"
+"0xE21A" = "attrFillHi"
+"0xE21F" = "attrFillHi"
+"0xE222" = "attrFillHi"
+
 [symbols]
 "0x0406" = "scrollEnd"
 "0x0408" = "scrollStart"

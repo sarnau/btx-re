@@ -7,116 +7,119 @@
 
 ; Hardware registers and RAM locations referenced below.
 
-P1DDR         EQU     $00
-P2DDR         EQU     $01
-PORT1         EQU     $02
-PORT2         EQU     $03
-P3DDR         EQU     $04
-P4DDR         EQU     $05
-PORT3         EQU     $06
-PORT4         EQU     $07
-TCSR          EQU     $08
-COUNTH        EQU     $09
-COUNTL        EQU     $0A
-OCRH          EQU     $0B
-OCRL          EQU     $0C
-ICRH          EQU     $0D
-ICRL          EQU     $0E
-P3CSR         EQU     $0F
-RMCR          EQU     $10
-TRCSR         EQU     $11
-RDR           EQU     $12
-TDR           EQU     $13
-RAMCR         EQU     $14
-softVecSci    EQU     $F0
-softVecTof    EQU     $F2
-softVecOcf    EQU     $F4
-softVecIcf    EQU     $F6
-softVecIrq1   EQU     $F8
-softVecSwi    EQU     $FA
-scrollEnd     EQU     $0406
-scrollStart   EQU     $0408
-rowAttr       EQU     $040A
-rowAccent     EQU     $040C
-rowRender     EQU     $040E
-drcsChar      EQU     $041B
-drcsWide      EQU     $041C
-drcsTall      EQU     $041D
-drcsFormat    EQU     $041E
-drcsRowHi     EQU     $0420
-drcsRowLo     EQU     $0421
-drcsSel0      EQU     $0422
-drcsSel1      EQU     $0423
-drcsSel2      EQU     $0424
-drcsSel3      EQU     $0425
-drcsPlane0    EQU     $0426
-drcsPlane1    EQU     $043E
-drcsPlane2    EQU     $0456
-drcsPlane3    EQU     $046E
-drcsOffset    EQU     $0487
-colourIndex   EQU     $048D
-gSetSelector  EQU     $048F
-clutIndex     EQU     $0495
-accentPending EQU     $0496
-parallelMode  EQU     $0497
-gsetG0        EQU     $0499
-gsetG1        EQU     $049A
-gsetG2        EQU     $049B
-gsetG3        EQU     $049C
-gsetGL        EQU     $049D
-gsetGR        EQU     $049E
-gsetSS        EQU     $049F
-gsetGLDefault EQU     $04A2
-savedRow      EQU     $04A5
-savedCol      EQU     $04A6
-saved04A4     EQU     $04A7
-savedClut     EQU     $04A8
-savedParallel EQU     $04A9
-savedGL       EQU     $04AA
-savedGR       EQU     $04AB
-savedG0       EQU     $04AC
-savedG1       EQU     $04AD
-inStatusLine  EQU     $04AF
-attr0         EQU     $04B1
-attr1         EQU     $04B2
-attr2         EQU     $04B3
-attr3         EQU     $04B4
-charCode      EQU     $04B5
-attrSpanBit   EQU     $04B6
-attrByteIndex EQU     $04B7
-attrMask      EQU     $04B8
-attrValue     EQU     $04B9
-txRingHead    EQU     $04D0
-txRingTail    EQU     $04D1
-txCurBit      EQU     $04EA
-txShift       EQU     $04EB
-txBitsLeft    EQU     $04EC
-txRing        EQU     $04EE
-asciiCol      EQU     $0617
-asciiRow      EQU     $0618
-glyphPtr      EQU     $07B2
-videoPtr      EQU     $07B6
-glyphBuf      EQU     $07BE
-glyphCode     EQU     $07E0
-cursorRowMax  EQU     $1B00
-glyphRows     EQU     $1B01
-scrollTop     EQU     $1B1C
-scrollBottom  EQU     $1B1D
-cursorRow     EQU     $1B1E
-cursorCol     EQU     $1B1F
-rowChar       EQU     $1B21
-redrawReq     EQU     $1B23
-planeRender   EQU     $4000
-planeAttr     EQU     $4400
-planeChar     EQU     $5400
-planeAccent   EQU     $5800
-videoRam      EQU     $5C00
-c64FifoWr     EQU     $6009
-c64FifoRd     EQU     $600A
-c64XferEn     EQU     $600B
-c64Status     EQU     $600C
-c64XferDone   EQU     $6010
-c64Fifo       EQU     $6080
+P1DDR          EQU     $00
+P2DDR          EQU     $01
+PORT1          EQU     $02
+PORT2          EQU     $03
+P3DDR          EQU     $04
+P4DDR          EQU     $05
+PORT3          EQU     $06
+PORT4          EQU     $07
+TCSR           EQU     $08
+COUNTH         EQU     $09
+COUNTL         EQU     $0A
+OCRH           EQU     $0B
+OCRL           EQU     $0C
+ICRH           EQU     $0D
+ICRL           EQU     $0E
+P3CSR          EQU     $0F
+RMCR           EQU     $10
+TRCSR          EQU     $11
+RDR            EQU     $12
+TDR            EQU     $13
+RAMCR          EQU     $14
+softVecSci     EQU     $F0
+softVecTof     EQU     $F2
+softVecOcf     EQU     $F4
+softVecIcf     EQU     $F6
+softVecIrq1    EQU     $F8
+softVecSwi     EQU     $FA
+scrollEnd      EQU     $0406
+scrollStart    EQU     $0408
+rowAttr        EQU     $040A
+rowAccent      EQU     $040C
+rowRender      EQU     $040E
+drcsChar       EQU     $041B
+drcsWide       EQU     $041C
+drcsTall       EQU     $041D
+drcsFormat     EQU     $041E
+drcsRowHi      EQU     $0420
+drcsRowLo      EQU     $0421
+drcsSel0       EQU     $0422
+drcsSel1       EQU     $0423
+drcsSel2       EQU     $0424
+drcsSel3       EQU     $0425
+drcsPlane0     EQU     $0426
+drcsPlane1     EQU     $043E
+drcsPlane2     EQU     $0456
+drcsPlane3     EQU     $046E
+drcsOffset     EQU     $0487
+colourIndex    EQU     $048D
+attrCellOffset EQU     $048E
+attrFillHi     EQU     $048E
+attrMaskInv    EQU     $048E
+gSetSelector   EQU     $048F
+clutIndex      EQU     $0495
+accentPending  EQU     $0496
+parallelMode   EQU     $0497
+gsetG0         EQU     $0499
+gsetG1         EQU     $049A
+gsetG2         EQU     $049B
+gsetG3         EQU     $049C
+gsetGL         EQU     $049D
+gsetGR         EQU     $049E
+gsetSS         EQU     $049F
+gsetGLDefault  EQU     $04A2
+savedRow       EQU     $04A5
+savedCol       EQU     $04A6
+saved04A4      EQU     $04A7
+savedClut      EQU     $04A8
+savedParallel  EQU     $04A9
+savedGL        EQU     $04AA
+savedGR        EQU     $04AB
+savedG0        EQU     $04AC
+savedG1        EQU     $04AD
+inStatusLine   EQU     $04AF
+attr0          EQU     $04B1
+attr1          EQU     $04B2
+attr2          EQU     $04B3
+attr3          EQU     $04B4
+charCode       EQU     $04B5
+attrSpanBit    EQU     $04B6
+attrByteIndex  EQU     $04B7
+attrMask       EQU     $04B8
+attrValue      EQU     $04B9
+txRingHead     EQU     $04D0
+txRingTail     EQU     $04D1
+txCurBit       EQU     $04EA
+txShift        EQU     $04EB
+txBitsLeft     EQU     $04EC
+txRing         EQU     $04EE
+asciiCol       EQU     $0617
+asciiRow       EQU     $0618
+glyphPtr       EQU     $07B2
+videoPtr       EQU     $07B6
+glyphBuf       EQU     $07BE
+glyphCode      EQU     $07E0
+cursorRowMax   EQU     $1B00
+glyphRows      EQU     $1B01
+scrollTop      EQU     $1B1C
+scrollBottom   EQU     $1B1D
+cursorRow      EQU     $1B1E
+cursorCol      EQU     $1B1F
+rowChar        EQU     $1B21
+redrawReq      EQU     $1B23
+planeRender    EQU     $4000
+planeAttr      EQU     $4400
+planeChar      EQU     $5400
+planeAccent    EQU     $5800
+videoRam       EQU     $5C00
+c64FifoWr      EQU     $6009
+c64FifoRd      EQU     $600A
+c64XferEn      EQU     $600B
+c64Status      EQU     $600C
+c64XferDone    EQU     $6010
+c64Fifo        EQU     $6080
 
         ORG     $8000
 
@@ -5058,7 +5061,7 @@ LE143:
         ORAA    #$10
         STAA    $00,X
         CLR     colourIndex
-        CLR     $048E
+        CLR     attrFillHi
         LDAA    cursorCol
         STAA    $0490
 
@@ -5074,7 +5077,7 @@ LE15C:
         STAA    $01,X
         LDAA    $03,X
         ANDA    #$6F
-        ORAA    $048E
+        ORAA    attrFillHi
         STAA    $03,X
 
 LE177:
@@ -5082,12 +5085,12 @@ LE177:
         ADDA    #$80
         STAA    colourIndex
         BCC     LE189
-        LDAA    $048E
+        LDAA    attrFillHi
         EORA    #$10
-        STAA    $048E
+        STAA    attrFillHi
 
 LE189:
-        LDAA    $048E
+        LDAA    attrFillHi
         ORAA    colourIndex
         CMPA    #$90
         BEQ     LE177
@@ -5136,7 +5139,7 @@ LE1DC:
         ORAA    #$10
         STAA    $00,X
         CLR     colourIndex
-        CLR     $048E
+        CLR     attrFillHi
         LDAA    cursorCol
         STAA    $0490
 
@@ -5152,7 +5155,7 @@ LE1F5:
         STAA    $01,X
         LDAA    $03,X
         ANDA    #$6F
-        ORAA    $048E
+        ORAA    attrFillHi
         STAA    $03,X
 
 LE210:
@@ -5160,12 +5163,12 @@ LE210:
         SUBA    #$80
         STAA    colourIndex
         BCC     LE222
-        LDAA    $048E
+        LDAA    attrFillHi
         EORA    #$10
-        STAA    $048E
+        STAA    attrFillHi
 
 LE222:
-        LDAA    $048E
+        LDAA    attrFillHi
         ORAA    colourIndex
         CMPA    #$90
         BEQ     LE210
@@ -5649,7 +5652,7 @@ LE4FC:
 ; Apply one attribute across the span that starts at the cursor.
 ;
 ;     A -> attrValue      the bits to set
-;     B -> attrMask       which bits they replace ($048E keeps the complement)
+;     B -> attrMask       which bits they replace (attrMaskInv keeps the complement)
 ;     X -> attrSpanBit    high byte: the render-plane bit marking this span
 ;          attrByteIndex  low byte: which of the cell's four attribute bytes
 ;
@@ -5664,7 +5667,7 @@ setAttrSpan:
         STAA    attrValue
         STAB    attrMask
         COMB
-        STAB    $048E
+        STAB    attrMaskInv
         STX     attrSpanBit
         LDX     rowAttr
         LDAA    $00,X
@@ -5713,7 +5716,7 @@ LE53F:
 
 LE558:
         LDAA    $00,X
-        ANDA    $048E
+        ANDA    attrMaskInv
         ORAA    attrValue
         STAA    $00,X
         INX
@@ -6016,7 +6019,7 @@ LE7CB:
         LDAB    cursorCol
         ASLB
         ASLB
-        STAB    $048E
+        STAB    attrCellOffset
         LDX     rowAttr
         ABX
         LDAA    $00,X
@@ -6030,7 +6033,7 @@ LE7DE:
 
 LE7E6:
         LDX     rowAttr
-        LDAB    $048E
+        LDAB    attrCellOffset
         ABX
         LDAA    $00,X
         ANDA    #$20
@@ -6166,7 +6169,7 @@ LE8C0:
 
 LE8C7:
         LDX     rowAttr
-        LDAB    $048E
+        LDAB    attrCellOffset
         ABX
         INX
         LDAA    $00,X
@@ -6222,7 +6225,7 @@ LE91D:
 
 LE930:
         LDX     rowAttr
-        LDAB    $048E
+        LDAB    attrCellOffset
         ABX
         LDAA    $01,X
         ANDA    #$F8
@@ -6237,7 +6240,7 @@ LE930:
 
 LE94E:
         LDX     rowAttr
-        LDAB    $048E
+        LDAB    attrCellOffset
         ABX
         LDAA    $00,X
         ANDA    #$02
@@ -6887,7 +6890,7 @@ LEDF7:
         STX     attrSpanBit
         LDAA    attrMask
         COMA
-        STAA    $048E
+        STAA    attrMaskInv
         LDX     rowAttr
         LDAB    attrByteIndex
         ABX
@@ -6895,7 +6898,7 @@ LEDF7:
 
 LEE10:
         LDAA    $00,X
-        ANDA    $048E
+        ANDA    attrMaskInv
         ORAA    attrValue
         STAA    $00,X
         INX
