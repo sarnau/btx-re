@@ -1,0 +1,91 @@
+# Analysis metadata for the Commodore BTX Decoder II firmware.
+#
+# This file is the source of truth for everything we learn about the ROM.
+# out/btx_decoder_ii.asm is generated from (ROM bytes + this file) and must
+# never be edited by hand.
+
+# Hardware entry points: the reset vector plus the seven interrupt stubs.
+entry_points = [
+    0xB200,  # RESET
+    0xF129,  # SCI  stub
+    0xF12E,  # TOF  stub
+    0xF133,  # OCF  stub
+    0xF138,  # ICF  stub
+    0xF13D,  # IRQ1 stub
+    0xF142,  # SWI  stub
+    0xF147,  # NMI  handler (bare RTI, also the null handler)
+    0xF148,  # follows the NMI RTI
+    0xF14C,  # installed into a soft vector by reset
+    0xF1D8,  # called from $F148
+]
+
+[meta]
+rom = "../C64 BTX Decoder/c64_btx_decoder_ii.bin"
+base = 0x8000
+sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
+
+
+[labels]
+"0xB200" = "reset"
+"0xF129" = "stubSci"
+"0xF12E" = "stubTof"
+"0xF133" = "stubOcf"
+"0xF138" = "stubIcf"
+"0xF13D" = "stubIrq1"
+"0xF142" = "stubSwi"
+"0xF147" = "nullHandler"
+"0xFFF0" = "vectors"
+
+[block_comments]
+"0xF129" = """
+Interrupt soft-vector stubs.
+
+Each stub loads a 16-bit handler address from internal RAM and jumps through
+it, so handlers can be revectored at runtime. Reset installs nullHandler into
+the vectors it does not use."""
+"0xB200" = """
+RESET entry.
+
+Sets up the stack, configures ports 1 and 2, and installs the interrupt soft
+vectors before entering the main firmware."""
+
+[line_comments]
+"0xB200" = "stack top - external RAM lies below $0400"
+"0xF147" = "null interrupt handler"
+
+# MC6801 internal register file. Names from the MC6801 Reference Manual.
+[symbols]
+"0x0000" = "P1DDR"
+"0x0001" = "P2DDR"
+"0x0002" = "PORT1"
+"0x0003" = "PORT2"
+"0x0004" = "P3DDR"
+"0x0005" = "P4DDR"
+"0x0006" = "PORT3"
+"0x0007" = "PORT4"
+"0x0008" = "TCSR"
+"0x0009" = "COUNTH"
+"0x000A" = "COUNTL"
+"0x000B" = "OCRH"
+"0x000C" = "OCRL"
+"0x000D" = "ICRH"
+"0x000E" = "ICRL"
+"0x000F" = "P3CSR"
+"0x0010" = "RMCR"
+"0x0011" = "TRCSR"
+"0x0012" = "RDR"
+"0x0013" = "TDR"
+"0x0014" = "RAMCR"
+# Interrupt soft vectors in internal RAM.
+"0x00F0" = "softVecSci"
+"0x00F2" = "softVecTof"
+"0x00F4" = "softVecOcf"
+"0x00F6" = "softVecIcf"
+"0x00F8" = "softVecIrq1"
+"0x00FA" = "softVecSwi"
+
+# The hardware vector table at the top of the image.
+[[regions]]
+start = 0xFFF0
+end = 0x10000
+kind = "words"
