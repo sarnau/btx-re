@@ -6,6 +6,8 @@ dis65xx.asm, which is what enforces byte-identity.
 
 from __future__ import annotations
 
+import dataclasses
+
 from dis65xx import codec6502
 from dis65xx.decode import Insn
 from dis65xx.opcodes import Mode, modes_for
@@ -16,6 +18,45 @@ from dis65xx.trace import CODE, TraceResult
 BYTES_PER_FCB = 16
 _INDENT = 8      # leading spaces before a mnemonic
 _MNEM_WIDTH = 8  # column width the mnemonic is padded to
+
+
+_JUMPS = ("JMP", "JSR")
+
+
+def collect_targets(data: bytes, result: TraceResult, sidecar: Sidecar) -> dict[int, str]:
+    """Auto-label every branch and jump target that has no name of its own.
+
+    Named L<addr>, so a target reads as a label instead of a bare address. Only
+    addresses inside the image qualify. The 6502 payload's absolute operands are
+    RUNTIME addresses with no position in this listing, so only its relative
+    branches are collected; its JMP/JSR operands stay literal.
+    """
+    base = result.base
+    end = base + len(data)
+    targets: set[int] = set()
+
+    for insn in result.insns.values():
+        if insn.mode is Mode.REL:
+            targets.add(insn.operand)
+        elif insn.mnemonic in _JUMPS and insn.mode in (Mode.EXT, Mode.DIR):
+            targets.add(insn.operand)
+
+    for region in sidecar.regions:
+        if region.kind != "code6502":
+            continue
+        addr = region.start
+        while addr < min(region.end, end):
+            try:
+                insn = codec6502.decode(data, addr - base, addr)
+            except ValueError:
+                addr += 1
+                continue
+            if insn.mode is M65.REL:
+                targets.add(insn.operand)
+            addr = insn.end
+
+    return {a: f"L{a:04X}" for a in targets
+            if base <= a < end and a not in sidecar.labels}
 
 
 def format_operand(insn: Insn, sidecar: Sidecar) -> str:
@@ -43,7 +84,7 @@ def format_operand(insn: Insn, sidecar: Sidecar) -> str:
     raise AssertionError(f"unhandled mode {mode}")  # pragma: no cover
 
 
-def format_operand_6502(insn) -> str:
+def format_operand_6502(insn, sidecar: Sidecar | None = None) -> str:
     """6502 operand syntax. Absolute operands stay literal - the payload runs at
     a different address than it is stored, so its references name runtime
     locations with no position in this ROM."""
@@ -67,6 +108,10 @@ def format_operand_6502(insn) -> str:
     if m is M65.IND:
         return f"(${v:04X})"
     if m is M65.REL:
+        if sidecar is not None:
+            named = sidecar.labels.get(v)
+            if named:
+                return named
         return f"${v:04X}"
     # Absolute forms need > when a shortest-fit assembler would pick zero page.
     pre = ">" if v < 0x100 else ""
@@ -77,6 +122,28 @@ def format_operand_6502(insn) -> str:
     if m is M65.ABY:
         return f"{pre}${v:04X},Y"
     raise AssertionError(m)  # pragma: no cover
+
+
+# The C64-side code lives in two address spaces. The bootstrap executes in
+# place from the cartridge window at $8000; the payload is streamed to the C64
+# and runs at $1000. An absolute operand names a location in one of those, not
+# in this listing, so it stays literal - but it can be cross-referenced.
+_C64_SPACES = ((0xB32D, 0xB3A6, 0x332D),   # bootstrap, runs at $8000
+               (0xB3A6, 0xD109, 0xA3A8))   # payload,   runs at $1000
+
+
+def _c64_xref(addr: int, insn, sidecar: Sidecar) -> str | None:
+    """Where an absolute 6502 operand lives in this ROM, if anywhere."""
+    if insn.mode is not M65.ABS or insn.mnemonic not in _JUMPS:
+        return None
+    for lo, hi, offset in _C64_SPACES:
+        if lo <= addr < hi:
+            rom_addr = insn.operand + offset
+            if not lo <= rom_addr < hi:
+                return None
+            name = sidecar.labels.get(rom_addr)
+            return f"{name} (${rom_addr:04X})" if name else f"ROM ${rom_addr:04X}"
+    return None
 
 
 def _emit_6502(data: bytes, base: int, start: int, end: int,
@@ -114,9 +181,20 @@ def _emit_6502(data: bytes, base: int, start: int, end: int,
             pending.append(data[addr - base])
             addr += 1
             continue
+        # A label strictly inside this instruction means a branch targets a byte
+        # the linear sweep framed over. Emit the leading bytes as FCB so the
+        # label can sit on its own address.
+        split = next((x for x in range(insn.addr + 1, insn.end)
+                      if x in sidecar.labels or x in sidecar.block_comments), None)
+        if split is not None:
+            flush()
+            lines.append(_fcb_line(data[addr - base:split - base])
+                         + f"{'':<8}; branch target below splits this instruction")
+            addr = split
+            continue
         flush()
-        body = f"{'':{_INDENT}}{insn.mnemonic:{_MNEM_WIDTH}}{format_operand_6502(insn)}".rstrip()
-        comment = sidecar.line_comments.get(addr)
+        body = f"{'':{_INDENT}}{insn.mnemonic:{_MNEM_WIDTH}}{format_operand_6502(insn, sidecar)}".rstrip()
+        comment = sidecar.line_comments.get(addr) or _c64_xref(addr, insn, sidecar)
         lines.append(f"{body:<40}; {comment}" if comment else body)
         addr = insn.end
     flush()
@@ -158,6 +236,11 @@ def _fdb_line(words: list[int]) -> str:
 
 
 def emit(data: bytes, result: TraceResult, sidecar: Sidecar) -> str:
+    # Branch and jump targets become labels. The sidecar's own names win, so a
+    # routine that has been identified keeps its name instead of an L-address.
+    auto = collect_targets(data, result, sidecar)
+    sidecar = dataclasses.replace(sidecar, labels={**auto, **sidecar.labels})
+
     base = result.base
     lines: list[str] = [
         "; Commodore BTX Decoder II firmware",

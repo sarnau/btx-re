@@ -45,6 +45,24 @@ The package was originally `dis6801`, renamed to `dis65xx` once the embedded
 The design spec and plan under `docs/superpowers/` were updated to match, so
 their paths point at real files.
 
+## Labels
+
+Every branch and jump target inside the image is a label. Targets the sidecar
+has named keep that name; the rest get `L<address>`, defined at the address they
+point to. Nothing on the 6801 side branches to a bare address.
+
+The 6502 side is different, because its code lives in two other address spaces:
+the bootstrap executes in place from the cartridge window at `$8000`, and the
+payload is streamed to the C64 and runs at `$1000`. An absolute operand there
+names a location in one of those, not in this listing, so making it a label
+would assemble to the ROM address and change the bytes. Those stay literal and
+carry a cross-reference comment instead:
+
+    JMP     $174C                   ; c64Vec02 ($BAF4)
+
+Relative branches are PC-relative and so resolve correctly in listing space;
+they use labels on both CPUs.
+
 ## Two instruction sets
 
 The image holds a C64-side 6502 program as well as the 68B01 firmware, so the

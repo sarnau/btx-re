@@ -676,6 +676,8 @@ fontNarrow:
         FCB     $22,$22,$22,$22,$1E,$00,$00,$00,$3C,$22,$3C,$22,$22,$22,$2C,$00
         FCB     $00,$00,$22,$1C,$22,$22,$3E,$22,$22,$00,$00,$00,$22,$1C,$22,$22
         FCB     $22,$22,$1C,$00,$00,$00,$22,$00,$22,$22,$22,$22,$1C,$00,$00,$00
+
+LA210:
         LDAA    $1B23
         STAA    $07DF
         CLR     $1B23
@@ -689,31 +691,39 @@ fontNarrow:
         STAA    >$00EE
         LDAA    cursorRowMax
         CMPA    #$17
-        BEQ     $A23E
+        BEQ     LA23E
         LDAA    #$0C
         STAA    $1B01
         CLR     $00EE
+
+LA23E:
         TST     $1B20
-        BEQ     $A250
+        BEQ     LA250
         LDX     rowChar
         LDAB    cursorCol
         ABX
         LDAA    $00,X
         ORAA    #$80
         STAA    $00,X
+
+LA250:
         LDAA    $07DD
         ORAA    $07DE
-        BEQ     $A26F
+        BEQ     LA26F
         LDAA    #$17
         STAA    >PORT3
         LDX     #$5C00
         LDAB    #$04
         LDAA    #$00
+
+LA264:
         STAA    $03,X
         ABX
         CPX     #$5FFF
-        BLS     $A264
-        JMP     $A2AD
+        BLS     LA264
+        JMP     LA2AD
+
+LA26F:
         LDAA    cursorRowMax
         STAA    $07B9
         LDAA    #$17
@@ -722,35 +732,45 @@ fontNarrow:
         STS     >$00EC
         LDS     #$1B02
         LDX     #$5C00
+
+LA284:
         PULA
         ANDA    #$7F
         LDAB    $1B01
         STAB    $07B8
         LDAB    #$04
+
+LA28F:
         STAA    $03,X
         ABX
         DEC     $07B8
-        BNE     $A28F
+        BNE     LA28F
         DEC     $07B9
-        BNE     $A284
+        BNE     LA284
         LDS     >$00EC
         CLI
         LDAA    $1B02
         ANDA    #$7F
+
+LA2A5:
         STAA    $03,X
         ABX
         CPX     #$5FFF
-        BLS     $A2A5
+        BLS     LA2A5
+
+LA2AD:
         LDAA    c64Fifo
         CMPA    c64Fifo
-        BNE     $A2AD
+        BNE     LA2AD
         TSTA
-        BEQ     $A2DF
+        BEQ     LA2DF
+
+LA2B8:
         LDAA    $608B
         CMPA    $608B
-        BNE     $A2B8
+        BNE     LA2B8
         TSTA
-        BNE     $A2AD
+        BNE     LA2AD
         LDAA    $1B20
         EORA    #$FF
         ORAA    cursorCol
@@ -761,14 +781,18 @@ fontNarrow:
         STAA    $6089
         STAA    $608B
         STAA    $61F9
+
+LA2DF:
         LDAB    #$04
         LDX     #$4403
+
+LA2E4:
         LDAA    $00,X
         ANDA    #$BF
         STAA    $00,X
         ABX
         CPX     #$53A0
-        BCS     $A2E4
+        BCS     LA2E4
         LDAA    #$00
         STAA    $07B0
         STAA    $07B1
@@ -779,18 +803,22 @@ fontNarrow:
         LDD     #$5800
         STD     >$00E8
         TST     $1B28
-        BEQ     $A312
-        JMP     $A797
+        BEQ     LA312
+        JMP     LA797
+
+LA312:
         LDX     >$00E6
         LDAB    $00,X
         LDX     >$00E4
         LDAA    $00,X
         STAA    >$00E0
         TSTB
-        BMI     $A32A
+        BMI     LA32A
         TST     $07DF
-        BNE     $A32A
-        JMP     $A71D
+        BNE     LA32A
+        JMP     LA71D
+
+LA32A:
         LDAA    $01,X
         STAA    >$00E1
         LDAA    $02,X
@@ -798,7 +826,7 @@ fontNarrow:
         LDAA    $03,X
         STAA    >$00E3
         ANDA    #$40
-        BEQ     $A351
+        BEQ     LA351
         LDAA    >$00E0
         ANDA    #$FD
         STAA    >$00E0
@@ -806,15 +834,21 @@ fontNarrow:
         LDAA    $00,X
         ORAA    #$80
         STAA    $00,X
-        JMP     $A71D
+        JMP     LA71D
+
+LA351:
         TST     $07DD
-        BEQ     $A377
+        BEQ     LA377
         LDAA    >$00E0
         BITA    #$10
-        BEQ     $A361
+        BEQ     LA361
         ANDA    #$33
-        BRA     $A362
+        BRA     LA362
+
+LA361:
         CLRA
+
+LA362:
         STAA    >$00E0
         LDAA    >$00E1
         ANDA    #$0F
@@ -823,74 +857,92 @@ fontNarrow:
         STAA    >$00E2
         LDAA    #$99
         STAA    >$00E3
+
+LA377:
         LDAA    >$00E0
         ANDA    #$03
-        BEQ     $A3DC
+        BEQ     LA3DC
         ANDA    #$02
-        BEQ     $A3AE
+        BEQ     LA3AE
         LDAA    $07B1
         CMPA    #$27
-        BEQ     $A3A6
+        BEQ     LA3A6
         LDAA    $07B0
-        BEQ     $A3AE
+        BEQ     LA3AE
         LDD     >$00E4
         SUBD    #$00A0
         STD     >$00EC
         LDX     >$00EC
         LDAA    $04,X
         ANDA    #$01
-        BEQ     $A3AE
+        BEQ     LA3AE
         LDAA    $07,X
         ANDA    #$40
-        BNE     $A3AE
+        BNE     LA3AE
+
+LA3A6:
         LDAA    >$00E0
         ANDA    #$FD
         STAA    >$00E0
+
+LA3AE:
         LDAA    >$00E0
         ANDA    #$01
-        BEQ     $A3DC
+        BEQ     LA3DC
         LDAA    $07B0
         CMPA    cursorRowMax
-        BEQ     $A3D9
+        BEQ     LA3D9
         LDAA    $07B0
         INCA
         CMPA    scrollTop
-        BEQ     $A3D9
+        BEQ     LA3D9
         DECA
         CMPA    scrollBottom
-        BEQ     $A3D9
+        BEQ     LA3D9
         LDX     >$00E4
         LDAA    $00,X
         ANDA    #$80
         EORA    $A0,X
-        BMI     $A3D9
-        BRA     $A3DC
+        BMI     LA3D9
+        BRA     LA3DC
+
+LA3D9:
         DEC     $00E0
+
+LA3DC:
         LDAA    >$00E1
         TAB
         ANDB    #$F8
         ANDA    #$07
         CMPA    #$04
-        BNE     $A402
+        BNE     LA402
         LDX     >$00E6
         LDAA    $00,X
         ANDA    #$7F
         CMPA    #$7F
-        BNE     $A3F7
+        BNE     LA3F7
         ORAB    #$06
-        BRA     $A3FF
+        BRA     LA3FF
+
+LA3F7:
         ANDA    #$60
         CMPA    #$40
-        BEQ     $A3FF
+        BEQ     LA3FF
         ORAB    #$02
+
+LA3FF:
         STAB    >$00E1
+
+LA402:
         TST     $07DE
-        BEQ     $A413
+        BEQ     LA413
         LDAA    #$07
         STAA    $07BC
         LDAA    #$00
         STAA    $07BD
-        BRA     $A427
+        BRA     LA427
+
+LA413:
         LDAB    >$00E2
         LDAA    >$00E3
         ASLD
@@ -902,26 +954,32 @@ fontNarrow:
         STAB    $07BC
         ANDA    #$1F
         STAA    $07BD
+
+LA427:
         LDAA    >$00E0
         ANDA    #$04
-        BEQ     $A446
+        BEQ     LA446
         LDAA    $07BD
         CMPA    #$08
-        BNE     $A43A
+        BNE     LA43A
         LDAA    #$00
         STAA    $07BD
+
+LA43A:
         LDAA    $07BC
         CMPA    #$08
-        BNE     $A446
+        BNE     LA446
         LDAA    #$00
         STAA    $07BC
+
+LA446:
         LDAA    >$00E1
         ANDA    #$07
         CMPA    #$05
-        BEQ     $A46A
+        BEQ     LA46A
         LDAA    >$00E3
         ANDA    #$04
-        BEQ     $A46A
+        BEQ     LA46A
         LDAA    $07BC
         LDAB    $07BD
         STAB    $07BC
@@ -929,25 +987,33 @@ fontNarrow:
         LDAA    >$00E3
         EORA    #$20
         STAA    >$00E3
+
+LA46A:
         TST     $1B24
-        BEQ     $A479
+        BEQ     LA479
         LDAA    >$00E3
         ORAA    #$08
         STAA    >$00E3
-        BRA     $A486
+        BRA     LA486
+
+LA479:
         LDAA    >$00E3
         ANDA    #$08
-        BNE     $A486
+        BNE     LA486
         LDAA    $07BD
         STAA    $07BC
+
+LA486:
         TST     $00E3
-        BMI     $A49A
+        BMI     LA49A
         LDAA    >$00E1
         BITA    #$40
-        BEQ     $A49A
+        BEQ     LA49A
         LDAA    $07BC
         EORA    #$08
         STAA    $07BC
+
+LA49A:
         LDAB    $07BC
         LDAA    $07BD
         ASLB
@@ -957,16 +1023,20 @@ fontNarrow:
         STAB    >$00EA
         STAA    >$00EB
         LDAA    >$00E3
-        BMI     $A4E2
+        BMI     LA4E2
         LDAA    #$20
         LDAB    >$00E3
         BITB    #$20
-        BEQ     $A4BA
+        BEQ     LA4BA
         LDAA    #$10
+
+LA4BA:
         LDAB    >$00E1
         BITB    #$40
-        BEQ     $A4C3
+        BEQ     LA4C3
         LDAA    #$30
+
+LA4C3:
         ORAA    >$00EB
         STAA    >$00EB
         LDAA    >$00E1
@@ -974,12 +1044,18 @@ fontNarrow:
         ANDA    #$40
         LDAB    >$00E3
         BITB    #$10
-        BEQ     $A4DA
+        BEQ     LA4DA
         ORAA    #$80
-        BRA     $A4DC
+        BRA     LA4DC
+
+LA4DA:
         EORA    #$40
+
+LA4DC:
         ORAA    >$00EB
         STAA    >$00EB
+
+LA4E2:
         LDX     >$00E6
         LDAA    $00,X
         ANDA    #$7F
@@ -987,60 +1063,76 @@ fontNarrow:
         STAA    $00,X
         LDAB    >$00E1
         ANDB    #$10
-        BEQ     $A4F9
+        BEQ     LA4F9
         ORAA    #$80
         STAA    $00,X
+
+LA4F9:
         LDX     >$00E8
         LDAA    $00,X
         STAA    $07E1
         LDAB    >$00E0
         ANDB    #$03
-        BEQ     $A550
+        BEQ     LA550
         LDX     >$00E6
         LDAA    $00,X
         ORAA    #$80
         STAA    $00,X
         BITB    #$01
-        BEQ     $A51B
+        BEQ     LA51B
         LDAA    $28,X
         ORAA    #$80
         STAA    $28,X
+
+LA51B:
         BITB    #$02
-        BEQ     $A525
+        BEQ     LA525
         LDAA    $01,X
         ORAA    #$80
         STAA    $01,X
+
+LA525:
         CMPB    #$03
-        BNE     $A52F
+        BNE     LA52F
         LDAA    $29,X
         ORAA    #$80
         STAA    $29,X
+
+LA52F:
         LDX     >$00E4
         BITB    #$01
-        BEQ     $A53C
+        BEQ     LA53C
         LDAA    $A3,X
         ORAA    #$40
         STAA    $A3,X
+
+LA53C:
         BITB    #$02
-        BEQ     $A546
+        BEQ     LA546
         LDAA    $07,X
         ORAA    #$40
         STAA    $07,X
+
+LA546:
         CMPB    #$03
-        BNE     $A550
+        BNE     LA550
         LDAA    $A7,X
         ORAA    #$40
         STAA    $A7,X
+
+LA550:
         LDAA    c64Fifo
         CMPA    c64Fifo
-        BNE     $A550
+        BNE     LA550
         TSTA
-        BEQ     $A5AF
+        BEQ     LA5AF
+
+LA55B:
         LDAA    $608B
         CMPA    $608B
-        BNE     $A55B
+        BNE     LA55B
         TSTA
-        BNE     $A550
+        BNE     LA550
         LDAA    $1B20
         EORA    #$FF
         ORAA    cursorCol
@@ -1066,33 +1158,41 @@ fontNarrow:
         LDAA    #$FF
         STAA    $608B
         STAA    $61F9
+
+LA5AF:
         LDAB    >$00E1
         ANDB    #$07
         CMPB    #$05
-        BNE     $A5C0
+        BNE     LA5C0
         LDAA    #$FF
         STAA    $07E2
-        JMP     $A7E7
+        JMP     LA7E7
+
+LA5C0:
         CLR     $07E2
         LDAB    >$00E0
         ANDB    #$33
         CMPB    #$13
-        BNE     $A5D6
+        BNE     LA5D6
         LDAA    $07E0
         CMPA    #$20
-        BEQ     $A5D6
-        JMP     $A5D6
+        BEQ     LA5D6
+        JMP     LA5D6
+
+LA5D6:
         LDAB    >$00E1
         ANDB    #$07
         CMPB    #$06
-        BNE     $A5F3
+        BNE     LA5F3
         LDX     #$AF8E
         STX     $07B2
         CLR     $07DC
         LDAB    >$00E1
         ANDB    #$FC
         STAB    >$00E1
-        JMP     $A69B
+        JMP     LA69B
+
+LA5F3:
         ASLB
         LDX     #$AEF0
         ABX
@@ -1108,17 +1208,21 @@ fontNarrow:
         STD     $07B2
         LDAA    >$00E1
         ANDA    #$08
-        BNE     $A618
-        JMP     $A69B
+        BNE     LA618
+        JMP     LA69B
+
+LA618:
         CLR     $07DC
         LDAB    #$FF
+
+LA61D:
         INCB
         LDX     #$AFA3
         ABX
         LDAA    $00,X
-        BEQ     $A639
+        BEQ     LA639
         CMPA    $07E0
-        BNE     $A61D
+        BNE     LA61D
         ASLB
         LDX     #$AFBB
         ABX
@@ -1126,6 +1230,8 @@ fontNarrow:
         DEX
         STX     $07B2
         DEC     $07DC
+
+LA639:
         LDX     $AEF2
         DEX
         STX     $07B4
@@ -1142,7 +1248,9 @@ fontNarrow:
         LDX     #$07BE
         LDAB    #$0A
         TST     $07DC
-        BMI     $A66E
+        BMI     LA66E
+
+LA661:
         PULA
         STAA    $00,X
         INX
@@ -1150,8 +1258,10 @@ fontNarrow:
         STAA    $00,X
         INX
         DECB
-        BNE     $A661
-        BRA     $A679
+        BNE     LA661
+        BRA     LA679
+
+LA66E:
         PULA
         STAA    $01,X
         PULA
@@ -1159,10 +1269,14 @@ fontNarrow:
         INX
         INX
         DECB
-        BNE     $A66E
+        BNE     LA66E
+
+LA679:
         LDS     $07B4
         LDX     #$07BE
         LDAB    #$0A
+
+LA681:
         PULA
         ORAA    $00,X
         STAA    $00,X
@@ -1172,24 +1286,28 @@ fontNarrow:
         STAA    $00,X
         INX
         DECB
-        BNE     $A681
+        BNE     LA681
         LDS     >$00EC
         CLI
         LDX     #$07BE
         DEX
         STX     $07B2
+
+LA69B:
         LDX     $07B2
         TST     $02,X
-        BPL     $A6F8
+        BPL     LA6F8
         LDAA    >$00E1
         BITA    #$07
-        BEQ     $A6F8
+        BEQ     LA6F8
         LDAA    >$00E0
         BITA    #$08
-        BNE     $A6B7
+        BNE     LA6B7
         LDAA    >$00E1
         ANDA    #$20
-        BEQ     $A6F8
+        BEQ     LA6F8
+
+LA6B7:
         LDAA    >$00E0
         ANDA    #$F7
         STAA    >$00E0
@@ -1198,6 +1316,8 @@ fontNarrow:
         LDS     $07B2
         LDX     #$07BE
         LDAB    #$0A
+
+LA6CB:
         PULA
         STAA    $00,X
         INX
@@ -1205,10 +1325,12 @@ fontNarrow:
         STAA    $00,X
         INX
         DECB
-        BNE     $A6CB
+        BNE     LA6CB
         LDS     #$AF7A
         LDX     #$07BE
         LDAB    #$0A
+
+LA6DE:
         PULA
         ANDA    $01,X
         STAA    $01,X
@@ -1218,36 +1340,46 @@ fontNarrow:
         INX
         INX
         DECB
-        BNE     $A6DE
+        BNE     LA6DE
         LDS     >$00EC
         CLI
         LDX     #$07BE
         DEX
         STX     $07B2
+
+LA6F8:
         LDAA    >$00E0
         ANDA    #$03
         CMPA    #$00
-        BEQ     $A70E
+        BEQ     LA70E
         CMPA    #$01
-        BEQ     $A713
+        BEQ     LA713
         CMPA    #$02
-        BEQ     $A718
-        JSR     $ADE8
-        BRA     $A71D
-        JSR     $AB05
-        BRA     $A71D
-        JSR     $ABD9
-        BRA     $A71D
-        JSR     $ACFB
-        BRA     $A71D
+        BEQ     LA718
+        JSR     LADE8
+        BRA     LA71D
+
+LA70E:
+        JSR     LAB05
+        BRA     LA71D
+
+LA713:
+        JSR     LABD9
+        BRA     LA71D
+
+LA718:
+        JSR     LACFB
+        BRA     LA71D
+
+LA71D:
         TST     $1B20
-        BEQ     $A75F
+        BEQ     LA75F
         LDAA    $07B1
         CMPA    cursorCol
-        BNE     $A75F
+        BNE     LA75F
         LDAA    $07B0
         CMPA    cursorRow
-        BNE     $A75F
+        BNE     LA75F
         LDAA    cursorCol
         ADDA    #$18
         STAA    >PORT3
@@ -1267,6 +1399,8 @@ fontNarrow:
         LDAA    $00,X
         ORAA    #$80
         STAA    $00,X
+
+LA75F:
         LDX     >$00E6
         INX
         STX     >$00E6
@@ -1279,16 +1413,18 @@ fontNarrow:
         INC     $07B1
         LDAA    $07B1
         CMPA    $AEFA
-        BLS     $A7C4
+        BLS     LA7C4
         LDAA    #$00
         STAA    $07B1
         INC     $07B0
         LDAA    $07B0
         CMPA    #$14
-        BNE     $A7BB
+        BNE     LA7BB
         LDAA    cursorRowMax
         CMPA    #$13
-        BNE     $A7BB
+        BNE     LA7BB
+
+LA797:
         LDAA    #$18
         STAA    $07B0
         LDAA    #$0A
@@ -1301,26 +1437,38 @@ fontNarrow:
         STX     >$00E8
         LDX     #$5300
         STX     >$00E4
-        JMP     $A312
+        JMP     LA312
+
+LA7BB:
         LDAA    cursorRowMax
         INCA
         CMPA    $07B0
-        BLT     $A7D5
+        BLT     LA7D5
+
+LA7C4:
         LDAA    >$00E0
         ANDA    #$02
-        BEQ     $A7D2
+        BEQ     LA7D2
         LDAA    #$00
         STAA    >$00E0
-        BRA     $A75F
-        JMP     $A312
+        BRA     LA75F
+
+LA7D2:
+        JMP     LA312
+
+LA7D5:
         LDAA    #$0A
         STAA    $1B01
         LDAA    cursorRowMax
         CMPA    #$17
-        BEQ     $A7E6
+        BEQ     LA7E6
         LDAA    #$0C
         STAA    $1B01
+
+LA7E6:
         RTS
+
+LA7E7:
         LDAB    $07E0
         ANDB    #$7F
         SUBB    #$20
@@ -1330,7 +1478,7 @@ fontNarrow:
         STD     $07B2
         LDAA    $1B01
         CMPA    #$0B
-        BCC     $A81C
+        BCC     LA81C
         LDD     $07B2
         ADDD    #$0002
         STD     $07B2
@@ -1338,62 +1486,80 @@ fontNarrow:
         LDX     $07B2
         LDAA    $00,X
         ANDA    #$20
-        BEQ     $A81C
+        BEQ     LA81C
         LDD     $07B2
         ADDD    #$0002
         STD     $07B2
+
+LA81C:
         LDX     $07B2
         STX     $07D8
         LDAA    $02,X
         ANDA    #$30
         STAA    $07DA
         CMPA    #$00
-        BNE     $A830
-        JMP     $A900
+        BNE     LA830
+        JMP     LA900
+
+LA830:
         CMPA    #$10
-        BNE     $A837
-        JMP     $A900
+        BNE     LA837
+        JMP     LA900
+
+LA837:
         CLR     $07BA
         CLR     $07BB
         LDAA    >$00E3
-        BPL     $A845
-        JMP     $A8C5
+        BPL     LA845
+        JMP     LA8C5
+
+LA845:
         LDAA    #$20
         LDAB    >$00E3
         BITB    #$20
-        BEQ     $A850
+        BEQ     LA850
         LDAA    #$10
+
+LA850:
         LDAB    >$00E1
         BITB    #$40
-        BEQ     $A859
+        BEQ     LA859
         LDAA    #$30
+
+LA859:
         STAA    $07BB
         LDAA    >$00E1
         LSRA
         ANDA    #$40
         LDAB    >$00E3
         BITB    #$10
-        BEQ     $A86D
+        BEQ     LA86D
         ORAA    #$80
-        BRA     $A86F
+        BRA     LA86F
+
+LA86D:
         EORA    #$40
+
+LA86F:
         ORAA    $07BB
         STAA    $07BB
         ANDA    #$30
         CMPA    #$30
-        BNE     $A8C5
+        BNE     LA8C5
         LDAA    $07DA
         ANDA    #$10
-        BEQ     $A894
+        BEQ     LA894
         LDAA    $07BA
         ORAA    #$C0
         STAA    $07BA
         LDAA    $07BB
         ORAA    #$0F
         STAA    $07BB
-        BRA     $A8C5
+        BRA     LA8C5
+
+LA894:
         TST     $1B2A
-        BPL     $A8C5
+        BPL     LA8C5
         LDAA    $1B2D
         ANDA    #$1F
         EORA    #$08
@@ -1413,35 +1579,53 @@ fontNarrow:
         LDAA    $1B2A
         ANDA    #$7F
         STAA    $1B2A
+
+LA8C5:
         LDAA    >$00E3
         TST     $1B24
-        BEQ     $A8CF
+        BEQ     LA8CF
         ORAA    #$08
+
+LA8CF:
         ANDA    #$0C
-        BEQ     $A8E4
+        BEQ     LA8E4
         TST     $00E3
-        BMI     $A8DA
+        BMI     LA8DA
         ANDA    #$FB
+
+LA8DA:
         CMPA    #$0C
-        BNE     $A8F3
+        BNE     LA8F3
         LDAA    $07BC
         STAA    $07BD
+
+LA8E4:
         LDAA    $07BD
         STAA    $07BC
         LDX     fontBaseTable
         DEX
         STX     $07B2
-        BRA     $A900
+        BRA     LA900
+
+LA8F3:
         LDAA    $07DA
         CMPA    #$10
-        BNE     $A8FD
-        JMP     $A903
-        JMP     $A903
-        JMP     $A6F8
+        BNE     LA8FD
+        JMP     LA903
+
+LA8FD:
+        JMP     LA903
+
+LA900:
+        JMP     LA6F8
+
+LA903:
         LDAA    >$00E0
         ANDA    #$02
-        BEQ     $A90D
-        JMP     $A98A
+        BEQ     LA90D
+        JMP     LA98A
+
+LA90D:
         LDAB    $07B1
         ADDB    #$18
         STAB    >PORT3
@@ -1454,13 +1638,15 @@ fontNarrow:
         STD     $07B6
         LDAB    >$00E0
         ANDB    #$01
-        BEQ     $A95B
+        BEQ     LA95B
         SEI
         STS     >$00EC
         LDX     $07B6
         LDS     $07B2
         LDAB    $1B01
         STAB    $07B8
+
+LA93B:
         PULA
         PULB
         STD     $00,X
@@ -1474,16 +1660,20 @@ fontNarrow:
         LDAB    #$08
         ABX
         DEC     $07B8
-        BNE     $A93B
+        BNE     LA93B
         LDS     >$00EC
         CLI
-        JMP     $A71D
+        JMP     LA71D
+
+LA95B:
         SEI
         STS     >$00EC
         LDX     $07B6
         LDS     $07B2
         LDAB    $1B01
         STAB    $07B8
+
+LA96B:
         PULA
         PULB
         STD     $00,X
@@ -1496,10 +1686,12 @@ fontNarrow:
         LDAB    #$04
         ABX
         DEC     $07B8
-        BNE     $A96B
+        BNE     LA96B
         LDS     >$00EC
         CLI
-        JMP     $A71D
+        JMP     LA71D
+
+LA98A:
         LDAB    $07B1
         ADDB    #$18
         STAB    >PORT3
@@ -1513,17 +1705,23 @@ fontNarrow:
         CLR     $07E3
         LDAB    >$00E0
         ANDB    #$01
-        BEQ     $A9AE
+        BEQ     LA9AE
         DEC     $07E3
+
+LA9AE:
         SEI
         STS     >$00EC
         LDS     $07B2
         LDAB    $1B01
         STAB    $07B8
+
+LA9BB:
         LDAA    $07DA
         ANDA    #$10
-        BEQ     $A9C5
-        JMP     $AA4E
+        BEQ     LA9C5
+        JMP     LAA4E
+
+LA9C5:
         PULA
         PULB
         ASLA
@@ -1540,8 +1738,10 @@ fontNarrow:
         ORAB    #$20
         STD     $00,X
         TST     $07E3
-        BEQ     $A9E5
+        BEQ     LA9E5
         STD     $04,X
+
+LA9E5:
         LDAB    $07D6
         ANDB    #$7E
         LDX     #$AEFB
@@ -1552,8 +1752,10 @@ fontNarrow:
         INC     PORT3
         STD     $00,X
         TST     $07E3
-        BEQ     $AA01
+        BEQ     LAA01
         STD     $04,X
+
+LAA01:
         DEC     PORT3
         PULA
         PULB
@@ -1572,8 +1774,10 @@ fontNarrow:
         EORB    $07BB
         STD     $02,X
         TST     $07E3
-        BEQ     $AA28
+        BEQ     LAA28
         STD     $06,X
+
+LAA28:
         LDAB    $07D6
         ANDB    #$7E
         LDX     #$AEFB
@@ -1585,10 +1789,14 @@ fontNarrow:
         EORB    $07BB
         STD     $02,X
         TST     $07E3
-        BEQ     $AA48
+        BEQ     LAA48
         STD     $06,X
+
+LAA48:
         DEC     PORT3
-        JMP     $AAEA
+        JMP     LAAEA
+
+LAA4E:
         STS     $07B2
         PULB
         TBA
@@ -1609,8 +1817,10 @@ fontNarrow:
         INC     PORT3
         STD     $00,X
         TST     $07E3
-        BEQ     $AA79
+        BEQ     LAA79
         STD     $04,X
+
+LAA79:
         PULB
         TBA
         ANDA    #$07
@@ -1630,8 +1840,10 @@ fontNarrow:
         LDX     $07B6
         STD     $02,X
         TST     $07E3
-        BEQ     $AAA2
+        BEQ     LAAA2
         STD     $06,X
+
+LAAA2:
         LDS     $07B2
         PULB
         PULA
@@ -1651,8 +1863,10 @@ fontNarrow:
         ORAB    #$30
         STD     $00,X
         TST     $07E3
-        BEQ     $AAC7
+        BEQ     LAAC7
         STD     $04,X
+
+LAAC7:
         PULB
         PULA
         ASLB
@@ -1671,20 +1885,28 @@ fontNarrow:
         EORB    $07BB
         STD     $02,X
         TST     $07E3
-        BEQ     $AAEA
+        BEQ     LAAEA
         STD     $06,X
+
+LAAEA:
         LDAB    #$04
         ABX
         TST     $07E3
-        BEQ     $AAF3
+        BEQ     LAAF3
         ABX
+
+LAAF3:
         STX     $07B6
         DEC     $07B8
-        BEQ     $AAFE
-        JMP     $A9BB
+        BEQ     LAAFE
+        JMP     LA9BB
+
+LAAFE:
         LDS     >$00EC
         CLI
-        JMP     $A71D
+        JMP     LA71D
+
+LAB05:
         LDAB    $07B1
         ADDB    #$18
         STAB    >PORT3
@@ -1708,14 +1930,16 @@ fontNarrow:
         STD     $22,X
         STD     $26,X
         TST     $00EE
-        BNE     $AB3F
+        BNE     LAB3F
         STD     $2A,X
         STD     $2E,X
+
+LAB3F:
         SEI
         STS     >$00EC
         LDS     $07B2
         TST     $00EE
-        BEQ     $AB76
+        BEQ     LAB76
         PULA
         PULB
         STD     $00,X
@@ -1746,20 +1970,26 @@ fontNarrow:
         PULA
         PULB
         STD     $24,X
-        JMP     $ABC8
+        JMP     LABC8
+
+LAB76:
         PULA
         PULB
         STD     $00,X
         TST     $07E2
-        BNE     $AB86
+        BNE     LAB86
         TSTB
-        BMI     $AB86
+        BMI     LAB86
         CLR     $00,X
         CLR     $01,X
+
+LAB86:
         TST     $07E2
-        BEQ     $AB8D
+        BEQ     LAB8D
         PULA
         PULB
+
+LAB8D:
         STD     $04,X
         PULA
         PULB
@@ -1789,24 +2019,32 @@ fontNarrow:
         PULB
         STD     $28,X
         TST     $07E2
-        BEQ     $ABBA
+        BEQ     LABBA
         PULA
         PULB
+
+LABBA:
         STD     $2C,X
         TST     $07E2
-        BNE     $ABC8
+        BNE     LABC8
         TSTB
-        BMI     $ABC8
+        BMI     LABC8
         CLR     $2C,X
         CLR     $2D,X
+
+LABC8:
         LDS     >$00EC
         CLI
         LDAA    >$00E0
         ANDA    #$08
-        BEQ     $ABD8
+        BEQ     LABD8
         LDD     #$FF0F
         STD     $24,X
+
+LABD8:
         RTS
+
+LABD9:
         LDAB    $07B1
         ADDB    #$18
         STAB    >PORT3
@@ -1840,16 +2078,18 @@ fontNarrow:
         STD     $4A,X
         STD     $4E,X
         TST     $00EE
-        BNE     $AC2B
+        BNE     LAC2B
         STD     $52,X
         STD     $56,X
         STD     $5A,X
         STD     $5E,X
+
+LAC2B:
         SEI
         STS     >$00EC
         LDS     $07B2
         TST     $00EE
-        BEQ     $AC76
+        BEQ     LAC76
         PULA
         PULB
         STD     $00,X
@@ -1890,23 +2130,29 @@ fontNarrow:
         PULB
         STD     $48,X
         STD     $4C,X
-        JMP     $ACE8
+        JMP     LACE8
+
+LAC76:
         PULA
         PULB
         STD     $00,X
         STD     $04,X
         TST     $07E2
-        BNE     $AC8C
+        BNE     LAC8C
         TSTB
-        BMI     $AC8C
+        BMI     LAC8C
         CLR     $00,X
         CLR     $01,X
         CLR     $04,X
         CLR     $05,X
+
+LAC8C:
         TST     $07E2
-        BEQ     $AC93
+        BEQ     LAC93
         PULA
         PULB
+
+LAC93:
         STD     $08,X
         STD     $0C,X
         PULA
@@ -1946,28 +2192,36 @@ fontNarrow:
         STD     $50,X
         STD     $54,X
         TST     $07E2
-        BEQ     $ACD4
+        BEQ     LACD4
         PULA
         PULB
+
+LACD4:
         STD     $58,X
         STD     $5C,X
         TST     $07E2
-        BNE     $ACE8
+        BNE     LACE8
         TSTB
-        BMI     $ACE8
+        BMI     LACE8
         CLR     $58,X
         CLR     $59,X
         CLR     $5C,X
         CLR     $5D,X
+
+LACE8:
         LDS     >$00EC
         CLI
         LDAA    >$00E0
         ANDA    #$08
-        BEQ     $ACFA
+        BEQ     LACFA
         LDD     #$FF0F
         STD     $48,X
         STD     $4C,X
+
+LACFA:
         RTS
+
+LACFB:
         LDAB    $07B1
         ADDB    #$18
         STAB    >PORT3
@@ -1987,15 +2241,17 @@ fontNarrow:
         LDAB    #$0A
         STAB    $07B8
         LDAA    >$00EE
-        BNE     $AD55
+        BNE     LAD55
         LDAA    $07E2
-        BEQ     $AD36
+        BEQ     LAD36
         LDAA    #$0C
         STAA    $07B8
-        BRA     $AD55
+        BRA     LAD55
+
+LAD36:
         TSX
         LDAB    $01,X
-        BMI     $AD50
+        BMI     LAD50
         LDD     #$0000
         LDX     $07B6
         STD     $00,X
@@ -2003,9 +2259,13 @@ fontNarrow:
         STD     $00,X
         DEC     PORT3
         INC     $07B8
-        BRA     $AD7E
+        BRA     LAD7E
+
+LAD50:
         LDAA    #$FF
         STAA    >$00EF
+
+LAD55:
         PULB
         INC     PORT3
         ANDB    #$3F
@@ -2029,6 +2289,8 @@ fontNarrow:
         LDD     $00,X
         LDX     $07B6
         STD     $00,X
+
+LAD7E:
         LDD     >$00EA
         STD     $02,X
         INC     PORT3
@@ -2038,22 +2300,24 @@ fontNarrow:
         ABX
         STX     $07B6
         TST     $00EF
-        BEQ     $AD9D
+        BEQ     LAD9D
         DES
         DES
         CLR     $00EF
-        BRA     $AD55
+        BRA     LAD55
+
+LAD9D:
         DEC     $07B8
-        BMI     $ADCE
-        BNE     $AD55
+        BMI     LADCE
+        BNE     LAD55
         LDAB    >$00EE
-        BNE     $ADCE
+        BNE     LADCE
         LDAB    $07E2
-        BNE     $ADCE
+        BNE     LADCE
         DES
         PULB
         TSTB
-        BMI     $ADC9
+        BMI     LADC9
         LDD     #$0000
         STD     $00,X
         INC     PORT3
@@ -2062,22 +2326,30 @@ fontNarrow:
         STD     $02,X
         DEC     PORT3
         STD     $02,X
-        BRA     $ADCE
+        BRA     LADCE
+
+LADC9:
         DES
         DES
-        JMP     $AD55
+        JMP     LAD55
+
+LADCE:
         LDS     >$00EC
         CLI
         PULX
         LDAA    >$00E0
         ANDA    #$08
-        BEQ     $ADE7
+        BEQ     LADE7
         LDD     #$FF0F
         STD     $24,X
         INC     PORT3
         STD     $24,X
         DEC     PORT3
+
+LADE7:
         RTS
+
+LADE8:
         LDAB    $07B1
         ADDB    #$18
         STAB    >PORT3
@@ -2097,15 +2369,17 @@ fontNarrow:
         LDAB    #$0A
         STAB    $07B8
         LDAB    >$00EE
-        BNE     $AE46
+        BNE     LAE46
         LDAB    $07E2
-        BEQ     $AE23
+        BEQ     LAE23
         LDAA    #$0C
         STAA    $07B8
-        BRA     $AE46
+        BRA     LAE46
+
+LAE23:
         TSX
         LDAB    $01,X
-        BMI     $AE41
+        BMI     LAE41
         LDD     #$0000
         LDX     $07B6
         STD     $00,X
@@ -2115,9 +2389,13 @@ fontNarrow:
         STD     $04,X
         DEC     PORT3
         INC     $07B8
-        BRA     $AE73
+        BRA     LAE73
+
+LAE41:
         LDAA    #$FF
         STAA    >$00EF
+
+LAE46:
         PULB
         INC     PORT3
         ANDB    #$3F
@@ -2143,6 +2421,8 @@ fontNarrow:
         LDX     $07B6
         STD     $00,X
         STD     $04,X
+
+LAE73:
         LDD     >$00EA
         STD     $02,X
         STD     $06,X
@@ -2154,22 +2434,24 @@ fontNarrow:
         ABX
         STX     $07B6
         TST     $00EF
-        BEQ     $AE96
+        BEQ     LAE96
         DES
         DES
         CLR     $00EF
-        BRA     $AE46
+        BRA     LAE46
+
+LAE96:
         DEC     $07B8
-        BMI     $AED2
-        BNE     $AE46
+        BMI     LAED2
+        BNE     LAE46
         LDAB    >$00EE
-        BNE     $AED2
+        BNE     LAED2
         LDAB    $07E2
-        BNE     $AED2
+        BNE     LAED2
         DES
         PULB
         TSTB
-        BMI     $AECD
+        BMI     LAECD
         LDD     >$00EA
         STD     $02,X
         STD     $06,X
@@ -2183,16 +2465,20 @@ fontNarrow:
         STD     $02,X
         STD     $06,X
         DEC     PORT3
-        BRA     $AED2
+        BRA     LAED2
+
+LAECD:
         DES
         DES
-        JMP     $AE46
+        JMP     LAE46
+
+LAED2:
         LDS     >$00EC
         CLI
         PULX
         LDAA    >$00E0
         ANDA    #$08
-        BEQ     $AEEF
+        BEQ     LAEEF
         LDD     #$FF0F
         STD     $48,X
         STD     $4C,X
@@ -2200,6 +2486,8 @@ fontNarrow:
         STD     $48,X
         STD     $4C,X
         DEC     PORT3
+
+LAEEF:
         RTS
 
 ; Font bases, then a bit-doubling table.
@@ -2308,19 +2596,21 @@ reset:
         STAA    TRCSR
         LDAA    TRCSR
         LDAA    RDR
-        JSR     $EEB1
-        JSR     $EE9A
-        JSR     $D849
-        JSR     $D3E5
-        JSR     $E9A5
-        JSR     $ECCB
-        JSR     $B2A3
-        JSR     $EED2
-        JSR     $A210
+        JSR     LEEB1
+        JSR     LEE9A
+        JSR     LD849
+        JSR     LD3E5
+        JSR     LE9A5
+        JSR     LECCB
+        JSR     LB2A3
+        JSR     LEED2
+        JSR     LA210
         LDD     #$F87F
         STAA    PORT4
         STAB    PORT4
         CLI
+
+LB280:
         SEI
         LDS     #$0400
         LDD     #$F61F
@@ -2329,19 +2619,23 @@ reset:
         CLR     $1B28
         CLR     $1B27
         CLR     $1B29
-        JSR     $EE9A
-        JSR     $EED2
+        JSR     LEE9A
+        JSR     LEED2
         CLR     $04DC
-        JSR     $ED9D
+        JSR     LED9D
         JMP     parseNextByte
+
+LB2A3:
         LDAA    #$03
         STAA    P1DDR
         LDAA    #$03
         STAA    PORT1
         LDAA    #$0B
         TST     PORT1
-        BPL     $B2B4
+        BPL     LB2B4
         LDAA    #$8B
+
+LB2B4:
         STAA    P4DDR
         TPA
         PSHA
@@ -2349,11 +2643,13 @@ reset:
         STS     $0406
         LDS     #$B32C
         LDX     #$6000
+
+LB2C2:
         PULA
         STAA    $00,X
         INX
         CPX     #$6079
-        BCS     $B2C2
+        BCS     LB2C2
         LDS     $0406
         PULA
         TAP
@@ -2396,33 +2692,43 @@ reset:
 sendPayloadToC64:
         LDAA    #$FF
         STAA    c64XferEn
+
+LB2E7:
         TST     c64Status
-        BEQ     $B2E7
+        BEQ     LB2E7
         TST     c64Status
-        BEQ     $B2E7
+        BEQ     LB2E7
+
+LB2F1:
         LDX     $0406
         INX
         CPX     #$D109
-        BEQ     $B31A
+        BEQ     LB31A
         STX     $0406
         LDAA    $00,X
+
+LB2FF:
         LDAB    c64FifoWr
         LDX     #$6080
         ABX
         INCB
         ANDB    #$0F
         CMPB    c64FifoRd
-        BEQ     $B2FF
+        BEQ     LB2FF
         CMPB    c64FifoRd
-        BEQ     $B2FF
+        BEQ     LB2FF
         STAA    $00,X
         STAB    c64FifoWr
-        BRA     $B2F1
+        BRA     LB2F1
+
+LB31A:
         CLR     c64XferEn
+
+LB31D:
         TST     c64Status
-        BNE     $B31D
+        BNE     LB31D
         TST     c64Status
-        BNE     $B31D
+        BNE     LB31D
         LDAA    #$FF
         STAA    c64XferDone
         RTS
@@ -2493,41 +2799,51 @@ c64ColdStart:
         JSR     $FD90
         JSR     $FD15
         JSR     $FF5B
-        JSR     $804D
+        JSR     $804D                   ; LB37A ($B37A)
         STA     $8000
         STA     $61
-        JSR     $804D
+        JSR     $804D                   ; LB37A ($B37A)
         STA     $8001
         STA     $62
         LDY     #$00
-        JSR     $804D
-        BCS     $B372
+
+LB363:
+        JSR     $804D                   ; LB37A ($B37A)
+        BCS     LB372
         STA     ($61),Y
         INY
-        BNE     $B363
+        BNE     LB363
         INC     $62
-        JMP     $8036
+        JMP     $8036                   ; LB363 ($B363)
+
+LB372:
         LDA     #$00
         STA     $800C
         JMP     ($8000)
+
+LB37A:
         LDA     $8009
         CMP     $8009
-        BNE     $B37A
+        BNE     LB37A
         CMP     $800A
-        BNE     $B393
+        BNE     LB393
         BIT     $800B
-        BMI     $B37A
+        BMI     LB37A
         BIT     $800B
-        BMI     $B37A
+        BMI     LB37A
         SEC
         RTS
+
+LB393:
         LDA     $800A
         TAX
         LDA     $8080,X
         INX
         CPX     #$10
-        BNE     $B3A1
+        BNE     LB3A1
         LDX     #$00
+
+LB3A1:
         STX     $800A
         CLC
         RTS
@@ -2563,67 +2879,67 @@ c64LoadAddr:
 ;     ($2C $00 $C0 $01 $98). Nothing addresses them directly, so they are reached
 ;     by index; the only LDA #$2D in the payload is at runtime $287B.
 c64Payload:
-        JMP     $16AE
-        JMP     $16FF
-        JMP     $174C
-        JMP     $1782
-        JMP     $194E
-        JMP     $17B6
-        JMP     $188F
-        JMP     $18BC
-        JMP     $18C2
-        JMP     $18E1
-        JMP     $18F6
-        JMP     $1930
-        JMP     $19BF
-        JMP     $19CF
-        JMP     $19DF
-        JMP     $1A9B
-        JMP     $28AA
-        JMP     $28ED
-        JMP     $2943
-        JMP     $1B22
-        JMP     $1C1A
-        JMP     $1C3F
-        JMP     $1C95
-        JMP     $1CF3
-        JMP     $1E39
-        JMP     $1E65
-        JMP     $1EEF
-        JMP     $1F2B
-        JMP     $1F54
-        JMP     $205F
-        JMP     $2103
-        JMP     $20ED
-        JMP     $2136
-        JMP     $290D
-        JMP     $26D9
-        JMP     $271F
-        JMP     $291E
-        JMP     $2937
-        JMP     $25D6
-        JMP     $2654
-        JMP     $2190
-        JMP     $2196
-        JMP     $21C0
-        JMP     $21F4
-        JMP     $220B
-        JMP     $220B
-        JMP     $226D
-        JMP     $26A9
-        JMP     $2752
-        JMP     $230C
-        JMP     $27B7
-        JMP     $27D6
-        JMP     $2846
-        JMP     $236D
-        JMP     $2472
-        JMP     $25A5
-        JMP     $25BD
-        JMP     $299B
-        JMP     $2B17
-        JMP     $2952
-        JMP     $2732
+        JMP     $16AE                   ; c64ScreenInit ($BA56)
+        JMP     $16FF                   ; c64ScreenOut1 ($BAA7)
+        JMP     $174C                   ; c64Vec02 ($BAF4)
+        JMP     $1782                   ; c64Vec03 ($BB2A)
+        JMP     $194E                   ; c64Vec04 ($BCF6)
+        JMP     $17B6                   ; c64Vec05 ($BB5E)
+        JMP     $188F                   ; c64Vec06 ($BC37)
+        JMP     $18BC                   ; c64Vec07 ($BC64)
+        JMP     $18C2                   ; c64Vec08 ($BC6A)
+        JMP     $18E1                   ; c64Vec09 ($BC89)
+        JMP     $18F6                   ; c64Vec10 ($BC9E)
+        JMP     $1930                   ; c64Vec11 ($BCD8)
+        JMP     $19BF                   ; c64Vec12 ($BD67)
+        JMP     $19CF                   ; c64Vec13 ($BD77)
+        JMP     $19DF                   ; c64Vec14 ($BD87)
+        JMP     $1A9B                   ; c64Vec15 ($BE43)
+        JMP     $28AA                   ; c64Vec16 ($CC52)
+        JMP     $28ED                   ; c64Vec17 ($CC95)
+        JMP     $2943                   ; c64Vec18 ($CCEB)
+        JMP     $1B22                   ; c64Vec19 ($BECA)
+        JMP     $1C1A                   ; c64Vec20 ($BFC2)
+        JMP     $1C3F                   ; c64Vec21 ($BFE7)
+        JMP     $1C95                   ; c64Vec22 ($C03D)
+        JMP     $1CF3                   ; c64Vec23 ($C09B)
+        JMP     $1E39                   ; c64Vec24 ($C1E1)
+        JMP     $1E65                   ; c64Vec25 ($C20D)
+        JMP     $1EEF                   ; c64Vec26 ($C297)
+        JMP     $1F2B                   ; c64Vec27 ($C2D3)
+        JMP     $1F54                   ; c64Vec28 ($C2FC)
+        JMP     $205F                   ; c64Vec29 ($C407)
+        JMP     $2103                   ; c64Vec30 ($C4AB)
+        JMP     $20ED                   ; c64Vec31 ($C495)
+        JMP     $2136                   ; c64Vec32 ($C4DE)
+        JMP     $290D                   ; c64Vec33 ($CCB5)
+        JMP     $26D9                   ; c64Vec34 ($CA81)
+        JMP     $271F                   ; c64Vec35 ($CAC7)
+        JMP     $291E                   ; c64Vec36 ($CCC6)
+        JMP     $2937                   ; c64Vec37 ($CCDF)
+        JMP     $25D6                   ; c64Vec38 ($C97E)
+        JMP     $2654                   ; c64Vec39 ($C9FC)
+        JMP     $2190                   ; c64Vec40 ($C538)
+        JMP     $2196                   ; c64Vec41 ($C53E)
+        JMP     $21C0                   ; c64Vec42 ($C568)
+        JMP     $21F4                   ; c64Vec43 ($C59C)
+        JMP     $220B                   ; c64Vec44 ($C5B3)
+        JMP     $220B                   ; c64Vec44 ($C5B3)
+        JMP     $226D                   ; c64Vec46 ($C615)
+        JMP     $26A9                   ; c64Vec47 ($CA51)
+        JMP     $2752                   ; c64Vec48 ($CAFA)
+        JMP     $230C                   ; c64Vec49 ($C6B4)
+        JMP     $27B7                   ; c64Vec50 ($CB5F)
+        JMP     $27D6                   ; c64Vec51 ($CB7E)
+        JMP     $2846                   ; c64Vec52 ($CBEE)
+        JMP     $236D                   ; c64Vec53 ($C715)
+        JMP     $2472                   ; c64ScreenOut2 ($C81A)
+        JMP     $25A5                   ; c64Vec55 ($C94D)
+        JMP     $25BD                   ; c64Vec56 ($C965)
+        JMP     $299B                   ; c64Vec57 ($CD43)
+        JMP     $2B17                   ; c64Vec58 ($CEBF)
+        JMP     $2952                   ; c64Vec59 ($CCFA)
+        JMP     $2732                   ; c64Vec60 ($CADA)
 
 ; Data following the C64 payload's jump table.
 ;
@@ -2772,17 +3088,21 @@ c64TextBlock:
         ORA     $E9,X
         ORA     $16,X
         ASL     $43,X
-        ASL     $A9,X
-        BRK
+        FCB     $16        ; branch target below splits this instruction
+
+c64ScreenInit:
+        LDA     #$00                    ; vector 0 at runtime $16AE - CLALL and $D016/$D021/$D800 - screen and colour RAM setup
         STA     $D016
         JSR     $FDA3
         LDA     #$00
         TAY
+
+LBA61:
         STA     >$0002,Y
         STA     $0200,Y
         STA     $0300,Y
         INY
-        BNE     $BA61
+        BNE     LBA61
         JSR     $FD90
         JSR     $FD15
         JSR     $FF5B
@@ -2804,12 +3124,12 @@ c64TextBlock:
         LDA     $81FC
         STA     $81FC
         CLI
-        JSR     $2404
+        JSR     $2404                   ; ROM $C7AC
 
 c64ScreenOut1:
         JSR     $10A2                   ; vector 1 at runtime $16FF - CHROUT with $D021/$D800/$D900
         LDA     $8012
-        BNE     $BAD5
+        BNE     LBAD5
         LDA     #$FF
         STA     $8012
         LDA     $10C4
@@ -2820,12 +3140,16 @@ c64ScreenOut1:
         STA     $800F
         LDY     #$00
         LDA     ($61),Y
-        BEQ     $BAD5
-        JSR     $1012
+        BEQ     LBAD5
+        JSR     $1012                   ; ROM $B3BA
         INC     $61
-        BNE     $BAD2
+        BNE     LBAD2
         INC     $62
-        JMP     $171B
+
+LBAD2:
+        JMP     $171B                   ; ROM $BAC3
+
+LBAD5:
         LDA     $10C0
         STA     $11DA
         LDA     $10C1
@@ -2841,48 +3165,66 @@ c64ScreenOut1:
 c64Vec02:
         LDA     #$FF                    ; vector 2 at runtime $174C - jump-table entry 2
         STA     $800F
+
+LBAF9:
         SEI
         LDA     $11E9
         CLI
         BIT     $11D9
-        BPL     $BB06
-        JSR     $103F
-        JSR     $109F
-        BCS     $BAF9
+        BPL     LBB06
+        JSR     $103F                   ; ROM $B3E7
+
+LBB06:
+        JSR     $109F                   ; ROM $B447
+        BCS     LBAF9
         CMP     #$03
-        BNE     $BB15
-        JSR     $101E
-        JMP     $177F
+        BNE     LBB15
+        JSR     $101E                   ; ROM $B3C6
+        JMP     $177F                   ; ROM $BB27
+
+LBB15:
         CMP     #$88
-        BNE     $BB24
+        BNE     LBB24
         BIT     $11D9
-        BMI     $BB24
-        JSR     $100C
-        JMP     $177F
-        JSR     $1009
-        JMP     $1751
+        BMI     LBB24
+        JSR     $100C                   ; ROM $B3B4
+        JMP     $177F                   ; ROM $BB27
+
+LBB24:
+        JSR     $1009                   ; ROM $B3B1
+        JMP     $1751                   ; LBAF9 ($BAF9)
 
 c64Vec03:
         CMP     #$8B                    ; vector 3 at runtime $1782 - jump-table entry 3
-        BNE     $BB31
-        JSR     $101E
+        BNE     LBB31
+        JSR     $101E                   ; ROM $B3C6
+
+LBB31:
         CMP     #$8C
-        BNE     $BB38
-        JSR     $101E
-        JSR     $100F
-        BCS     $BB5D
+        BNE     LBB38
+        JSR     $101E                   ; ROM $B3C6
+
+LBB38:
+        JSR     $100F                   ; ROM $B3B7
+        BCS     LBB5D
         LDA     $11F7
-        BEQ     $BB47
+        BEQ     LBB47
         LDA     $11E9
-        BMI     $BB5D
+        BMI     LBB5D
+
+LBB47:
         LDA     $11E9
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     $11EA
-        BEQ     $BB55
-        JSR     $1012
+        BEQ     LBB55
+        JSR     $1012                   ; ROM $B3BA
+
+LBB55:
         LDA     $11EB
-        BEQ     $BB5D
-        JSR     $1012
+        BEQ     LBB5D
+        JSR     $1012                   ; ROM $B3BA
+
+LBB5D:
         RTS
 
 c64Vec05:
@@ -2891,9 +3233,9 @@ c64Vec05:
         STX     $11EA
         STX     $11EB
         LDX     $11E8
-        BEQ     $BBB5
+        BEQ     LBBB5
         LDX     $11F7
-        BEQ     $BB97
+        BEQ     LBB97
         LDX     #$71
         STX     $69
         LDX     #$18
@@ -2901,20 +3243,26 @@ c64Vec05:
         LDY     #$00
         TAX
         LDA     ($69),Y
-        BEQ     $BB96
+        BEQ     LBB96
         TXA
         CMP     ($69),Y
-        BEQ     $BB8C
+        BEQ     LBB8C
         INY
         INY
-        JMP     $17D5
+        JMP     $17D5                   ; ROM $BB7D
+
+LBB8C:
         INY
         LDA     ($69),Y
-        BEQ     $BC03
+        BEQ     LBC03
         STA     $11E9
         CLC
         RTS
+
+LBB96:
         TXA
+
+LBB97:
         LDX     $10C8
         STX     $69
         LDX     $10C9
@@ -2922,16 +3270,20 @@ c64Vec05:
         LDY     #$00
         TAX
         LDA     ($69),Y
-        BEQ     $BBB4
+        BEQ     LBBB4
         TXA
         CMP     ($69),Y
-        BEQ     $BC05
+        BEQ     LBC05
         INY
         INY
         INY
         INY
-        JMP     $17FB
+        JMP     $17FB                   ; ROM $BBA3
+
+LBBB4:
         TXA
+
+LBBB5:
         LDX     $10C6
         STX     $69
         LDX     $10C7
@@ -2939,43 +3291,55 @@ c64Vec05:
         LDY     #$00
         TAX
         LDA     ($69),Y
-        BEQ     $BBD2
+        BEQ     LBBD2
         TXA
         CMP     ($69),Y
-        BEQ     $BC05
+        BEQ     LBC05
         INY
         INY
         INY
         INY
-        JMP     $1819
+        JMP     $1819                   ; ROM $BBC1
+
+LBBD2:
         TXA
         CMP     #$00
-        BEQ     $BBF7
+        BEQ     LBBF7
         CMP     #$10
-        BEQ     $BC03
+        BEQ     LBC03
         CMP     #$20
-        BCC     $BBF7
+        BCC     LBBF7
         CMP     #$41
-        BCC     $BBF7
+        BCC     LBBF7
         CMP     #$5B
-        BCC     $BBF5
+        BCC     LBBF5
         CMP     #$60
-        BCC     $BBF7
+        BCC     LBBF7
         CMP     #$C1
-        BCC     $BC03
+        BCC     LBC03
         CMP     #$DB
-        BCC     $BBFC
-        BCS     $BC03
+        BCC     LBBFC
+        BCS     LBC03
+
+LBBF5:
         ORA     #$20
+
+LBBF7:
         STA     $11E9
         CLC
         RTS
+
+LBBFC:
         AND     #$7F
         STA     $11E9
         CLC
         RTS
+
+LBC03:
         SEC
         RTS
+
+LBC05:
         INY
         LDA     ($69),Y
         STA     $11E9
@@ -3007,81 +3371,95 @@ c64Vec05:
 c64Vec06:
         LDX     $8010                   ; vector 6 at runtime $188F - jump-table entry 6
         CPX     $8010
-        BNE     $BC37
+        BNE     c64Vec06
         CPX     #$00
-        BEQ     $BC37
+        BEQ     c64Vec06
+
+LBC43:
         LDX     $800D
         INX
         CPX     #$40
-        BNE     $BC4D
+        BNE     LBC4D
         LDX     #$00
+
+LBC4D:
         CPX     $800E
-        BEQ     $BC43
+        BEQ     LBC43
         CPX     $800E
-        BEQ     $BC43
+        BEQ     LBC43
         LDY     $800D
         STA     $8040,Y
         STX     $800D
-        JSR     $1021
+        JSR     $1021                   ; ROM $B3C9
         RTS
 
 c64Vec07:
         JSR     $1018                   ; vector 7 at runtime $18BC - jump-table entry 7
-        BCS     $BC64
+        BCS     c64Vec07
         RTS
 
 c64Vec08:
         LDA     $800A                   ; vector 8 at runtime $18C2 - jump-table entry 8
         CMP     $8009
-        BEQ     $BC77
+        BEQ     LBC77
         CMP     $8009
-        BNE     $BC79
+        BNE     LBC79
+
+LBC77:
         SEC
         RTS
+
+LBC79:
         TAX
         LDA     $8020,X
         INX
         CPX     #$20
-        BNE     $BC84
+        BNE     LBC84
         LDX     #$00
+
+LBC84:
         STX     $800A
         CLC
         RTS
 
 c64Vec09:
         LDA     #$10                    ; vector 9 at runtime $18E1 - jump-table entry 9
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$7A
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$10
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$55
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         RTS
 
 c64Vec10:
         BIT     $11D9                   ; vector 10 at runtime $18F6 - jump-table entry 10
-        BPL     $BCD7
+        BPL     LBCD7
         LDA     #$10
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$6D
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$00
         STA     $11D9
+
+LBCB2:
         LDA     $800B
-        BNE     $BCB2
+        BNE     LBCB2
         LDA     $800B
-        BNE     $BCB2
-        JSR     $103F
-        JSR     $1078
+        BNE     LBCB2
+        JSR     $103F                   ; ROM $B3E7
+        JSR     $1078                   ; ROM $B420
         LDA     $65
         STA     $11DA
         LDA     $66
         STA     $11DB
         LDA     #$07
-        JSR     $105D
-        JSR     $1060
-        JSR     $101B
+        JSR     $105D                   ; ROM $B405
+        JSR     $1060                   ; ROM $B408
+        JSR     $101B                   ; ROM $B3C3
+
+LBCD7:
         RTS
 
 c64Vec11:
@@ -3093,13 +3471,19 @@ c64Vec11:
         LDA     #$7F
         STA     $DC00
         PLP
-        BNE     $BCF5
+        BNE     LBCF5
         LDX     #$0A
+
+LBCED:
         LDY     #$C8
+
+LBCEF:
         DEY
-        BNE     $BCEF
+        BNE     LBCEF
         DEX
-        BNE     $BCED
+        BNE     LBCED
+
+LBCF5:
         RTS
 
 c64Vec04:
@@ -3107,105 +3491,136 @@ c64Vec04:
         STA     $11E7
         LDA     #$03
         LDX     $11E7
-        BEQ     $BD04
+        BEQ     LBD04
         LDA     #$04
-        JSR     $105D
-        JSR     $109F
+
+LBD04:
+        JSR     $105D                   ; ROM $B405
+
+LBD07:
+        JSR     $109F                   ; ROM $B447
         AND     #$7F
-        BEQ     $BD07
+        BEQ     LBD07
         CMP     #$03
-        BNE     $BD15
-        JMP     $101B
+        BNE     LBD15
+        JMP     $101B                   ; ROM $B3C3
+
+LBD15:
         STA     $11B9
         LDY     #$FD
+
+LBD1A:
         INY
         INY
         INY
         LDA     $1997,Y
-        BEQ     $BD34
+        BEQ     LBD34
         CMP     $11B9
-        BNE     $BD1A
+        BNE     LBD1A
         LDA     $1998,Y
         STA     $61
         LDA     $1999,Y
         STA     $62
         JMP     ($0061)
+
+LBD34:
         LDA     $11E7
         EOR     #$FF
         STA     $11E7
-        JMP     $1953
-        JMP     $102D
+        JMP     $1953                   ; ROM $BCFB
+        JMP     $102D                   ; ROM $B3D5
         FCB     $43,$3C
-        BPL     $BD8A
+        BPL     LBD8A
         FCB     $42
-        BPL     $BD96
+        BPL     LBD96
         AND     $5810,Y
         EOR     $10
         EOR     ($24,X)
-        BPL     $BD94
+        BPL     LBD94
         FCB     $27
-        BPL     $BDA8
+        BPL     LBDA8
         PHA
-        BPL     $BDA3
+        BPL     LBDA3
         LSR     $5010
         EOR     ($10),Y
         EOR     $54
-        BPL     $BDB2
+        BPL     LBDB2
         ROL     A
-        BPL     $BDB8
+        BPL     LBDB8
         FCB     $AB
-        BPL     $BD67
+        BPL     c64Vec12
 
 c64Vec12:
         LDA     #$10                    ; vector 12 at runtime $19BF - jump-table entry 12
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$67
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$FF
         STA     $11F7
         RTS
 
 c64Vec13:
         LDA     #$10                    ; vector 13 at runtime $19CF - jump-table entry 13
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$66
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$00
         STA     $11F7
         RTS
 
 c64Vec14:
         JSR     $101B                   ; vector 14 at runtime $19DF - jump-table entry 14
+
+LBD8A:
         LDA     #$00
         STA     $8080
         LDA     #$10
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
+
+LBD94:
         LDA     #$4C
-        JSR     $1012
+
+LBD96:
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$10
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$66
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
+
+LBDA3:
         LDA     #$41
         STA     $61
-        LDA     #$1A
+        FCB     $A9        ; branch target below splits this instruction
+
+LBDA8:
+        FCB     $1A
         STA     $62
+
+LBDAB:
         LDY     #$00
         LDA     ($61),Y
-        BEQ     $BDBD
-        JSR     $1012
-        INC     $61
-        BNE     $BDAB
+        BEQ     LBDBD
+        FCB     $20        ; branch target below splits this instruction
+
+LBDB2:
+        FCB     $12
+        BPL     $BD9B
+        ADC     ($D0,X)
+        FCB     $F3
+
+LBDB8:
         INC     $62
-        JMP     $1A03
+        JMP     $1A03                   ; LBDAB ($BDAB)
+
+LBDBD:
         LDA     #$02
-        JSR     $107E
+        JSR     $107E                   ; ROM $B426
         LDA     #$10
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$51
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$02
-        JSR     $107E
+        JSR     $107E                   ; ROM $B426
         JSR     $EDFE
         LDA     #$08
         JSR     $ED0C
@@ -3220,15 +3635,15 @@ c64Vec14:
         AND     ($40),Y
         FCB     $1B,$23
         JSR     $9B57
-        BMI     $BE36
+        BMI     LBE36
         FCB     $1F
         EOR     $41
-        JSR     $2020
+        JSR     $2020                   ; ROM $C3C8
         FCB     $8F
         PHP
-        JSR     $2D43
+        JSR     $2D43                   ; ROM $D0EB
         ROL     $34,X
-        JSR     $202D
+        JSR     $202D                   ; ROM $C3D5
         FCB     $42
         ADC     $74
         FCB     $72
@@ -3250,6 +3665,8 @@ c64Vec14:
         ADC     $63
         PLA
         ROR     $7265
+
+LBE36:
         FCB     $1F,$4F,$4F
         ADC     $6D,X
         FCB     $73,$74
@@ -3261,63 +3678,77 @@ c64Vec14:
 c64Vec15:
         JSR     $1078                   ; vector 15 at runtime $1A9B - jump-table entry 15
         LDA     #$00
-        JSR     $105D
+        JSR     $105D                   ; ROM $B405
         LDA     #$13
-        JSR     $1057
-        BCC     $BE56
-        JSR     $101B
+        JSR     $1057                   ; ROM $B3FF
+        BCC     LBE56
+        JSR     $101B                   ; ROM $B3C3
         RTS
-        JSR     $1030
-        BCC     $BE69
+
+LBE56:
+        JSR     $1030                   ; ROM $B3D8
+        BCC     LBE69
         LDA     #$02
-        JSR     $105D
-        JSR     $109F
-        BCS     $BE60
-        JSR     $101B
+        JSR     $105D                   ; ROM $B405
+
+LBE60:
+        JSR     $109F                   ; ROM $B447
+        BCS     LBE60
+        JSR     $101B                   ; ROM $B3C3
         RTS
+
+LBE69:
         TXA
         PHA
         LDA     #$10
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$4C
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         PLA
         CMP     #$10
-        BEQ     $BE7D
-        JSR     $1012
-        JSR     $1033
-        BCS     $BEAD
+        BEQ     LBE7D
+        JSR     $1012                   ; ROM $B3BA
+
+LBE7D:
+        JSR     $1033                   ; ROM $B3DB
+        BCS     LBEAD
         CMP     #$10
-        BEQ     $BE98
+        BEQ     LBE98
         PHA
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         PLA
         CMP     #$11
-        BNE     $BE98
+        BNE     LBE98
         BIT     $90
-        BVS     $BE98
+        BVS     LBE98
         LDA     #$05
-        JSR     $107E
+        JSR     $107E                   ; ROM $B426
+
+LBE98:
         BIT     $90
-        BVC     $BE7D
-        JSR     $1036
-        JSR     $101B
+        BVC     LBE7D
+
+LBE9C:
+        JSR     $1036                   ; ROM $B3DE
+        JSR     $101B                   ; ROM $B3C3
         LDA     #$10
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$6C
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         RTS
+
+LBEAD:
         BIT     $11EC
-        BPL     $BE9C
-        JSR     $106F
+        BPL     LBE9C
+        JSR     $106F                   ; ROM $B417
         LDA     #$00
         STA     $11EC
         LDA     #$10
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$2E
-        JSR     $1012
-        JSR     $101B
-        JMP     $1AF4
+        JSR     $1012                   ; ROM $B3BA
+        JSR     $101B                   ; ROM $B3C3
+        JMP     $1AF4                   ; LBE9C ($BE9C)
 
 c64Vec19:
         LDA     #$00                    ; vector 19 at runtime $1B22 - jump-table entry 19
@@ -3325,114 +3756,140 @@ c64Vec19:
         LDA     #$08
         JSR     $ED0C
         BIT     $90
-        BMI     $BEE0
+        BMI     LBEE0
         LDA     #$6F
         JSR     $EDB9
         BIT     $90
-        BPL     $BEF3
+        BPL     LBEF3
+
+LBEE0:
         LDA     #$0D
-        JSR     $105D
+        JSR     $105D                   ; ROM $B405
         LDA     #$17
-        JSR     $105D
-        JSR     $109F
-        BCS     $BEEA
-        JSR     $101B
+        JSR     $105D                   ; ROM $B405
+
+LBEEA:
+        JSR     $109F                   ; ROM $B447
+        BCS     LBEEA
+        JSR     $101B                   ; ROM $B3C3
         RTS
+
+LBEF3:
         JSR     $EDFE
-        JSR     $1075
-        JSR     $1078
+        JSR     $1075                   ; ROM $B41D
+        JSR     $1078                   ; ROM $B420
         LDA     #$0B
-        JSR     $105D
-        JSR     $109F
+        JSR     $105D                   ; ROM $B405
+
+LBF01:
+        JSR     $109F                   ; ROM $B447
         CMP     #$03
-        BNE     $BF11
+        BNE     LBF11
         LDA     #$00
-        JSR     $1012
-        JSR     $101B
+        JSR     $1012                   ; ROM $B3BA
+        JSR     $101B                   ; ROM $B3C3
         RTS
+
+LBF11:
         CMP     #$3F
-        BEQ     $BF19
+        BEQ     LBF19
         CMP     #$DB
-        BNE     $BF24
+        BNE     LBF24
+
+LBF19:
         LDA     #$00
-        JSR     $1012
-        JSR     $1099
-        JMP     $1039
+        JSR     $1012                   ; ROM $B3BA
+        JSR     $1099                   ; ROM $B441
+        JMP     $1039                   ; ROM $B3E1
+
+LBF24:
         CMP     #$30
-        BCC     $BF01
+        BCC     LBF01
         CMP     #$3A
-        BCC     $BF36
+        BCC     LBF36
         AND     #$7F
         CMP     #$41
-        BCC     $BF01
+        BCC     LBF01
         CMP     #$5B
-        BCS     $BF01
+        BCS     LBF01
+
+LBF36:
         STA     $11B4
         LDA     #$08
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$20
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     $11B4
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$00
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         BIT     $11D8
-        BPL     $BF65
-        JSR     $106C
+        BPL     LBF65
+        JSR     $106C                   ; ROM $B414
         LDA     #$10
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$6B
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$00
         STA     $11D8
+
+LBF65:
         BIT     $11EC
-        BPL     $BF7F
-        JSR     $106F
+        BPL     LBF7F
+        JSR     $106F                   ; ROM $B417
         LDA     #$00
         STA     $11EC
         LDA     #$10
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$2E
-        JSR     $1012
-        JSR     $101B
-        JSR     $1096
-        BCC     $BF92
+        JSR     $1012                   ; ROM $B3BA
+        JSR     $101B                   ; ROM $B3C3
+
+LBF7F:
+        JSR     $1096                   ; ROM $B43E
+        BCC     LBF92
         LDA     #$02
-        JSR     $105D
-        JSR     $109F
-        BCS     $BF89
-        JSR     $101B
+        JSR     $105D                   ; ROM $B405
+
+LBF89:
+        JSR     $109F                   ; ROM $B447
+        BCS     LBF89
+
+LBF8E:
+        JSR     $101B                   ; ROM $B3C3
         RTS
+
+LBF92:
         BIT     $90
-        BVS     $BF8E
+        BVS     LBF8E
         TXA
         PHA
         LDA     #$FF
         STA     $11EC
         LDA     #$10
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$2C
-        JSR     $1012
-        JSR     $1078
+        JSR     $1012                   ; ROM $B3BA
+        JSR     $1078                   ; ROM $B420
         LDA     #$0C
-        JSR     $105D
+        JSR     $105D                   ; ROM $B405
         LDA     $11B4
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$20
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         PLA
-        JSR     $1009
+        JSR     $1009                   ; ROM $B3B1
         JSR     $EDEF
         RTS
 
 c64Vec20:
         JSR     $101B                   ; vector 20 at runtime $1C1A - jump-table entry 20
         LDA     #$10
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$4D
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$05
-        JSR     $105D
+        JSR     $105D                   ; ROM $B405
         LDA     #$FF
         STA     $800C
         STA     $11D9
@@ -3444,48 +3901,58 @@ c64Vec20:
 
 c64Vec21:
         JSR     $1018                   ; vector 21 at runtime $1C3F - jump-table entry 21
-        BCS     $C03C
+        BCS     LC03C
         LDY     #$00
         STA     ($65),Y
         INC     $65
-        BNE     $BFFD
+        BNE     LBFFD
         INC     $66
         LDA     $66
         CMP     $10C3
-        BEQ     $C000
-        JMP     $1C3F
+        BEQ     LC000
+
+LBFFD:
+        JMP     $1C3F                   ; c64Vec21 ($BFE7)
+
+LC000:
         LDA     #$00
         STA     $11D9
         LDA     #$10
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$6D
-        JSR     $1012
-        JSR     $1078
+        JSR     $1012                   ; ROM $B3BA
+        JSR     $1078                   ; ROM $B420
         LDA     #$08
-        JSR     $105D
+        JSR     $105D                   ; ROM $B405
         LDA     $65
         STA     $11DA
         LDA     $66
         STA     $11DB
-        JSR     $1060
+        JSR     $1060                   ; ROM $B408
+
+LC024:
         LDA     $800B
-        BNE     $C024
+        BNE     LC024
         LDA     $800B
-        BNE     $C024
+        BNE     LC024
+
+LC02E:
         LDA     $8009
         CMP     $8009
-        BNE     $C02E
+        BNE     LC02E
         STA     $800A
-        JSR     $101B
+        JSR     $101B                   ; ROM $B3C3
+
+LC03C:
         RTS
 
 c64Vec22:
         LDA     #$10                    ; vector 22 at runtime $1C95 - jump-table entry 22
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$4C
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$06
-        JSR     $105D
+        JSR     $105D                   ; ROM $B405
         LDA     $10C0
         STA     $65
         LDA     $10C1
@@ -3493,32 +3960,40 @@ c64Vec22:
         LDA     #$00
         STA     $11DD
         JSR     $FFE1
-        BEQ     $C06E
+        BEQ     LC06E
         LDA     $65
         CMP     $11DA
-        BNE     $C07C
+        BNE     LC07C
         LDA     $66
         CMP     $11DB
-        BNE     $C07C
-        JSR     $101B
+        BNE     LC07C
+
+LC06E:
+        JSR     $101B                   ; ROM $B3C3
         LDA     #$10
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$6C
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         RTS
+
+LC07C:
         LDA     $11DD
         CMP     #$11
-        BNE     $C088
+        BNE     LC088
         LDA     #$05
-        JSR     $107E
+        JSR     $107E                   ; ROM $B426
+
+LC088:
         LDY     #$00
         LDA     ($65),Y
         STA     $11DD
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         INC     $65
-        BNE     $C098
+        BNE     LC098
         INC     $66
-        JMP     $1CB3
+
+LC098:
+        JMP     $1CB3                   ; ROM $C05B
 
 c64Vec23:
         LDA     #$FF                    ; vector 23 at runtime $1CF3 - jump-table entry 23
@@ -3529,115 +4004,143 @@ c64Vec23:
         STA     $11E0
         LDA     #$FF
         STA     $11EF
+
+LC0AF:
         LDA     #$10
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     $11E0
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         INC     $11EF
         LDA     #$FF
         STA     $11EE
         LDA     #$28
         STA     $11DF
+
+LC0C7:
         INC     $11EE
-        JSR     $1015
+        JSR     $1015                   ; ROM $B3BD
         AND     #$7F
         STA     $11E1
-        JSR     $1015
+        JSR     $1015                   ; ROM $B3BD
         STA     $11E2
-        JSR     $1015
+        JSR     $1015                   ; ROM $B3BD
         STA     $11E3
-        JSR     $1015
+        JSR     $1015                   ; ROM $B3BD
         STA     $11E4
-        JSR     $1015
+        JSR     $1015                   ; ROM $B3BD
         STA     $11E5
-        JSR     $1015
+        JSR     $1015                   ; ROM $B3BD
         STA     $11E6
-        JSR     $1081
+        JSR     $1081                   ; ROM $B429
         DEC     $11DF
-        BNE     $C0C7
+        BNE     LC0C7
         INC     $11E0
         LDA     $11E0
         CMP     #$2A
-        BNE     $C0AF
+        BNE     LC0AF
         LDA     #$00
         STA     $800C
-        JSR     $1078
+        JSR     $1078                   ; ROM $B420
         LDA     #$0E
-        JSR     $105D
-        JSR     $109F
-        BCS     $C10F
+        JSR     $105D                   ; ROM $B405
+
+LC10F:
+        JSR     $109F                   ; ROM $B447
+        BCS     LC10F
         AND     #$7F
         CMP     #$03
-        BNE     $C11D
-        JMP     $101B
+        BNE     LC11D
+        JMP     $101B                   ; ROM $B3C3
+
+LC11D:
         CMP     #$44
-        BEQ     $C13D
+        BEQ     LC13D
         CMP     #$46
-        BNE     $C10F
+        BNE     LC10F
         LDA     #$07
-        JSR     $105D
+        JSR     $105D                   ; ROM $B405
         LDA     #$13
-        JSR     $1057
-        BCC     $C135
-        JSR     $101B
+        JSR     $1057                   ; ROM $B3FF
+        BCC     LC135
+        JSR     $101B                   ; ROM $B3C3
         RTS
-        JSR     $1090
-        BCS     $C1B5
-        JMP     $1D9A
-        JSR     $1093
-        BCS     $C1B0
+
+LC135:
+        JSR     $1090                   ; ROM $B438
+        BCS     LC1B5
+        JMP     $1D9A                   ; ROM $C142
+
+LC13D:
+        JSR     $1093                   ; ROM $B43B
+        BCS     LC1B0
         LDA     #$11
         STA     $11E0
+
+LC147:
         JSR     $FFE1
-        BNE     $C14F
-        JMP     $1E24
+        BNE     LC14F
+        JMP     $1E24                   ; ROM $C1CC
+
+LC14F:
         LDA     #$10
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     $11E0
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$28
         STA     $11DF
-        JSR     $1015
+
+LC15F:
+        JSR     $1015                   ; ROM $B3BD
         AND     #$7F
         STA     $11E1
-        JSR     $1015
+        JSR     $1015                   ; ROM $B3BD
         STA     $11E2
-        JSR     $1015
+        JSR     $1015                   ; ROM $B3BD
         STA     $11E3
-        JSR     $1015
+        JSR     $1015                   ; ROM $B3BD
         STA     $11E4
-        JSR     $1015
+        JSR     $1015                   ; ROM $B3BD
         STA     $11E5
-        JSR     $1015
+        JSR     $1015                   ; ROM $B3BD
         STA     $11E6
         LDA     $BA
         CMP     #$04
-        BNE     $C191
-        JSR     $1087
-        JMP     $1DEC
-        JSR     $1084
+        BNE     LC191
+        JSR     $1087                   ; ROM $B42F
+        JMP     $1DEC                   ; ROM $C194
+
+LC191:
+        JSR     $1084                   ; ROM $B42C
         DEC     $11DF
-        BNE     $C15F
+        BNE     LC15F
         LDA     #$0D
         JSR     $EDDD
         INC     $11E0
         LDA     $11E0
         CMP     #$29
-        BNE     $C147
+        BNE     LC147
         LDA     #$00
         STA     $800C
-        JMP     $1E24
+        JMP     $1E24                   ; ROM $C1CC
+
+LC1B0:
         LDA     #$0F
-        JSR     $105D
+        JSR     $105D                   ; ROM $B405
+
+LC1B5:
         LDA     #$0A
-        JSR     $105D
-        JSR     $109F
-        BCS     $C1BA
+        JSR     $105D                   ; ROM $B405
+
+LC1BA:
+        JSR     $109F                   ; ROM $B447
+        BCS     LC1BA
         AND     #$7F
         CMP     #$4A
-        BNE     $C1C8
-        JMP     $1D5F
-        JSR     $101B
+        BNE     LC1C8
+        JMP     $1D5F                   ; ROM $C107
+
+LC1C8:
+        JSR     $101B                   ; ROM $B3C3
         RTS
         LDA     $BA
         JSR     $ED0C
@@ -3646,39 +4149,45 @@ c64Vec23:
         ORA     #$E0
         JSR     $EDB9
         JSR     $EDFE
-        JSR     $101B
+        JSR     $101B                   ; ROM $B3C3
         RTS
 
 c64Vec24:
         LDA     $8080                   ; vector 24 at runtime $1E39 - jump-table entry 24
         CMP     $8080
-        BNE     $C1E1
+        BNE     c64Vec24
         EOR     #$FF
         STA     $8080
-        BEQ     $C1FF
+        BEQ     LC1FF
         LDA     #$10
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$78
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$11
-        JMP     $1E59
+        JMP     $1E59                   ; ROM $C201
+
+LC1FF:
         LDA     #$12
-        JSR     $105D
-        JSR     $109F
-        BCS     $C204
-        JSR     $101B
+        JSR     $105D                   ; ROM $B405
+
+LC204:
+        JSR     $109F                   ; ROM $B447
+        BCS     LC204
+        JSR     $101B                   ; ROM $B3C3
         RTS
 
 c64Vec25:
         PHP                             ; vector 25 at runtime $1E65 - jump-table entry 25
         SEI
+
+LC20F:
         LDA     $808B
         CMP     $808B
-        BNE     $C20F
+        BNE     LC20F
         CMP     #$00
-        BEQ     $C27F
+        BEQ     LC27F
         LDY     $8089
-        BMI     $C284
+        BMI     LC284
         LDA     $8083
         AND     #$7F
         STA     $11E1
@@ -3692,39 +4201,51 @@ c64Vec25:
         STA     $11E5
         LDA     $8088
         STA     $11E6
-        JSR     $108A
+        JSR     $108A                   ; ROM $B432
         CMP     #$60
-        BCC     $C251
+        BCC     LC251
         AND     #$5F
-        BNE     $C253
+        BNE     LC253
+
+LC251:
         AND     #$3F
+
+LC253:
         PHA
         LDA     $11E6
         AND     #$04
-        BEQ     $C261
+        BEQ     LC261
         PLA
         ORA     #$80
-        JMP     $1EBA
+        JMP     $1EBA                   ; ROM $C262
+
+LC261:
         PLA
         PHA
         LDA     $11E6
         AND     #$08
-        BNE     $C270
+        BNE     LC270
         PLA
         LDA     #$20
-        JMP     $1EC9
+        JMP     $1EC9                   ; ROM $C271
+
+LC270:
         PLA
         LDX     $808A
         LDY     $8089
-        JSR     $10A5
+        JSR     $10A5                   ; ROM $B44D
         LDA     #$00
         STA     $808B
+
+LC27F:
         LDA     $81F9
         PLP
         RTS
+
+LC284:
         LDX     $8081
         LDY     $8082
-        JSR     $10A8
+        JSR     $10A8                   ; ROM $B450
         LDA     $81F9
         LDA     #$00
         STA     $808B
@@ -3733,212 +4254,258 @@ c64Vec25:
 
 c64Vec26:
         LDA     #$10                    ; vector 26 at runtime $1EEF - jump-table entry 26
-        JSR     $105D
-        JSR     $109F
+        JSR     $105D                   ; ROM $B405
+
+LC29C:
+        JSR     $109F                   ; ROM $B447
         CMP     #$03
-        BEQ     $C2BC
+        BEQ     LC2BC
         AND     #$7F
         CMP     #$41
-        BEQ     $C2C0
+        BEQ     LC2C0
         CMP     #$44
-        BNE     $C29C
+        BNE     LC29C
         LDA     #$FF
         STA     $11E8
         LDA     #$10
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$4E
-        JSR     $1012
-        JSR     $101B
+        JSR     $1012                   ; ROM $B3BA
+
+LC2BC:
+        JSR     $101B                   ; ROM $B3C3
         RTS
+
+LC2C0:
         LDA     #$00
         STA     $11E8
         LDA     #$10
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$6E
-        JSR     $1012
-        JSR     $101B
+        JSR     $1012                   ; ROM $B3BA
+        JSR     $101B                   ; ROM $B3C3
         RTS
 
 c64Vec27:
         LDA     #$13                    ; vector 27 at runtime $1F2B - jump-table entry 27
-        JSR     $105D
-        JSR     $109F
+        JSR     $105D                   ; ROM $B405
+
+LC2D8:
+        JSR     $109F                   ; ROM $B447
         CMP     #$03
-        BNE     $C2E3
-        JSR     $101B
+        BNE     LC2E3
+        JSR     $101B                   ; ROM $B3C3
         RTS
+
+LC2E3:
         CMP     #$31
-        BCC     $C2D8
+        BCC     LC2D8
         CMP     #$3A
-        BCS     $C2D8
+        BCS     LC2D8
         SEC
         SBC     #$30
         PHA
         LDA     #$14
-        JSR     $105D
+        JSR     $105D                   ; ROM $B405
         PLA
-        JSR     $107E
-        JSR     $101B
+        JSR     $107E                   ; ROM $B426
+        JSR     $101B                   ; ROM $B3C3
         RTS
 
 c64Vec28:
         BIT     $11EC                   ; vector 28 at runtime $1F54 - jump-table entry 28
-        BPL     $C305
-        JSR     $101B
+        BPL     LC305
+        JSR     $101B                   ; ROM $B3C3
         RTS
+
+LC305:
         BIT     $11D8
-        BPL     $C331
+        BPL     LC331
         LDA     #$10
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$6B
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$18
-        JSR     $105D
-        JSR     $106C
+        JSR     $105D                   ; ROM $B405
+        JSR     $106C                   ; ROM $B414
         LDA     #$17
-        JSR     $105D
+        JSR     $105D                   ; ROM $B405
         LDA     #$00
         STA     $11D8
+
+LC326:
         JSR     $FFE4
         CMP     #$00
-        BEQ     $C326
-        JSR     $101B
+        BEQ     LC326
+        JSR     $101B                   ; ROM $B3C3
         RTS
-        JSR     $1078
+
+LC331:
+        JSR     $1078                   ; ROM $B420
         LDA     #$15
-        JSR     $105D
+        JSR     $105D                   ; ROM $B405
+
+LC339:
         JSR     $FFE4
         CMP     #$03
-        BNE     $C349
+        BNE     LC349
         LDA     #$00
-        JSR     $1012
-        JSR     $101B
+        JSR     $1012                   ; ROM $B3BA
+        JSR     $101B                   ; ROM $B3C3
         RTS
+
+LC349:
         CMP     #$3F
-        BEQ     $C351
+        BEQ     LC351
         CMP     #$DB
-        BNE     $C35C
+        BNE     LC35C
+
+LC351:
         LDA     #$00
-        JSR     $1012
-        JSR     $1099
-        JMP     $1054
+        JSR     $1012                   ; ROM $B3BA
+        JSR     $1099                   ; ROM $B441
+        JMP     $1054                   ; ROM $B3FC
+
+LC35C:
         CMP     #$30
-        BCC     $C339
+        BCC     LC339
         CMP     #$3A
-        BCC     $C36E
+        BCC     LC36E
         AND     #$7F
         CMP     #$41
-        BCC     $C339
+        BCC     LC339
         CMP     #$5B
-        BCS     $C339
+        BCS     LC339
+
+LC36E:
         STA     $11B4
         LDA     #$08
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$20
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     $11B4
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$00
-        JSR     $1012
-        JSR     $108D
-        BCC     $C3A0
+        JSR     $1012                   ; ROM $B3BA
+        JSR     $108D                   ; ROM $B435
+        BCC     LC3A0
         LDA     #$00
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$17
-        JSR     $105D
+        JSR     $105D                   ; ROM $B405
+
+LC395:
         JSR     $FFE4
         CMP     #$00
-        BEQ     $C395
-        JSR     $101B
+        BEQ     LC395
+        JSR     $101B                   ; ROM $B3C3
         RTS
+
+LC3A0:
         LDA     #$0C
-        JSR     $105D
+        JSR     $105D                   ; ROM $B405
         LDA     $11B4
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$00
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$16
-        JSR     $105D
+        JSR     $105D                   ; ROM $B405
         LDA     #$0D
-        JSR     $1057
-        BCC     $C3CB
+        JSR     $1057                   ; ROM $B3FF
+        BCC     LC3CB
         LDA     #$20
         STA     $11BE
         LDA     #$00
         STA     $11BF
         LDA     #$02
         STA     $11BC
+
+LC3CB:
         LDA     $8011
         CMP     $8011
-        BNE     $C3CB
+        BNE     LC3CB
         STA     $11ED
-        JSR     $1066
+        JSR     $1066                   ; ROM $B40E
         LDY     #$00
         STY     $11B9
+
+LC3DE:
         LDA     $11BE,Y
         JSR     $EDDD
         INC     $11B9
         LDY     $11B9
         CPY     $11BC
-        BNE     $C3DE
+        BNE     LC3DE
         LDA     #$00
         JSR     $EDDD
         JSR     $EDFE
         LDA     #$FF
         STA     $11D8
         LDA     #$10
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$4B
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         RTS
 
 c64Vec29:
         STA     $11BD                   ; vector 29 at runtime $205F - jump-table entry 29
         LDY     #$00
         STY     $11BC
-        JSR     $109F
-        BCS     $C40F
+
+LC40F:
+        JSR     $109F                   ; ROM $B447
+        BCS     LC40F
         CMP     #$9D
-        BEQ     $C41C
+        BEQ     LC41C
         CMP     #$14
-        BNE     $C42E
+        BNE     LC42E
+
+LC41C:
         LDY     $11BC
         CPY     #$00
-        BEQ     $C40F
+        BEQ     LC40F
         DEC     $11BC
         LDA     #$08
-        JSR     $1012
-        JMP     $2067
+        JSR     $1012                   ; ROM $B3BA
+        JMP     $2067                   ; LC40F ($C40F)
+
+LC42E:
         CMP     #$8D
-        BEQ     $C436
+        BEQ     LC436
         CMP     #$0D
-        BNE     $C445
+        BNE     LC445
+
+LC436:
         LDY     $11BC
-        BEQ     $C40F
+        BEQ     LC40F
         LDA     #$00
         STA     $11BE,Y
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         CLC
         RTS
+
+LC445:
         CMP     #$03
-        BNE     $C450
+        BNE     LC450
         LDA     #$00
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         SEC
         RTS
+
+LC450:
         TAX
         AND     #$7F
         CMP     #$20
-        BCC     $C40F
+        BCC     LC40F
         TXA
         CMP     #$5F
-        BEQ     $C40F
+        BEQ     LC40F
         CMP     #$2D
-        BEQ     $C40F
+        BEQ     LC40F
         PHA
-        JSR     $100F
+        JSR     $100F                   ; ROM $B3B7
         PLA
-        BCS     $C40F
+        BCS     LC40F
         LDY     $11BC
         STA     $11BE,Y
         TAX
@@ -3947,17 +4514,19 @@ c64Vec29:
         LDA     #$00
         STA     $11E8
         TXA
-        JSR     $1009
+        JSR     $1009                   ; ROM $B3B1
         PLA
         STA     $11E8
         INC     $11BC
         LDY     $11BC
         CPY     $11BD
-        BNE     $C492
+        BNE     LC492
         DEC     $11BC
         LDA     #$08
-        JSR     $1012
-        JMP     $2067
+        JSR     $1012                   ; ROM $B3BA
+
+LC492:
+        JMP     $2067                   ; LC40F ($C40F)
 
 c64Vec31:
         ASL     A                       ; vector 31 at runtime $20ED - jump-table entry 31
@@ -3975,71 +4544,87 @@ c64Vec31:
 
 c64Vec30:
         LDA     #$10                    ; vector 30 at runtime $2103 - jump-table entry 30
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$75
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$10
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$5A
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDY     #$00
         LDA     ($63),Y
         STA     $11D7
         INY
         STY     $11B9
+
+LC4CA:
         LDY     $11B9
         LDA     ($63),Y
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDY     $11B9
         INC     $11B9
         CPY     $11D7
-        BNE     $C4CA
+        BNE     LC4CA
         RTS
 
 c64Vec32:
         LDA     #$13                    ; vector 32 at runtime $2136 - jump-table entry 32
-        JSR     $1057
-        BCC     $C4E6
+        JSR     $1057                   ; ROM $B3FF
+        BCC     LC4E6
         RTS
-        JSR     $1090
-        BCS     $C51C
+
+LC4E6:
+        JSR     $1090                   ; ROM $B438
+        BCS     LC51C
         LDA     $10C0
         STA     $65
         LDA     $10C1
         STA     $66
         JSR     $FFE1
-        BEQ     $C518
+        BEQ     LC518
         LDA     $65
         CMP     $11DA
-        BNE     $C508
+        BNE     LC508
         LDA     $66
         CMP     $11DB
-        BEQ     $C518
+        BEQ     LC518
+
+LC508:
         LDY     #$00
         LDA     ($65),Y
         JSR     $EDDD
         INC     $65
-        BNE     $C515
+        BNE     LC515
         INC     $66
-        JMP     $214D
-        JSR     $1063
+
+LC515:
+        JMP     $214D                   ; ROM $C4F5
+
+LC518:
+        JSR     $1063                   ; ROM $B40B
         RTS
+
+LC51C:
         LDA     #$0A
-        JSR     $105D
-        JSR     $109F
-        BCS     $C521
+        JSR     $105D                   ; ROM $B405
+
+LC521:
+        JSR     $109F                   ; ROM $B447
+        BCS     LC521
         AND     #$7F
         CMP     #$4A
-        BNE     $C537
-        JSR     $1078
+        BNE     LC537
+        JSR     $1078                   ; ROM $B420
         LDA     #$07
-        JSR     $105D
-        JMP     $1060
+        JSR     $105D                   ; ROM $B405
+        JMP     $1060                   ; ROM $B408
+
+LC537:
         RTS
 
 c64Vec40:
         LDA     #$01                    ; vector 40 at runtime $2190 - jump-table entry 40
-        JSR     $105D
+        JSR     $105D                   ; ROM $B405
         RTS
 
 c64Vec41:
@@ -4047,18 +4632,24 @@ c64Vec41:
         STA     $81FC
         STA     $11ED
         JSR     $FFE1
-        BEQ     $C567
+        BEQ     LC567
         BIT     $11D9
-        BPL     $C554
-        JSR     $103F
+        BPL     LC554
+        JSR     $103F                   ; ROM $B3E7
+
+LC554:
         LDA     $8011
         STA     $81FC
         CMP     $11ED
-        BNE     $C567
+        BNE     LC567
         LDX     #$14
+
+LC561:
         DEX
-        BNE     $C561
-        JMP     $219F
+        BNE     LC561
+        JMP     $219F                   ; ROM $C547
+
+LC567:
         RTS
 
 c64Vec42:
@@ -4068,16 +4659,24 @@ c64Vec42:
         CLC
         ADC     $11DE
         STA     $11DE
+
+LC574:
         LDY     #$C8
+
+LC576:
         LDX     #$C8
+
+LC578:
         DEX
-        BNE     $C578
+        BNE     LC578
         DEY
-        BNE     $C576
+        BNE     LC576
         JSR     $FFE1
-        BEQ     $C59B
+        BEQ     LC59B
         DEC     $11DE
-        BNE     $C574
+        BNE     LC574
+
+LC588:
         LDA     #$7F
         STA     $DC00
         LDA     $DC01
@@ -4086,62 +4685,91 @@ c64Vec42:
         LDA     #$7F
         STA     $DC00
         PLP
-        BEQ     $C588
+        BEQ     LC588
+
+LC59B:
         RTS
 
 c64Vec43:
         JSR     $108A                   ; vector 43 at runtime $21F4 - jump-table entry 43
         CMP     #$60
-        BCC     $C5A7
+        BCC     LC5A7
         AND     #$5F
-        BNE     $C5A9
+        BNE     LC5A9
+
+LC5A7:
         AND     #$3F
+
+LC5A9:
         LDX     $11EE
         LDY     $11EF
-        JSR     $10A5
+        JSR     $10A5                   ; ROM $B44D
         RTS
 
 c64Vec44:
         LDA     $11E1                   ; vector 44 at runtime $220B - jump-table entry 44
         CMP     #$7B
-        BNE     $C5C8
+        BNE     LC5C8
         LDA     $11E4
         AND     #$07
         CMP     #$01
-        BNE     $C5C8
+        BNE     LC5C8
         LDA     #$BE
-        JMP     $2269
+        JMP     $2269                   ; LC611 ($C611)
+
+LC5C8:
         LDA     $11E4
         AND     #$08
-        BEQ     $C608
+        BEQ     LC608
         LDA     $11E2
         CMP     #$48
-        BNE     $C608
+        BNE     LC608
         LDA     $11E1
         CMP     #$61
-        BEQ     $C5F4
+        BEQ     LC5F4
         CMP     #$41
-        BEQ     $C5F7
+        BEQ     LC5F7
         CMP     #$6F
-        BEQ     $C5FA
+        BEQ     LC5FA
         CMP     #$4F
-        BEQ     $C5FD
+        BEQ     LC5FD
         CMP     #$75
-        BEQ     $C600
+        BEQ     LC600
         CMP     #$55
-        BEQ     $C603
-        JMP     $2260
+        BEQ     LC603
+        JMP     $2260                   ; LC608 ($C608)
+
+LC5F4:
         LDA     #$BB
-        BIT     $DBA9
-        BIT     $BCA9
-        BIT     $DCA9
-        BIT     $BDA9
-        BIT     $DDA9
-        JMP     $2269
-        JSR     $108A
+        FCB     $2C        ; branch target below splits this instruction
+
+LC5F7:
+        LDA     #$DB
+        FCB     $2C        ; branch target below splits this instruction
+
+LC5FA:
+        LDA     #$BC
+        FCB     $2C        ; branch target below splits this instruction
+
+LC5FD:
+        LDA     #$DC
+        FCB     $2C        ; branch target below splits this instruction
+
+LC600:
+        LDA     #$BD
+        FCB     $2C        ; branch target below splits this instruction
+
+LC603:
+        LDA     #$DD
+        JMP     $2269                   ; LC611 ($C611)
+
+LC608:
+        JSR     $108A                   ; ROM $B432
         CMP     #$DD
-        BNE     $C611
+        BNE     LC611
         LDA     #$21
+
+LC611:
         JSR     $EDDD
         RTS
 
@@ -4150,72 +4778,98 @@ c64Vec46:
         SEI
         LDA     $11E4
         AND     #$07
-        BEQ     $C694
+        BEQ     LC694
         CMP     #$01
-        BEQ     $C633
+        BEQ     LC633
         CMP     #$02
-        BEQ     $C65A
+        BEQ     LC65A
         CMP     #$03
-        BEQ     $C666
+        BEQ     LC666
         CMP     #$04
-        BEQ     $C67B
+        BEQ     LC67B
         LDA     #$2A
-        JMP     $230A
+        JMP     $230A                   ; LC6B2 ($C6B2)
+
+LC633:
         LDA     $11E1
         CMP     #$20
-        BEQ     $C694
+        BEQ     LC694
         CMP     #$50
-        BNE     $C643
+        BNE     LC643
         LDA     #$C0
-        JMP     $230A
+        JMP     $230A                   ; LC6B2 ($C6B2)
+
+LC643:
         CMP     #$24
-        BNE     $C64C
+        BNE     LC64C
         LDA     #$24
-        JMP     $230A
+        JMP     $230A                   ; LC6B2 ($C6B2)
+
+LC64C:
         CMP     #$26
-        BNE     $C655
+        BNE     LC655
         LDA     #$23
-        JMP     $230A
+        JMP     $230A                   ; LC6B2 ($C6B2)
+
+LC655:
         LDA     #$2A
-        JMP     $230A
+        JMP     $230A                   ; LC6B2 ($C6B2)
+
+LC65A:
         LDA     $11E1
         CMP     #$20
-        BEQ     $C694
+        BEQ     LC694
         LDA     #$2A
-        JMP     $230A
+        JMP     $230A                   ; LC6B2 ($C6B2)
+
+LC666:
         LDA     $11E1
         CMP     #$20
-        BEQ     $C694
+        BEQ     LC694
         CMP     #$50
-        BNE     $C676
+        BNE     LC676
         LDA     #$DD
-        JMP     $230A
+        JMP     $230A                   ; LC6B2 ($C6B2)
+
+LC676:
         LDA     #$2A
-        JMP     $230A
+        JMP     $230A                   ; LC6B2 ($C6B2)
+
+LC67B:
         LDA     $11E1
         CMP     #$20
-        BEQ     $C694
+        BEQ     LC694
         CMP     #$40
-        BCS     $C68B
+        BCS     LC68B
         LDA     #$BF
-        JMP     $230A
+        JMP     $230A                   ; LC6B2 ($C6B2)
+
+LC68B:
         CMP     #$60
-        BCC     $C694
+        BCC     LC694
         LDA     #$2A
-        JMP     $230A
+        JMP     $230A                   ; LC6B2 ($C6B2)
+
+LC694:
         LDA     $11E1
         CMP     #$60
-        BNE     $C6A0
+        BNE     LC6A0
         LDA     #$20
-        JMP     $230A
+        JMP     $230A                   ; LC6B2 ($C6B2)
+
+LC6A0:
         CMP     #$7C
-        BNE     $C6A9
+        BNE     LC6A9
         LDA     #$DD
-        JMP     $230A
+        JMP     $230A                   ; LC6B2 ($C6B2)
+
+LC6A9:
         LDA     $11E1
         CMP     #$41
-        BCC     $C6B2
+        BCC     LC6B2
         EOR     #$20
+
+LC6B2:
         PLP
         RTS
 
@@ -4236,7 +4890,7 @@ c64Vec49:
         LDA     $B9
         JSR     $EDB9
         BIT     $90
-        BMI     $C6F4
+        BMI     LC6F4
         LDA     #$1B
         JSR     $EDDD
         LDA     #$40
@@ -4249,17 +4903,21 @@ c64Vec49:
         JSR     $EDDD
         CLC
         RTS
+
+LC6F4:
         JSR     $EDFE
-        JSR     $1078
+        JSR     $1078                   ; ROM $B420
         LDA     #$0F
-        JSR     $105D
+        JSR     $105D                   ; ROM $B405
         SEC
         RTS
         BIT     $81F8
-        BMI     $C70C
-        JSR     $104B
+        BMI     LC70C
+        JSR     $104B                   ; ROM $B3F3
         JMP     $EA31
-        JSR     $104B
+
+LC70C:
+        JSR     $104B                   ; ROM $B3F3
         PLA
         TAY
         PLA
@@ -4269,78 +4927,100 @@ c64Vec49:
 
 c64Vec53:
         LDA     $11EC                   ; vector 53 at runtime $236D - jump-table entry 53
-        BNE     $C766
+        BNE     LC766
         JSR     $FFE4
         CMP     #$00
-        BEQ     $C764
+        BEQ     LC764
         CMP     #$A0
-        BNE     $C727
+        BNE     LC727
         LDA     #$20
+
+LC727:
         BIT     $11E8
-        BPL     $C73E
+        BPL     LC73E
         CMP     #$59
-        BEQ     $C73C
+        BEQ     LC73C
         CMP     #$5A
-        BEQ     $C73C
+        BEQ     LC73C
         CMP     #$D9
-        BEQ     $C73C
+        BEQ     LC73C
         CMP     #$DA
-        BNE     $C73E
+        BNE     LC73E
+
+LC73C:
         EOR     #$03
+
+LC73E:
         BIT     $11D8
-        BPL     $C750
+        BPL     LC750
         PHA
-        JSR     $1066
+        JSR     $1066                   ; ROM $B40E
         PLA
         PHA
         JSR     $EDDD
         JSR     $EDFE
         PLA
+
+LC750:
         CMP     #$0D
-        BNE     $C762
+        BNE     LC762
+
+LC754:
         LDX     $8090
         CPX     $8090
-        BNE     $C754
+        BNE     LC754
         CPX     #$28
-        BEQ     $C762
+        BEQ     LC762
         LDA     #$8D
+
+LC762:
         CLC
         RTS
+
+LC764:
         SEC
         RTS
+
+LC766:
         JSR     $FFE1
-        BNE     $C770
+        BNE     LC770
         LDA     #$00
-        JMP     $23D7
-        JSR     $1069
-        JSR     $1033
+        JMP     $23D7                   ; ROM $C77F
+
+LC770:
+        JSR     $1069                   ; ROM $B411
+        JSR     $1033                   ; ROM $B3DB
         PHP
         PHA
         JSR     $EDEF
         PLA
         PLP
-        BVC     $C7A0
+        BVC     LC7A0
         PHA
         LDA     #$00
-        JSR     $1012
-        JSR     $101B
+        JSR     $1012                   ; ROM $B3BA
+        JSR     $101B                   ; ROM $B3C3
         LDA     #$00
         STA     $11EC
         LDA     #$10
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$2E
-        JSR     $1012
-        JSR     $101B
-        JSR     $106F
+        JSR     $1012                   ; ROM $B3BA
+        JSR     $101B                   ; ROM $B3C3
+        JSR     $106F                   ; ROM $B417
         PLA
         CLC
         RTS
+
+LC7A0:
         TXA
         CMP     #$01
-        BNE     $C7AA
-        JSR     $107B
+        BNE     LC7AA
+        JSR     $107B                   ; ROM $B423
         SEC
         RTS
+
+LC7AA:
         CLC
         RTS
         LDA     #$7F
@@ -4351,39 +5031,51 @@ c64Vec53:
         LDA     #$7F
         STA     $DC00
         PLP
-        BNE     $C80B
+        BNE     LC80B
         LDA     #$02
-        JSR     $107E
+        JSR     $107E                   ; ROM $B426
         LDX     #$00
+
+LC7C6:
         LDA     $2464,X
-        BEQ     $C7D1
+        BEQ     LC7D1
         STA     $11BE,X
         INX
-        BNE     $C7C6
+        BNE     LC7C6
+
+LC7D1:
         STX     $11BC
-        JSR     $1030
-        BCS     $C808
+        JSR     $1030                   ; ROM $B3D8
+        BCS     LC808
         STA     $61
         STA     $65
-        JSR     $1033
-        BVS     $C808
+        JSR     $1033                   ; ROM $B3DB
+        BVS     LC808
         STA     $62
         STA     $66
         LDA     #$19
-        JSR     $105D
-        JSR     $1033
-        BVS     $C7FF
-        BCS     $C808
+        JSR     $105D                   ; ROM $B405
+        JSR     $1033                   ; ROM $B3DB
+        BVS     LC7FF
+        BCS     LC808
         LDY     #$00
         STA     ($61),Y
         INC     $61
-        BNE     $C7FC
+        BNE     LC7FC
         INC     $62
-        JMP     $2443
-        JSR     $1036
-        JSR     $101B
+
+LC7FC:
+        JMP     $2443                   ; ROM $C7EB
+
+LC7FF:
+        JSR     $1036                   ; ROM $B3DE
+        JSR     $101B                   ; ROM $B3C3
         JMP     ($0065)
-        JSR     $1036
+
+LC808:
+        JSR     $1036                   ; ROM $B3DE
+
+LC80B:
         RTS
         FCB     $42,$54
         CLI
@@ -4398,32 +5090,38 @@ c64ScreenOut2:
         STA     $A7
         LDA     #$24
         STA     $A8
+
+LC822:
         LDY     #$00
         LDA     ($A7),Y
-        BEQ     $C833
+        BEQ     LC833
         JSR     $FFD2
         INC     $A7
-        BNE     $C822
+        BNE     LC822
         INC     $A8
-        BNE     $C822
+        BNE     LC822
+
+LC833:
         LDA     #$0F
         STA     $D021
         LDY     #$00
         LDA     #$0B
+
+LC83C:
         STA     $D800,Y
         STA     $D900,Y
         STA     $DA00,Y
         STA     $DB00,Y
         INY
-        BNE     $C83C
+        BNE     LC83C
         RTS
         ASL     $9308
         FCB     $97
         ORA     ($11),Y
         ORA     ($20),Y
-        JSR     $2020
-        JSR     $2020
-        JSR     $2020
+        JSR     $2020                   ; ROM $C3C8
+        JSR     $2020                   ; ROM $C3C8
+        JSR     $2020                   ; ROM $C3C8
         JSR     $C220
         EOR     #$4C
         FCB     $44,$53,$43
@@ -4434,7 +5132,7 @@ c64ScreenOut2:
         FCB     $54
         ORA     $1111
         ORA     ($11),Y
-        JSR     $2020
+        JSR     $2020                   ; ROM $C3C8
         FCB     $C2
         EOR     #$54
         FCB     $54
@@ -4462,7 +5160,7 @@ c64ScreenOut2:
         EOR     $4C,X
         JSR     $4E41
         BIT     $0D0D
-        JSR     $2020
+        JSR     $2020                   ; ROM $C3C8
         FCB     $4F,$44
         EOR     $52
         JSR     $4157
@@ -4498,7 +5196,7 @@ c64ScreenOut2:
         ROL     $D320,X
         FCB     $22
         ROL     $0D0D
-        JSR     $2020
+        JSR     $2020                   ; ROM $C3C8
         FCB     $D3
         EOR     #$45
         JSR     $4556
@@ -4529,7 +5227,10 @@ c64ScreenOut2:
         AND     $2D2D
         AND     $2D2D
         AND     $2D2D
-        AND     $0800
+        FCB     $2D,$00        ; branch target below splits this instruction
+
+c64Vec55:
+        PHP                             ; vector 55 at runtime $25A5 - jump-table entry 55
         SEI
         PHA
         TXA
@@ -4550,7 +5251,7 @@ c64Vec56:
         PHP                             ; vector 56 at runtime $25BD - jump-table entry 56
         SEI
         CPX     #$FF
-        BEQ     $C978
+        BEQ     LC978
         STX     $D3
         STY     $D6
         LDA     #$00
@@ -4558,6 +5259,8 @@ c64Vec56:
         JSR     $E56C
         PLP
         RTS
+
+LC978:
         LDA     #$01
         STA     $CC
         PLP
@@ -4570,56 +5273,72 @@ c64Vec38:
         STA     $BA
         JSR     $ED09
         BIT     $90
-        BMI     $C9F8
+        BMI     LC9F8
         LDA     #$6F
         STA     $B9
         JSR     $EDC7
-        JSR     $1078
+        JSR     $1078                   ; ROM $B420
         LDA     #$09
-        JSR     $105D
+        JSR     $105D                   ; ROM $B405
         LDA     #$00
         STA     $11DC
-        JSR     $1033
-        BCS     $C9F0
-        BVS     $C9F0
+        JSR     $1033                   ; ROM $B3DB
+        BCS     LC9F0
+        BVS     LC9F0
         CMP     #$30
-        BEQ     $C9B1
+        BEQ     LC9B1
         LDA     #$FF
         STA     $11DC
-        JSR     $1033
-        BCS     $C9F0
-        BVS     $C9F0
+
+LC9B1:
+        JSR     $1033                   ; ROM $B3DB
+        BCS     LC9F0
+        BVS     LC9F0
         CMP     #$30
-        BEQ     $C9C4
+        BEQ     LC9C4
         LDA     #$FF
         ORA     $11DC
         STA     $11DC
-        JSR     $1033
-        BCS     $C9F0
-        BVS     $C9F0
-        JSR     $1033
-        BCS     $C9F0
-        BVS     $C9F0
+
+LC9C4:
+        JSR     $1033                   ; ROM $B3DB
+        BCS     LC9F0
+        BVS     LC9F0
+
+LC9CB:
+        JSR     $1033                   ; ROM $B3DB
+        BCS     LC9F0
+        BVS     LC9F0
         CMP     #$2C
-        BEQ     $C9E4
+        BEQ     LC9E4
         TAX
         LDA     $90
         LSR     A
         LSR     A
-        BCS     $C9CB
+        BCS     LC9CB
         TXA
-        JSR     $1012
-        JMP     $2623
+        JSR     $1012                   ; ROM $B3BA
+        JMP     $2623                   ; LC9CB ($C9CB)
+
+LC9E4:
         LDA     #$00
-        JSR     $1012
-        JSR     $1033
-        BCS     $C9F0
-        BVC     $C9E9
+        JSR     $1012                   ; ROM $B3BA
+
+LC9E9:
+        JSR     $1033                   ; ROM $B3DB
+        BCS     LC9F0
+        BVC     LC9E9
+
+LC9F0:
         JSR     $EDEF
         BIT     $11DC
-        BPL     $C9FA
+        BPL     LC9FA
+
+LC9F8:
         SEC
         RTS
+
+LC9FA:
         CLC
         RTS
 
@@ -4630,37 +5349,47 @@ c64Vec39:
         STA     $BA
         JSR     $ED09
         LDX     $90
-        BNE     $CA4D
+        BNE     LCA4D
         LDA     #$6F
         STA     $B9
         JSR     $EDC7
         LDX     $90
-        BNE     $CA4D
+        BNE     LCA4D
         LDA     #$00
         STA     $11DC
-        JSR     $1033
-        BCS     $CA45
-        BVS     $CA45
+        JSR     $1033                   ; ROM $B3DB
+        BCS     LCA45
+        BVS     LCA45
         CMP     #$30
-        BEQ     $CA2B
+        BEQ     LCA2B
         LDA     #$FF
         STA     $11DC
-        JSR     $1033
-        BCS     $CA45
-        BVS     $CA45
+
+LCA2B:
+        JSR     $1033                   ; ROM $B3DB
+        BCS     LCA45
+        BVS     LCA45
         CMP     #$30
-        BEQ     $CA3E
+        BEQ     LCA3E
         LDA     #$FF
         ORA     $11DC
         STA     $11DC
-        JSR     $1033
-        BCS     $CA45
-        BVC     $CA3E
+
+LCA3E:
+        JSR     $1033                   ; ROM $B3DB
+        BCS     LCA45
+        BVC     LCA3E
+
+LCA45:
         JSR     $EDEF
         BIT     $11DC
-        BPL     $CA4F
+        BPL     LCA4F
+
+LCA4D:
         SEC
         RTS
+
+LCA4F:
         CLC
         RTS
 
@@ -4679,15 +5408,19 @@ c64Vec47:
         STA     $BC
         LDA     #$00
         STA     $90
-        JSR     $10B1
-        BCC     $CA79
+        JSR     $10B1                   ; ROM $B459
+        BCC     LCA79
         LDA     #$0D
-        JSR     $105D
+        JSR     $105D                   ; ROM $B405
         SEC
         RTS
-        JSR     $1072
-        BCS     $CA7F
+
+LCA79:
+        JSR     $1072                   ; ROM $B41A
+        BCS     LCA7F
         RTS
+
+LCA7F:
         SEC
         RTS
 
@@ -4702,24 +5435,32 @@ c64Vec34:
         JSR     $ED0C
         LDA     $B9
         JSR     $EDB9
+
+LCA97:
         LDA     $8090
         CMP     $8090
-        BNE     $CA97
+        BNE     LCA97
         CMP     #$28
-        BEQ     $CAB1
+        BEQ     LCAB1
+
+LCAA3:
         LDA     $8011
         CMP     $8011
-        BNE     $CAA3
+        BNE     LCAA3
         STA     $11ED
-        JMP     $271E
+        JMP     $271E                   ; LCAC6 ($CAC6)
+
+LCAB1:
         LDA     $8011
         CMP     $8011
-        BNE     $CAB1
+        BNE     LCAB1
         CMP     $11ED
-        BEQ     $CAC6
+        BEQ     LCAC6
         LDA     #$01
         JSR     $EDDD
         INC     $11ED
+
+LCAC6:
         RTS
 
 c64Vec35:
@@ -4748,7 +5489,7 @@ c64Vec60:
         STA     $11BE,Y
         INY
         STY     $B7
-        JMP     $276F
+        JMP     $276F                   ; ROM $CB17
 
 c64Vec48:
         LDY     $11BC                   ; vector 48 at runtime $2752 - jump-table entry 48
@@ -4777,12 +5518,14 @@ c64Vec48:
         STA     $BC
         LDA     #$00
         STA     $90
-        JSR     $10B1
-        BCS     $CB55
-        JSR     $1072
-        BCC     $CB3D
+        JSR     $10B1                   ; ROM $B459
+        BCS     LCB55
+        JSR     $1072                   ; ROM $B41A
+        BCC     LCB3D
         SEC
         RTS
+
+LCB3D:
         LDA     #$08
         STA     $BA
         LDA     #$64
@@ -4795,9 +5538,11 @@ c64Vec48:
         STA     $9A
         CLC
         RTS
-        JSR     $1078
+
+LCB55:
+        JSR     $1078                   ; ROM $B420
         LDA     #$0D
-        JSR     $105D
+        JSR     $105D                   ; ROM $B405
         SEC
         RTS
 
@@ -4816,99 +5561,121 @@ c64Vec50:
         STA     $BC
         LDA     #$0B
         STA     $B7
-        JMP     $28C3
+        JMP     $28C3                   ; ROM $CC6B
 
 c64Vec51:
         BIT     $11EC                   ; vector 51 at runtime $27D6 - jump-table entry 51
-        BMI     $CBED
+        BMI     LCBED
         LDA     #$10
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$4C
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     $10CA
         STA     $61
         LDA     $10CB
         STA     $62
+
+LCB97:
         LDY     #$00
         LDA     ($61),Y
-        BEQ     $CBA9
-        JSR     $1012
+        BEQ     LCBA9
+        JSR     $1012                   ; ROM $B3BA
         INC     $61
-        BNE     $CB97
+        BNE     LCB97
         INC     $62
-        JMP     $27EF
+        JMP     $27EF                   ; LCB97 ($CB97)
+
+LCBA9:
         LDA     #$30
         STA     $11B4
-        JSR     $109C
-        BCS     $CBDB
+
+LCBAE:
+        JSR     $109C                   ; ROM $B444
+        BCS     LCBDB
         JSR     $FFE1
-        BEQ     $CBDB
+        BEQ     LCBDB
         INC     $11B4
         LDA     $11B4
         CMP     #$3A
-        BNE     $CBAE
+        BNE     LCBAE
         LDA     #$41
         STA     $11B4
-        JSR     $109C
-        BCS     $CBDB
+
+LCBC7:
+        JSR     $109C                   ; ROM $B444
+        BCS     LCBDB
         JSR     $FFE1
-        BEQ     $CBDB
+        BEQ     LCBDB
         INC     $11B4
         LDA     $11B4
         CMP     #$5B
-        BNE     $CBC7
+        BNE     LCBC7
+
+LCBDB:
         JSR     $FFE1
-        BEQ     $CBDB
-        JSR     $1075
+        BEQ     LCBDB
+        JSR     $1075                   ; ROM $B41D
         LDA     #$10
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$6C
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
+
+LCBED:
         RTS
 
 c64Vec52:
         LDA     $11B4                   ; vector 52 at runtime $2846 - jump-table entry 52
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$3A
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$20
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$11
         STA     $11BA
-        JSR     $1096
-        BCS     $CC23
+        JSR     $1096                   ; ROM $B43E
+        BCS     LCC23
         TXA
-        JSR     $1009
+        JSR     $1009                   ; ROM $B3B1
         DEC     $11BA
-        JSR     $1033
-        BCS     $CC4D
-        BVS     $CC3E
+
+LCC0F:
+        JSR     $1033                   ; ROM $B3DB
+        BCS     LCC4D
+        BVS     LCC3E
         CMP     #$00
-        BEQ     $CC3E
-        JSR     $1009
+        BEQ     LCC3E
+        JSR     $1009                   ; ROM $B3B1
         DEC     $11BA
-        BNE     $CC0F
+        BNE     LCC0F
         RTS
+
+LCC23:
         LDA     #$2D
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         DEC     $11BA
         LDA     $11BA
         CMP     #$0B
-        BNE     $CC23
+        BNE     LCC23
+
+LCC32:
         LDA     #$20
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         DEC     $11BA
-        BNE     $CC32
+        BNE     LCC32
         CLC
         RTS
+
+LCC3E:
         LDA     #$20
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         DEC     $11BA
-        BNE     $CC3E
-        JSR     $106F
+        BNE     LCC3E
+        JSR     $106F                   ; ROM $B417
         CLC
         RTS
-        JSR     $2896
+
+LCC4D:
+        JSR     $2896                   ; LCC3E ($CC3E)
         SEC
         RTS
 
@@ -4927,42 +5694,48 @@ c64Vec16:
         STA     $B7
         JSR     $EDEF
         JSR     $EDFE
-        JSR     $10B1
-        BCS     $CC93
+        JSR     $10B1                   ; ROM $B459
+        BCS     LCC93
         LDA     $B9
         STA     $11BB
-        JSR     $1075
-        BCS     $CC93
+        JSR     $1075                   ; ROM $B41D
+        BCS     LCC93
         LDA     $BA
         JSR     $ED09
         LDA     $11BB
         STA     $B9
         JSR     $EDC7
-        JSR     $1033
+        JSR     $1033                   ; ROM $B3DB
         TAX
         CLC
         RTS
+
+LCC93:
         SEC
         RTS
 
 c64Vec17:
         LDA     #$00                    ; vector 17 at runtime $28ED - jump-table entry 17
         STA     $90
+
+LCC99:
         LDA     #$FD
         AND     $90
         STA     $90
         JSR     $FFE1
-        BEQ     $CCB3
+        BEQ     LCCB3
         JSR     $EE13
         TAX
         LDA     $90
         LSR     A
         LSR     A
-        BCS     $CC99
+        BCS     LCC99
         TXA
         BIT     $90
         CLC
         RTS
+
+LCCB3:
         SEC
         RTS
 
@@ -5010,24 +5783,28 @@ c64Vec59:
         LDA     $BA
         JSR     $ED0C
         LDA     $90
-        BMI     $CD12
+        BMI     LCD12
         LDA     $B9
         ORA     #$F0
         JSR     $EDB9
         LDA     $90
-        BPL     $CD14
+        BPL     LCD14
+
+LCD12:
         SEC
         RTS
+
+LCD14:
         JMP     $F3F6
         FCB     $1F,$2F
         EOR     ($9B,X)
         AND     ($40),Y
         FCB     $1B,$23
         JSR     $9B57
-        BMI     $CD64
+        BMI     LCD64
         FCB     $1F
         EOR     ($41,X)
-        JSR     $2020
+        JSR     $2020                   ; ROM $C3C8
         FCB     $8F
         PHP
         EOR     $6B61
@@ -5046,35 +5823,49 @@ c64Vec59:
 c64Vec57:
         LDA     $11EC                   ; vector 57 at runtime $299B - jump-table entry 57
         ORA     $11D8
-        BEQ     $CD59
+        BEQ     LCD59
         LDA     #$1E
-        JSR     $105D
-        JSR     $109F
-        BCS     $CD50
-        JSR     $101B
+        JSR     $105D                   ; ROM $B405
+
+LCD50:
+        JSR     $109F                   ; ROM $B447
+        BCS     LCD50
+        JSR     $101B                   ; ROM $B3C3
         RTS
-        JSR     $1078
+
+LCD59:
+        JSR     $1078                   ; ROM $B420
         LDA     #$1A
-        JSR     $105D
+        JSR     $105D                   ; ROM $B405
         LDA     #$13
-        JSR     $1057
-        BCC     $CD6C
-        JSR     $101B
+        FCB     $20        ; branch target below splits this instruction
+
+LCD64:
+        FCB     $57
+        BPL     $CCF7
+        FCB     $04
+        JSR     $101B                   ; ROM $B3C3
         RTS
-        JSR     $10B4
-        BCC     $CD7F
+
+LCD6C:
+        JSR     $10B4                   ; ROM $B45C
+        BCC     LCD7F
         LDA     #$17
-        JSR     $105D
-        JSR     $109F
-        BCS     $CD76
-        JSR     $101B
+        JSR     $105D                   ; ROM $B405
+
+LCD76:
+        JSR     $109F                   ; ROM $B447
+        BCS     LCD76
+        JSR     $101B                   ; ROM $B3C3
         RTS
+
+LCD7F:
         LDA     #$1B
-        JSR     $105D
+        JSR     $105D                   ; ROM $B405
         LDA     #$10
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$4D
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     $10C0
         STA     $65
         STA     $6D
@@ -5083,178 +5874,228 @@ c64Vec57:
         STA     $66
         STA     $6E
         STA     $11DB
-        JSR     $10AE
-        BCC     $CDA2
+
+LCDA2:
+        JSR     $10AE                   ; ROM $B456
+        BCC     LCDA2
+
+LCDA7:
         LDA     #$00
         STA     $11F0
-        JSR     $10AE
-        BCS     $CDA7
+        JSR     $10AE                   ; ROM $B456
+        BCS     LCDA7
         CMP     #$3C
-        BEQ     $CDB9
+        BEQ     LCDB9
         CMP     #$3E
-        BNE     $CDA2
-        JSR     $10AE
-        BCS     $CDA7
+        BNE     LCDA2
+
+LCDB9:
+        JSR     $10AE                   ; ROM $B456
+        BCS     LCDA7
         CMP     #$27
-        BNE     $CDC5
-        JMP     $2A4A
+        BNE     LCDC5
+        JMP     $2A4A                   ; ROM $CDF2
+
+LCDC5:
         AND     #$E0
         CMP     #$40
-        BNE     $CDA2
+        BNE     LCDA2
         LDA     #$FF
         STA     $11F0
         LDA     #$00
         STA     $11F1
-        JSR     $10AE
-        BCS     $CDA7
+        JSR     $10AE                   ; ROM $B456
+        BCS     LCDA7
         CMP     #$43
-        BNE     $CDE1
-        JMP     $2ABD
+        BNE     LCDE1
+        JMP     $2ABD                   ; ROM $CE65
+
+LCDE1:
         CMP     #$45
-        BNE     $CDE8
-        JMP     $2ABD
+        BNE     LCDE8
+        JMP     $2ABD                   ; ROM $CE65
+
+LCDE8:
         CMP     #$47
-        BNE     $CDEF
-        JMP     $2AC0
-        JMP     $29FA
-        JSR     $10AE
-        BCS     $CE62
-        JSR     $10AE
-        BCS     $CE62
+        BNE     LCDEF
+        JMP     $2AC0                   ; ROM $CE68
+
+LCDEF:
+        JMP     $29FA                   ; LCDA2 ($CDA2)
+        JSR     $10AE                   ; ROM $B456
+        BCS     LCE62
+        JSR     $10AE                   ; ROM $B456
+        BCS     LCE62
         AND     #$0F
-        BEQ     $CE5F
+        BEQ     LCE5F
         STA     $11F5
-        JSR     $10AE
-        BCS     $CE62
+
+LCE03:
+        JSR     $10AE                   ; ROM $B456
+        BCS     LCE62
         DEC     $11F5
-        BEQ     $CE5F
+        BEQ     LCE5F
         CMP     #$22
-        BEQ     $CE34
-        JSR     $10AE
-        BCS     $CE62
+        BEQ     LCE34
+        JSR     $10AE                   ; ROM $B456
+        BCS     LCE62
         DEC     $11F5
-        BEQ     $CE5F
+        BEQ     LCE5F
         AND     #$0F
-        BEQ     $CE03
+        BEQ     LCE03
         STA     $11F6
-        JSR     $10AE
-        BCS     $CDA7
+        JSR     $10AE                   ; ROM $B456
+        BCS     LCDA7
         DEC     $11F5
-        BEQ     $CE5F
+        BEQ     LCE5F
         DEC     $11F6
-        BEQ     $CE03
-        JMP     $2A7A
-        JSR     $10AE
-        BCS     $CE62
-        JSR     $10AE
+        BEQ     LCE03
+        JMP     $2A7A                   ; ROM $CE22
+
+LCE34:
+        JSR     $10AE                   ; ROM $B456
+        BCS     LCE62
+        JSR     $10AE                   ; ROM $B456
         CMP     #$42
-        BNE     $CE48
+        BNE     LCE48
         LDA     #$1C
-        JSR     $105D
-        JMP     $2AB7
+        JSR     $105D                   ; ROM $B405
+        JMP     $2AB7                   ; LCE5F ($CE5F)
+
+LCE48:
         LDA     #$10
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$6D
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$1D
-        JSR     $105D
-        JSR     $109F
-        BCS     $CE57
-        JMP     $2AEE
-        JMP     $29FA
-        JMP     $29FF
+        JSR     $105D                   ; ROM $B405
+
+LCE57:
+        JSR     $109F                   ; ROM $B447
+        BCS     LCE57
+        JMP     $2AEE                   ; LCE96 ($CE96)
+
+LCE5F:
+        JMP     $29FA                   ; LCDA2 ($CDA2)
+
+LCE62:
+        JMP     $29FF                   ; LCDA7 ($CDA7)
         LDA     #$00
         BIT     $FFA9
         STA     $11F4
-        JSR     $10AE
-        BCS     $CE62
+        JSR     $10AE                   ; ROM $B456
+        BCS     LCE62
         STA     $11F5
         CMP     #$00
-        BEQ     $CE83
-        JSR     $10AE
-        BCS     $CE62
+        BEQ     LCE83
+
+LCE79:
+        JSR     $10AE                   ; ROM $B456
+        BCS     LCE62
         DEC     $11F5
-        BNE     $CE79
-        JSR     $10AE
-        BCS     $CE8E
+        BNE     LCE79
+
+LCE83:
+        JSR     $10AE                   ; ROM $B456
+        BCS     LCE8E
         JSR     $EDDD
-        JMP     $2ADB
+        JMP     $2ADB                   ; LCE83 ($CE83)
+
+LCE8E:
         BIT     $11F4
-        BMI     $CE96
-        JMP     $29FF
+        BMI     LCE96
+        JMP     $29FF                   ; LCDA7 ($CDA7)
+
+LCE96:
         LDA     #$10
-        JSR     $1012
+        JSR     $1012                   ; ROM $B3BA
         LDA     #$6D
-        JSR     $1012
-        JSR     $1078
-        JSR     $1063
-        JSR     $101B
+        JSR     $1012                   ; ROM $B3BA
+        JSR     $1078                   ; ROM $B420
+        JSR     $1063                   ; ROM $B40B
+        JSR     $101B                   ; ROM $B3C3
+
+LCEA9:
         LDA     $800B
-        BNE     $CEA9
+        BNE     LCEA9
         LDA     $800B
-        BNE     $CEA9
+        BNE     LCEA9
+
+LCEB3:
         LDA     $8009
         CMP     $8009
-        BNE     $CEB3
+        BNE     LCEB3
         STA     $800A
         RTS
 
 c64Vec58:
         JSR     $1018                   ; vector 58 at runtime $2B17 - jump-table entry 58
-        BCS     $CEE2
+        BCS     LCEE2
         LDY     #$00
         STA     ($65),Y
         INC     $65
-        BNE     $CEBF
+        BNE     c64Vec58
         INC     $66
         LDA     $66
         CMP     $10C3
-        BNE     $CEBF
+        BNE     c64Vec58
         LDA     $10C0
         STA     $65
         LDA     $10C1
         STA     $66
-        JMP     $2B17
+        JMP     $2B17                   ; c64Vec58 ($CEBF)
+
+LCEE2:
         LDA     $8090
         CMP     #$50
-        BEQ     $CEF8
-        JSR     $109F
-        BCS     $CEFD
+        BEQ     LCEF8
+        JSR     $109F                   ; ROM $B447
+        BCS     LCEFD
         CMP     #$03
-        BEQ     $CEF8
-        JSR     $1009
-        JMP     $2B55
+        BEQ     LCEF8
+        JSR     $1009                   ; ROM $B3B1
+        JMP     $2B55                   ; LCEFD ($CEFD)
+
+LCEF8:
         PLA
         PLA
-        JMP     $2AEE
+        JMP     $2AEE                   ; LCE96 ($CE96)
+
+LCEFD:
         LDA     $65
         CMP     $6D
-        BNE     $CF0C
+        BNE     LCF0C
         LDA     $66
         CMP     $6E
-        BNE     $CF0C
-        JMP     $2B17
+        BNE     LCF0C
+        JMP     $2B17                   ; c64Vec58 ($CEBF)
+
+LCF0C:
         LDY     #$00
         LDA     ($6D),Y
         INC     $6D
-        BNE     $CF27
+        BNE     LCF27
         INC     $6E
         LDX     $6E
         CPX     $10C3
-        BNE     $CF27
+        BNE     LCF27
         LDX     $10C0
         STX     $6D
         LDX     $10C1
         STX     $6E
+
+LCF27:
         CMP     #$1F
-        BEQ     $CF63
+        BEQ     LCF63
         BIT     $11F0
-        BPL     $CF61
+        BPL     LCF61
         LDX     $11F1
-        BNE     $CF3E
+        BNE     LCF3E
         STA     $11F2
         INC     $11F1
-        JMP     $2B3A
+        JMP     $2B3A                   ; LCEE2 ($CEE2)
+
+LCF3E:
         AND     #$3F
         STA     $11F3
         LDA     $11F2
@@ -5267,18 +6108,24 @@ c64Vec58:
         INC     $11F1
         LDX     $11F1
         CPX     #$04
-        BNE     $CF61
+
+LCF5A:
+        BNE     LCF61
         LDX     #$00
         STX     $11F1
+
+LCF61:
         CLC
         RTS
+
+LCF63:
         SEC
         RTS
         FCB     $1F,$2F,$43,$0C,$1F,$2F,$44,$1F
         EOR     ($41,X)
         JSR     $8E20
         PHP
-        JSR     $2020
+        JSR     $2020                   ; ROM $C3C8
         JSR     $6320
         FCB     $6F
         ADC     $6F6D
@@ -5286,10 +6133,13 @@ c64Vec58:
         ADC     $9B
         AND     ($40),Y
         FCB     $1B,$23
-        JSR     $1F54
+        JSR     $1F54                   ; c64Vec28 ($C2FC)
         FCB     $42
-        EOR     ($9B,X)
-        BMI     $CFCE
+        FCB     $41        ; branch target below splits this instruction
+
+LCF8B:
+        FCB     $9B
+        BMI     LCFCE
         FCB     $83
         JSR     $4712
         TXS
@@ -5300,7 +6150,7 @@ c64Vec58:
         FCB     $A3,$12,$57
         CPX     $20
         FCB     $12
-        JMP     $20EA
+        JMP     $20EA                   ; LC492 ($C492)
         FCB     $12
         EOR     $20B5,Y
         FCB     $12,$4B
@@ -5310,7 +6160,7 @@ c64Vec58:
         FCB     $FC,$DF,$12
         EOR     #$FC
         FCB     $F4
-        BCS     $CF5A
+        BCS     LCF5A
         FCB     $12,$44
         LDA     $20,X
         FCB     $12,$4B
@@ -5319,7 +6169,10 @@ c64Vec58:
         INX
         FCB     $DF,$12,$43,$BF,$A3,$12
         EOR     $EF
-        FCB     $DF,$12,$43
+        FCB     $DF
+
+LCFCE:
+        FCB     $12,$43
         LDY     $A0,X
         FCB     $12,$43
         LDA     $20,X
@@ -5330,7 +6183,7 @@ c64Vec58:
         FCB     $DF,$DF,$DF,$AF
         LDA     ($E0,X)
         FCB     $FC,$DF,$DF,$FC
-        BCS     $CF8B
+        BCS     LCF8B
         FCB     $AF,$DF,$DF,$DF
         LDA     $A0
         FCB     $12,$43
@@ -5353,6 +6206,8 @@ c64Vec58:
         FCB     $DF,$12,$43
         NOP
         FCB     $DF,$12,$43
+
+LD01A:
         LDA     $DF,X
         FCB     $12,$43
         LDY     #$12
@@ -5376,22 +6231,28 @@ c64Vec58:
         JSR     $4B12
         NOP
         JSR     $5912
+
+LD04E:
         LDA     $20,X
         FCB     $12,$4B
         NOP
         LDY     #$EA
         FCB     $EB,$E2
         NOP
+
+LD058:
         CPX     #$FA
         CPX     #$F0
         CPX     #$B0
         SBC     $B0,X
+
+LD060:
         LDA     ($F0),Y
         CPX     #$F0
-        BEQ     $D04E
-        BCS     $D058
-        BCS     $D01A
-        BCS     $D060
+        BEQ     LD04E
+        BCS     LD058
+        BCS     LD01A
+        BCS     LD060
         LDY     #$B5
         JSR     $4B12
         NOP
@@ -5437,17 +6298,17 @@ c64Vec58:
         FCB     $67
         JSR     $6D12
         FCB     $9B
-        BMI     $D107
+        BMI     LD107
         FCB     $83
         JSR     $6544
         FCB     $63,$6F,$64
         ADC     $72
         ADC     $646F
         ADC     $6C,X
-        JSR     $1966
+        JSR     $1966                   ; ROM $BD0E
         PHA
         ADC     $72,X
-        JSR     $2D43
+        JSR     $2D43                   ; ROM $D0EB
         ROL     $34,X
         FCB     $2F
         AND     ($32),Y
@@ -5456,7 +6317,7 @@ c64Vec58:
         ROR     $309B
         RTI
         FCB     $87
-        BNE     $D100
+        BNE     LD100
         FCB     $67
         JSR     $6712
         FCB     $1F
@@ -5467,8 +6328,13 @@ c64Vec58:
         ROL     $2036
         AND     ($34),Y
         AND     ($30),Y
+
+LD100:
         SEC
-        FCB     $37,$77,$72,$1F,$2F,$43,$1E
+        FCB     $37,$77,$72,$1F,$2F,$43
+
+LD107:
+        FCB     $1E
         BRK
 
         CPU     6801
@@ -5519,22 +6385,32 @@ csiTable:
         FDB     $FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42
         FDB     $FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42
         FDB     $FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42
+
+LD349:
         LDS     #$0400
-        JSR     $F081
+
+LD34C:
+        JSR     LF081
         CMPA    #$1F
-        BNE     $D34C
-        BEQ     $D358
+        BNE     LD34C
+        BEQ     LD358
 
 parseNextByte:
-        JSR     $F081
+        JSR     LF081
+
+LD358:
         CMPA    #$1B
-        BNE     $D35F
-        JMP     $D3A5
+        BNE     LD35F
+        JMP     LD3A5
+
+LD35F:
         CMPA    #$9B
-        BNE     $D366
-        JMP     $D3C5
+        BNE     LD366
+        JMP     LD3C5
+
+LD366:
         CMPA    #$20
-        BCC     $D376
+        BCC     LD376
 
 ; CEPT control-code interpreter.
 ;
@@ -5576,11 +6452,15 @@ dispatchC0:
         LDX     $00,X
         PULA
         JMP     $00,X
+
+LD376:
         CMPA    #$80
-        BCC     $D37D
-        JMP     $E986
+        BCC     LD37D
+        JMP     LE986
+
+LD37D:
         CMPA    #$A0
-        BCC     $D3A2
+        BCC     LD3A2
         TST     $0497
         BMI     dispatchC1b
 
@@ -5605,17 +6485,23 @@ dispatchC1b:
         LDX     $00,X
         PULA
         JMP     $00,X
-        JMP     $E986
-        JSR     $F081
+
+LD3A2:
+        JMP     LE986
+
+LD3A5:
+        JSR     LF081
         TST     $04AF
         BPL     dispatchEsc
-        JMP     $E9A2
+        JMP     LE9A2
 
 dispatchEsc:
         PSHA
         SUBA    #$20
-        BCC     $D3B8
+        BCC     LD3B8
         JMP     parseNextByte
+
+LD3B8:
         ANDA    #$7F
         ASLA
         TAB
@@ -5624,16 +6510,20 @@ dispatchEsc:
         LDX     $00,X
         PULA
         JMP     $00,X
-        JSR     $F081
+
+LD3C5:
+        JSR     LF081
         TST     $04AF
         BPL     dispatchCsi
-        JMP     $E9A2
+        JMP     LE9A2
 
 dispatchCsi:
         PSHA
         SUBA    #$20
-        BCC     $D3D8
+        BCC     LD3D8
         JMP     parseNextByte
+
+LD3D8:
         ANDA    #$7F
         ASLA
         TAB
@@ -5642,28 +6532,38 @@ dispatchCsi:
         LDX     $00,X
         PULA
         JMP     $00,X
+
+LD3E5:
         LDD     #$0800
         STD     $0402
         LDAA    #$60
         STAA    $0489
+
+LD3F0:
         LDAB    #$17
+
+LD3F2:
         LDX     $0402
         ABX
         CLR     $00,X
         DECB
-        BPL     $D3F2
+        BPL     LD3F2
         LDD     #$0030
         ADDD    $0402
         STD     $0402
         DEC     $0489
-        BNE     $D3F0
+        BNE     LD3F0
         RTS
-        JSR     $E98C
+
+LD40A:
+        JSR     LE98C
         CMPA    #$20
         BEQ     parseFormatParams
-        BCS     $D416
-        JMP     $D4BD
-        JMP     $E9A2
+        BCS     LD416
+        JMP     LD4BD
+
+LD416:
+        JMP     LE9A2
 
 ; Format-parameter lookup: one key table plus three parallel value tables,
 ; 18 entries each, $D419-$D460.
@@ -5721,20 +6621,26 @@ fmtVals041F:
         FCB     $01,$01
 
 parseFormatParams:
-        JSR     $E98C
+        JSR     LE98C
         CMPA    #$40
-        BHI     $D47E
+        BHI     LD47E
         CMPA    #$28
-        BNE     $D472
-        JSR     $D3E5
-        JMP     $D475
-        JSR     $E98C
-        JSR     $E98C
-        JSR     $E98C
-        JSR     $E98C
+        BNE     LD472
+        JSR     LD3E5
+        JMP     LD475
+
+LD472:
+        JSR     LE98C
+
+LD475:
+        JSR     LE98C
+        JSR     LE98C
+        JSR     LE98C
+
+LD47E:
         ANDA    #$0F
         STAA    $0488
-        JSR     $E98C
+        JSR     LE98C
         ANDA    #$07
         STAA    $041E
         ASLA
@@ -5745,12 +6651,16 @@ parseFormatParams:
 
 fmtLookup:
         LDAB    #$11
+
+LD494:
         LDX     #$D419
         ABX
         CMPA    $00,X
-        BEQ     $D49F
+        BEQ     LD49F
         DECB
-        BPL     $D494
+        BPL     LD494
+
+LD49F:
         LDX     #$D42B
         ABX
         LDAA    $00,X
@@ -5763,54 +6673,84 @@ fmtLookup:
         ABX
         LDAA    $00,X
         STAA    $041F
-        JMP     $D34C
+        JMP     LD34C
+
+LD4BD:
         CMPA    #$7F
-        BCS     $D4C4
-        JMP     $D349
+        BCS     LD4C4
+        JMP     LD349
+
+LD4C4:
         STAA    $041B
         LDAB    #$66
         LDAA    #$00
+
+LD4CB:
         LDX     #$041F
         ABX
         STAA    $00,X
         DECB
-        BNE     $D4CB
-        JSR     $E98C
-        JMP     $D527
-        JSR     $E98C
+        BNE     LD4CB
+        JSR     LE98C
+        JMP     LD527
+
+LD4DA:
+        JSR     LE98C
+
+LD4DD:
         CMPA    #$30
-        BCS     $D504
+        BCS     LD504
         CMPA    #$80
-        BCS     $D4E8
-        JMP     $D7ED
+        BCS     LD4E8
+        JMP     LD7ED
+
+LD4E8:
         CMPA    #$40
-        BCC     $D504
+        BCC     LD504
         CMPA    #$34
-        BCS     $D4F3
-        JMP     $D7ED
+        BCS     LD4F3
+        JMP     LD7ED
+
+LD4F3:
         ANDA    #$03
         TAB
         LDAA    #$FF
         LDX     #$0422
         ABX
         STAA    $00,X
-        JMP     $D4DA
-        JSR     $F081
+        JMP     LD4DA
+
+LD501:
+        JSR     LF081
+
+LD504:
         CMPA    #$1F
-        BNE     $D50B
-        JMP     $D6C4
-        BCC     $D510
-        JMP     $D7ED
+        BNE     LD50B
+        JMP     LD6C4
+
+LD50B:
+        BCC     LD510
+        JMP     LD7ED
+
+LD510:
         CMPA    #$30
-        BNE     $D517
-        JMP     $D6D1
-        BCC     $D51C
-        JMP     $D653
+        BNE     LD517
+        JMP     LD6D1
+
+LD517:
+        BCC     LD51C
+        JMP     LD653
+
+LD51C:
         CMPA    #$80
-        BCS     $D523
-        JMP     $D7ED
+        BCS     LD523
+        JMP     LD7ED
+
+LD523:
         CMPA    #$40
-        BCC     $D54F
+        BCC     LD54F
+
+LD527:
         CLR     $0422
         CLR     $0423
         CLR     $0424
@@ -5820,21 +6760,29 @@ fmtLookup:
         CLR     $0421
         LDAB    cursorRowMax
         CMPB    #$13
-        BNE     $D546
-        JMP     $D4DD
+        BNE     LD546
+        JMP     LD4DD
+
+LD546:
         INC     $0487
         INC     $0487
-        JMP     $D4DD
+        JMP     LD4DD
+
+LD54F:
         ANDA    #$3F
         LDAB    $041C
-        BMI     $D559
-        JMP     $D623
+        BMI     LD559
+        JMP     LD623
+
+LD559:
         LDAB    $041E
         CMPB    #$04
-        BNE     $D569
+        BNE     LD569
         STAA    $0421
         CLR     $0420
-        JMP     $D5A7
+        JMP     LD5A7
+
+LD569:
         CLR     $0420
         CLR     $0421
         LSRA
@@ -5861,16 +6809,22 @@ fmtLookup:
         LSRA
         ROR     $0420
         ASR     $0420
-        JSR     $D5B5
+
+LD5A7:
+        JSR     LD5B5
         LDAB    $041D
-        BPL     $D5B2
-        JSR     $D5B5
-        JMP     $D501
+        BPL     LD5B2
+        JSR     LD5B5
+
+LD5B2:
+        JMP     LD501
+
+LD5B5:
         LDAB    $0487
         CMPB    #$18
-        BCC     $D61F
+        BCC     LD61F
         LDAA    $0422
-        BPL     $D5D2
+        BPL     LD5D2
         LDAB    $0487
         LDAA    $0420
         LDX     #$0426
@@ -5878,8 +6832,10 @@ fmtLookup:
         STAA    $00,X
         LDAA    $0421
         STAA    $01,X
+
+LD5D2:
         LDAA    $0423
-        BPL     $D5E8
+        BPL     LD5E8
         LDAB    $0487
         LDX     #$043E
         ABX
@@ -5887,8 +6843,10 @@ fmtLookup:
         STAA    $00,X
         LDAA    $0421
         STAA    $01,X
+
+LD5E8:
         LDAA    $0424
-        BPL     $D5FE
+        BPL     LD5FE
         LDAB    $0487
         LDAA    $0420
         LDX     #$0456
@@ -5896,8 +6854,10 @@ fmtLookup:
         STAA    $00,X
         LDAA    $0421
         STAA    $01,X
+
+LD5FE:
         LDAA    $0425
-        BPL     $D614
+        BPL     LD614
         LDAB    $0487
         LDAA    $0420
         LDX     #$046E
@@ -5905,99 +6865,139 @@ fmtLookup:
         STAA    $00,X
         LDAA    $0421
         STAA    $01,X
+
+LD614:
         LDAB    $0487
         INCB
         INCB
         CMPB    #$19
-        BCS     $D61F
+        BCS     LD61F
         LDAB    #$18
+
+LD61F:
         STAB    $0487
         RTS
+
+LD623:
         LDAB    $0487
         RORB
-        BCS     $D644
+        BCS     LD644
         STAA    $0420
         CLR     $0421
         LSR     $0420
         ROR     $0421
         LSR     $0420
         ROR     $0421
-        JSR     $D5B5
+        JSR     LD5B5
         DEC     $0487
-        JMP     $D501
+        JMP     LD501
+
+LD644:
         ORAA    $0421
         STAA    $0421
         DEC     $0487
-        JSR     $D5B5
-        JMP     $D501
+        JSR     LD5B5
+        JMP     LD501
+
+LD653:
         LDAB    $0487
         RORB
-        BCC     $D65C
+        BCC     LD65C
         INC     $0487
+
+LD65C:
         CMPA    #$20
-        BNE     $D669
+        BNE     LD669
         CLR     $0420
         CLR     $0421
-        JMP     $D697
+        JMP     LD697
+
+LD669:
         CMPA    #$2C
-        BNE     $D679
+        BNE     LD679
         CLR     $0420
         CLR     $0421
-        JSR     $D6B8
-        JMP     $D501
+        JSR     LD6B8
+        JMP     LD501
+
+LD679:
         CMPA    #$2D
-        BNE     $D68B
+        BNE     LD68B
         LDAB    #$FF
         STAB    $0420
         STAB    $0421
-        JSR     $D6B8
-        JMP     $D501
+        JSR     LD6B8
+        JMP     LD501
+
+LD68B:
         CMPA    #$2F
-        BNE     $D6A4
+        BNE     LD6A4
         LDAB    #$FF
         STAB    $0420
         STAB    $0421
-        JSR     $D6B8
+
+LD697:
+        JSR     LD6B8
         LDAB    $0487
         CMPB    #$18
-        BCS     $D697
-        JMP     $D501
+        BCS     LD697
+        JMP     LD501
+
+LD6A4:
         CMPA    #$2E
-        BEQ     $D697
+        BEQ     LD697
         ANDA    #$0F
         STAA    $0488
-        JSR     $D6B8
+
+LD6AD:
+        JSR     LD6B8
         DEC     $0488
-        BNE     $D6AD
-        JMP     $D501
-        JSR     $D5B5
+        BNE     LD6AD
+        JMP     LD501
+
+LD6B8:
+        JSR     LD5B5
         LDAB    $041D
-        BPL     $D6C3
-        JSR     $D5B5
+        BPL     LD6C3
+        JSR     LD5B5
+
+LD6C3:
         RTS
-        JSR     $D6D9
+
+LD6C4:
+        JSR     LD6D9
         LDAA    #$FF
         STAA    $1B23
         LDAA    #$1F
-        JMP     $D358
+        JMP     LD358
+
+LD6D1:
         PSHA
-        JSR     $D6D9
+        JSR     LD6D9
         PULA
-        JMP     $D527
+        JMP     LD527
+
+LD6D9:
         LDAB    $0487
         RORB
-        BCC     $D6E2
+        BCC     LD6E2
         INC     $0487
+
+LD6E2:
         CLR     $0420
         CLR     $0421
-        JSR     $D6B8
+
+LD6E8:
+        JSR     LD6B8
         LDAB    $0487
         CMPB    #$18
-        BCS     $D6E8
+        BCS     LD6E8
         LDAA    $041B
         SUBA    #$20
-        BCC     $D6FA
+        BCC     LD6FA
         RTS
+
+LD6FA:
         LDAB    #$30
         MUL
         ADDD    #$0800
@@ -6005,15 +7005,19 @@ fmtLookup:
         LDAA    $041B
         ADDA    $041F
         CMPA    #$7F
-        BCS     $D70F
+        BCS     LD70F
         LDAA    #$7F
+
+LD70F:
         STAA    $041B
         LDAA    $041E
         CMPA    #$01
-        BEQ     $D73D
+        BEQ     LD73D
         CMPA    #$02
-        BEQ     $D75B
-        JMP     $D78C
+        BEQ     LD75B
+        JMP     LD78C
+
+LD720:
         PSHB
         PSHA
         PSHX
@@ -6029,7 +7033,11 @@ fmtLookup:
         PULA
         PULB
         RTS
+
+LD73D:
         LDAB    #$00
+
+LD73F:
         LDX     #$0426
         ABX
         LDAA    $01,X
@@ -6038,13 +7046,17 @@ fmtLookup:
         ANDA    #$0F
         ORAA    #$00
         STAA    $0421
-        JSR     $D720
+        JSR     LD720
         INCB
         INCB
         CMPB    #$18
-        BCS     $D73F
+        BCS     LD73F
         RTS
+
+LD75B:
         LDAB    #$00
+
+LD75D:
         LDX     #$0426
         ABX
         LDAA    $01,X
@@ -6053,7 +7065,7 @@ fmtLookup:
         ANDA    #$0F
         ORAA    #$20
         STAA    $0421
-        JSR     $D720
+        JSR     LD720
         LDX     #$043E
         ABX
         LDAA    $01,X
@@ -6061,13 +7073,17 @@ fmtLookup:
         LDAA    $00,X
         ANDA    #$0F
         STAA    $0421
-        JSR     $D720
+        JSR     LD720
         INCB
         INCB
         CMPB    #$18
-        BCS     $D75D
+        BCS     LD75D
         RTS
+
+LD78C:
         CLRB
+
+LD78D:
         LDX     #$043E
         ABX
         LDAA    $01,X
@@ -6089,7 +7105,7 @@ fmtLookup:
         ANDA    #$3F
         ORAA    $0489
         STAA    $0420
-        JSR     $D720
+        JSR     LD720
         LDX     #$046E
         ABX
         LDAA    $01,X
@@ -6110,38 +7126,56 @@ fmtLookup:
         ANDA    #$3F
         ORAA    $0489
         STAA    $0420
-        JSR     $D720
+        JSR     LD720
         INCB
         INCB
         CMPB    #$18
-        BHI     $D7EC
-        JMP     $D78D
+        BHI     LD7EC
+        JMP     LD78D
+
+LD7EC:
         RTS
+
+LD7ED:
         CLR     $0420
         CLR     $0421
-        JSR     $D6B8
+
+LD7F3:
+        JSR     LD6B8
         LDAB    $0487
         CMPB    #$18
-        BCS     $D7F3
-        JSR     $D6D9
+        BCS     LD7F3
+        JSR     LD6D9
         LDAA    #$FF
         STAA    $1B23
-        JMP     $D349
-        JSR     $E98C
+        JMP     LD349
+
+LD808:
+        JSR     LE98C
         CMPA    #$20
-        BNE     $D812
-        JMP     $D870
+        BNE     LD812
+        JMP     LD870
+
+LD812:
         CMPA    #$21
-        BNE     $D819
-        JMP     $D843
+        BNE     LD819
+        JMP     LD843
+
+LD819:
         CMPA    #$30
-        BCS     $D820
-        JMP     $D8A8
-        JMP     $D349
+        BCS     LD820
+        JMP     LD8A8
+
+LD820:
+        JMP     LD349
         FCB     $00,$00,$00,$0F,$00,$F0,$00,$FF,$0F,$00,$0F,$0F,$0F,$F0,$0F,$FF
         FCB     $00,$00,$00,$0F,$00,$F0,$00,$FF,$0F,$00,$0F,$0F,$0F,$F0,$0F,$FF
-        JSR     $D849
-        JMP     $D34C
+
+LD843:
+        JSR     LD849
+        JMP     LD34C
+
+LD849:
         CLRA
         STAA    $1B2A
         INCA
@@ -6150,8 +7184,10 @@ fmtLookup:
         STAA    $1B2C
         INCA
         STAA    $1B2D
-        JSR     $DA1C
+        JSR     LDA1C
         LDAB    #$1F
+
+LD85E:
         LDX     #$D823
         ABX
         LDAA    $00,X
@@ -6159,40 +7195,58 @@ fmtLookup:
         ABX
         STAA    $00,X
         DECB
-        BPL     $D85E
-        JMP     $D9FE
+        BPL     LD85E
+        JMP     LD9FE
+
+LD870:
         CLR     $04BF
         CLR     $04C0
-        JSR     $F081
+        JSR     LF081
         CMPA    #$30
-        BCS     $D880
-        JMP     $D34C
+        BCS     LD880
+        JMP     LD34C
+
+LD880:
         CMPA    #$1F
-        BNE     $D887
-        JMP     $D358
-        BCC     $D88C
-        JMP     $D349
+        BNE     LD887
+        JMP     LD358
+
+LD887:
+        BCC     LD88C
+        JMP     LD349
+
+LD88C:
         ANDA    #$0F
         STAA    $04BF
-        JSR     $F081
+        JSR     LF081
         CMPA    #$1F
-        BNE     $D89B
-        JMP     $D358
-        BCC     $D8A0
-        JMP     $D349
+        BNE     LD89B
+        JMP     LD358
+
+LD89B:
+        BCC     LD8A0
+        JMP     LD349
+
+LD8A0:
         ANDA    #$0F
         STAA    $04C0
-        JMP     $D34C
+        JMP     LD34C
+
+LD8A8:
         ANDA    #$0F
         STAA    $0420
-        JSR     $F081
+        JSR     LF081
         CMPA    #$40
-        BCC     $D8E0
+        BCC     LD8E0
         CMPA    #$1F
-        BNE     $D8BB
-        JMP     $D358
-        BCC     $D8C0
-        JMP     $D349
+        BNE     LD8BB
+        JMP     LD358
+
+LD8BB:
+        BCC     LD8C0
+        JMP     LD349
+
+LD8C0:
         ANDA    #$0F
         STAA    $0421
         LDAA    $0420
@@ -6200,24 +7254,34 @@ fmtLookup:
         MUL
         ADDB    $0421
         STAB    $0420
-        JSR     $F081
+        JSR     LF081
         CMPA    #$1F
-        BNE     $D8DB
-        JMP     $D358
-        BCC     $D8E0
-        JMP     $D349
+        BNE     LD8DB
+        JMP     LD358
+
+LD8DB:
+        BCC     LD8E0
+        JMP     LD349
+
+LD8E0:
         LDAB    $04BF
         ANDB    #$0F
         CMPB    #$02
-        BNE     $D8EC
-        JMP     $D9C9
+        BNE     LD8EC
+        JMP     LD9C9
+
+LD8EC:
         LDAB    $0420
         CMPB    #$10
-        BCC     $D8F6
-        JMP     $D349
+        BCC     LD8F6
+        JMP     LD349
+
+LD8F6:
         CMPB    #$20
-        BCS     $D8FD
-        JMP     $D349
+        BCS     LD8FD
+        JMP     LD349
+
+LD8FD:
         SUBB    #$10
         STAB    $0420
         CLR     $04C1
@@ -6225,28 +7289,44 @@ fmtLookup:
         CLR     $04C3
         CLR     $04C4
         CLR     $04C5
-        JMP     $D917
-        JSR     $F081
+        JMP     LD917
+
+LD914:
+        JSR     LF081
+
+LD917:
         CMPA    #$1F
-        BNE     $D91E
-        JMP     $D358
+        BNE     LD91E
+        JMP     LD358
+
+LD91E:
         CMPA    #$40
-        BCC     $D925
-        JMP     $D349
+        BCC     LD925
+        JMP     LD349
+
+LD925:
         CMPA    #$80
-        BCS     $D92C
-        JMP     $D349
+        BCS     LD92C
+        JMP     LD349
+
+LD92C:
         STAA    $04C6
-        JSR     $F081
+        JSR     LF081
         CMPA    #$1F
-        BNE     $D939
-        JMP     $D358
+        BNE     LD939
+        JMP     LD358
+
+LD939:
         CMPA    #$40
-        BCC     $D940
-        JMP     $D349
+        BCC     LD940
+        JMP     LD349
+
+LD940:
         CMPA    #$80
-        BCS     $D947
-        JMP     $D349
+        BCS     LD947
+        JMP     LD349
+
+LD947:
         LSRA
         ROR     $04C1
         LSRA
@@ -6275,20 +7355,26 @@ fmtLookup:
         LDAA    #$00
         STAA    $04C5
         LDAA    #$04
+
+LD981:
         ASL     $04C1
         ROL     $04C5
         DECA
-        BNE     $D981
+        BNE     LD981
         LDAA    #$04
+
+LD98C:
         ASL     $04C2
         ROL     $04C4
         DECA
-        BNE     $D98C
+        BNE     LD98C
         LDAA    #$04
+
+LD997:
         ASL     $04C3
         ROL     $04C4
         DECA
-        BNE     $D997
+        BNE     LD997
         LDAA    $0420
         ASLA
         TAB
@@ -6298,40 +7384,58 @@ fmtLookup:
         STAA    $01,X
         LDAA    $04C5
         STAA    $00,X
-        JSR     $D9FE
+        JSR     LD9FE
         INC     $0420
         LDAB    $0420
         CMPB    #$10
-        BCS     $D9C3
-        JMP     $D34C
-        JMP     $D914
-        JSR     $F081
+        BCS     LD9C3
+        JMP     LD34C
+
+LD9C3:
+        JMP     LD914
+
+LD9C6:
+        JSR     LF081
+
+LD9C9:
         CMPA    #$1F
-        BNE     $D9D0
-        JMP     $D358
+        BNE     LD9D0
+        JMP     LD358
+
+LD9D0:
         CMPA    #$40
-        BCC     $D9D7
-        JMP     $D349
+        BCC     LD9D7
+        JMP     LD349
+
+LD9D7:
         CMPA    #$60
-        BCS     $D9DE
-        JMP     $D349
+        BCS     LD9DE
+        JMP     LD349
+
+LD9DE:
         ANDA    #$1F
         LDAB    $0420
         LDX     #$1B2A
         ABX
         STAA    $00,X
         INC     $0420
-        JSR     $DA1C
+        JSR     LDA1C
         LDAB    $0420
         CMPB    #$04
-        BCS     $D9FB
+        BCS     LD9FB
         LDAA    #$05
         STAA    $0420
-        JMP     $D9C6
+
+LD9FB:
+        JMP     LD9C6
+
+LD9FE:
         PSHA
         PSHB
         PSHX
         LDAB    #$0F
+
+LDA03:
         ASLB
         LDX     #$05F6
         ABX
@@ -6343,11 +7447,13 @@ fmtLookup:
         ABX
         STAA    $00,X
         DECB
-        BPL     $DA03
+        BPL     LDA03
         PULX
         PULB
         PULA
         RTS
+
+LDA1C:
         PSHA
         LDAA    $1B2D
         ANDA    #$1F
@@ -6367,65 +7473,75 @@ fmtLookup:
         RTS
 
 ctrlIgnored:
-        JMP     $E9A2
+        JMP     LE9A2
 
 ctlAPB:
         DEC     cursorCol               ; C0 $08 APB - cursor back
-        JSR     $EC16
+        JSR     LEC16
         JMP     parseNextByte
 
 ctlAPF:
         INC     cursorCol               ; C0 $09 APF - cursor forward
-        JSR     $EC16
+        JSR     LEC16
         JMP     parseNextByte
 
 ctlAPD:
         TST     $04AF                   ; C0 $0A APD - cursor down
-        BPL     $DA5D
+        BPL     LDA5D
         JMP     parseNextByte
-        JSR     $EE3A
+
+LDA5D:
+        JSR     LEE3A
         TST     $04A3
-        BPL     $DA73
+        BPL     LDA73
         LDAA    cursorRow
         CMPA    scrollBottom
-        BNE     $DA73
-        JSR     $EA44
+        BNE     LDA73
+        JSR     LEA44
         JMP     parseNextByte
+
+LDA73:
         INC     cursorRow
-        JSR     $EC16
-        JSR     $E9A5
+        JSR     LEC16
+        JSR     LE9A5
         JMP     parseNextByte
 
 ctlAPU:
         TST     $04AF                   ; C0 $0B APU - cursor up
-        BPL     $DA87
+        BPL     LDA87
         JMP     parseNextByte
-        JSR     $EE3A
+
+LDA87:
+        JSR     LEE3A
         TST     $04A3
-        BPL     $DA9D
+        BPL     LDA9D
         LDAA    cursorRow
         CMPA    scrollTop
-        BNE     $DA9D
-        JSR     $EB28
+        BNE     LDA9D
+        JSR     LEB28
         JMP     parseNextByte
+
+LDA9D:
         DEC     cursorRow
-        JSR     $EC16
-        JSR     $E9A5
+        JSR     LEC16
+        JSR     LE9A5
         JMP     parseNextByte
 
 ctlCS:
         TST     $04AF                   ; C0 $0C CS - clear screen
-        BPL     $DAB1
+        BPL     LDAB1
         JMP     parseNextByte
+
+LDAB1:
         LDAA    #$FF
         STAA    scrollTop
         STAA    scrollBottom
         STAA    $04A3
-        JSR     $EE4B
+        JSR     LEE4B
         LDAA    #$18
         STAA    cursorRow
         CLR     cursorCol
-        JSR     $E9A5
+        JSR     LE9A5
         LDAA    $1B25
         STAA    $1B23
         CLR     $0495
@@ -6435,14 +7551,16 @@ ctlCS:
 
 ctlAPR:
         CLR     cursorCol               ; C0 $0D APR - cursor to start of line
-        JSR     $EC16
-        JSR     $E9A5
+        JSR     LEC16
+        JSR     LE9A5
         JMP     parseNextByte
 
 ctlSO:
         TST     $04AF                   ; C0 $0E SO - shift out to G1
-        BPL     $DAF0
+        BPL     LDAF0
         JMP     parseNextByte
+
+LDAF0:
         LDAA    #$01
         STAA    $049D
         STAA    $04A2
@@ -6450,8 +7568,10 @@ ctlSO:
 
 ctlSI:
         TST     $04AF                   ; C0 $0F SI - shift in to G0
-        BPL     $DB03
+        BPL     LDB03
         JMP     parseNextByte
+
+LDB03:
         LDAA    #$00
         STAA    $049D
         STAA    $04A2
@@ -6459,8 +7579,10 @@ ctlSI:
 
 ctlCON:
         TST     $04AF                   ; C0 $11 CON - cursor on
-        BPL     $DB16
+        BPL     LDB16
         JMP     parseNextByte
+
+LDB16:
         LDAA    #$FF
         STAA    $1B20
         LDX     rowChar
@@ -6473,34 +7595,44 @@ ctlCON:
 
 ctlRPT:
         TST     $04AF                   ; C0 $12 RPT - repeat last character
-        BPL     $DB33
+        BPL     LDB33
         JMP     parseNextByte
-        JSR     $E98C
+
+LDB33:
+        JSR     LE98C
         ANDA    #$3F
         STAA    $0490
         LDAA    $04A0
         STAA    $04A1
+
+LDB41:
         LDAA    $0490
-        BEQ     $DB58
+        BEQ     LDB58
         LDAA    $04A1
         STAA    $049F
         LDAA    charCode
-        JSR     $E781
+        JSR     LE781
         DEC     $0490
-        JMP     $DB41
+        JMP     LDB41
+
+LDB58:
         JMP     parseNextByte
 
 ctlCOF:
         TST     $04AF                   ; C0 $14 COF - cursor off
-        BPL     $DB63
+        BPL     LDB63
         JMP     parseNextByte
+
+LDB63:
         CLR     $1B20
+
+LDB66:
         JMP     parseNextByte
 
 ctlCAN:
         LDX     rowAttr                 ; C0 $18 CAN - cancel to end of line
         LDAA    $00,X
-        BMI     $DB66
+        BMI     LDB66
         LDAB    cursorCol
         STAB    $0490
         ASLB
@@ -6517,6 +7649,8 @@ ctlCAN:
         LDAA    $03,X
         ANDA    #$BF
         STAA    $041A
+
+LDB94:
         LDAA    #$A0
         LDX     rowChar
         LDAB    cursorCol
@@ -6540,23 +7674,27 @@ ctlCAN:
         INC     cursorCol
         LDAA    cursorCol
         CMPA    #$28
-        BCS     $DB94
+        BCS     LDB94
         LDAA    $0490
         STAA    cursorCol
         JMP     parseNextByte
 
 ctlSS2:
         TST     $04AF                   ; C0 $19 SS2 - single shift G2
-        BPL     $DBDA
+        BPL     LDBDA
         JMP     parseNextByte
+
+LDBDA:
         LDAA    #$02
         STAA    $049F
         JMP     parseNextByte
 
 ctlSS3:
         TST     $04AF                   ; C0 $1D SS3 - single shift G3
-        BPL     $DBEA
+        BPL     LDBEA
         JMP     parseNextByte
+
+LDBEA:
         LDAA    #$03
         STAA    $049F
         JMP     parseNextByte
@@ -6564,53 +7702,71 @@ ctlSS3:
 ctlAPH:
         CLR     cursorRow               ; C0 $1E APH - cursor home
         CLR     cursorCol
-        JSR     $ECB5
-        JSR     $E9A5
-        JSR     $EE3A
+        JSR     LECB5
+        JSR     LE9A5
+        JSR     LEE3A
         JMP     parseNextByte
 
 ctlUS:
         TST     $04AF                   ; C0 $1F US - unit separator
-        BPL     $DC0C
-        JSR     $E744
-        JSR     $E98C
+        BPL     LDC0C
+        JSR     LE744
+
+LDC0C:
+        JSR     LE98C
         CMPA    #$23
-        BNE     $DC16
-        JMP     $D40A
+        BNE     LDC16
+        JMP     LD40A
+
+LDC16:
         CMPA    #$26
-        BNE     $DC1D
-        JMP     $D808
+        BNE     LDC1D
+        JMP     LD808
+
+LDC1D:
         CMPA    #$2D
-        BNE     $DC24
-        JMP     $E5FA
+        BNE     LDC24
+        JMP     LE5FA
+
+LDC24:
         CMPA    #$2F
-        BNE     $DC2B
-        JMP     $E637
+        BNE     LDC2B
+        JMP     LE637
+
+LDC2B:
         CMPA    #$3F
-        BNE     $DC32
-        JMP     $DC6A
+        BNE     LDC32
+        JMP     LDC6A
+
+LDC32:
         STAA    $048D
         ANDA    #$F0
         CMPA    #$30
-        BNE     $DC3E
-        JMP     $E99F
+        BNE     LDC3E
+        JMP     LE99F
+
+LDC3E:
         CMPA    #$40
-        BCC     $DC45
-        JMP     $D34C
+        BCC     LDC45
+        JMP     LD34C
+
+LDC45:
         CLR     $1B20
-        JSR     $ECB5
-        JSR     $EE3A
+        JSR     LECB5
+        JSR     LEE3A
         LDAA    $048D
         ANDA    #$3F
         STAA    cursorRow
         DEC     cursorRow
-        JSR     $E98C
+        JSR     LE98C
         ANDA    #$3F
         STAA    cursorCol
         DEC     cursorCol
-        JSR     $E9A5
+        JSR     LE9A5
         JMP     parseNextByte
-        JMP     $D34C
+
+LDC6A:
+        JMP     LD34C
 
 ; Colour handlers, written as a skip chain.
 ;
@@ -6659,95 +7815,99 @@ c1aAlphaCyan:
 
 c1aAlphaWhite:
         LDAA    #$07                    ; C1 $87 AlphaWhite - alphanumeric foreground white (serial set)
-        JSR     $E9CE
+        JSR     LE9CE
         LDAA    $04A2
         STAA    $049D
-        JMP     $DDFB
+        JMP     LDDFB
 
 c1aFSH:
         LDX     #$1003                  ; C1 $88 FSH - flash on (serial set)
         LDAB    #$80
         LDAA    #$00
-        JSR     $E4FF
+        JSR     LE4FF
         LDX     #$1001
         LDAB    #$C0
         LDAA    #$80
-        JSR     $E4FF
+        JSR     LE4FF
         LDX     #$1003
         LDAB    #$30
         LDAA    #$10
-        JSR     $E4FF
-        JMP     $DDFB
+        JSR     LE4FF
+        JMP     LDDFB
 
 c1aSTD:
         LDX     #$1003                  ; C1 $89 STD - steady (serial set)
         LDAB    #$80
         TBA
-        JSR     $E4FF
+        JSR     LE4FF
         LDX     #$1001
         LDAB    #$C0
         LDAA    #$80
-        JSR     $E4FF
+        JSR     LE4FF
         LDX     #$1003
         LDAB    #$30
         LDAA    #$10
-        JSR     $E4FF
-        JMP     $DDFB
+        JSR     LE4FF
+        JMP     LDDFB
 
 c1aEBX:
         LDX     #$4000                  ; C1 $8A EBX - end box (serial set)
         LDAB    #$04
         LDAA    #$00
-        JSR     $E4FF
-        JMP     $DDFB
+        JSR     LE4FF
+        JMP     LDDFB
 
 c1aSBX:
         LDX     #$4000                  ; C1 $8B SBX - start box (serial set)
         LDAB    #$04
         LDAA    #$04
-        JSR     $E4FF
-        JMP     $DDFB
+        JSR     LE4FF
+        JMP     LDDFB
 
 c1aNSZ:
         LDX     #$0400                  ; C1 $8C NSZ - normal size (serial set)
         LDAB    #$03
         LDAA    #$00
-        JSR     $E4FF
-        JMP     $DDFB
+        JSR     LE4FF
+        JMP     LDDFB
 
 c1aDBH:
         LDX     rowAttr                 ; C1 $8D DBH - double height (serial set)
         LDAA    $00,X
-        BMI     $DD3E
+        BMI     LDD3E
         LDX     #$0400
         LDAB    #$03
         LDAA    #$01
-        JSR     $E4FF
-        JMP     $DD2A
+        JSR     LE4FF
+        JMP     LDD2A
 
 c1aDBW:
         LDX     #$0400                  ; C1 $8E DBW - double width (serial set)
         LDAB    #$03
         LDAA    #$02
-        JSR     $E4FF
-        JMP     $DDFB
+        JSR     LE4FF
+        JMP     LDDFB
 
 c1aDBS:
         LDX     rowAttr                 ; C1 $8F DBS - double size (serial set)
         LDAA    $00,X
-        BMI     $DD3E
+        BMI     LDD3E
         LDX     #$0400
         LDAB    #$03
         LDAA    #$03
-        JSR     $E4FF
+        JSR     LE4FF
+
+LDD2A:
         LDAA    cursorRow
         CMPA    scrollBottom
-        BNE     $DD3E
-        JSR     $EA44
+        BNE     LDD3E
+        JSR     LEA44
         DEC     cursorRow
-        JSR     $EC16
-        JSR     $E9A5
-        JMP     $DDFB
+        JSR     LEC16
+        JSR     LE9A5
+
+LDD3E:
+        JMP     LDDFB
 
 c1aMosaicBlack:
         LDAA    #$00                    ; C1 $90 MosaicBlack - mosaic foreground black (serial set)
@@ -6781,44 +7941,46 @@ c1aMosaicWhite:
         LDAA    #$07                    ; C1 $97 MosaicWhite - mosaic foreground white (serial set)
         STAA    $048D
         TST     $04AF
-        BPL     $DD63
+        BPL     LDD63
         JMP     parseNextByte
+
+LDD63:
         LDAA    $048D
-        JSR     $E9CE
+        JSR     LE9CE
         LDAA    $049D
         STAA    $04A2
         LDAA    #$FF
         STAA    $049D
-        JMP     $DDFB
+        JMP     LDDFB
 
 c1aCDY:
         LDX     #$2003                  ; C1 $98 CDY - conceal display (serial set)
         LDAB    #$08
         LDAA    #$00
-        JSR     $E4FF
-        JMP     $DDFB
+        JSR     LE4FF
+        JMP     LDDFB
 
 c1aSPL:
         LDX     #$0800                  ; C1 $99 SPL - stop lining (serial set)
         LDAB    #$08
         LDAA    #$00
-        JSR     $E4FF
-        JMP     $DDFB
+        JSR     LE4FF
+        JMP     LDDFB
 
 c1aSTL:
         LDX     #$0800                  ; C1 $9A STL - start lining (serial set)
         LDAB    #$08
         LDAA    #$08
-        JSR     $E4FF
-        JMP     $DDFB
+        JSR     LE4FF
+        JMP     LDDFB
 
 c1aCSI:
-        JMP     $E9A2                   ; C1 $9B CSI - control sequence introducer (serial set)
+        JMP     LE9A2                   ; C1 $9B CSI - control sequence introducer (serial set)
 
 c1aBBD:
         LDAA    #$00                    ; C1 $9C BBD - black background (serial set)
-        JSR     $E9FF
-        JMP     $DDFB
+        JSR     LE9FF
+        JMP     LDDFB
 
 c1aNBD:
         LDAB    cursorCol               ; C1 $9D NBD - new background (serial set)
@@ -6834,7 +7996,7 @@ c1aNBD:
         ANDA    #$03
         LDX     #$0203
         LDAB    #$03
-        JSR     $E4FF
+        JSR     LE4FF
         LDAA    $048C
         RORA
         RORA
@@ -6843,27 +8005,35 @@ c1aNBD:
         ANDA    #$E0
         LDAB    #$E0
         LDX     #$0202
-        JSR     $E4FF
-        JMP     $DDFB
+        JSR     LE4FF
+        JMP     LDDFB
 
 c1aHMS:
         TST     $04AF                   ; C1 $9E HMS - hold mosaic (serial set)
-        BPL     $DDE0
+        BPL     LDDE0
         JMP     parseNextByte
+
+LDDE0:
         LDAA    $049D
-        BPL     $DDEB
+        BPL     LDDEB
         LDAA    charCode
         STAA    $0498
-        JMP     $DDFB
+
+LDDEB:
+        JMP     LDDFB
 
 c1aRMS:
         TST     $04AF                   ; C1 $9F RMS - release mosaic (serial set)
-        BPL     $DDF6
+        BPL     LDDF6
         JMP     parseNextByte
+
+LDDF6:
         LDAA    #$09
         STAA    $0498
+
+LDDFB:
         LDAA    $0498
-        JMP     $D358
+        JMP     LD358
 
 c1bAlphaBlack:
         LDAA    #$00                    ; C1 $80 AlphaBlack - alphanumeric foreground black (parallel set)
@@ -6895,7 +8065,7 @@ c1bAlphaCyan:
 
 c1bAlphaWhite:
         LDAA    #$07                    ; C1 $87 AlphaWhite - alphanumeric foreground white (parallel set)
-        JSR     $E9CE
+        JSR     LE9CE
         JMP     parseNextByte
 
 c1bFSH:
@@ -6992,7 +8162,7 @@ c1bMosaicCyan:
 
 c1bMosaicWhite:
         LDAA    #$07                    ; C1 $97 MosaicWhite - mosaic foreground white (parallel set)
-        JSR     $E9FF
+        JSR     LE9FF
         JMP     parseNextByte
 
 c1bCDY:
@@ -7014,7 +8184,7 @@ c1bSTL:
         JMP     parseNextByte
 
 c1bCSI:
-        JMP     $E9A2                   ; C1 $9B CSI - control sequence introducer (parallel set)
+        JMP     LE9A2                   ; C1 $9B CSI - control sequence introducer (parallel set)
 
 c1bBBD:
         LDAA    attr3                   ; C1 $9C BBD - black background (parallel set)
@@ -7072,91 +8242,151 @@ escLS3:
         JMP     parseNextByte
 
 escDesignateG0:
-        JSR     $E98C                   ; ESC $28 - ESC 2/8
+        JSR     LE98C                   ; ESC $28 - ESC 2/8
         CMPA    #$20
-        BNE     $DF53
+        BNE     LDF53
         LDAA    #$05
         STAA    $0499
-        JSR     $E98C
+        JSR     LE98C
         JMP     parseNextByte
+
+LDF53:
         ANDA    #$0F
-        BEQ     $DF58
+        BEQ     LDF58
         DECA
+
+LDF58:
         STAA    $0499
         JMP     parseNextByte
 
 escDesignateG1:
-        JSR     $E98C                   ; ESC $29 - ESC 2/9
+        JSR     LE98C                   ; ESC $29 - ESC 2/9
         CMPA    #$20
-        BNE     $DF70
+        BNE     LDF70
         LDAA    #$05
         STAA    $049A
-        JSR     $E98C
+        JSR     LE98C
         JMP     parseNextByte
+
+LDF70:
         ANDA    #$0F
-        BEQ     $DF75
+        BEQ     LDF75
         DECA
+
+LDF75:
         STAA    $049A
         JMP     parseNextByte
 
 escDesignateG2:
-        JSR     $E98C                   ; ESC $2A - ESC 2/10
+        JSR     LE98C                   ; ESC $2A - ESC 2/10
         CMPA    #$20
-        BNE     $DF8D
+        BNE     LDF8D
         LDAA    #$05
         STAA    $049B
-        JSR     $E98C
+        JSR     LE98C
         JMP     parseNextByte
+
+LDF8D:
         ANDA    #$0F
-        BEQ     $DF92
+        BEQ     LDF92
         DECA
+
+LDF92:
         STAA    $049B
         JMP     parseNextByte
 
 escDesignateG3:
-        JSR     $E98C                   ; ESC $2B - ESC 2/11
+        JSR     LE98C                   ; ESC $2B - ESC 2/11
         CMPA    #$20
-        BNE     $DFAA
+        BNE     LDFAA
         LDAA    #$05
         STAA    $049C
-        JSR     $E98C
+        JSR     LE98C
         JMP     parseNextByte
+
+LDFAA:
         ANDA    #$0F
-        BEQ     $DFAF
+        BEQ     LDFAF
         DECA
+
+LDFAF:
         STAA    $049C
         JMP     parseNextByte
 
 escSelectC1Set:
-        JSR     $E98C                   ; ESC $22 - ESC 2/2 - writes $0497, choosing ctrlTableC1a or C1b
+        JSR     LE98C                   ; ESC $22 - ESC 2/2 - writes $0497, choosing ctrlTableC1a or C1b
         ANDA    #$01
-        BEQ     $DFC7
+        BEQ     LDFC7
         LDAA    $04A2
         STAA    $049D
         LDAA    #$FF
-        JMP     $DFC9
+        JMP     LDFC9
+
+LDFC7:
         LDAA    #$00
+
+LDFC9:
         STAA    $0497
         JMP     parseNextByte
+
+LDFCF:
         LDAA    #$00
-        BITA    $8601
-        BITA    $8602
-        BITA    $8603
+        FCB     $B5        ; overlapped by the entry point below
+
+LDFD2:
+        LDAA    #$01
+        FCB     $B5        ; overlapped by the entry point below
+
+LDFD5:
+        LDAA    #$02
+        FCB     $B5        ; overlapped by the entry point below
+
+LDFD8:
+        LDAA    #$03
         STAA    $0495
         JMP     parseNextByte
+
+LDFE0:
         LDAB    #$00
-        BITA    $C601
-        BITA    $C602
-        BITA    $C603
-        BITA    $C604
-        BITA    $C605
-        BITA    $C606
-        BITA    $C607
-        BITA    $C608
-        BITA    $C609
+        FCB     $B5        ; overlapped by the entry point below
+
+LDFE3:
+        LDAB    #$01
+        FCB     $B5        ; overlapped by the entry point below
+
+LDFE6:
+        LDAB    #$02
+        FCB     $B5        ; overlapped by the entry point below
+
+LDFE9:
+        LDAB    #$03
+        FCB     $B5        ; overlapped by the entry point below
+
+LDFEC:
+        LDAB    #$04
+        FCB     $B5        ; overlapped by the entry point below
+
+LDFEF:
+        LDAB    #$05
+        FCB     $B5        ; overlapped by the entry point below
+
+LDFF2:
+        LDAB    #$06
+        FCB     $B5        ; overlapped by the entry point below
+
+LDFF5:
+        LDAB    #$07
+        FCB     $B5        ; overlapped by the entry point below
+
+LDFF8:
+        LDAB    #$08
+        FCB     $B5        ; overlapped by the entry point below
+
+LDFFB:
+        LDAB    #$09
         STAB    $048D
         CMPA    #$3B
-        BEQ     $E025
+        BEQ     LE025
         ANDA    #$0F
         ASL     $048D
         ADDA    $048D
@@ -7165,22 +8395,26 @@ escSelectC1Set:
         ADDA    $048D
         STAA    scrollTop
         DEC     scrollTop
-        JSR     $E98C
+        JSR     LE98C
         CMPA    #$3B
-        BEQ     $E029
-        JMP     $E9A2
+        BEQ     LE029
+        JMP     LE9A2
+
+LE025:
         DECB
         STAB    scrollTop
-        JSR     $E98C
+
+LE029:
+        JSR     LE98C
         ANDA    #$0F
         STAA    $048D
         STAA    scrollBottom
         DEC     scrollBottom
-        JSR     $E98C
+        JSR     LE98C
         CMPA    #$55
-        BEQ     $E075
+        BEQ     LE075
         CMPA    #$56
-        BEQ     $E067
+        BEQ     LE067
         ANDA    #$0F
         ASL     $048D
         ADDA    $048D
@@ -7189,96 +8423,123 @@ escSelectC1Set:
         ADDA    $048D
         STAA    scrollBottom
         DEC     scrollBottom
-        JSR     $E98C
+        JSR     LE98C
         CMPA    #$55
-        BEQ     $E075
+        BEQ     LE075
         CMPA    #$56
-        BEQ     $E067
-        JMP     $E9A2
+        BEQ     LE067
+        JMP     LE9A2
+
+LE067:
         LDAA    #$FF
         STAA    scrollTop
         STAA    scrollBottom
         STAA    $1B23
         JMP     parseNextByte
+
+LE075:
         LDAA    #$FF
         STAA    $1B23
         LDAA    scrollTop
-        BEQ     $E067
+        BEQ     LE067
         LDAA    scrollBottom
         CMPA    cursorRowMax
-        BEQ     $E067
+        BEQ     LE067
         JMP     parseNextByte
+
+LE08A:
         LDAA    #$00
-        BITA    $86FF
+        FCB     $B5        ; overlapped by the entry point below
+
+LE08D:
+        LDAA    #$FF
         STAA    $04A3
         JMP     parseNextByte
-        JSR     $EA44
+
+LE095:
+        JSR     LEA44
         JMP     parseNextByte
-        JSR     $EB28
+
+LE09B:
+        JSR     LEB28
         JMP     parseNextByte
+
+LE0A1:
         LDX     #$1003
         LDAB    #$B0
         LDAA    #$30
-        JSR     $E573
+        JSR     LE573
         LDX     #$1001
         LDAB    #$C0
         LDAA    #$80
-        JSR     $E573
+        JSR     LE573
         CLR     $04B0
-        JMP     $E4F4
+        JMP     LE4F4
+
+LE0BB:
         LDX     #$1001
         LDAB    #$C0
         TBA
-        JSR     $E573
+        JSR     LE573
         LDX     #$1003
         LDAB    #$B0
         LDAA    #$10
-        JSR     $E573
+        JSR     LE573
         CLR     $04B0
-        JMP     $E4F4
+        JMP     LE4F4
+
+LE0D4:
         LDX     #$1001
         LDAB    #$80
         LDAA    #$00
-        JSR     $E573
+        JSR     LE573
         LDX     #$1003
         LDAB    #$90
         LDAA    #$00
-        JSR     $E573
+        JSR     LE573
         CLR     $04B0
-        JMP     $E4F4
+        JMP     LE4F4
+
+LE0EE:
         LDX     #$1001
         LDAB    #$80
         LDAA    #$80
-        JSR     $E573
+        JSR     LE573
         LDX     #$1003
         LDAB    #$90
         LDAA    #$00
-        JSR     $E573
+        JSR     LE573
         CLR     $04B0
-        JMP     $E4F4
+        JMP     LE4F4
+
+LE108:
         LDX     #$1001
         LDAB    #$80
         LDAA    #$00
-        JSR     $E573
+        JSR     LE573
         LDX     #$1003
         LDAB    #$90
         LDAA    #$10
-        JSR     $E573
+        JSR     LE573
         CLR     $04B0
-        JMP     $E4F4
+        JMP     LE4F4
+
+LE122:
         TST     $0497
-        BPL     $E143
+        BPL     LE143
         LDAA    #$01
         STAA    $04B0
         LDX     #$0001
         LDAB    #$80
         LDAA    #$00
-        JSR     $E57B
+        JSR     LE57B
         LDX     #$0003
         LDAB    #$90
         LDAA    #$00
-        JSR     $E57B
-        JMP     $E4FC
+        JSR     LE57B
+        JMP     LE4FC
+
+LE143:
         LDAB    cursorCol
         LDX     rowRender
         ABX
@@ -7289,6 +8550,8 @@ escSelectC1Set:
         CLR     $048E
         LDAA    cursorCol
         STAA    $0490
+
+LE15C:
         LDAB    $0490
         ASLB
         ASLB
@@ -7302,47 +8565,59 @@ escSelectC1Set:
         ANDA    #$6F
         ORAA    $048E
         STAA    $03,X
+
+LE177:
         LDAA    $048D
         ADDA    #$80
         STAA    $048D
-        BCC     $E189
+        BCC     LE189
         LDAA    $048E
         EORA    #$10
         STAA    $048E
+
+LE189:
         LDAA    $048E
         ORAA    $048D
         CMPA    #$90
-        BEQ     $E177
+        BEQ     LE177
         LDAA    $00,X
         ANDA    #$02
-        BEQ     $E19C
+        BEQ     LE19C
         INC     $0490
+
+LE19C:
         INC     $0490
         LDAB    $0490
         CMPB    #$28
-        BCC     $E1B3
+        BCC     LE1B3
         LDX     rowRender
         ABX
         LDAA    $00,X
         ANDA    #$10
-        BNE     $E1B3
-        JMP     $E15C
+        BNE     LE1B3
+        JMP     LE15C
+
+LE1B3:
         LDAA    #$FF
         STAA    $1B23
-        JMP     $E4F4
+        JMP     LE4F4
+
+LE1BB:
         TST     $0497
-        BPL     $E1DC
+        BPL     LE1DC
         LDAA    #$FF
         STAA    $04B0
         LDX     #$0001
         LDAB    #$80
         LDAA    #$00
-        JSR     $E57B
+        JSR     LE57B
         LDX     #$0003
         LDAB    #$90
         LDAA    #$00
-        JSR     $E57B
-        JMP     $E4FC
+        JSR     LE57B
+        JMP     LE4FC
+
+LE1DC:
         LDAB    cursorCol
         LDX     rowRender
         ABX
@@ -7353,6 +8628,8 @@ escSelectC1Set:
         CLR     $048E
         LDAA    cursorCol
         STAA    $0490
+
+LE1F5:
         LDAB    $0490
         ASLB
         ASLB
@@ -7366,230 +8643,314 @@ escSelectC1Set:
         ANDA    #$6F
         ORAA    $048E
         STAA    $03,X
+
+LE210:
         LDAA    $048D
         SUBA    #$80
         STAA    $048D
-        BCC     $E222
+        BCC     LE222
         LDAA    $048E
         EORA    #$10
         STAA    $048E
+
+LE222:
         LDAA    $048E
         ORAA    $048D
         CMPA    #$90
-        BEQ     $E210
+        BEQ     LE210
         LDAA    $00,X
         ANDA    #$02
-        BEQ     $E235
+        BEQ     LE235
         INC     $0490
+
+LE235:
         INC     $0490
         LDAB    $0490
         CMPB    #$28
-        BCC     $E24C
+        BCC     LE24C
         LDX     rowRender
         ABX
         LDAA    $00,X
         ANDA    #$10
-        BNE     $E24C
-        JMP     $E1F5
+        BNE     LE24C
+        JMP     LE1F5
+
+LE24C:
         LDAA    #$FF
         STAA    $1B23
-        JMP     $E4F4
+        JMP     LE4F4
 
 csiDigit0:
-        JSR     $E98C                   ; CSI $30 - numeric parameter '0'
+        JSR     LE98C                   ; CSI $30 - numeric parameter '0'
         CMPA    #$40
-        BNE     $E25E
-        JMP     $DFCF
+        BNE     LE25E
+        JMP     LDFCF
+
+LE25E:
         CMPA    #$60
-        BNE     $E265
-        JMP     $E095
+        BNE     LE265
+        JMP     LE095
+
+LE265:
         CMPA    #$41
-        BNE     $E26C
-        JMP     $E0A1
+        BNE     LE26C
+        JMP     LE0A1
+
+LE26C:
         CMPA    #$30
-        BCS     $E273
-        JMP     $DFE0
-        JMP     $E9A2
+        BCS     LE273
+        JMP     LDFE0
+
+LE273:
+        JMP     LE9A2
 
 csiDigit1:
-        JSR     $E98C                   ; CSI $31 - numeric parameter '1'
+        JSR     LE98C                   ; CSI $31 - numeric parameter '1'
         CMPA    #$40
-        BNE     $E280
-        JMP     $DFD2
+        BNE     LE280
+        JMP     LDFD2
+
+LE280:
         CMPA    #$60
-        BNE     $E287
-        JMP     $E09B
+        BNE     LE287
+        JMP     LE09B
+
+LE287:
         CMPA    #$41
-        BNE     $E28E
-        JMP     $E0BB
+        BNE     LE28E
+        JMP     LE0BB
+
+LE28E:
         CMPA    #$50
-        BNE     $E295
-        JMP     $E446
+        BNE     LE295
+        JMP     LE446
+
+LE295:
         CMPA    #$51
-        BNE     $E29C
-        JMP     $E454
+        BNE     LE29C
+        JMP     LE454
+
+LE29C:
         CMPA    #$30
-        BCS     $E2A3
-        JMP     $DFE3
-        JMP     $E9A2
+        BCS     LE2A3
+        JMP     LDFE3
+
+LE2A3:
+        JMP     LE9A2
 
 csiDigit2:
-        JSR     $E98C                   ; CSI $32 - numeric parameter '2'
+        JSR     LE98C                   ; CSI $32 - numeric parameter '2'
         CMPA    #$40
-        BNE     $E2B0
-        JMP     $DFD5
+        BNE     LE2B0
+        JMP     LDFD5
+
+LE2B0:
         CMPA    #$60
-        BNE     $E2B7
-        JMP     $E08D
+        BNE     LE2B7
+        JMP     LE08D
+
+LE2B7:
         CMPA    #$41
-        BNE     $E2BE
-        JMP     $E0D4
+        BNE     LE2BE
+        JMP     LE0D4
+
+LE2BE:
         CMPA    #$53
-        BNE     $E2C5
-        JMP     $E463
+        BNE     LE2C5
+        JMP     LE463
+
+LE2C5:
         CMPA    #$54
-        BNE     $E2CC
-        JMP     $E470
+        BNE     LE2CC
+        JMP     LE470
+
+LE2CC:
         CMPA    #$30
-        BCS     $E2D3
-        JMP     $DFE6
-        JMP     $E9A2
+        BCS     LE2D3
+        JMP     LDFE6
+
+LE2D3:
+        JMP     LE9A2
 
 csiDigit3:
-        JSR     $E98C                   ; CSI $33 - numeric parameter '3'
+        JSR     LE98C                   ; CSI $33 - numeric parameter '3'
         CMPA    #$40
-        BNE     $E2E0
-        JMP     $DFD8
+        BNE     LE2E0
+        JMP     LDFD8
+
+LE2E0:
         CMPA    #$60
-        BNE     $E2E7
-        JMP     $E08A
+        BNE     LE2E7
+        JMP     LE08A
+
+LE2E7:
         CMPA    #$41
-        BNE     $E2EE
-        JMP     $E0EE
+        BNE     LE2EE
+        JMP     LE0EE
+
+LE2EE:
         CMPA    #$30
-        BCS     $E2F5
-        JMP     $DFE9
-        JMP     $E9A2
+        BCS     LE2F5
+        JMP     LDFE9
+
+LE2F5:
+        JMP     LE9A2
 
 csiDigit4:
-        JSR     $E98C                   ; CSI $34 - numeric parameter '4'
+        JSR     LE98C                   ; CSI $34 - numeric parameter '4'
         CMPA    #$41
-        BNE     $E302
-        JMP     $E108
+        BNE     LE302
+        JMP     LE108
+
+LE302:
         CMPA    #$30
-        BCS     $E309
-        JMP     $DFEC
-        JMP     $E9A2
+        BCS     LE309
+        JMP     LDFEC
+
+LE309:
+        JMP     LE9A2
 
 csiDigit5:
-        JSR     $E98C                   ; CSI $35 - numeric parameter '5'
+        JSR     LE98C                   ; CSI $35 - numeric parameter '5'
         CMPA    #$41
-        BNE     $E316
-        JMP     $E122
+        BNE     LE316
+        JMP     LE122
+
+LE316:
         CMPA    #$30
-        BCS     $E31D
-        JMP     $DFEF
-        JMP     $E9A2
+        BCS     LE31D
+        JMP     LDFEF
+
+LE31D:
+        JMP     LE9A2
 
 csiDigit6:
-        JSR     $E98C                   ; CSI $36 - numeric parameter '6'
+        JSR     LE98C                   ; CSI $36 - numeric parameter '6'
         CMPA    #$41
-        BNE     $E32A
-        JMP     $E1BB
+        BNE     LE32A
+        JMP     LE1BB
+
+LE32A:
         CMPA    #$30
-        BCS     $E331
-        JMP     $DFF2
-        JMP     $E9A2
+        BCS     LE331
+        JMP     LDFF2
+
+LE331:
+        JMP     LE9A2
 
 csiDigit7:
-        JSR     $E98C                   ; CSI $37 - numeric parameter '7'
+        JSR     LE98C                   ; CSI $37 - numeric parameter '7'
         CMPA    #$30
-        BCS     $E33E
-        JMP     $DFF5
-        JMP     $E9A2
+        BCS     LE33E
+        JMP     LDFF5
+
+LE33E:
+        JMP     LE9A2
 
 csiDigit8:
-        JSR     $E98C                   ; CSI $38 - numeric parameter '8'
+        JSR     LE98C                   ; CSI $38 - numeric parameter '8'
         CMPA    #$30
-        BCS     $E34B
-        JMP     $DFF8
-        JMP     $E9A2
+        BCS     LE34B
+        JMP     LDFF8
+
+LE34B:
+        JMP     LE9A2
 
 csiDigit9:
-        JSR     $E98C                   ; CSI $39 - numeric parameter '9'
+        JSR     LE98C                   ; CSI $39 - numeric parameter '9'
         CMPA    #$30
-        BCS     $E358
-        JMP     $DFFB
-        JMP     $E9A2
+        BCS     LE358
+        JMP     LDFFB
+
+LE358:
+        JMP     LE9A2
 
 csiFinalB:
         LDX     #$2003                  ; CSI $42 - final byte 'B'
         LDAB    #$08
         TBA
-        JSR     $E573
-        JMP     $E4F4
+        JSR     LE573
+        JMP     LE4F4
 
 escDefine:
-        JSR     $E98C                   ; ESC $23 - ESC 2/3 - definition sequence
+        JSR     LE98C                   ; ESC $23 - ESC 2/3 - definition sequence
         CMPA    #$20
-        BNE     $E371
-        JMP     $E4C7
+        BNE     LE371
+        JMP     LE4C7
+
+LE371:
         CMPA    #$21
-        BEQ     $E378
-        JMP     $E9A2
-        JSR     $E98C
+        BEQ     LE378
+        JMP     LE9A2
+
+LE378:
+        JSR     LE98C
         STAA    $048D
         CMPA    #$5E
-        BEQ     $E38F
+        BEQ     LE38F
         ANDA    #$F8
         CMPA    #$40
-        BNE     $E38B
-        JMP     $E483
+        BNE     LE38B
+        JMP     LE483
+
+LE38B:
         CMPA    #$50
-        BNE     $E392
-        JMP     $E49F
+        BNE     LE392
+
+LE38F:
+        JMP     LE49F
+
+LE392:
         LDAA    $048D
         CMPA    #$5A
-        BEQ     $E3C4
+        BEQ     LE3C4
         CMPA    #$59
-        BEQ     $E3CD
+        BEQ     LE3CD
         CMPA    #$4C
-        BEQ     $E3D7
+        BEQ     LE3D7
         CMPA    #$49
-        BEQ     $E3E6
+        BEQ     LE3E6
         CMPA    #$48
-        BEQ     $E403
+        BEQ     LE403
         CMPA    #$58
-        BEQ     $E40D
+        BEQ     LE40D
         CMPA    #$5F
-        BEQ     $E417
+        BEQ     LE417
         CMPA    #$4B
-        BEQ     $E420
+        BEQ     LE420
         CMPA    #$4A
-        BEQ     $E429
+        BEQ     LE429
         CMPA    #$5C
-        BEQ     $E433
+        BEQ     LE433
         CMPA    #$5D
-        BEQ     $E43D
-        JMP     $E9A2
+        BEQ     LE43D
+        JMP     LE9A2
+
+LE3C4:
         LDX     #$0000
         LDAB    #$08
         TBA
-        JMP     $E47D
+        JMP     LE47D
+
+LE3CD:
         LDX     #$0000
         LDAB    #$08
         LDAA    #$00
-        JMP     $E47D
+        JMP     LE47D
+
+LE3D7:
         LDAA    #$FF
         STAA    $1B23
         LDX     #$0000
         LDAB    #$03
         LDAA    #$00
-        JMP     $E47D
+        JMP     LE47D
+
+LE3E6:
         LDX     #$0003
         LDAB    #$80
         TBA
-        JMP     $E47D
+        JMP     LE47D
 
 ; Unreachable code. This is one of four orphan fragments, 43 bytes in total:
 ;
@@ -7618,63 +8979,89 @@ orphanE3EF:
         LDX     #$0001
         LDAB    #$C0
         LDAA    #$00
-        JSR     $EDF7
+        JSR     LEDF7
         LDX     #$0003
         LDAB    #$B0
         LDAA    #$00
-        JMP     $E47D
+        JMP     LE47D
+
+LE403:
         LDX     #$0003
         LDAB    #$A0
         LDAA    #$20
-        JMP     $E47D
+        JMP     LE47D
+
+LE40D:
         LDX     #$0003
         LDAB    #$08
         LDAA    #$00
-        JMP     $E47D
+        JMP     LE47D
+
+LE417:
         LDX     #$0003
         LDAB    #$08
         TBA
-        JMP     $E47D
+        JMP     LE47D
+
+LE420:
         LDX     #$0000
         LDAB    #$04
         TBA
-        JMP     $E47D
+        JMP     LE47D
+
+LE429:
         LDX     #$0000
         LDAB    #$04
         LDAA    #$00
-        JMP     $E47D
+        JMP     LE47D
+
+LE433:
         LDX     #$0003
         LDAB    #$04
         LDAA    #$00
-        JMP     $E47D
+        JMP     LE47D
+
+LE43D:
         LDX     #$0003
         LDAB    #$04
         TBA
-        JMP     $E47D
+        JMP     LE47D
+
+LE446:
         LDAA    #$FF
         STAA    $1B23
         LDX     #$0000
         LDAB    #$80
         TBA
-        JMP     $E47D
+        JMP     LE47D
+
+LE454:
         LDAA    #$FF
         STAA    $1B23
         LDAB    #$80
         LDX     #$0000
         LDAA    #$00
-        JMP     $E47D
+        JMP     LE47D
+
+LE463:
         LDAA    #$10
         LDAB    #$30
         LDX     #$0000
-        JSR     $E573
-        JMP     $E4F4
+        JSR     LE573
+        JMP     LE4F4
+
+LE470:
         LDAA    #$00
         LDAB    #$10
         LDX     #$0000
-        JSR     $E573
-        JMP     $E4F4
-        JSR     $EDF7
+        JSR     LE573
+        JMP     LE4F4
+
+LE47D:
+        JSR     LEDF7
         JMP     parseNextByte
+
+LE483:
         LDAA    $048D
         ANDA    #$07
         STAA    $048D
@@ -7685,13 +9072,17 @@ orphanE3EF:
         ORAA    $048D
         LDAB    #$1F
         LDX     #$0002
-        JSR     $EDF7
+        JSR     LEDF7
         JMP     parseNextByte
+
+LE49F:
         LDAA    $048D
         CMPA    #$5E
-        BNE     $E4AB
+        BNE     LE4AB
         LDAA    #$88
-        JMP     $E4BB
+        JMP     LE4BB
+
+LE4AB:
         ANDA    #$07
         STAA    $048D
         LDAA    $0495
@@ -7700,16 +9091,22 @@ orphanE3EF:
         ASLA
         ORAA    $048D
         ORAA    #$80
+
+LE4BB:
         LDAB    cursorRow
         LDX     #$1B03
         ABX
         STAA    $00,X
         JMP     parseNextByte
-        JSR     $E98C
+
+LE4C7:
+        JSR     LE98C
         CMPA    #$5E
-        BNE     $E4D3
+        BNE     LE4D3
         LDAA    #$88
-        JMP     $E4E3
+        JMP     LE4E3
+
+LE4D3:
         ANDA    #$07
         STAA    $048D
         LDAA    $0495
@@ -7718,17 +9115,27 @@ orphanE3EF:
         ASLA
         ORAA    $048D
         ORAA    #$80
+
+LE4E3:
         STAA    $1B02
         LDX     #$1B03
+
+LE4E9:
         STAA    $00,X
         INX
         CPX     #$1B1B
-        BNE     $E4E9
+        BNE     LE4E9
         JMP     parseNextByte
+
+LE4F4:
         TST     $0497
-        BMI     $E4FC
-        JMP     $DDFB
+        BMI     LE4FC
+        JMP     LDDFB
+
+LE4FC:
         JMP     parseNextByte
+
+LE4FF:
         STAA    $04B9
         STAB    $04B8
         COMB
@@ -7736,8 +9143,10 @@ orphanE3EF:
         STX     $04B6
         LDX     rowAttr
         LDAA    $00,X
-        BPL     $E514
+        BPL     LE514
         RTS
+
+LE514:
         LDX     rowRender
         LDAB    cursorCol
         ABX
@@ -7745,24 +9154,30 @@ orphanE3EF:
         ORAA    $04B6
         STAA    $00,X
         CLR     gSetSelector
+
+LE525:
         INC     gSetSelector
         INCB
         CMPB    #$28
-        BEQ     $E535
+        BEQ     LE535
         INX
         LDAA    $00,X
         ANDA    $04B6
-        BEQ     $E525
+        BEQ     LE525
+
+LE535:
         LDAB    cursorCol
         LDX     rowChar
         ABX
         LDAB    gSetSelector
+
+LE53F:
         LDAA    $00,X
         ORAA    #$80
         STAA    $00,X
         INX
         DECB
-        BNE     $E53F
+        BNE     LE53F
         LDAB    cursorCol
         ASLB
         ASLB
@@ -7770,6 +9185,8 @@ orphanE3EF:
         LDX     rowAttr
         ABX
         LDAB    gSetSelector
+
+LE558:
         LDAA    $00,X
         ANDA    $048E
         ORAA    $04B9
@@ -7779,14 +9196,18 @@ orphanE3EF:
         INX
         INX
         DECB
-        BNE     $E558
+        BNE     LE558
         LDAA    $04B9
         LDAB    $04B8
         LDX     $04B6
         RTS
+
+LE573:
         TST     $0497
-        BMI     $E57B
-        JMP     $E4FF
+        BMI     LE57B
+        JMP     LE4FF
+
+LE57B:
         STAA    $04B9
         COMB
         STAB    $04B8
@@ -7803,6 +9224,8 @@ orphanE3EF:
         COMB
         LDAA    $04B9
         RTS
+
+LE5A1:
         LDAA    cursorRow
         PSHA
         LDAA    cursorCol
@@ -7811,22 +9234,24 @@ orphanE3EF:
         STAA    cursorRow
         LDAA    #$00
         STAA    cursorCol
-        JSR     $E9A5
+        JSR     LE9A5
         LDX     #$0000
         LDAB    #$FF
         LDAA    #$00
-        JSR     $EDF7
+        JSR     LEDF7
         INX
-        JSR     $EDF7
+        JSR     LEDF7
         INX
         LDAA    #$02
-        JSR     $EDF7
+        JSR     LEDF7
         INX
         LDAA    #$88
-        JSR     $EDF7
+        JSR     LEDF7
         LDAA    #$2B
         STAA    $048D
         LDAB    #$13
+
+LE5D7:
         LDX     #$FD0D
         ABX
         LDAA    $00,X
@@ -7837,60 +9262,80 @@ orphanE3EF:
         ABX
         STAA    $00,X
         DECB
-        BPL     $E5D7
+        BPL     LE5D7
         PULA
         STAA    cursorCol
         PULA
         STAA    cursorRow
-        JSR     $E9A5
+        JSR     LE9A5
         RTS
+
+LE5FA:
         LDAA    #$FF
         STAA    $04A4
         STAA    $1B23
         LDAA    #$17
         STAA    cursorRowMax
-        JSR     $E98C
+        JSR     LE98C
         STAA    $048D
         ANDA    #$F0
         CMPA    #$20
-        BNE     $E616
-        JMP     $E634
+        BNE     LE616
+        JMP     LE634
+
+LE616:
         LDAA    $048D
         CMPA    #$42
-        BNE     $E62A
+        BNE     LE62A
         LDAA    #$13
         STAA    cursorRowMax
         LDAA    #$FF
         STAA    $1B23
-        JSR     $E98C
+        JSR     LE98C
+
+LE62A:
         CMPA    #$71
-        BNE     $E634
+        BNE     LE634
         CLR     $04A4
         JMP     parseNextByte
-        JMP     $E9A2
-        JSR     $E98C
+
+LE634:
+        JMP     LE9A2
+
+LE637:
+        JSR     LE98C
         TAB
         CMPA    #$4F
-        BNE     $E642
-        JMP     $E73E
+        BNE     LE642
+        JMP     LE73E
+
+LE642:
         CMPA    #$40
-        BNE     $E649
-        JMP     $E6C6
+        BNE     LE649
+        JMP     LE6C6
+
+LE649:
         LSRA
-        BCS     $E653
+        BCS     LE653
         LDAA    #$FF
         STAA    $0497
-        BRA     $E656
+        BRA     LE656
+
+LE653:
         CLR     $0497
+
+LE656:
         CMPB    #$41
-        BEQ     $E669
+        BEQ     LE669
         CMPB    #$42
-        BEQ     $E669
+        BEQ     LE669
         CMPB    #$43
-        BEQ     $E6A5
+        BEQ     LE6A5
         CMPB    #$44
-        BEQ     $E6A5
-        JMP     $E9A2
+        BEQ     LE6A5
+        JMP     LE9A2
+
+LE669:
         CLR     $0499
         CLR     $049D
         CLR     $04A2
@@ -7910,11 +9355,15 @@ orphanE3EF:
         LDAA    #$80
         STAA    $1B02
         LDX     #$1B03
+
+LE69A:
         STAA    $00,X
         INX
         CPX     #$1B1C
-        BNE     $E69A
+        BNE     LE69A
         JMP     ctlCS
+
+LE6A5:
         CLR     $0499
         CLR     $049D
         CLR     $04A2
@@ -7928,6 +9377,8 @@ orphanE3EF:
         LDAA    #$FF
         STAA    $1B23
         JMP     parseNextByte
+
+LE6C6:
         LDAA    #$FF
         STAA    $04AF
         LDAA    cursorCol
@@ -7952,12 +9403,12 @@ orphanE3EF:
         CLR     $04A4
         CLR     $0495
         CLR     $0497
-        JSR     $E98C
+        JSR     LE98C
         ANDA    #$1F
         STAA    cursorRow
         DEC     cursorRow
-        JSR     $E9A5
-        JSR     $EE3A
+        JSR     LE9A5
+        JSR     LEE3A
         CLR     $0499
         LDAA    #$01
         STAA    $049A
@@ -7968,16 +9419,20 @@ orphanE3EF:
         LDX     #$0000
         LDAB    #$80
         LDAA    #$00
-        JSR     $EDF7
+        JSR     LEDF7
         JMP     parseNextByte
-        JSR     $E744
+
+LE73E:
+        JSR     LE744
         JMP     parseNextByte
+
+LE744:
         CLR     $04AF
         LDAA    $04A6
         STAA    cursorCol
         LDAA    $04A5
         STAA    cursorRow
-        JSR     $E9A5
+        JSR     LE9A5
         LDAA    $04A7
         STAA    $04A4
         LDAA    $04A8
@@ -7993,36 +9448,46 @@ orphanE3EF:
         LDAA    $04AD
         STAA    $049A
         RTS
+
+LE781:
         STAA    charCode
         LDAA    $0497
-        BEQ     $E7CB
+        BEQ     LE7CB
         LDAA    attr0
         ANDA    #$01
-        BEQ     $E7CB
+        BEQ     LE7CB
         LDAA    cursorRow
-        BEQ     $E7CB
+        BEQ     LE7CB
         LDAA    cursorRow
         DECA
         CMPA    scrollBottom
-        BNE     $E7A1
-        JMP     $E94E
+        BNE     LE7A1
+        JMP     LE94E
+
+LE7A1:
         LDAB    cursorCol
         ASLB
         ASLB
         LDX     rowAttr
         ABX
         LDAA    $00,X
-        BPL     $E7B1
-        JMP     $E94E
+        BPL     LE7B1
+        JMP     LE94E
+
+LE7B1:
         LDAA    cursorRow
         CMPA    scrollTop
-        BNE     $E7C2
-        JSR     $EB28
+        BNE     LE7C2
+        JSR     LEB28
         INC     cursorRow
-        JSR     $EC16
+        JSR     LEC16
+
+LE7C2:
         DEC     cursorRow
-        JSR     $E9A5
+        JSR     LE9A5
         INC     cursorRow
+
+LE7CB:
         LDAB    cursorCol
         ASLB
         ASLB
@@ -8030,11 +9495,15 @@ orphanE3EF:
         LDX     rowAttr
         ABX
         LDAA    $00,X
-        BPL     $E7DE
-        JMP     $E94E
+        BPL     LE7DE
+        JMP     LE94E
+
+LE7DE:
         TST     $0497
-        BMI     $E7E6
-        JMP     $E8C7
+        BMI     LE7E6
+        JMP     LE8C7
+
+LE7E6:
         LDX     rowAttr
         LDAB    $048E
         ABX
@@ -8050,9 +9519,9 @@ orphanE3EF:
         STAA    $03,X
         LDAA    attr0
         ANDA    #$02
-        BEQ     $E824
+        BEQ     LE824
         CMPB    #$9C
-        BCC     $E824
+        BCC     LE824
         LDAA    attr0
         STAA    $04,X
         LDAA    attr1
@@ -8061,8 +9530,10 @@ orphanE3EF:
         STAA    $06,X
         LDAA    attr3
         STAA    $07,X
+
+LE824:
         TST     cursorCol
-        BEQ     $E885
+        BEQ     LE885
         DEX
         DEX
         DEX
@@ -8071,74 +9542,104 @@ orphanE3EF:
         LDAA    $00,X
         EORA    $04,X
         BITA    #$03
-        BEQ     $E838
+        BEQ     LE838
         ORAB    #$04
+
+LE838:
         BITA    #$04
-        BEQ     $E83E
+        BEQ     LE83E
         ORAB    #$40
+
+LE83E:
         BITA    #$08
-        BEQ     $E844
+        BEQ     LE844
         ORAB    #$08
+
+LE844:
         LDAA    $01,X
         EORA    $05,X
         BITA    #$C0
-        BEQ     $E84E
+        BEQ     LE84E
         ORAB    #$10
+
+LE84E:
         LDAA    $02,X
         EORA    $06,X
         BITA    #$1F
-        BEQ     $E858
+        BEQ     LE858
         ORAB    #$01
+
+LE858:
         BITA    #$E0
-        BEQ     $E85E
+        BEQ     LE85E
         ORAB    #$02
+
+LE85E:
         LDAA    $03,X
         EORA    $07,X
         BITA    #$03
-        BEQ     $E868
+        BEQ     LE868
         ORAB    #$02
+
+LE868:
         BITA    #$04
-        BEQ     $E86E
+        BEQ     LE86E
         ORAB    #$80
+
+LE86E:
         BITA    #$08
-        BEQ     $E874
+        BEQ     LE874
         ORAB    #$20
+
+LE874:
         BITA    #$B0
-        BEQ     $E87A
+        BEQ     LE87A
         ORAB    #$10
+
+LE87A:
         PSHB
         LDAB    cursorCol
         LDX     rowRender
         ABX
         PULB
         STAB    $00,X
+
+LE885:
         LDAA    $04B0
-        BEQ     $E8C7
+        BEQ     LE8C7
         CMPA    #$01
-        BEQ     $E8A9
+        BEQ     LE8A9
+
+LE88E:
         LDAA    attr1
         EORA    #$80
         STAA    attr1
         ANDA    #$80
-        BEQ     $E8C7
+        BEQ     LE8C7
         LDAA    attr3
         EORA    #$10
         STAA    attr3
         ANDA    #$10
-        BEQ     $E8C7
-        JMP     $E88E
+        BEQ     LE8C7
+        JMP     LE88E
+
+LE8A9:
         LDAA    attr1
         EORA    #$80
         STAA    attr1
         ANDA    #$80
-        BNE     $E8C0
+        BNE     LE8C0
         LDAA    attr3
         EORA    #$10
         STAA    attr3
-        JMP     $E8C7
+        JMP     LE8C7
+
+LE8C0:
         LDAA    attr3
         ANDA    #$10
-        BNE     $E8A9
+        BNE     LE8A9
+
+LE8C7:
         LDX     rowAttr
         LDAB    $048E
         ABX
@@ -8153,36 +9654,48 @@ orphanE3EF:
         CLR     accentPending
         LDAB    $049F
         STAB    $04A0
-        BMI     $E8FA
+        BMI     LE8FA
         LDX     #$0499
         ABX
         LDAA    $00,X
         STAA    gSetSelector
         LDAA    #$FF
         STAA    $049F
-        JMP     $E91D
+        JMP     LE91D
+
+LE8FA:
         TST     $049D
-        BPL     $E907
+        BPL     LE907
         LDAA    #$04
         STAA    gSetSelector
-        JMP     $E91D
+        JMP     LE91D
+
+LE907:
         TST     charCode
-        BMI     $E911
+        BMI     LE911
         LDAB    $049D
-        BRA     $E914
+        BRA     LE914
+
+LE911:
         LDAB    $049E
+
+LE914:
         LDX     #$0499
         ABX
         LDAA    $00,X
         STAA    gSetSelector
+
+LE91D:
         LDAA    gSetSelector
         CMPA    #$01
-        BNE     $E930
+        BNE     LE930
         LDAA    charCode
         ANDA    #$70
         CMPA    #$40
-        BNE     $E930
-        JMP     $E972
+        BNE     LE930
+        JMP     LE972
+
+LE930:
         LDX     rowAttr
         LDAB    $048E
         ABX
@@ -8196,21 +9709,27 @@ orphanE3EF:
         LDAA    charCode
         ORAA    #$80
         STAA    $00,X
+
+LE94E:
         LDX     rowAttr
         LDAB    $048E
         ABX
         LDAA    $00,X
         ANDA    #$02
-        BEQ     $E968
+        BEQ     LE968
         LDAA    cursorCol
         CMPA    #$27
-        BEQ     $E968
+        BEQ     LE968
         INC     cursorCol
-        JSR     $EC16
+        JSR     LEC16
+
+LE968:
         INC     cursorCol
-        JSR     $EC16
-        JSR     $E9A5
+        JSR     LEC16
+        JSR     LE9A5
         RTS
+
+LE972:
         LDX     rowAccent
         LDAB    cursorCol
         ABX
@@ -8220,20 +9739,32 @@ orphanE3EF:
         LDAA    #$FF
         STAA    accentPending
         RTS
-        JSR     $E781
+
+LE986:
+        JSR     LE781
         JMP     parseNextByte
-        JSR     $F081
+
+LE98C:
+        JSR     LF081
         CMPA    #$00
-        BEQ     $E98C
+        BEQ     LE98C
         CMPA    #$1F
-        BNE     $E99E
+        BNE     LE99E
         PULA
         PULA
         LDAA    #$1F
-        JMP     $D358
+        JMP     LD358
+
+LE99E:
         RTS
-        JMP     $D34C
+
+LE99F:
+        JMP     LD34C
+
+LE9A2:
         JMP     parseNextByte
+
+LE9A5:
         LDAB    cursorRow
         ASLB
         LDX     #$FC77
@@ -8253,9 +9784,11 @@ orphanE3EF:
         LDX     $00,X
         STX     rowRender
         RTS
+
+LE9CE:
         STAA    $048D
         TST     $0497
-        BMI     $E9E7
+        BMI     LE9E7
         LDAA    $0495
         ASLA
         ASLA
@@ -8263,7 +9796,9 @@ orphanE3EF:
         ORAA    $048D
         LDX     #$0102
         LDAB    #$1F
-        JMP     $E4FF
+        JMP     LE4FF
+
+LE9E7:
         LDAA    $0495
         ASLA
         ASLA
@@ -8275,13 +9810,15 @@ orphanE3EF:
         ORAA    $048D
         STAA    attr2
         RTS
+
+LE9FF:
         STAA    $048D
         TST     $0497
-        BMI     $EA22
+        BMI     LEA22
         LDAA    $0495
         LDX     #$0203
         LDAB    #$03
-        JSR     $E4FF
+        JSR     LE4FF
         LDAA    $048D
         ASLA
         ASLA
@@ -8290,7 +9827,9 @@ orphanE3EF:
         ASLA
         LDX     #$0202
         LDAB    #$E0
-        JMP     $E4FF
+        JMP     LE4FF
+
+LEA22:
         LDAA    attr3
         ANDA    #$FC
         ORAA    $0495
@@ -8307,9 +9846,13 @@ orphanE3EF:
         ORAA    $048D
         STAA    attr2
         RTS
+
+LEA44:
         TST     scrollTop
-        BPL     $EA4A
+        BPL     LEA4A
         RTS
+
+LEA4A:
         LDAB    scrollBottom
         ASLB
         LDX     #$FC77
@@ -8324,19 +9867,25 @@ orphanE3EF:
         STD     $0408
         LDX     $0408
         CPX     $0406
-        BEQ     $EA78
+        BEQ     LEA78
+
+LEA6C:
         LDAA    $28,X
         ORAA    #$80
         STAA    $00,X
         INX
         CPX     $0406
-        BCS     $EA6C
+        BCS     LEA6C
+
+LEA78:
         LDAB    #$28
         LDAA    #$A0
+
+LEA7C:
         STAA    $00,X
         INX
         DECB
-        BNE     $EA7C
+        BNE     LEA7C
         LDAB    scrollBottom
         ASLB
         LDX     #$FC45
@@ -8351,12 +9900,16 @@ orphanE3EF:
         STD     $0408
         LDX     $0408
         CPX     $0406
-        BEQ     $EAAE
+        BEQ     LEAAE
+
+LEAA4:
         LDAA    $28,X
         STAA    $00,X
         INX
         CPX     $0406
-        BCS     $EAA4
+        BCS     LEAA4
+
+LEAAE:
         LDAB    scrollBottom
         ASLB
         LDX     #$FCDB
@@ -8371,17 +9924,23 @@ orphanE3EF:
         STD     $0408
         LDX     $0408
         CPX     $0406
-        BEQ     $EADA
+        BEQ     LEADA
+
+LEAD0:
         LDAA    $28,X
         STAA    $00,X
         INX
         CPX     $0406
-        BCS     $EAD0
+        BCS     LEAD0
+
+LEADA:
         LDAB    #$28
+
+LEADC:
         CLR     $00,X
         INX
         DECB
-        BNE     $EADC
+        BNE     LEADC
         LDAB    scrollBottom
         ASLB
         LDX     #$FCA9
@@ -8396,13 +9955,19 @@ orphanE3EF:
         STD     $0408
         LDX     $0408
         CPX     $0406
-        BEQ     $EB0E
+        BEQ     LEB0E
+
+LEB04:
         LDAA    $A0,X
         STAA    $00,X
         INX
         CPX     $0406
-        BCS     $EB04
+        BCS     LEB04
+
+LEB0E:
         LDAB    #$28
+
+LEB10:
         LDAA    #$00
         STAA    $00,X
         INX
@@ -8416,11 +9981,15 @@ orphanE3EF:
         STAA    $00,X
         INX
         DECB
-        BNE     $EB10
+        BNE     LEB10
         RTS
+
+LEB28:
         TST     scrollTop
-        BPL     $EB2E
+        BPL     LEB2E
         RTS
+
+LEB2E:
         LDAB    scrollTop
         ASLB
         LDX     #$FC77
@@ -8435,21 +10004,27 @@ orphanE3EF:
         STD     $0408
         LDX     $0408
         CPX     $0406
-        BEQ     $EB5E
+        BEQ     LEB5E
         DEX
+
+LEB51:
         LDAA    $00,X
         ORAA    #$80
         STAA    $28,X
         DEX
         CPX     $0406
-        BCC     $EB51
+        BCC     LEB51
         INX
+
+LEB5E:
         LDAB    #$28
         LDAA    #$A0
+
+LEB62:
         STAA    $00,X
         INX
         DECB
-        BNE     $EB62
+        BNE     LEB62
         LDAB    scrollTop
         ASLB
         LDX     #$FC45
@@ -8464,13 +10039,17 @@ orphanE3EF:
         STD     $0408
         LDX     $0408
         CPX     $0406
-        BEQ     $EB95
+        BEQ     LEB95
         DEX
+
+LEB8B:
         LDAA    $00,X
         STAA    $28,X
         DEX
         CPX     $0406
-        BCC     $EB8B
+        BCC     LEB8B
+
+LEB95:
         LDAB    scrollTop
         ASLB
         LDX     #$FCDB
@@ -8485,19 +10064,25 @@ orphanE3EF:
         STD     $0408
         LDX     $0408
         CPX     $0406
-        BEQ     $EBC3
+        BEQ     LEBC3
         DEX
+
+LEBB8:
         LDAA    $00,X
         STAA    $28,X
         DEX
         CPX     $0406
-        BCC     $EBB8
+        BCC     LEBB8
         INX
+
+LEBC3:
         LDAB    #$28
+
+LEBC5:
         CLR     $00,X
         INX
         DECB
-        BNE     $EBC5
+        BNE     LEBC5
         LDAB    scrollTop
         ASLB
         LDX     #$FCA9
@@ -8512,18 +10097,24 @@ orphanE3EF:
         STD     $0408
         LDX     $0408
         CPX     $0406
-        BEQ     $EBFC
+        BEQ     LEBFC
         DEX
         DEX
         DEX
         DEX
+
+LEBF1:
         LDAA    $00,X
         STAA    $A0,X
         DEX
         CPX     $0406
-        BCC     $EBF1
+        BCC     LEBF1
         INX
+
+LEBFC:
         LDAB    #$28
+
+LEBFE:
         LDAA    #$00
         STAA    $00,X
         INX
@@ -8537,68 +10128,98 @@ orphanE3EF:
         STAA    $00,X
         INX
         DECB
-        BNE     $EBFE
+        BNE     LEBFE
         RTS
+
+LEC16:
         LDAA    cursorCol
-        BMI     $EC22
+        BMI     LEC22
         CMPA    #$28
-        BCC     $EC3E
-        JMP     $EC5A
+        BCC     LEC3E
+        JMP     LEC5A
+
+LEC22:
         TST     $04A4
-        BPL     $EC38
-        JSR     $EE3A
+        BPL     LEC38
+        JSR     LEE3A
         LDAA    #$27
         STAA    cursorCol
-        JSR     $EC8D
-        JSR     $E9A5
-        JMP     $EC5A
+        JSR     LEC8D
+        JSR     LE9A5
+        JMP     LEC5A
+
+LEC38:
         CLR     cursorCol
-        JMP     $EC5A
+        JMP     LEC5A
+
+LEC3E:
         TST     $04A4
-        BPL     $EC52
-        JSR     $EE3A
+        BPL     LEC52
+        JSR     LEE3A
         CLR     cursorCol
-        JSR     $ECA1
-        JSR     $E9A5
-        JMP     $EC5A
+        JSR     LECA1
+        JSR     LE9A5
+        JMP     LEC5A
+
+LEC52:
         LDAA    #$27
         STAA    cursorCol
-        JMP     $EC5A
+        JMP     LEC5A
+
+LEC5A:
         LDAA    cursorRow
-        BMI     $EC65
+        BMI     LEC65
         CMPA    cursorRowMax
-        BHI     $EC79
+        BHI     LEC79
         RTS
+
+LEC65:
         TST     $04A4
-        BPL     $EC73
+        BPL     LEC73
         LDAA    cursorRowMax
         STAA    cursorRow
-        JMP     $E9A5
+        JMP     LE9A5
+
+LEC73:
         CLR     cursorRow
-        JMP     $E9A5
+        JMP     LE9A5
+
+LEC79:
         TST     $04A4
-        BPL     $EC84
+        BPL     LEC84
         CLR     cursorRow
-        JMP     $E9A5
+        JMP     LE9A5
+
+LEC84:
         LDAA    cursorRowMax
         STAA    cursorRow
-        JMP     $E9A5
+        JMP     LE9A5
+
+LEC8D:
         LDAA    cursorRow
         CMPA    scrollTop
-        BNE     $EC9D
+        BNE     LEC9D
         TST     $04A3
-        BPL     $EC9D
-        JMP     $EB28
+        BPL     LEC9D
+        JMP     LEB28
+
+LEC9D:
         DEC     cursorRow
         RTS
+
+LECA1:
         LDAA    cursorRow
         CMPA    scrollBottom
-        BNE     $ECB1
+        BNE     LECB1
         TST     $04A3
-        BPL     $ECB1
-        JMP     $EA44
+        BPL     LECB1
+        JMP     LEA44
+
+LECB1:
         INC     cursorRow
         RTS
+
+LECB5:
         CLR     $04B0
         CLR     attr0
         LDAA    #$80
@@ -8608,6 +10229,8 @@ orphanE3EF:
         LDAA    #$99
         STAA    attr3
         RTS
+
+LECCB:
         CLR     $04DA
         CLR     $04DB
         CLR     $1B26
@@ -8660,7 +10283,7 @@ orphanE3EF:
         CLR     accentPending
         CLR     cursorRow
         CLR     cursorCol
-        JSR     $E9A5
+        JSR     LE9A5
         CLR     $0495
         LDAA    #$FF
         STAA    scrollTop
@@ -8677,12 +10300,14 @@ orphanE3EF:
         CLR     $04E0
         CLR     cursorRow
         CLR     cursorCol
-        JSR     $E9A5
+        JSR     LE9A5
         CLR     $04D9
         LDAA    #$64
         STAA    $04E2
         STAA    $6090
         RTS
+
+LED9D:
         CLR     $04AF
         CLR     $0497
         LDAA    #$30
@@ -8717,6 +10342,8 @@ orphanE3EF:
         LDAA    #$09
         STAA    $0498
         RTS
+
+LEDF7:
         STAA    $04B9
         STAB    $04B8
         STX     $04B6
@@ -8727,6 +10354,8 @@ orphanE3EF:
         LDAB    $04B7
         ABX
         LDAB    #$28
+
+LEE10:
         LDAA    $00,X
         ANDA    $048E
         ORAA    $04B9
@@ -8736,96 +10365,130 @@ orphanE3EF:
         INX
         INX
         DECB
-        BNE     $EE10
+        BNE     LEE10
         LDX     rowChar
         LDAB    #$28
+
+LEE26:
         LDAA    $00,X
         ORAA    #$80
         STAA    $00,X
         INX
         DECB
-        BNE     $EE26
+        BNE     LEE26
         LDAA    $04B9
         LDAB    $04B8
         LDX     $04B6
         RTS
+
+LEE3A:
         TST     $049D
-        BPL     $EE45
+        BPL     LEE45
         LDAA    $04A2
         STAA    $049D
+
+LEE45:
         LDAA    #$09
         STAA    $0498
         RTS
+
+LEE4B:
         LDAA    #$A0
         LDX     #$5400
+
+LEE50:
         STAA    $00,X
         INX
         CPX     #$57C0
-        BNE     $EE50
+        BNE     LEE50
         LDX     #$4000
+
+LEE5B:
         CLR     $00,X
         INX
         CPX     #$43C0
-        BNE     $EE5B
+        BNE     LEE5B
         LDX     #$4400
         LDAB    #$04
+
+LEE68:
         CLR     $00,X
         ABX
         CPX     #$53A0
-        BCS     $EE68
+        BCS     LEE68
         LDX     #$4400
         LDAA    #$80
+
+LEE75:
         STAA    $01,X
         ABX
         CPX     #$5300
-        BCS     $EE75
+        BCS     LEE75
         LDAA    #$07
         LDX     #$4400
         LDAA    #$07
+
+LEE84:
         STAA    $02,X
         ABX
         CPX     #$5300
-        BCS     $EE84
+        BCS     LEE84
         LDX     #$4400
         LDAA    #$99
+
+LEE91:
         STAA    $03,X
         ABX
         CPX     #$5300
-        BCS     $EE91
+        BCS     LEE91
         RTS
-        JSR     $EE4B
+
+LEE9A:
+        JSR     LEE4B
         CLR     $1B23
         LDX     #$1B03
         LDAA    #$0F
+
+LEEA5:
         STAA    $00,X
         INX
         CPX     #$1B1B
-        BNE     $EEA5
+        BNE     LEEA5
         STAA    $1B02
         RTS
+
+LEEB1:
         LDAA    #$18
+
+LEEB3:
         STAA    PORT3
         LDX     #$5F80
         LDAA    #$02
         LDAB    #$04
+
+LEEBC:
         CLR     $00,X
         CLR     $01,X
         CLR     $02,X
         STAA    $03,X
         ABX
         CPX     #$6000
-        BCS     $EEBC
+        BCS     LEEBC
         LDAA    PORT3
         INCA
         CMPA    #$40
-        BCS     $EEB3
+        BCS     LEEB3
         RTS
+
+LEED2:
         LDAA    $1B27
         ORAA    $1B29
         ORAA    $1B28
-        BNE     $EEFC
+        BNE     LEEFC
         LDX     #$5300
         LDAB    #$04
+
+LEEE2:
         CLR     $00,X
         LDAA    #$C0
         STAA    $01,X
@@ -8836,10 +10499,14 @@ orphanE3EF:
         STAA    $03,X
         ABX
         CPX     #$53A0
-        BCS     $EEE2
-        BRA     $EF15
+        BCS     LEEE2
+        BRA     LEF15
+
+LEEFC:
         LDX     #$5300
         LDAB    #$04
+
+LEF01:
         CLR     $00,X
         LDAA    #$C0
         STAA    $01,X
@@ -8849,38 +10516,52 @@ orphanE3EF:
         STAA    $03,X
         ABX
         CPX     #$53A0
-        BCS     $EF01
-        JSR     $EF1C
-        JSR     $EFCB
+        BCS     LEF01
+
+LEF15:
+        JSR     LEF1C
+        JSR     LEFCB
         RTS
-        JSR     $F0F8
+
+LEF1C:
+        JSR     LF0F8
         TPA
         PSHA
         SEI
         STS     $048A
         LDS     #$EF66
         TST     $04E0
-        BEQ     $EF32
+        BEQ     LEF32
         LDS     #$EFB6
-        BRA     $EF4E
+        BRA     LEF4E
+
+LEF32:
         TST     $1B27
-        BEQ     $EF3C
+        BEQ     LEF3C
         LDS     #$EF7A
-        BRA     $EF4E
+        BRA     LEF4E
+
+LEF3C:
         TST     $1B29
-        BEQ     $EF46
+        BEQ     LEF46
         LDS     #$EFA2
-        BRA     $EF4E
+        BRA     LEF4E
+
+LEF46:
         TST     $1B28
-        BEQ     $EF4E
+        BEQ     LEF4E
         LDS     #$EF8E
+
+LEF4E:
         LDX     #$57C0
+
+LEF51:
         PULA
         ORAA    #$80
         STAA    $00,X
         INX
         CPX     #$57D4
-        BCS     $EF51
+        BCS     LEF51
         LDS     $048A
         PULA
         TAP
@@ -8901,7 +10582,9 @@ strModeNames:
         FCB     $4F,$50,$45,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20
         FCB     $48,$45,$58,$2D,$54,$61,$73,$74,$61,$74,$75,$72,$65,$69,$6E,$67
         FCB     $61,$62,$65,$20
-        JSR     $F0F8
+
+LEFCB:
+        JSR     LF0F8
         TPA
         PSHA
         SEI
@@ -8911,12 +10594,14 @@ strModeNames:
         ABX
         TXS
         LDX     #$57D4
+
+LEFDF:
         PULA
         ORAA    #$80
         STAA    $00,X
         INX
         CPX     #$57E8
-        BCS     $EFDF
+        BCS     LEFDF
         LDS     $048A
         PULA
         TAP
@@ -8942,79 +10627,107 @@ strStatusMsgs:
         FCB     $20,$20,$20,$20,$44,$65,$63,$6F,$64,$65,$72,$73,$6F,$66,$74,$77
         FCB     $61,$72,$65,$20,$56,$33,$2E,$33,$42,$65,$6C,$65,$67,$74,$20,$20
         FCB     $20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20
-        JSR     $F1D8
-        JSR     $F45B
-        JSR     $F7FE
+
+LF081:
+        JSR     LF1D8
+        JSR     LF45B
+        JSR     LF7FE
         CMPA    #$00
-        BNE     $F0A9
+        BNE     LF0A9
         CLR     $04AE
-        JSR     $A210
-        JSR     $F1D8
-        JSR     $F45B
+        JSR     LA210
+
+LF094:
+        JSR     LF1D8
+        JSR     LF45B
         LDAA    $1B23
         ORAA    $04AE
-        BNE     $F081
-        JSR     $F7FE
+        BNE     LF081
+        JSR     LF7FE
         CMPA    #$00
-        BEQ     $F094
+        BEQ     LF094
+
+LF0A9:
         TST     $04DF
-        BEQ     $F0B1
-        JSR     $F979
+        BEQ     LF0B1
+        JSR     LF979
+
+LF0B1:
         CMPA    #$1A
-        BNE     $F0C1
+        BNE     LF0C1
+
+LF0B5:
         LDAB    $6011
         CMPB    $6011
-        BNE     $F0B5
+        BNE     LF0B5
         INCB
         STAB    $6011
+
+LF0C1:
         RTS
+
+LF0C2:
         LDX     $04CB
-        BMI     $F0F7
+        BMI     LF0F7
         LDX     #$FFFF
         STX     $04CB
         LDX     #$5300
         LDD     $02,X
         STD     $04C9
         LDD     #$0889
+
+LF0D8:
         STD     $02,X
         INX
         INX
         INX
         INX
         CPX     #$53A0
-        BCS     $F0D8
+        BCS     LF0D8
         LDX     #$57C0
+
+LF0E6:
         LDAA    $00,X
         ORAA    #$80
         STAA    $00,X
         INX
         CPX     #$57E8
-        BCS     $F0E6
+        BCS     LF0E6
         LDAA    #$FF
         STAA    $04AE
+
+LF0F7:
         RTS
+
+LF0F8:
         LDX     $04CB
-        BPL     $F128
+        BPL     LF128
         LDX     #$02EE
         STX     $04CB
         LDX     #$5300
         LDD     $04C9
+
+LF109:
         STD     $02,X
         INX
         INX
         INX
         INX
         CPX     #$53A0
-        BCS     $F109
+        BCS     LF109
         LDX     #$57C0
+
+LF117:
         LDAA    $00,X
         ORAA    #$80
         STAA    $00,X
         INX
         CPX     #$57E8
-        BCS     $F117
+        BCS     LF117
         LDAA    #$FF
         STAA    $04AE
+
+LF128:
         RTS
 
 ; Interrupt soft-vector stubs.
@@ -9048,7 +10761,7 @@ stubSwi:
 
 nullHandler:
         RTI                             ; null interrupt handler
-        JSR     $F1D8
+        JSR     LF1D8
         RTI
 
 ; 75-baud transmit: a software UART clocked by the timer output compare.
@@ -9083,14 +10796,16 @@ txBitTick:
         LDAB    P4DDR
         ANDB    #$0F
         TST     PORT1
-        BPL     $F160
+        BPL     LF160
         ORAB    #$80
+
+LF160:
         STAB    P4DDR
         LDAA    txBitsLeft
-        BNE     $F18A
+        BNE     LF18A
         LDAB    txRingHead
         CMPB    txRingTail
-        BEQ     $F1B3
+        BEQ     LF1B3
         LDX     #$04EE
         INCB
         ABX
@@ -9103,14 +10818,18 @@ txBitTick:
         LDAA    TCSR
         ORAA    #$01
         STAA    TCSR
-        BRA     $F1B0
+        BRA     LF1B0
+
+LF18A:
         CMPA    #$01
-        BNE     $F199
+        BNE     LF199
         LDAA    TCSR
         ANDA    #$FE
         STAA    TCSR
         DEC     txBitsLeft
-        BRA     $F1B0
+        BRA     LF1B0
+
+LF199:
         LDAA    txShift
         ANDA    #$01
         STAA    txCurBit
@@ -9120,49 +10839,63 @@ txBitTick:
         STAA    TCSR
         DEC     txBitsLeft
         LSR     txShift
-        JMP     $F1D7
-        JSR     $F1D8
+
+LF1B0:
+        JMP     LF1D7
+
+LF1B3:
+        JSR     LF1D8
         TST     $04D9
-        BEQ     $F1D7
+        BEQ     LF1D7
         TST     $04C8
-        BNE     $F1D7
+        BNE     LF1D7
         TST     $0493
-        BPL     $F1D7
+        BPL     LF1D7
         LDAA    $0494
         CMPA    #$07
-        BNE     $F1D7
+        BNE     LF1D7
         LDX     $04CB
-        BEQ     $F1D7
-        BMI     $F1D7
+        BEQ     LF1D7
+        BMI     LF1D7
         DEX
         STX     $04CB
+
+LF1D7:
         RTI
+
+LF1D8:
         TPA
         PSHA
         SEI
         TST     $04DC
-        BEQ     $F1E3
-        JMP     $F409
-        JSR     $F434
-        BCC     $F1F0
-        JSR     $F459
-        BCC     $F1F0
-        JMP     $F409
+        BEQ     LF1E3
+        JMP     LF409
+
+LF1E3:
+        JSR     LF434
+        BCC     LF1F0
+        JSR     LF459
+        BCC     LF1F0
+        JMP     LF409
+
+LF1F0:
         TST     $04E0
-        BEQ     $F22A
+        BEQ     LF22A
         SUBA    #$30
         CMPA    #$09
-        BLS     $F20C
+        BLS     LF20C
         ORAA    #$20
         SUBA    #$27
         CMPA    #$0F
-        BLS     $F20C
+        BLS     LF20C
         CLR     $04E0
-        JSR     $EF1C
-        JMP     $F409
+        JSR     LEF1C
+        JMP     LF409
+
+LF20C:
         LDAB    $04E0
         CMPB    #$02
-        BEQ     $F222
+        BEQ     LF222
         ASLA
         ASLA
         ASLA
@@ -9170,40 +10903,54 @@ txBitTick:
         STAA    $04E1
         LDAA    #$02
         STAA    $04E0
-        JMP     $F409
+        JMP     LF409
+
+LF222:
         ORAA    $04E1
         LDAB    #$01
         STAB    $04E0
+
+LF22A:
         LDAB    $04DE
-        BEQ     $F29F
+        BEQ     LF29F
         CMPB    #$28
-        BLS     $F253
+        BLS     LF253
         LDAB    #$2C
         SUBB    $04DE
         CMPB    #$03
-        BNE     $F23F
+        BNE     LF23F
         ANDA    $0493
+
+LF23F:
         LDX     #$5300
         ABX
         LDAB    #$04
+
+LF245:
         STAA    $00,X
         ABX
         CPX     #$53A0
-        BCS     $F245
+        BCS     LF245
         DEC     $04DE
-        JMP     $F409
+        JMP     LF409
+
+LF253:
         CMPA    #$00
-        BNE     $F25D
+        BNE     LF25D
         CLR     $04DE
-        JMP     $F409
+        JMP     LF409
+
+LF25D:
         CMPA    #$09
-        BEQ     $F299
+        BEQ     LF299
         CMPA    #$08
-        BNE     $F287
+        BNE     LF287
         LDAA    $04DE
         CMPA    #$28
-        BCS     $F26F
-        JMP     $F409
+        BCS     LF26F
+        JMP     LF409
+
+LF26F:
         INC     $04DE
         LDX     #$57C0
         LDAB    #$28
@@ -9213,7 +10960,9 @@ txBitTick:
         STAA    $00,X
         LDAA    #$FF
         STAA    $04AE
-        JMP     $F409
+        JMP     LF409
+
+LF287:
         LDX     #$57C0
         LDAB    #$28
         SUBB    $04DE
@@ -9222,275 +10971,391 @@ txBitTick:
         STAA    $00,X
         LDAA    #$FF
         STAA    $04AE
+
+LF299:
         DEC     $04DE
-        JMP     $F409
+        JMP     LF409
+
+LF29F:
         CMPA    #$10
-        BNE     $F2AB
+        BNE     LF2AB
         LDAA    #$FF
         STAA    $04DB
-        JMP     $F409
+        JMP     LF409
+
+LF2AB:
         TST     $04DB
-        BPL     $F2B3
-        JMP     $F2ED
-        JSR     $F40C
+        BPL     LF2B3
+        JMP     LF2ED
+
+LF2B3:
+        JSR     LF40C
         TSTA
-        BEQ     $F2E4
+        BEQ     LF2E4
         CMPA    #$13
-        BNE     $F2C2
+        BNE     LF2C2
         INC     $04BE
-        BRA     $F2D7
+        BRA     LF2D7
+
+LF2C2:
         CMPA    #$1C
-        BEQ     $F2CB
+        BEQ     LF2CB
         CLR     $04BE
-        BRA     $F2D7
+        BRA     LF2D7
+
+LF2CB:
         LDAB    $04BE
         CMPB    #$0C
-        BNE     $F2D7
+        BNE     LF2D7
         PSHA
-        JSR     $E5A1
+        JSR     LE5A1
         PULA
+
+LF2D7:
         TST     $04D9
-        BEQ     $F2E7
+        BEQ     LF2E7
         TST     $04DA
-        BNE     $F2E7
-        JSR     $F7A4
-        JMP     $F409
-        JSR     $F7E4
-        JMP     $F409
+        BNE     LF2E7
+        JSR     LF7A4
+
+LF2E4:
+        JMP     LF409
+
+LF2E7:
+        JSR     LF7E4
+        JMP     LF409
+
+LF2ED:
         CLR     $04DB
         CMPA    #$52
-        BNE     $F304
+        BNE     LF304
         LDAA    $1B24
         EORA    #$01
         STAA    $1B24
         LDAA    #$FF
         STAA    $1B23
-        JMP     $F409
+        JMP     LF409
+
+LF304:
         CMPA    #$54
-        BNE     $F318
+        BNE     LF318
         LDAA    $1B25
         EORA    #$FF
         STAA    $1B25
         LDAA    #$FF
         STAA    $1B23
-        JMP     $F409
+        JMP     LF409
+
+LF318:
         CMPA    #$57
-        BNE     $F327
+        BNE     LF327
         LDAA    #$FF
         STAA    $1B26
         STAA    $1B23
-        JMP     $F409
+        JMP     LF409
+
+LF327:
         CMPA    #$77
-        BNE     $F336
+        BNE     LF336
         CLR     $1B26
         LDAA    #$FF
         STAA    $1B23
-        JMP     $F409
+        JMP     LF409
+
+LF336:
         CMPA    #$75
-        BNE     $F342
+        BNE     LF342
         LDAA    #$FF
         STAA    $04C8
-        JMP     $F409
+        JMP     LF409
+
+LF342:
         CMPA    #$55
-        BNE     $F34C
+        BNE     LF34C
         CLR     $04C8
-        JMP     $F409
+        JMP     LF409
+
+LF34C:
         CMPA    #$73
-        BNE     $F353
-        JSR     $F0C2
+        BNE     LF353
+        JSR     LF0C2
+
+LF353:
         CMPA    #$53
-        BNE     $F35A
-        JSR     $F0F8
+        BNE     LF35A
+        JSR     LF0F8
+
+LF35A:
         CMPA    #$31
-        BNE     $F365
+        BNE     LF365
         LDAA    #$AB
         STAA    P4DDR
-        JMP     $F409
+        JMP     LF409
+
+LF365:
         CMPA    #$32
-        BNE     $F370
+        BNE     LF370
         LDAA    #$9B
         STAA    P4DDR
-        JMP     $F409
+        JMP     LF409
+
+LF370:
         CMPA    #$34
-        BNE     $F37B
+        BNE     LF37B
         LDAA    #$8B
         STAA    P4DDR
-        JMP     $F409
+        JMP     LF409
+
+LF37B:
         CMPA    #$5A
-        BNE     $F38A
+        BNE     LF38A
         LDAA    #$2C
         STAA    $04DE
-        JSR     $F0F8
-        JMP     $F409
+        JSR     LF0F8
+        JMP     LF409
+
+LF38A:
         CMPA    #$7A
-        BNE     $F397
-        JSR     $EED2
-        JSR     $F0F8
-        JMP     $F409
+        BNE     LF397
+        JSR     LEED2
+        JSR     LF0F8
+        JMP     LF409
+
+LF397:
         CMPA    #$4D
-        BNE     $F3A6
+        BNE     LF3A6
         LDAA    #$FF
         STAA    $04DF
         STAA    c64XferEn
-        JMP     $F409
+        JMP     LF409
+
+LF3A6:
         CMPA    #$6D
-        BNE     $F3B3
+        BNE     LF3B3
         CLR     $04DF
         CLR     c64XferEn
-        JMP     $F409
+        JMP     LF409
+
+LF3B3:
         CMPA    #$4C
-        BNE     $F3BF
+        BNE     LF3BF
         LDAA    #$FF
         STAA    $04DA
-        JMP     $F409
+        JMP     LF409
+
+LF3BF:
         CMPA    #$6C
-        BNE     $F3C9
+        BNE     LF3C9
         CLR     $04DA
-        JMP     $F409
+        JMP     LF409
+
+LF3C9:
         CMPA    #$48
-        BNE     $F3D8
+        BNE     LF3D8
         LDAA    #$01
         STAA    $04E0
-        JSR     $EF1C
-        JMP     $F409
+        JSR     LEF1C
+        JMP     LF409
+
+LF3D8:
         CMPA    #$4E
-        BNE     $F3E4
+        BNE     LF3E4
         LDAA    #$FF
         STAA    $0627
-        JMP     $F409
+        JMP     LF409
+
+LF3E4:
         CMPA    #$6E
-        BNE     $F3EE
+        BNE     LF3EE
         CLR     $0627
-        JMP     $F409
+        JMP     LF409
+
+LF3EE:
         CMPA    #$2C
-        BNE     $F3FA
+        BNE     LF3FA
         LDAA    #$01
         STAA    $0494
-        JMP     $F409
+        JMP     LF409
+
+LF3FA:
         CMPA    #$2E
-        BNE     $F406
+        BNE     LF406
         LDAA    #$07
         STAA    $0494
-        JMP     $F409
+        JMP     LF409
+
+LF406:
         STAA    $04DC
+
+LF409:
         PULA
         TAP
         RTS
+
+LF40C:
         TST     $1B27
-        BEQ     $F41A
+        BEQ     LF41A
         CMPA    #$13
-        BEQ     $F428
+        BEQ     LF428
         CMPA    #$1C
-        BEQ     $F42B
+        BEQ     LF42B
         RTS
+
+LF41A:
         TST     $1B28
-        BEQ     $F427
+        BEQ     LF427
         CMPA    #$09
-        BEQ     $F42E
+        BEQ     LF42E
         CMPA    #$0B
-        BEQ     $F431
+        BEQ     LF431
+
+LF427:
         RTS
+
+LF428:
         LDAA    #$2A
         RTS
+
+LF42B:
         LDAA    #$5F
         RTS
+
+LF42E:
         LDAA    #$11
         RTS
+
+LF431:
         LDAA    #$14
         RTS
+
+LF434:
         LDAB    $600D
         CMPB    $600D
-        BNE     $F434
+        BNE     LF434
         CMPB    $600E
-        BEQ     $F455
+        BEQ     LF455
         LDX     #$6040
         LDAB    $600E
         ABX
         LDAA    $00,X
         INCB
         CMPB    #$40
-        BNE     $F450
+        BNE     LF450
         CLRB
+
+LF450:
         STAB    $600E
         CLC
         RTS
+
+LF455:
         SEC
         RTS
 
 orphanF457:
         SEC
         RTS
+
+LF459:
         SEC
         RTS
+
+LF45B:
         LDX     $04CB
-        BNE     $F463
-        JSR     $F0C2
+        BNE     LF463
+        JSR     LF0C2
+
+LF463:
         TST     $04DD
-        BNE     $F487
+        BNE     LF487
         LDAA    $04DC
-        BNE     $F470
-        JMP     $F5A2
+        BNE     LF470
+        JMP     LF5A2
+
+LF470:
         CMPA    #$45
-        BNE     $F49D
+        BNE     LF49D
         CLR     $04DC
         TST     $04D9
-        BNE     $F487
-        JSR     $EE9A
+        BNE     LF487
+        JSR     LEE9A
         LDAA    #$FF
         STAA    $04AE
-        JMP     $F59F
+        JMP     LF59F
+
+LF487:
         LDAB    #$50
         STAB    $04E2
         STAB    $6090
-        JSR     $EFCB
-        JSR     $A210
-        JSR     $F5CF
+        JSR     LEFCB
+        JSR     LA210
+        JSR     LF5CF
         CLR     $04DD
         SEC
         RTS
+
+LF49D:
         CMPA    #$41
-        BNE     $F4AF
+        BNE     LF4AF
         TST     $04D9
-        BMI     $F4AC
+        BMI     LF4AC
         CLR     $04DC
-        JSR     $F5A4
-        JMP     $F59F
+        JSR     LF5A4
+
+LF4AC:
+        JMP     LF59F
+
+LF4AF:
         CMPA    #$46
-        BNE     $F4B6
-        JMP     $B280
+        BNE     LF4B6
+        JMP     LB280
+
+LF4B6:
         CMPA    #$66
-        BNE     $F4BD
-        JMP     $B280
+        BNE     LF4BD
+        JMP     LB280
+
+LF4BD:
         CMPA    #$67
-        BNE     $F4C4
-        JMP     $F999
+        BNE     LF4C4
+        JMP     LF999
+
+LF4C4:
         CMPA    #$47
-        BNE     $F4D9
+        BNE     LF4D9
         CLR     $1B28
         CLR     $1B27
         LDAA    #$FF
         STAA    $1B29
-        JSR     $EED2
-        JMP     $F59F
+        JSR     LEED2
+        JMP     LF59F
+
+LF4D9:
         CMPA    #$78
-        BNE     $F4E5
+        BNE     LF4E5
         LDAA    #$FF
         STAA    $1B23
-        JMP     $F59F
+        JMP     LF59F
+
+LF4E5:
         CMPA    #$4B
-        BNE     $F4F4
+        BNE     LF4F4
         LDAA    #$7F
         STAA    $0493
-        JSR     $EED2
-        JMP     $F59F
+        JSR     LEED2
+        JMP     LF59F
+
+LF4F4:
         CMPA    #$6B
-        BNE     $F503
+        BNE     LF503
         LDAA    #$FF
         STAA    $0493
-        JSR     $EED2
-        JMP     $F59F
+        JSR     LEED2
+        JMP     LF59F
+
+LF503:
         CMPA    #$51
-        BNE     $F52D
+        BNE     LF52D
         LDAA    #$07
         STAA    P1DDR
         LDAA    PORT1
@@ -9500,18 +11365,22 @@ orphanF457:
         LDAB    #$50
         STAB    $04E2
         STAB    $6090
-        JSR     $EFCB
-        JSR     $A210
-        JSR     $F5CF
+        JSR     LEFCB
+        JSR     LA210
+        JSR     LF5CF
         LDAB    P4DDR
         ANDB    #$0F
         STAB    P4DDR
         SEI
-        BRA     $F52B
+
+LF52B:
+        BRA     LF52B
+
+LF52D:
         CMPA    #$11
-        BCS     $F59F
+        BCS     LF59F
         CMPA    #$2A
-        BHI     $F59F
+        BHI     LF59F
         TAB
         SUBB    #$11
         ASLB
@@ -9531,41 +11400,49 @@ orphanF457:
         STAA    $0492
         LDAA    #$FF
         STAA    c64XferEn
+
+LF55E:
         LDX     $0410
         LDAA    $00,X
-        JSR     $F979
+        JSR     LF979
         INX
         STX     $0410
         LDX     $0414
         LDAA    $00,X
-        JSR     $F979
+        JSR     LF979
         INX
         STX     $0414
         LDX     $0412
         LDAA    $00,X
-        JSR     $F979
+        JSR     LF979
         LDAA    $01,X
-        JSR     $F979
+        JSR     LF979
         LDAA    $02,X
-        JSR     $F979
+        JSR     LF979
         LDAA    $03,X
-        JSR     $F979
+        JSR     LF979
         INX
         INX
         INX
         INX
         STX     $0412
         DEC     $0492
-        BNE     $F55E
+        BNE     LF55E
         CLR     c64XferEn
-        JMP     $F59F
+        JMP     LF59F
+
+LF59F:
         CLR     $04DC
+
+LF5A2:
         CLC
         RTS
-        JSR     $F83E
+
+LF5A4:
+        JSR     LF83E
         TST     $04D9
-        BEQ     $F5C7
-        JSR     $ED9D
+        BEQ     LF5C7
+        JSR     LED9D
         SEI
         LDAA    TRCSR
         LDAA    RDR
@@ -9578,10 +11455,14 @@ orphanF457:
         LDD     COUNTH
         ADDD    #$3415
         STD     OCRH
+
+LF5C7:
         LDD     #$F14C
         STD     >softVecOcf
         CLI
         RTS
+
+LF5CF:
         LDAA    #$08
         STAA    TRCSR
         LDAA    PORT2
@@ -9604,14 +11485,16 @@ orphanF457:
         CLI
         LDD     #$07D0
         STD     $04E3
+
+LF601:
         LDAA    $04E3
         CMPA    #$FF
-        BNE     $F601
+        BNE     LF601
         LDAA    #$64
         STAA    $04E2
         STAA    $6090
-        JSR     $EFCB
-        JSR     $A210
+        JSR     LEFCB
+        JSR     LA210
         SEI
         LDD     #$F14C
         STD     >softVecOcf
@@ -9619,16 +11502,20 @@ orphanF457:
         RTS
 
 sciRxHandler:
-        JSR     $F75F
-        BCC     $F627
-        JMP     $F75E
+        JSR     LF75F
+        BCC     LF627
+        JMP     LF75E
+
+LF627:
         LDAB    $04D6
-        BEQ     $F62F
-        JMP     $F71A
+        BEQ     LF62F
+        JMP     LF71A
+
+LF62F:
         CMPA    #$04
-        BNE     $F65A
+        BNE     LF65A
         TST     $04ED
-        BEQ     $F65A
+        BEQ     LF65A
         LDAA    #$08
         STAA    TRCSR
         TST     TRCSR
@@ -9643,50 +11530,64 @@ sciRxHandler:
         STAA    P2DDR
         LDAB    #$FF
         STAB    $04DD
-        JMP     $F75E
+        JMP     LF75E
+
+LF65A:
         CLR     $04ED
         CMPA    #$10
-        BNE     $F669
+        BNE     LF669
         LDAB    #$FF
         STAB    $04ED
-        JMP     $F75E
+        JMP     LF75E
+
+LF669:
         CMPA    #$02
-        BNE     $F670
-        JMP     $F6BE
+        BNE     LF670
+        JMP     LF6BE
+
+LF670:
         STAA    $04CF
-        JSR     $F818
+        JSR     LF818
         LDAA    $04CF
         CMPA    #$00
-        BEQ     $F6B0
+        BEQ     LF6B0
         CMPA    #$01
-        BEQ     $F6B0
+        BEQ     LF6B0
         CMPA    #$03
-        BEQ     $F6D5
+        BEQ     LF6D5
         CMPA    #$04
-        BEQ     $F6B3
+        BEQ     LF6B3
         CMPA    #$05
-        BEQ     $F6F0
+        BEQ     LF6F0
         CMPA    #$06
-        BEQ     $F6B0
+        BEQ     LF6B0
         CMPA    #$07
-        BNE     $F698
-        JMP     $F70D
+        BNE     LF698
+        JMP     LF70D
+
+LF698:
         CMPA    #$10
-        BEQ     $F6B0
+        BEQ     LF6B0
         CMPA    #$15
-        BEQ     $F6B0
+        BEQ     LF6B0
         CMPA    #$14
-        BEQ     $F6B0
+        BEQ     LF6B0
         CMPA    #$17
-        BEQ     $F6D5
+        BEQ     LF6D5
         TST     $04DA
-        BNE     $F6B0
-        JSR     $F7E4
-        JMP     $F75E
+        BNE     LF6B0
+        JSR     LF7E4
+
+LF6B0:
+        JMP     LF75E
+
+LF6B3:
         LDAA    #$30
         STAA    $04CD
         CLR     $04D8
-        JMP     $F75E
+        JMP     LF75E
+
+LF6BE:
         LDAA    #$FF
         STAA    $04D8
         LDD     #$0000
@@ -9694,9 +11595,11 @@ sciRxHandler:
         CLR     $04D6
         LDD     $05F4
         STD     $05F2
-        JMP     $F75E
+        JMP     LF75E
+
+LF6D5:
         TST     $04D8
-        BPL     $F6ED
+        BPL     LF6ED
         CLR     $04D8
         LDAA    $04CD
         EORA    #$01
@@ -9704,40 +11607,56 @@ sciRxHandler:
         STAA    $04CD
         LDAA    #$02
         STAA    $04D6
-        JMP     $F75E
+
+LF6ED:
+        JMP     LF75E
+
+LF6F0:
         LDAA    #$15
-        BRA     $F707
+        BRA     LF707
+
+LF6F4:
         LDAA    $04CE
         CMPA    #$15
-        BEQ     $F707
+        BEQ     LF707
         CMPA    #$06
-        BEQ     $F707
+        BEQ     LF707
         LDAA    #$10
-        JSR     $F7A4
+        JSR     LF7A4
         LDAA    $04CE
-        JSR     $F7A4
-        JMP     $F75E
+
+LF707:
+        JSR     LF7A4
+        JMP     LF75E
+
+LF70D:
         LDAA    #$02
         STAA    $04D6
         LDAA    #$06
         STAA    $04CE
-        JMP     $F75E
+        JMP     LF75E
+
+LF71A:
         CLR     $04ED
         DEC     $04D6
-        BEQ     $F728
+        BEQ     LF728
         STAA    $04D5
-        JMP     $F75E
+        JMP     LF75E
+
+LF728:
         STAA    $04D4
         LDX     $04D2
         CPX     $04D4
-        BNE     $F747
+        BNE     LF747
         LDD     #$0000
         STD     $04D2
         LDAA    $04D7
-        BNE     $F747
+        BNE     LF747
         LDD     $05F2
         STD     $05F4
-        JMP     $F6F4
+        JMP     LF6F4
+
+LF747:
         LDD     $05F4
         STD     $05F2
         CLR     $04D7
@@ -9745,25 +11664,35 @@ sciRxHandler:
         STAA    $04CE
         LDD     #$0000
         STD     $04D2
-        JMP     $F6F4
+        JMP     LF6F4
+
+LF75E:
         RTI
+
+LF75F:
         LDAA    TRCSR
         TAB
         ANDA    #$40
-        BNE     $F76F
+        BNE     LF76F
         ASLB
-        BCC     $F76D
+        BCC     LF76D
         LDAA    RDR
         CLC
         RTS
+
+LF76D:
         SEC
         RTS
+
+LF76F:
         LDX     #$19AA
+
+LF772:
         LDAA    PORT2
         ANDA    #$08
-        BNE     $F79C
+        BNE     LF79C
         DEX
-        BNE     $F772
+        BNE     LF772
         LDAA    #$08
         STAA    TRCSR
         TST     TRCSR
@@ -9780,13 +11709,17 @@ sciRxHandler:
         STAA    $04DD
         SEC
         RTS
+
+LF79C:
         LDAA    #$01
         STAA    $04D7
         LDAA    RDR
         RTS
+
+LF7A4:
         LDAB    $1B27
         ORAB    $1B28
-        BEQ     $F7D1
+        BEQ     LF7D1
         PSHA
         RORA
         PSHA
@@ -9822,62 +11755,88 @@ sciRxHandler:
         PULB
         RORB
         RORA
+
+LF7D1:
         LDAB    txRingTail
         INCB
         CMPB    txRingHead
-        BEQ     $F7D1
+        BEQ     LF7D1
         INC     txRingTail
         LDX     #$04EE
         ABX
         STAA    $00,X
         RTS
+
+LF7E4:
         LDX     $05F2
         INX
         CPX     #$3000
-        BNE     $F7F0
+        BNE     LF7F0
         LDX     #$2000
+
+LF7F0:
         STX     $05F2
         TST     $04D8
-        BMI     $F7FB
+        BMI     LF7FB
         STX     $05F4
+
+LF7FB:
         STAA    $00,X
         RTS
+
+LF7FE:
         LDX     $05F0
         CPX     $05F4
-        BNE     $F809
+        BNE     LF809
         LDAA    #$00
         RTS
+
+LF809:
         INX
         CPX     #$3000
-        BNE     $F812
+        BNE     LF812
         LDX     #$2000
+
+LF812:
         STX     $05F0
         LDAA    $00,X
         RTS
+
+LF818:
         LDAA    $04CF
         STAA    $05EF
         LDD     $04D2
         LDX     #$0008
+
+LF824:
         LSRD
-        BCC     $F837
+        BCC     LF837
         LSR     $05EF
-        BCS     $F830
+        BCS     LF830
+
+LF82C:
         EORA    #$A0
         EORB    #$01
+
+LF830:
         DEX
-        BNE     $F824
+        BNE     LF824
         STD     $04D2
         RTS
+
+LF837:
         LSR     $05EF
-        BCS     $F82C
-        BRA     $F830
+        BCS     LF82C
+        BRA     LF830
+
+LF83E:
         LDAA    PORT2
         ORAA    #$03
         STAA    PORT2
         CLR     $04E2
         CLR     $6090
-        JSR     $EFCB
-        JSR     $A210
+        JSR     LEFCB
+        JSR     LA210
         SEI
         LDD     COUNTH
         ADDD    #$03E8
@@ -9900,90 +11859,110 @@ sciRxHandler:
         STAA    TCSR
         LDD     #$10AE
         STD     $04E5
+
+LF881:
         LDD     #$00C8
         STD     $04E7
         CLR     $04DC
-        JSR     $F1D8
+        JSR     LF1D8
         LDAA    $04DC
         CMPA    #$45
-        BNE     $F897
-        JMP     $F942
+        BNE     LF897
+        JMP     LF942
+
+LF897:
         LDAA    $04E5
         CMPA    #$FF
-        BEQ     $F8BD
+        BEQ     LF8BD
         LDAA    PORT2
         ANDA    #$08
-        BEQ     $F881
+        BEQ     LF881
         LDAA    $04E7
         CMPA    #$FF
-        BNE     $F897
+        BNE     LF897
         LDAB    #$78
         STAB    $04E2
         STAB    $6090
-        JSR     $EFCB
-        JSR     $A210
-        JSR     $F5CF
+        JSR     LEFCB
+        JSR     LA210
+        JSR     LF5CF
         RTS
+
+LF8BD:
         CLR     $04DC
-        JSR     $F1D8
+        JSR     LF1D8
         LDAA    $04DC
         CMPA    #$45
-        BNE     $F8CD
-        JMP     $F942
+        BNE     LF8CD
+        JMP     LF942
+
+LF8CD:
         LDX     #$0016
+
+LF8D0:
         LDAA    $04E3
         CMPA    #$FF
-        BEQ     $F92F
+        BEQ     LF92F
         LDAA    PORT2
         ANDA    #$08
-        BEQ     $F8BD
+        BEQ     LF8BD
         DEX
-        BNE     $F8D0
+        BNE     LF8D0
         LDAB    #$14
         STAB    $04E2
         STAB    $6090
-        JSR     $EFCB
-        JSR     $A210
+        JSR     LEFCB
+        JSR     LA210
         LDD     #$84D0
         STD     $04E3
-        JSR     $F1D8
+
+LF8F4:
+        JSR     LF1D8
         LDAA    $04DC
         CMPA    #$45
-        BNE     $F901
-        JMP     $F942
+        BNE     LF901
+        JMP     LF942
+
+LF901:
         LDD     #$00C8
         STD     $04E7
+
+LF907:
         LDAA    $04E3
         CMPA    #$FF
-        BEQ     $F92F
+        BEQ     LF92F
         LDAA    PORT2
         ANDA    #$08
-        BEQ     $F8F4
+        BEQ     LF8F4
         LDAA    $04E7
         CMPA    #$FF
-        BNE     $F907
+        BNE     LF907
         LDAB    #$28
         STAB    $04E2
         STAB    $6090
-        JSR     $EFCB
-        JSR     $A210
+        JSR     LEFCB
+        JSR     LA210
         LDAA    #$FF
         STAA    $04D9
         RTS
+
+LF92F:
         CLI
         LDAB    #$3C
         STAB    $04E2
         STAB    $6090
-        JSR     $EFCB
-        JSR     $A210
-        JSR     $F5CF
+        JSR     LEFCB
+        JSR     LA210
+        JSR     LF5CF
         RTS
+
+LF942:
         LDAB    #$50
         STAB    $04E2
         STAB    $6090
-        JSR     $EFCB
-        JSR     $A210
-        JSR     $F5CF
+        JSR     LEFCB
+        JSR     LA210
+        JSR     LF5CF
         RTS
 
 timerHandlerAlt:
@@ -10001,24 +11980,30 @@ timerHandlerAlt:
         ADDD    #$03E8
         STD     OCRH
         RTI
+
+LF979:
         PSHA
         PSHB
         PSHX
+
+LF97C:
         LDAB    c64FifoWr
         LDX     #$6020
         ABX
         INCB
         ANDB    #$1F
         CMPB    c64FifoRd
-        BEQ     $F97C
+        BEQ     LF97C
         CMPB    c64FifoRd
-        BEQ     $F97C
+        BEQ     LF97C
         STAA    $00,X
         STAB    c64FifoWr
         PULX
         PULB
         PULA
         RTS
+
+LF999:
         SEI
         LDS     #$0400
         LDD     #$FC25
@@ -10028,36 +12013,42 @@ timerHandlerAlt:
         CLR     $1B29
         LDAA    #$FF
         STAA    $1B28
-        JSR     $EE4B
-        JSR     $EED2
+        JSR     LEE4B
+        JSR     LEED2
         CLR     $1B20
         CLR     $04DC
         LDAA    #$80
         STAA    $1B02
         LDX     #$1B03
+
+LF9C3:
         STAA    $00,X
         INX
         CPX     #$1B1B
-        BNE     $F9C3
-        JSR     $A210
+        BNE     LF9C3
+        JSR     LA210
         LDAA    #$17
         STAA    >PORT3
         LDD     #$0010
         LDX     #$5C00
+
+LF9D9:
         STAA    $03,X
         STAA    $07,X
         STAA    $0B,X
         STAA    $0F,X
         ABX
         CPX     #$5FC0
-        BCS     $F9D9
+        BCS     LF9D9
         LDD     #$0000
         STD     $0617
         LDAA    #$0C
-        JSR     $FBAA
-        JSR     $FC01
-        JSR     $FB9A
-        BRA     $F9F2
+        JSR     LFBAA
+
+LF9F2:
+        JSR     LFC01
+        JSR     LFB9A
+        BRA     LF9F2
 
 ; ASCII terminal-mode C0 dispatch: 32 big-endian entries, $F9FA-$FA39.
 ;
@@ -10075,15 +12066,23 @@ asciiCtrlTable:
         FDB     $FAB9,$FACC,$FA3A,$FAE1,$FA85,$FAC7,$FACB,$FACB
         FDB     $FACB,$FACB,$FAF6,$FACB,$FB03,$FACB,$FACB,$FACB
         FDB     $FACB,$FACB,$FACB,$FACB,$FACB,$FACB,$FACB,$FACB
+
+LFA3A:
         LDAA    $0618
         CMPA    #$17
-        BCC     $FA46
+        BCC     LFA46
         INCA
         STAA    $0618
         RTS
+
+LFA46:
         LDAA    #$18
+
+LFA48:
         STAA    >PORT3
         LDX     #$5C00
+
+LFA4E:
         LDD     $28,X
         STD     $00,X
         LDD     $2A,X
@@ -10095,7 +12094,9 @@ asciiCtrlTable:
         LDAB    #$08
         ABX
         CPX     #$5F98
-        BCS     $FA4E
+        BCS     LFA4E
+
+LFA66:
         LDD     #$00D0
         STD     $00,X
         STD     $04,X
@@ -10105,18 +12106,22 @@ asciiCtrlTable:
         LDAB    #$08
         ABX
         CPX     #$5FC0
-        BCS     $FA66
+        BCS     LFA66
         LDAA    >PORT3
         INCA
         CMPA    #$40
-        BCS     $FA48
+        BCS     LFA48
         RTS
         CLRA
         STAA    $0617
         STAA    $0618
         LDAA    #$18
+
+LFA8E:
         STAA    PORT3
         LDX     #$5C00
+
+LFA93:
         LDD     #$1200
         STD     $02,X
         STD     $06,X
@@ -10130,18 +12135,22 @@ asciiCtrlTable:
         LDAB    #$10
         ABX
         CPX     #$5FC0
-        BNE     $FA93
+        BNE     LFA93
         LDAA    PORT3
         INCA
         CMPA    #$40
-        BNE     $FA8E
+        BNE     LFA8E
         RTS
         TST     $0617
-        BNE     $FABF
+        BNE     LFABF
         RTS
+
+LFABF:
         DEC     $0617
         LDAA    #$20
-        JMP     $FB0D
+        JMP     LFB0D
+
+LFAC7:
         CLR     $0617
         RTS
         RTS
@@ -10149,46 +12158,62 @@ asciiCtrlTable:
         ADDA    #$08
         ANDA    #$F8
         CMPA    #$50
-        BCS     $FADD
+        BCS     LFADD
         CLR     $0617
-        JMP     $FA3A
+        JMP     LFA3A
+
+LFADD:
         STAA    $0617
         RTS
-        JMP     $FA3A
+        JMP     LFA3A
 
 orphanFAE4:
         LDAA    $0617
         INCA
         CMPA    #$50
-        BCS     $FAF2
+        BCS     LFAF2
         CLR     $0617
-        JMP     $FA3A
+        JMP     LFA3A
+
+LFAF2:
         STAA    $0617
         RTS
         LDAA    $0617
         DECA
-        BMI     $FAFF
+        BMI     LFAFF
         STAA    $0617
+
+LFAFF:
         RTS
 
 orphanFB00:
-        JMP     $FA3A
+        JMP     LFA3A
         LDAA    $0618
         DECA
-        BMI     $FB0C
+        BMI     LFB0C
         STAA    $0618
+
+LFB0C:
         RTS
+
+LFB0D:
         TST     $0627
-        BEQ     $FB23
+        BEQ     LFB23
         LDX     #$FC30
+
+LFB15:
         TST     $00,X
-        BEQ     $FB23
+        BEQ     LFB23
         CMPA    $00,X
-        BEQ     $FB21
+        BEQ     LFB21
         INX
         INX
-        BRA     $FB15
+        BRA     LFB15
+
+LFB21:
         LDAA    $01,X
+
+LFB23:
         SUBA    #$20
         LDAB    #$0A
         MUL
@@ -10207,7 +12232,9 @@ orphanFB00:
         STAA    $0619
         LDAB    $0617
         ANDB    #$01
-        BEQ     $FB6E
+        BEQ     LFB6E
+
+LFB4F:
         LDX     $061C
         LDAA    $00,X
         INX
@@ -10221,8 +12248,10 @@ orphanFB00:
         ABX
         STX     $061A
         DEC     $0619
-        BNE     $FB4F
+        BNE     LFB4F
         RTS
+
+LFB6E:
         LDX     $061C
         LDAA    $00,X
         INX
@@ -10242,8 +12271,10 @@ orphanFB00:
         ABX
         STX     $061A
         DEC     $0619
-        BNE     $FB6E
+        BNE     LFB6E
         RTS
+
+LFB9A:
         PSHA
         LDAA    $0620
         STAA    >PORT3
@@ -10253,23 +12284,29 @@ orphanFB00:
 
 asciiDispatchC0:
         PULA
+
+LFBAA:
         ANDA    #$7F
         CMPA    #$1F
-        BHI     $FBBC
+        BHI     LFBBC
         TAB
         ASLB
         LDX     #$F9FA
         ABX
         LDX     $00,X
         JSR     $00,X
-        BRA     $FBCF
-        JSR     $FB0D
+        BRA     LFBCF
+
+LFBBC:
+        JSR     LFB0D
         INC     $0617
         LDAA    $0617
         CMPA    #$50
-        BCS     $FBCF
-        JSR     $FAC7
-        JSR     $FA3A
+        BCS     LFBCF
+        JSR     LFAC7
+        JSR     LFA3A
+
+LFBCF:
         LDAA    $0618
         LDAB    #$28
         MUL
@@ -10285,37 +12322,53 @@ asciiDispatchC0:
         STD     $0623
         LDAA    $0617
         BITA    #$01
-        BEQ     $FBFB
+        BEQ     LFBFB
         LDD     #$3FD0
-        BRA     $FBFE
+        BRA     LFBFE
+
+LFBFB:
         LDD     #$C0DF
+
+LFBFE:
         STD     $00,X
         RTS
-        JSR     $F7FE
+
+LFC01:
+        JSR     LF7FE
         TSTA
-        BNE     $FC1C
-        JSR     $F1D8
-        JSR     $F45B
+        BNE     LFC1C
+        JSR     LF1D8
+        JSR     LF45B
         TST     $1B23
-        BNE     $FC17
+        BNE     LFC17
         TST     $04AE
-        BEQ     $FC1A
-        JSR     $A210
-        BRA     $FC01
+        BEQ     LFC1A
+
+LFC17:
+        JSR     LA210
+
+LFC1A:
+        BRA     LFC01
+
+LFC1C:
         TST     $04DF
-        BEQ     $FC24
-        JSR     $F979
+        BEQ     LFC24
+        JSR     LF979
+
+LFC24:
         RTS
-        JSR     $F75F
-        BCS     $FC2F
+        JSR     LF75F
+        BCS     LFC2F
         ANDA    #$7F
-        JSR     $F7E4
+        JSR     LF7E4
+
+LFC2F:
         RTI
         FCB     $40,$80,$7B,$81,$7C,$82,$7D,$83,$7E,$84,$5B,$85,$5C,$86,$5D,$87
         FCB     $00,$00
 
 seqIgnored:
-        JMP     $E9A2
+        JMP     LE9A2
 
 lineAddr5800:
         FDB     $5800,$5828,$5850,$5878,$58A0,$58C8,$58F0,$5918
