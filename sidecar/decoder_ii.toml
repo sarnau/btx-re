@@ -872,6 +872,7 @@ Sets up the stack, configures ports 1 and 2, and installs the interrupt soft
 vectors before entering the main firmware."""
 
 [line_comments]
+"0xB32D" = "cold $8013, warm $FE72, then C3 C2 CD 38 30 = \"CBM80\" with CBM in PETSCII"
 "0xBA56" = "vector 0 at runtime $16AE - CLALL and $D016/$D021/$D800 - screen and colour RAM setup"
 "0xBAA7" = "vector 1 at runtime $16FF - CHROUT with $D021/$D800/$D900"
 "0xBAF4" = "vector 2 at runtime $174C - jump-table entry 2"

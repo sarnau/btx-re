@@ -13,6 +13,9 @@ from dis65xx.opcodes6502 import Mode
 from dis65xx.sidecar import C64Block, Sidecar
 
 BYTES_PER_FCB = 16
+# Shorter runs are not worth showing as text: two printable bytes in binary
+# data are usually coincidence, and rendering them as strings is misleading.
+_MIN_FCC = 4
 _INDENT = 8
 _MNEM_WIDTH = 8
 _JUMPS = ("JMP", "JSR")
@@ -200,17 +203,27 @@ def emit_block(data: bytes, base: int, block: C64Block, sidecar: Sidecar) -> str
             run = 0
             while run < len(pending) and _printable(pending[run]):
                 run += 1
-            if run >= 4:
+            if run >= _MIN_FCC:
                 text = bytes(pending[:run]).decode("latin-1")
                 del pending[:run]
                 for i in range(0, len(text), 40):
                     lines.append(f"{'':{_INDENT}}{'FCC':{_MNEM_WIDTH}}"
                                  f'"{text[i:i + 40]}"')
                 continue
-            take = run if run else 1
-            while take < len(pending) and not _printable(pending[take]):
-                take += 1
-            take = min(take, BYTES_PER_FCB)
+            # No text here, so emit a full FCB line and only stop early if a
+            # real string starts partway through it. Breaking on every
+            # printable byte fragmented the data into needless short lines.
+            take = BYTES_PER_FCB
+            i = 1
+            while i < min(len(pending), BYTES_PER_FCB):
+                j = i
+                while j < len(pending) and _printable(pending[j]):
+                    j += 1
+                if j - i >= _MIN_FCC:
+                    take = i
+                    break
+                i = max(j, i + 1)
+            take = min(take, len(pending), BYTES_PER_FCB)
             chunk = bytes(pending[:take])
             del pending[:take]
             lines.append(f"{'':{_INDENT}}{'FCB':{_MNEM_WIDTH}}"
@@ -227,6 +240,9 @@ def emit_block(data: bytes, base: int, block: C64Block, sidecar: Sidecar) -> str
                 for line in block_comment.strip().splitlines():
                     lines.append(f"; {line}" if line else ";")
             lines.append(f"{labels[rt]}:")
+            note = sidecar.line_comments.get(rom_addr)
+            if note:
+                lines.append(f"; {note}")
         region = sidecar.region_at(rt + block.offset)
         if region is not None and region.kind in _WORD_KINDS and insn is None:
             if words_left == 0:

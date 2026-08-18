@@ -236,51 +236,27 @@ L10B4:
 ; records such as 89 10 52 00 / 8B 10 41 00 / 8A 10 54 00, which look like a
 ; key or character translation table. Not yet decoded.
 c64VecTableEnd:
-        FCB     $00,$00,$00,$00,$00,$00,$00,$00,$00,$BD
-        FCB     $2B,$00,$80,$BD
-        FCB     $2B,$CE,$10
-        FCB     $4A,$11
-        FCB     $6F,$29,$70,$16,$0D,$0D,$00,$00,$8D,$0D,$0A,$00,$91,$0B,$00,$00
-        FCB     $11,$0A,$00,$00,$1D,$09,$00,$00,$14,$08,$00,$00,$9D,$08,$00,$00
-        FCB     $13,$1E,$00,$00,$93,$0C,$00,$00,$85,$13,$00,$00,$86,$1C,$00,$00
-        FCB     $87,$1A,$00,$00,$89,$10
-        FCB     $52,$00,$8B,$10
-        FCB     $41,$00,$8A,$10
+        FCB     $00,$00,$00,$00,$00,$00,$00,$00,$00,$BD,$2B,$00,$80,$BD,$2B,$CE
+        FCB     $10,$4A,$11,$6F,$29,$70,$16,$0D,$0D,$00,$00,$8D,$0D,$0A,$00,$91
+        FCB     $0B,$00,$00,$11,$0A,$00,$00,$1D,$09,$00,$00,$14,$08,$00,$00,$9D
+        FCB     $08,$00,$00,$13,$1E,$00,$00,$93,$0C,$00,$00,$85,$13,$00,$00,$86
+        FCB     $1C,$00,$00,$87,$1A,$00,$00,$89,$10,$52,$00,$8B,$10,$41,$00,$8A
+        FCB     $10
 
 c64VarBlock:
-        FCB     $54,$00,$8C,$10
-        FCB     $45,$00,$90,$80,$00,$00,$05,$87,$00,$00,$1C,$81,$00,$00,$9F,$86
-        FCB     $00,$00,$9C,$85,$00,$00,$1E,$82,$00,$00,$1F,$84,$00,$00,$9E,$83
-        FCB     $00,$00
-        FCB     $5F,$11,$00,$00,$06,$14,$00,$00,$AE,$13,$00,$00,$AB,$11,$00,$00
-        FCB     $24,$A4,$00,$00,$5C,$A3,$00,$00,$00,$00,$00,$00
-        FCB     $23,$19
-        FCB     $27,$00
-        FCB     $27,$2F,$00,$00
-        FCB     $2B,$19
-        FCB     $7B,$00,$DB
-        FCB     $3F,$00,$00
-        FCB     $2D,$19
-        FCB     $42,$20,$DD,$19
-        FCB     $41,$20,$5C
-        FCB     $5B,$00,$00,$A9,$19
-        FCB     $2D,$00
-        FCB     $40,$19
-        FCB     $48,$75,$BA,$19
+        FCB     $54,$00,$8C,$10,$45,$00,$90,$80,$00,$00,$05,$87,$00,$00,$1C,$81
+        FCB     $00,$00,$9F,$86,$00,$00,$9C,$85,$00,$00,$1E,$82,$00,$00,$1F,$84
+        FCB     $00,$00,$9E,$83,$00,$00,$5F,$11,$00,$00,$06,$14,$00,$00,$AE,$13
+        FCB     $00,$00,$AB,$11,$00,$00,$24,$A4,$00,$00,$5C,$A3,$00,$00,$00,$00
+        FCB     $00,$00,$23,$19,$27,$00,$27,$2F,$00,$00,$2B,$19,$7B,$00,$DB,$3F
+        FCB     $00,$00,$2D,$19,$42,$20,$DD,$19,$41,$20,$5C,$5B,$00,$00,$A9,$19
+        FCB     $2D,$00,$40,$19,$48,$75,$BA,$19
         FCC     "HU*+"
-        FCB     $00,$00,$C0
-        FCB     $2A,$00,$00
-        FCB     $5E,$5D,$00,$00,$DE,$5C,$00,$00
-        FCB     $3A,$19
-        FCB     $48,$6F,$5B,$19
-        FCB     $48,$4F,$3B,$19
-        FCB     $48,$61,$5D,$19
+        FCB     $00,$00,$C0,$2A,$00,$00,$5E,$5D,$00,$00,$DE,$5C,$00,$00,$3A,$19
+        FCB     $48,$6F,$5B,$19,$48,$4F,$3B,$19,$48,$61,$5D,$19
         FCC     "HA=#"
-        FCB     $00,$00
-        FCB     $3C,$3B,$00,$00
-        FCB     $3E,$3A,$00,$00
-        FCB     $2F,$2D,$00,$00
-        FCB     $3F,$3D,$00,$00,$00,$00,$00,$00
+        FCB     $00,$00,$3C,$3B,$00,$00,$3E,$3A,$00,$00,$2F,$2D,$00,$00,$3F,$3D
+        FCB     $00,$00,$00,$00,$00,$00
 
 c64Strings:
         FCC     "@:BTX-MAK-"
@@ -446,6 +422,7 @@ c64StrTable:
         DW      L1548,L1575,L15A2,L15BB,L15E9,L1616,L1643
 
 c64ScreenInit:
+; vector 0 at runtime $16AE - CLALL and $D016/$D021/$D800 - screen and colour RAM setup
         LDA     #$00                    ; vector 0 at runtime $16AE - CLALL and $D016/$D021/$D800 - screen and colour RAM setup
         STA     $D016
         JSR     IOINIT
@@ -482,6 +459,7 @@ L16B9:
         JSR     L2404
 
 c64ScreenOut1:
+; vector 1 at runtime $16FF - CHROUT with $D021/$D800/$D900
         JSR     L10A2                   ; vector 1 at runtime $16FF - CHROUT with $D021/$D800/$D900
         LDA     $8012
         BNE     L172D
@@ -520,6 +498,7 @@ L172D:
         STA     $11F7
 
 c64Vec02:
+; vector 2 at runtime $174C - jump-table entry 2
         LDA     #$FF                    ; vector 2 at runtime $174C - jump-table entry 2
         STA     $800F
 
@@ -554,6 +533,7 @@ L177F:
         JMP     L1751
 
 c64Vec03:
+; vector 3 at runtime $1782 - jump-table entry 3
         CMP     #$8B                    ; vector 3 at runtime $1782 - jump-table entry 3
         BNE     L1789
         JSR     L101E
@@ -587,6 +567,7 @@ L17B5:
         RTS
 
 c64Vec05:
+; vector 5 at runtime $17B6 - jump-table entry 5
         LDX     #$00                    ; vector 5 at runtime $17B6 - jump-table entry 5
         STX     $11E9
         STX     $11EA
@@ -734,6 +715,7 @@ L185D:
         BRK
 
 c64Vec06:
+; vector 6 at runtime $188F - jump-table entry 6
         LDX     btxXferDone             ; vector 6 at runtime $188F - jump-table entry 6
         CPX     btxXferDone
         BNE     c64Vec06
@@ -759,11 +741,13 @@ L18A5:
         RTS
 
 c64Vec07:
+; vector 7 at runtime $18BC - jump-table entry 7
         JSR     L1018                   ; vector 7 at runtime $18BC - jump-table entry 7
         BCS     c64Vec07
         RTS
 
 c64Vec08:
+; vector 8 at runtime $18C2 - jump-table entry 8
         LDA     btxFifoRd               ; vector 8 at runtime $18C2 - jump-table entry 8
         CMP     btxFifoWr
         BEQ     L18CF
@@ -788,6 +772,7 @@ L18DC:
         RTS
 
 c64Vec09:
+; vector 9 at runtime $18E1 - jump-table entry 9
         LDA     #$10                    ; vector 9 at runtime $18E1 - jump-table entry 9
         JSR     L1012
         LDA     #$7A
@@ -799,6 +784,7 @@ c64Vec09:
         RTS
 
 c64Vec10:
+; vector 10 at runtime $18F6 - jump-table entry 10
         BIT     $11D9                   ; vector 10 at runtime $18F6 - jump-table entry 10
         BPL     L192F
         LDA     #$10
@@ -828,6 +814,7 @@ L192F:
         RTS
 
 c64Vec11:
+; vector 11 at runtime $1930 - jump-table entry 11
         LDA     #$7F                    ; vector 11 at runtime $1930 - jump-table entry 11
         STA     $DC00
         LDA     $DC01
@@ -852,6 +839,7 @@ L194D:
         RTS
 
 c64Vec04:
+; vector 4 at runtime $194E - jump-table entry 4
         LDA     #$00                    ; vector 4 at runtime $194E - jump-table entry 4
         STA     $11E7
 
@@ -920,6 +908,7 @@ L198C:
         BPL     c64Vec12
 
 c64Vec12:
+; vector 12 at runtime $19BF - jump-table entry 12
         LDA     #$10                    ; vector 12 at runtime $19BF - jump-table entry 12
         JSR     L1012
         LDA     #$67
@@ -929,6 +918,7 @@ c64Vec12:
         RTS
 
 c64Vec13:
+; vector 13 at runtime $19CF - jump-table entry 13
         LDA     #$10                    ; vector 13 at runtime $19CF - jump-table entry 13
         JSR     L1012
         LDA     #$66
@@ -938,6 +928,7 @@ c64Vec13:
         RTS
 
 c64Vec14:
+; vector 14 at runtime $19DF - jump-table entry 14
         JSR     L101B                   ; vector 14 at runtime $19DF - jump-table entry 14
 
 L19E2:
@@ -1001,12 +992,10 @@ L1A15:
         LDA     #$00
         STA     $8005
         JMP     (KERNAL_FFFC)
-        FCB     $1F
-        FCB     $2F
+        FCB     $1F,$2F
         EOR     ($9B,X)
         AND     ($40),Y
-        FCB     $1B
-        FCB     $23
+        FCB     $1B,$23
         JSR     $9B57
         BMI     L1A8E
         FCB     $1F
@@ -1021,8 +1010,7 @@ L1A15:
         ADC     $74
         FCB     $72
         ADC     #$65
-        FCB     $62,$1F
-        FCB     $4B
+        FCB     $62,$1F,$4B
         LSR     $6166
         JMP     ($736C)
         JSR     KERNAL_C86E
@@ -1041,8 +1029,7 @@ L1A15:
         ROR     $7265
 
 L1A8E:
-        FCB     $1F
-        FCB     $4F,$4F
+        FCB     $1F,$4F,$4F
         ADC     $6D,X
         FCB     $73,$74
         ADC     $63
@@ -1051,6 +1038,7 @@ L1A8E:
         BRK
 
 c64Vec15:
+; vector 15 at runtime $1A9B - jump-table entry 15
         JSR     L1078                   ; vector 15 at runtime $1A9B - jump-table entry 15
         LDA     #$00
         JSR     L105D
@@ -1126,6 +1114,7 @@ L1B05:
         JMP     L1AF4
 
 c64Vec19:
+; vector 19 at runtime $1B22 - jump-table entry 19
         LDA     #$00                    ; vector 19 at runtime $1B22 - jump-table entry 19
         STA     $90
         LDA     #$08
@@ -1258,6 +1247,7 @@ L1BEA:
         RTS
 
 c64Vec20:
+; vector 20 at runtime $1C1A - jump-table entry 20
         JSR     L101B                   ; vector 20 at runtime $1C1A - jump-table entry 20
         LDA     #$10
         JSR     L1012
@@ -1275,6 +1265,7 @@ c64Vec20:
         RTS
 
 c64Vec21:
+; vector 21 at runtime $1C3F - jump-table entry 21
         JSR     L1018                   ; vector 21 at runtime $1C3F - jump-table entry 21
         BCS     L1C94
         LDY     #$00
@@ -1322,6 +1313,7 @@ L1C94:
         RTS
 
 c64Vec22:
+; vector 22 at runtime $1C95 - jump-table entry 22
         LDA     #$10                    ; vector 22 at runtime $1C95 - jump-table entry 22
         JSR     L1012
         LDA     #$4C
@@ -1373,6 +1365,7 @@ L1CF0:
         JMP     L1CB3
 
 c64Vec23:
+; vector 23 at runtime $1CF3 - jump-table entry 23
         LDA     #$FF                    ; vector 23 at runtime $1CF3 - jump-table entry 23
         STA     btxStatus
         LDA     #$93
@@ -1538,6 +1531,7 @@ L1E24:
         RTS
 
 c64Vec24:
+; vector 24 at runtime $1E39 - jump-table entry 24
         LDA     btxFifo                 ; vector 24 at runtime $1E39 - jump-table entry 24
         CMP     btxFifo
         BNE     c64Vec24
@@ -1564,6 +1558,7 @@ L1E5C:
         RTS
 
 c64Vec25:
+; vector 25 at runtime $1E65 - jump-table entry 25
         PHP                             ; vector 25 at runtime $1E65 - jump-table entry 25
         SEI
 
@@ -1644,6 +1639,7 @@ L1EDC:
         RTS
 
 c64Vec26:
+; vector 26 at runtime $1EEF - jump-table entry 26
         LDA     #$10                    ; vector 26 at runtime $1EEF - jump-table entry 26
         JSR     L105D
 
@@ -1678,6 +1674,7 @@ L1F18:
         RTS
 
 c64Vec27:
+; vector 27 at runtime $1F2B - jump-table entry 27
         LDA     #$13                    ; vector 27 at runtime $1F2B - jump-table entry 27
         JSR     L105D
 
@@ -1704,6 +1701,7 @@ L1F3B:
         RTS
 
 c64Vec28:
+; vector 28 at runtime $1F54 - jump-table entry 28
         BIT     $11EC                   ; vector 28 at runtime $1F54 - jump-table entry 28
         BPL     L1F5D
         JSR     L101B
@@ -1844,6 +1842,7 @@ L2036:
         RTS
 
 c64Vec29:
+; vector 29 at runtime $205F - jump-table entry 29
         STA     $11BD                   ; vector 29 at runtime $205F - jump-table entry 29
         LDY     #$00
         STY     $11BC
@@ -1925,6 +1924,7 @@ L20EA:
         JMP     L2067
 
 c64Vec31:
+; vector 31 at runtime $20ED - jump-table entry 31
         ASL     A                       ; vector 31 at runtime $20ED - jump-table entry 31
         TAY
         LDA     $10CC
@@ -1939,6 +1939,7 @@ c64Vec31:
         STA     $64
 
 c64Vec30:
+; vector 30 at runtime $2103 - jump-table entry 30
         LDA     #$10                    ; vector 30 at runtime $2103 - jump-table entry 30
         JSR     L1012
         LDA     #$75
@@ -1964,6 +1965,7 @@ L2122:
         RTS
 
 c64Vec32:
+; vector 32 at runtime $2136 - jump-table entry 32
         LDA     #$13                    ; vector 32 at runtime $2136 - jump-table entry 32
         JSR     L1057
         BCC     L213E
@@ -2021,11 +2023,13 @@ L218F:
         RTS
 
 c64Vec40:
+; vector 40 at runtime $2190 - jump-table entry 40
         LDA     #$01                    ; vector 40 at runtime $2190 - jump-table entry 40
         JSR     L105D
         RTS
 
 c64Vec41:
+; vector 41 at runtime $2196 - jump-table entry 41
         LDA     $8011                   ; vector 41 at runtime $2196 - jump-table entry 41
         STA     $81FC
         STA     $11ED
@@ -2053,6 +2057,7 @@ L21BF:
         RTS
 
 c64Vec42:
+; vector 42 at runtime $21C0 - jump-table entry 42
         STA     $11DE                   ; vector 42 at runtime $21C0 - jump-table entry 42
         ASL     A
         ASL     A
@@ -2091,6 +2096,7 @@ L21F3:
         RTS
 
 c64Vec43:
+; vector 43 at runtime $21F4 - jump-table entry 43
         JSR     L108A                   ; vector 43 at runtime $21F4 - jump-table entry 43
         CMP     #$60
         BCC     L21FF
@@ -2107,6 +2113,7 @@ L2201:
         RTS
 
 c64Vec44:
+; vector 44 at runtime $220B - jump-table entry 44
         LDA     $11E1                   ; vector 44 at runtime $220B - jump-table entry 44
         CMP     #$7B
         BNE     L2220
@@ -2174,6 +2181,7 @@ L2269:
         RTS
 
 c64Vec46:
+; vector 46 at runtime $226D - jump-table entry 46
         PHP                             ; vector 46 at runtime $226D - jump-table entry 46
         SEI
         LDA     $11E4
@@ -2274,6 +2282,7 @@ L230A:
         RTS
 
 c64Vec49:
+; vector 49 at runtime $230C - jump-table entry 49
         LDA     #$01                    ; vector 49 at runtime $230C - jump-table entry 49
         STA     $B8
         LDA     #$04
@@ -2326,6 +2335,7 @@ L2364:
         RTI
 
 c64Vec53:
+; vector 53 at runtime $236D - jump-table entry 53
         LDA     $11EC                   ; vector 53 at runtime $236D - jump-table entry 53
         BNE     L23BE
         JSR     GETIN
@@ -2492,6 +2502,7 @@ L2463:
         BRK
 
 c64ScreenOut2:
+; vector 54 at runtime $2472 - CHROUT with $D021/$D800/$D900
         LDA     #$A4                    ; vector 54 at runtime $2472 - CHROUT with $D021/$D800/$D900
         STA     $A7
         LDA     #$24
@@ -2637,6 +2648,7 @@ L2494:
         BRK
 
 c64Vec55:
+; vector 55 at runtime $25A5 - jump-table entry 55
         PHP                             ; vector 55 at runtime $25A5 - jump-table entry 55
         SEI
         PHA
@@ -2655,6 +2667,7 @@ c64Vec55:
         RTS
 
 c64Vec56:
+; vector 56 at runtime $25BD - jump-table entry 56
         PHP                             ; vector 56 at runtime $25BD - jump-table entry 56
         SEI
         CPX     #$FF
@@ -2674,6 +2687,7 @@ L25D0:
         RTS
 
 c64Vec38:
+; vector 38 at runtime $25D6 - jump-table entry 38
         LDA     #$00                    ; vector 38 at runtime $25D6 - jump-table entry 38
         STA     $90
         LDA     #$08
@@ -2750,6 +2764,7 @@ L2652:
         RTS
 
 c64Vec39:
+; vector 39 at runtime $2654 - jump-table entry 39
         LDA     #$00                    ; vector 39 at runtime $2654 - jump-table entry 39
         STA     $90
         LDA     #$08
@@ -2801,6 +2816,7 @@ L26A7:
         RTS
 
 c64Vec47:
+; vector 47 at runtime $26A9 - jump-table entry 47
         LDY     #$0F                    ; vector 47 at runtime $26A9 - jump-table entry 47
         STY     $B7
         LDA     #$02
@@ -2832,6 +2848,7 @@ L26D7:
         RTS
 
 c64Vec34:
+; vector 34 at runtime $26D9 - jump-table entry 34
         LDA     #$02                    ; vector 34 at runtime $26D9 - jump-table entry 34
         STA     $B8
         LDA     #$08
@@ -2871,6 +2888,7 @@ L271E:
         RTS
 
 c64Vec35:
+; vector 35 at runtime $271F - jump-table entry 35
         LDA     #$00                    ; vector 35 at runtime $271F - jump-table entry 35
         STA     $90
         LDA     #$08
@@ -2882,6 +2900,7 @@ c64Vec35:
         RTS
 
 c64Vec60:
+; vector 60 at runtime $2732 - jump-table entry 60
         LDY     $11BC                   ; vector 60 at runtime $2732 - jump-table entry 60
         LDA     #$2C
         STA     $11BE,Y
@@ -2899,6 +2918,7 @@ c64Vec60:
         JMP     L276F
 
 c64Vec48:
+; vector 48 at runtime $2752 - jump-table entry 48
         LDY     $11BC                   ; vector 48 at runtime $2752 - jump-table entry 48
         LDA     #$2C
         STA     $11BE,Y
@@ -2956,6 +2976,7 @@ L27AD:
         RTS
 
 c64Vec50:
+; vector 50 at runtime $27B7 - jump-table entry 50
         LDA     #$00                    ; vector 50 at runtime $27B7 - jump-table entry 50
         STA     $90
         LDA     #$03
@@ -2973,6 +2994,7 @@ c64Vec50:
         JMP     L28C3
 
 c64Vec51:
+; vector 51 at runtime $27D6 - jump-table entry 51
         BIT     $11EC                   ; vector 51 at runtime $27D6 - jump-table entry 51
         BMI     L2845
         LDA     #$10
@@ -3033,6 +3055,7 @@ L2845:
         RTS
 
 c64Vec52:
+; vector 52 at runtime $2846 - jump-table entry 52
         LDA     $11B4                   ; vector 52 at runtime $2846 - jump-table entry 52
         JSR     L1012
         LDA     #$3A
@@ -3089,6 +3112,7 @@ L28A5:
         RTS
 
 c64Vec16:
+; vector 16 at runtime $28AA - jump-table entry 16
         LDA     #$00                    ; vector 16 at runtime $28AA - jump-table entry 16
         STA     $90
         LDA     #$08
@@ -3126,6 +3150,7 @@ L28EB:
         RTS
 
 c64Vec17:
+; vector 17 at runtime $28ED - jump-table entry 17
         LDA     #$00                    ; vector 17 at runtime $28ED - jump-table entry 17
         STA     $90
 
@@ -3151,6 +3176,7 @@ L290B:
         RTS
 
 c64Vec33:
+; vector 33 at runtime $290D - jump-table entry 33
         JSR     IEC_UNLSN               ; vector 33 at runtime $290D - jump-table entry 33
         LDA     #$08
         JSR     IEC_LISTEN
@@ -3160,6 +3186,7 @@ c64Vec33:
         RTS
 
 c64Vec36:
+; vector 36 at runtime $291E - jump-table entry 36
         JSR     L1066                   ; vector 36 at runtime $291E - jump-table entry 36
         LDA     #$00
         JSR     IEC_CIOUT
@@ -3172,6 +3199,7 @@ c64Vec36:
         RTS
 
 c64Vec37:
+; vector 37 at runtime $2937 - jump-table entry 37
         LDA     #$66                    ; vector 37 at runtime $2937 - jump-table entry 37
         STA     $B9
         LDA     #$08
@@ -3180,6 +3208,7 @@ c64Vec37:
         RTS
 
 c64Vec18:
+; vector 18 at runtime $2943 - jump-table entry 18
         JSR     IEC_UNTLK               ; vector 18 at runtime $2943 - jump-table entry 18
         LDA     #$08
         STA     $BA
@@ -3192,6 +3221,7 @@ L294F:
         INC     $60,X
 
 c64Vec59:
+; vector 59 at runtime $2952 - jump-table entry 59
         LDA     #$00                    ; vector 59 at runtime $2952 - jump-table entry 59
         STA     $90
         LDA     $BA
@@ -3210,12 +3240,10 @@ L296A:
 
 L296C:
         JMP     KERNAL_F3F6
-        FCB     $1F
-        FCB     $2F
+        FCB     $1F,$2F
         EOR     ($9B,X)
         AND     ($40),Y
-        FCB     $1B
-        FCB     $23
+        FCB     $1B,$23
         JSR     $9B57
         BMI     L29BC
         FCB     $1F
@@ -3237,6 +3265,7 @@ L296C:
         BRK
 
 c64Vec57:
+; vector 57 at runtime $299B - jump-table entry 57
         LDA     $11EC                   ; vector 57 at runtime $299B - jump-table entry 57
         ORA     $11D8
         BEQ     L29B1
@@ -3452,6 +3481,7 @@ L2B0B:
         RTS
 
 c64Vec58:
+; vector 58 at runtime $2B17 - jump-table entry 58
         JSR     L1018                   ; vector 58 at runtime $2B17 - jump-table entry 58
         BCS     L2B3A
         LDY     #$00
@@ -3544,9 +3574,7 @@ L2BB9:
 L2BBB:
         SEC
         RTS
-        FCB     $1F
-        FCB     $2F,$43,$0C,$1F
-        FCB     $2F,$44,$1F
+        FCB     $1F,$2F,$43,$0C,$1F,$2F,$44,$1F
         EOR     ($41,X)
         JSR     $8E20
         PHP
@@ -3557,8 +3585,7 @@ L2BBB:
         FCB     $64,$6F,$72
         ADC     $9B
         AND     ($40),Y
-        FCB     $1B
-        FCB     $23
+        FCB     $1B,$23
         JSR     c64Vec28
         FCB     $42,$41
 
@@ -3572,15 +3599,13 @@ L2BE3:
         STA     $1220,Y
         LSR     $7E1B
         CLV
-        FCB     $A3,$12
-        FCB     $57
+        FCB     $A3,$12,$57
         CPX     $20
         FCB     $12
         JMP     L20EA
         FCB     $12
         EOR     $20B5,Y
-        FCB     $12
-        FCB     $4B
+        FCB     $12,$4B
         NOP
         JSR     $4412
         CPX     #$F8
@@ -3588,28 +3613,22 @@ L2BE3:
         EOR     #$FC
         FCB     $F4
         BCS     L2BB2
-        FCB     $12
-        FCB     $44
+        FCB     $12,$44
         LDA     $20,X
-        FCB     $12
-        FCB     $4B
+        FCB     $12,$4B
         NOP
         JSR     $4312
         INX
-        FCB     $DF,$12
-        FCB     $43,$BF,$A3,$12
+        FCB     $DF,$12,$43,$BF,$A3,$12
         EOR     $EF
         FCB     $DF
 
 L2C26:
-        FCB     $12
-        FCB     $43
+        FCB     $12,$43
         LDY     $A0,X
-        FCB     $12
-        FCB     $43
+        FCB     $12,$43
         LDA     $20,X
-        FCB     $12
-        FCB     $4B
+        FCB     $12,$4B
         NOP
         JSR     $4312
         TAX
@@ -3619,45 +3638,36 @@ L2C26:
         BCS     L2BE3
         FCB     $AF,$DF,$DF,$DF
         LDA     $A0
-        FCB     $12
-        FCB     $43
+        FCB     $12,$43
         LDA     $20,X
-        FCB     $12
-        FCB     $4B
+        FCB     $12,$4B
         NOP
         JSR     $4412
         LDX     #$E3
         SED
         INC     $EADF,X
-        FCB     $DF,$12
-        FCB     $43
+        FCB     $DF,$12,$43
         LDA     $DF,X
         SBC     $B3F4,X
         LDA     ($A0,X)
-        FCB     $12
-        FCB     $44
+        FCB     $12,$44
         LDA     $20,X
-        FCB     $12
-        FCB     $4B
+        FCB     $12,$4B
         NOP
         JSR     $4512
-        FCB     $DF,$12
-        FCB     $43
+        FCB     $DF,$12,$43
         NOP
-        FCB     $DF,$12
-        FCB     $43
+        FCB     $DF,$12,$43
 
 L2C72:
         LDA     $DF,X
-        FCB     $12
-        FCB     $43
+        FCB     $12,$43
         LDY     #$12
         EOR     $B5
         JSR     $4B12
         NOP
         JSR     $4512
-        FCB     $DF,$12
-        FCB     $43
+        FCB     $DF,$12,$43
         SBC     $AFF3,X
         FCB     $AF,$F3
         INC     $12DF,X
@@ -3676,8 +3686,7 @@ L2C72:
 
 L2CA6:
         LDA     $20,X
-        FCB     $12
-        FCB     $4B
+        FCB     $12,$4B
         NOP
         LDY     #$EA
         FCB     $EB,$E2
@@ -3701,15 +3710,13 @@ L2CB8:
         NOP
         LDY     #$EA
         SBC     #$EA
-        FCB     $12
-        FCB     $43
+        FCB     $12,$43
         TAX
         CPX     $A0EA
         LDA     $12,X
         FCB     $43
         NOP
-        FCB     $12
-        FCB     $43
+        FCB     $12,$43
         LDY     #$BD
         LDA     $B9
         LDA     ($B5),Y
@@ -3722,8 +3729,7 @@ L2CB8:
         LDX     #$A3
         LDX     #$A3
         LDX     #$A1
-        FCB     $12
-        FCB     $44
+        FCB     $12,$44
         LDX     #$12
         FCB     $43
         LDA     ($A3,X)
@@ -3737,8 +3743,7 @@ L2CB8:
         FCB     $57
         STA     $A1B8,Y
         JSR     $4D12
-        FCB     $A3,$12
-        FCB     $57
+        FCB     $A3,$12,$57
         JSR     $6F12
         FCB     $87,$1B
         ADC     $12D0,X
@@ -3780,8 +3785,7 @@ L2D43:
 
 L2D58:
         SEC
-        FCB     $37,$77,$72,$1F
-        FCB     $2F,$43
+        FCB     $37,$77,$72,$1F,$2F,$43
 
 L2D5F:
         FCB     $1E

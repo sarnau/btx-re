@@ -155,3 +155,24 @@ def test_strings_avoid_characters_the_assemblers_read_differently():
         if line.strip().startswith("FCC"):
             text = line.split('"', 1)[1].rsplit('"', 1)[0]
             assert "\\" not in text and '"' not in text, line
+
+
+def test_fcc_threshold_keeps_binary_data_out_of_strings():
+    """Two printable bytes in binary data are usually coincidence. Rendering
+    them as text produced lines like FCC "^]" and FCC "<;", which read as
+    strings but are not."""
+    src = (OUT / "c64_payload.asm").read_text()
+    shorts = [ln.strip() for ln in src.splitlines()
+              if ln.strip().startswith("FCC") and len(ln.split('"')[1]) < 4]
+    # only a chunked remainder of a long run may be short
+    assert len(shorts) <= 1, shorts
+
+
+def test_data_runs_are_not_fragmented():
+    """The cartridge header is one run of bytes; splitting it at every
+    printable byte scattered it over three lines and hid the signature."""
+    src = (OUT / "c64_bootstrap.asm").read_text()
+    head = src.split("c64CartHeader:", 1)[1].split("c64ColdStart:", 1)[0]
+    fcb = [ln for ln in head.splitlines() if ln.strip().startswith("FCB")]
+    assert len(fcb) == 2, fcb          # 16 bytes + the remaining 3
+    assert "$13,$80,$72,$FE,$C3,$C2,$CD,$38,$30" in fcb[0]
