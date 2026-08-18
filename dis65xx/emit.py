@@ -137,6 +137,9 @@ def _instruction_line(insn: Insn, sidecar: Sidecar) -> str:
     operand = format_operand(insn, sidecar)
     body = f"{'':{_INDENT}}{insn.mnemonic:{_MNEM_WIDTH}}{operand}".rstrip()
     comment = sidecar.line_comments.get(insn.addr)
+    # A note on a labelled address was already printed under the label.
+    if comment and insn.addr in sidecar.labels:
+        comment = None
     return f"{body:<40}; {comment}" if comment else body
 
 
@@ -334,6 +337,12 @@ def emit(data: bytes, result: TraceResult, sidecar: Sidecar) -> str:
                     lines.append(f"; {line}" if line else ";")
             if label:
                 lines.append(f"{label}:")
+                # A note on a labelled address documents the routine, so it
+                # goes under the label rather than trailing its first
+                # instruction, which is where a note without a label belongs.
+                note = sidecar.line_comments.get(addr)
+                if note:
+                    lines.append(f"; {note}")
 
 
         if region is not None and region.kind == "words_le" and not is_code:

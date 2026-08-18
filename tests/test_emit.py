@@ -204,3 +204,25 @@ def test_c64_blocks_carry_a_label():
                        ("c64PayloadBlock:", "c64_payload.bin")):
         i = src.index(label)
         assert f'BINCLUDE "{inc}"' in src[i:i + 200], label
+
+
+def test_every_named_routine_is_documented():
+    """A name says what something is called; the note says what it does. A
+    routine that gains a name without one is the gap this catches."""
+    import tomllib
+    sidecar = tomllib.load(open(ROOT / "sidecar" / "decoder_ii.toml", "rb"))
+    labels = {int(k, 16): v for k, v in sidecar["labels"].items()}
+    documented = ({int(k, 16) for k in sidecar["block_comments"]}
+                  | {int(k, 16) for k in sidecar["line_comments"]})
+    src = (OUT / "btx_decoder_ii.asm").read_text()
+    missing = []
+    for addr, name in sorted(labels.items()):
+        if addr < 0x8000 or name.startswith("orphan"):
+            continue
+        # a routine is a label the listing follows with an instruction
+        m = re.search(rf"^{name}:\n(?:;.*\n)*\s+([A-Z]{{2,4}})", src, re.M)
+        if not m or m.group(1) in ("FCB", "FCC", "FDB", "DW"):
+            continue
+        if addr not in documented:
+            missing.append(f"${addr:04X} {name}")
+    assert not missing, missing
