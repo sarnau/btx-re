@@ -598,6 +598,41 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xFFF0" = "vectors"
 
 [block_comments]
+"0xD492" = """
+Resolve a DRCS format, and what happens when it does not resolve.
+
+The key is (drcsFormat & 7) << 4 | (first byte & $0F), searched down fmtKeys:
+
+    LDAB #$11
+  next:
+    LDX #fmtKeys / ABX
+    CMPA 0,X / BEQ found
+    DECB / BPL next
+  found:
+    LDX #fmtVals041C / ABX / LDAA 0,X / STAA drcsWide
+    LDX #fmtVals041D / ABX / LDAA 0,X / STAA drcsTall
+    LDX #fmtVals041F / ABX / LDAA 0,X / STAA drcsCharSpan
+
+There is no miss branch. B counts 17 down to 0 and then to $FF, BPL fails on
+the negative, and control falls into the found code with B = $FF - so the
+three loads index 255 bytes past their tables, into the middle of the DRCS
+code that follows:
+
+    drcsWide      <- $D52A = $7F
+    drcsTall      <- $D53C = $F6
+    drcsCharSpan  <- $D54E = $DD
+
+It is reachable. fmtKeys covers high nibbles 1, 2 and 4 against low nibbles
+6, 7, A, B, C and F, so any other combination in a DRCS header misses, and the
+header comes off the line.
+
+The consequences are bounded, which is presumably why it was never noticed.
+drcsWide and drcsTall are only ever tested for bit 7, so $7F and $F6 mean
+narrow and tall - a legal combination, just not the requested one.
+drcsCharSpan is added to drcsChar and clamped: LDAA drcsChar / ADDA
+drcsCharSpan / CMPA #$7F / BCS ok / LDAA #$7F, and 221 always trips the clamp.
+So a malformed header defines a differently shaped character. It cannot crash
+or write outside drcsStore."""
 "0xF61F" = """
 The data link is BSC, and the control bytes name themselves.
 
@@ -1834,7 +1869,6 @@ Sets up the stack, configures ports 1 and 2, and installs the interrupt soft
 vectors before entering the main firmware."""
 
 [line_comments]
-"0xD492" = "look the format byte up in fmtKeys, 18 entries, and read drcsWide, drcsTall and drcsCharSpan out of the three parallel tables"
 "0xF12E" = "TOF soft vector stub - LDX softVecTof / JMP 0,X"
 "0xF133" = "OCF soft vector stub"
 "0xF138" = "ICF soft vector stub"

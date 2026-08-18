@@ -3471,8 +3471,41 @@ LD47E:
         ASLA
         ORAA    fmtKeyLo
 
+; Resolve a DRCS format, and what happens when it does not resolve.
+;
+; The key is (drcsFormat & 7) << 4 | (first byte & $0F), searched down fmtKeys:
+;
+;     LDAB #$11
+;   next:
+;     LDX #fmtKeys / ABX
+;     CMPA 0,X / BEQ found
+;     DECB / BPL next
+;   found:
+;     LDX #fmtVals041C / ABX / LDAA 0,X / STAA drcsWide
+;     LDX #fmtVals041D / ABX / LDAA 0,X / STAA drcsTall
+;     LDX #fmtVals041F / ABX / LDAA 0,X / STAA drcsCharSpan
+;
+; There is no miss branch. B counts 17 down to 0 and then to $FF, BPL fails on
+; the negative, and control falls into the found code with B = $FF - so the
+; three loads index 255 bytes past their tables, into the middle of the DRCS
+; code that follows:
+;
+;     drcsWide      <- $D52A = $7F
+;     drcsTall      <- $D53C = $F6
+;     drcsCharSpan  <- $D54E = $DD
+;
+; It is reachable. fmtKeys covers high nibbles 1, 2 and 4 against low nibbles
+; 6, 7, A, B, C and F, so any other combination in a DRCS header misses, and the
+; header comes off the line.
+;
+; The consequences are bounded, which is presumably why it was never noticed.
+; drcsWide and drcsTall are only ever tested for bit 7, so $7F and $F6 mean
+; narrow and tall - a legal combination, just not the requested one.
+; drcsCharSpan is added to drcsChar and clamped: LDAA drcsChar / ADDA
+; drcsCharSpan / CMPA #$7F / BCS ok / LDAA #$7F, and 221 always trips the clamp.
+; So a malformed header defines a differently shaped character. It cannot crash
+; or write outside drcsStore.
 fmtLookup:
-; look the format byte up in fmtKeys, 18 entries, and read drcsWide, drcsTall and drcsCharSpan out of the three parallel tables
         LDAB    #$11
 
 LD494:

@@ -855,6 +855,29 @@ depends on the format `fmtLookup` resolved from the `fmtKeys` tables:
   half of the same idea.
 - `drcsFormat = 4` — no expansion; A goes straight into `drcsRowLo`.
 
+`fmtLookup` at `$D492` resolves those three from a key built out of the
+header, `(drcsFormat & 7) << 4 | (first byte & $0F)`, searched down `fmtKeys`.
+
+**It has no miss branch.** `B` counts 17 down to 0 and then to `$FF`, `BPL`
+fails on the negative, and control falls into the found code with `B = $FF` —
+so the three loads index 255 bytes past their tables, into the middle of the
+DRCS code that follows:
+
+| | | |
+|---|---|---|
+| `drcsWide` | ← `$D52A` | `$7F` |
+| `drcsTall` | ← `$D53C` | `$F6` |
+| `drcsCharSpan` | ← `$D54E` | `$DD` |
+
+It is reachable — `fmtKeys` covers high nibbles 1, 2 and 4 against low nibbles
+6, 7, A, B, C and F, so any other combination misses, and the header comes off
+the line. But the consequences are bounded, which is presumably why it was
+never noticed. `drcsWide` and `drcsTall` are only ever tested for bit 7, so
+`$7F` and `$F6` mean narrow and tall — a legal combination, just not the
+requested one. `drcsCharSpan` is added to `drcsChar` and clamped at `$7F`,
+which 221 always trips. A malformed header defines a differently shaped
+character; it cannot crash or write outside `drcsStore`.
+
 The doubling lands exactly where the fonts are. Six input pixels become twelve,
 and the 16-bit pair leaves its top four bits clear — the same shape as the ROM
 character sets, whose ink occupies columns 4–15 of a 16-bit row. A DRCS
@@ -1110,9 +1133,6 @@ entire C64 payload is byte-for-byte identical. See
 - **`videoReg0`–`videoReg3`.** Four bytes at `$1B2A` written to `P3CSR` with
   `AND #$1F`, initialised to 0, 1, 2, 3. They select something in the video
   hardware; nothing in the ROM says what.
-- **The `fmtLookup` no-match path.** Reachable, but harmless: two of its three
-  outputs are read only for bit 7 and the third is clamped. Documented in the
-  sidecar rather than treated as a bug.
 - **Two cell bytes.** The decoder puts `curAttr0` and `curAttr2` into `cellAttr0` and
   `cellAttr2`, and the C64 stores them as `c64Cell3` and `c64Cell5` and never
   reads them back. Both sides carry the fields; neither uses them.
