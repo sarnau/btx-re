@@ -1173,7 +1173,7 @@ L190A:
         STA     c64CapEnd
         LDA     c64BufWrHi
         STA     c64CapEnd+1
-        LDA     #$07
+        LDA     #$07                    ; msgSaveFile
         JSR     vecShowMsg
         JSR     vecSaveBuffer
         JSR     vecHideMsg
@@ -1207,15 +1207,16 @@ L194D:
         RTS
 
 c64Menu:
-; vector 4 $100C - the <F7> menu: shows msg 3/4, reads a letter and dispatches through c64MenuKeys; any other key toggles the two menu lines
+; vector 4 $100C - the <F7> menu: shows msgMenu1 or msgMenu2, reads a letter and dispatches through c64MenuKeys; any other key toggles the two menu lines
         LDA     #$00
         STA     c64MenuLine
 
 L1953:
+; msgMenu1, unless c64MenuLine picks msgMenu2 below
         LDA     #$03
         LDX     c64MenuLine
         BEQ     L195C
-        LDA     #$04
+        LDA     #$04                    ; msgMenu2
 
 L195C:
         JSR     vecShowMsg
@@ -1407,7 +1408,7 @@ ceptMonitorMsg:
 c64MenuLoad:
 ; vector 15 $102D - menu 'L' (Load): msg 0 "von Diskette: File?", then stream the file to the decoder through c64DiskOpenRead/GetByte/CloseRead
         JSR     vecClearMsg
-        LDA     #$00
+        LDA     #$00                    ; msgLoadFile
         JSR     vecShowMsg
         LDA     #$13
         JSR     vecInputLine
@@ -1418,7 +1419,7 @@ c64MenuLoad:
 L1AAE:
         JSR     vecDiskOpenRead
         BCC     L1AC1
-        LDA     #$02
+        LDA     #$02                    ; msgNoFile
         JSR     vecShowMsg
 
 L1AB8:
@@ -1494,9 +1495,10 @@ c64MenuMacro:
         BPL     L1B4B
 
 L1B38:
+; msgNoDrive
         LDA     #$0D
         JSR     vecShowMsg
-        LDA     #$17
+        LDA     #$17                    ; msgPressKey
         JSR     vecShowMsg
 
 L1B42:
@@ -1509,7 +1511,7 @@ L1B4B:
         JSR     UNLSN
         JSR     vecDiskCheckError
         JSR     vecClearMsg
-        LDA     #$0B
+        LDA     #$0B                    ; msgMacroRun
         JSR     vecShowMsg
 
 L1B59:
@@ -1579,7 +1581,7 @@ L1BBD:
 L1BD7:
         JSR     vecMacroOpenRead
         BCC     L1BEA
-        LDA     #$02
+        LDA     #$02                    ; msgNoFile
         JSR     vecShowMsg
 
 L1BE1:
@@ -1602,7 +1604,7 @@ L1BEA:
         LDA     #$2C
         JSR     vecSendByte
         JSR     vecClearMsg
-        LDA     #$0C
+        LDA     #$0C                    ; msgMacroLabel
         JSR     vecShowMsg
         LDA     c64MacroId
         JSR     vecSendByte
@@ -1620,7 +1622,7 @@ c64MenuCapture:
         JSR     vecSendByte
         LDA     #$4D
         JSR     vecSendByte
-        LDA     #$05
+        LDA     #$05                    ; msgCaptureOn
         JSR     vecShowMsg
         LDA     #$FF
         STA     btxStatus
@@ -1655,7 +1657,7 @@ L1C58:
         LDA     #$6D
         JSR     vecSendByte
         JSR     vecClearMsg
-        LDA     #$08
+        LDA     #$08                    ; msgBufferFull
         JSR     vecShowMsg
         LDA     c64BufWr
         STA     c64CapEnd
@@ -1685,7 +1687,7 @@ c64MenuDisplay:
         JSR     vecSendByte
         LDA     #$4C
         JSR     vecSendByte
-        LDA     #$06
+        LDA     #$06                    ; msgShowBuffer
         JSR     vecShowMsg
         LDA     c64BufStart
         STA     c64BufWr
@@ -1780,7 +1782,7 @@ L1D1F:
 
 L1D5F:
         JSR     vecClearMsg
-        LDA     #$0E
+        LDA     #$0E                    ; msgPrinterOrFile
         JSR     vecShowMsg
 
 L1D67:
@@ -1796,7 +1798,7 @@ L1D75:
         BEQ     L1D95
         CMP     #$46
         BNE     L1D67
-        LDA     #$07
+        LDA     #$07                    ; msgSaveFile
         JSR     vecShowMsg
         LDA     #$13
         JSR     vecInputLine
@@ -1867,10 +1869,12 @@ L1DEC:
         JMP     L1E24
 
 L1E08:
+; msgNoPrinter
         LDA     #$0F
         JSR     vecShowMsg
 
 L1E0D:
+; msgRetry
         LDA     #$0A
         JSR     vecShowMsg
 
@@ -1913,6 +1917,7 @@ c64MenuScreen:
         JMP     L1E59
 
 L1E57:
+; msgMonitorOff
         LDA     #$12
 
 L1E59:
@@ -2006,7 +2011,7 @@ L1EDC:
         RTS
 
 c64MenuKeybd:
-; vector 26 $104E - menu 'K' (Keybd): msg $10 "Keyboard: deutsch oder ASCII?"; 'D' sends $10 $4E and sets the German flag, 'A' sends $10 $6E and clears it
+; vector 26 $104E - menu 'K' (Keybd): msgKeyboard "Keyboard: deutsch oder ASCII?"; 'D' sends $10 $4E and sets the German flag, 'A' sends $10 $6E and clears it
         LDA     #$10
         JSR     vecShowMsg
 
@@ -2041,7 +2046,7 @@ L1F18:
         RTS
 
 c64MenuPause:
-; vector 27 $1051 - menu 'P' (Pause): msg $13 asks for 1-9 seconds, msg $14 "bitte warten...", then c64DelaySecs
+; vector 27 $1051 - menu 'P' (Pause): msgPauseAsk asks for 1-9 seconds, then msgPauseWait, then c64DelaySecs
         LDA     #$13
         JSR     vecShowMsg
 
@@ -2060,7 +2065,7 @@ L1F3B:
         SEC
         SBC     #$30
         PHA
-        LDA     #$14
+        LDA     #$14                    ; msgPauseWait
         JSR     vecShowMsg
         PLA
         JSR     vecDelaySecs
@@ -2081,10 +2086,10 @@ L1F5D:
         JSR     vecSendByte
         LDA     #$6B
         JSR     vecSendByte
-        LDA     #$18
+        LDA     #$18                    ; msgMacroDone
         JSR     vecShowMsg
         JSR     vecMacroRecClose
-        LDA     #$17
+        LDA     #$17                    ; msgPressKey
         JSR     vecShowMsg
         LDA     #$00
         STA     c64RecFlag
@@ -2098,7 +2103,7 @@ L1F7E:
 
 L1F89:
         JSR     vecClearMsg
-        LDA     #$15
+        LDA     #$15                    ; msgMacroNew
         JSR     vecShowMsg
 
 L1F91:
@@ -2147,7 +2152,7 @@ L1FC6:
         BCC     L1FF8
         LDA     #$00
         JSR     vecSendByte
-        LDA     #$17
+        LDA     #$17                    ; msgPressKey
         JSR     vecShowMsg
 
 L1FED:
@@ -2158,13 +2163,14 @@ L1FED:
         RTS
 
 L1FF8:
+; msgMacroLabel
         LDA     #$0C
         JSR     vecShowMsg
         LDA     c64MacroId
         JSR     vecSendByte
         LDA     #$00
         JSR     vecSendByte
-        LDA     #$16
+        LDA     #$16                    ; msgMacroName
         JSR     vecShowMsg
         LDA     #$0D
         JSR     vecInputLine
@@ -2367,6 +2373,7 @@ L2170:
         RTS
 
 L2174:
+; msgRetry
         LDA     #$0A
         JSR     vecShowMsg
 
@@ -2377,7 +2384,7 @@ L2179:
         CMP     #$4A
         BNE     L218F
         JSR     vecClearMsg
-        LDA     #$07
+        LDA     #$07                    ; msgSaveFile
         JSR     vecShowMsg
         JMP     vecSaveBuffer
 
@@ -2385,7 +2392,7 @@ L218F:
         RTS
 
 c64ClearMsg:
-; vector 40 $1078 - show msg 1, the all-blank 40-column record: blank the status line without closing the overlay
+; vector 40 $1078 - show msgBlank, the all-blank 40-column record: blank the status line without closing the overlay
         LDA     #$01
         JSR     vecShowMsg
         RTS
@@ -2678,7 +2685,7 @@ c64OpenPrinter:
 L234C:
         JSR     UNLSN
         JSR     vecClearMsg
-        LDA     #$0F
+        LDA     #$0F                    ; msgNoPrinter
         JSR     vecShowMsg
         SEC
         RTS
@@ -2841,7 +2848,7 @@ L2429:
         BVS     L2460
         STA     c64PtrHi
         STA     c64BufWrHi
-        LDA     #$19
+        LDA     #$19                    ; msgLoadingExtra
         JSR     vecShowMsg
 
 L2443:
@@ -3006,7 +3013,7 @@ c64DiskShowError:
         STA     SA
         JSR     TKSA
         JSR     vecClearMsg
-        LDA     #$09
+        LDA     #$09                    ; msgErrLine
         JSR     vecShowMsg
         LDA     #$00
         STA     c64DosErr
@@ -3140,7 +3147,7 @@ c64MacroRecStart:
         STA     STATUS
         JSR     vecOpenChannel
         BCC     L26D1
-        LDA     #$0D
+        LDA     #$0D                    ; msgNoDrive
         JSR     vecShowMsg
         SEC
         RTS
@@ -3277,7 +3284,7 @@ L2795:
 
 L27AD:
         JSR     vecClearMsg
-        LDA     #$0D
+        LDA     #$0D                    ; msgNoDrive
         JSR     vecShowMsg
         SEC
         RTS
@@ -3557,7 +3564,7 @@ c64MenuTelesoft:
         LDA     c64PlayFlag
         ORA     c64RecFlag
         BEQ     L29B1
-        LDA     #$1E
+        LDA     #$1E                    ; msgNoTelesoft
         JSR     vecShowMsg
 
 L29A8:
@@ -3568,7 +3575,7 @@ L29A8:
 
 L29B1:
         JSR     vecClearMsg
-        LDA     #$1A
+        LDA     #$1A                    ; msgTelesoftFile
         JSR     vecShowMsg
         LDA     #$13
         JSR     vecInputLine
@@ -3579,7 +3586,7 @@ L29B1:
 L29C4:
         JSR     vecOpenPrgWrite
         BCC     L29D7
-        LDA     #$17
+        LDA     #$17                    ; msgPressKey
         JSR     vecShowMsg
 
 L29CE:
@@ -3589,6 +3596,7 @@ L29CE:
         RTS
 
 L29D7:
+; msgTelesoftPage
         LDA     #$1B
         JSR     vecShowMsg
         LDA     #$10
@@ -3691,7 +3699,7 @@ L2A8C:
         JSR     vecTelesoftByte
         CMP     #$42
         BNE     L2AA0
-        LDA     #$1C
+        LDA     #$1C                    ; msgLoadingData
         JSR     vecShowMsg
         JMP     L2AB7
 
@@ -3700,7 +3708,7 @@ L2AA0:
         JSR     vecSendByte
         LDA     #$6D
         JSR     vecSendByte
-        LDA     #$1D
+        LDA     #$1D                    ; msgBadFormat
         JSR     vecShowMsg
 
 L2AAF:
