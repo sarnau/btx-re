@@ -105,8 +105,10 @@ renderRow      EQU     $07B0
 renderCol      EQU     $07B1
 glyphPtr       EQU     $07B2
 videoPtr       EQU     $07B6
+blitRows       EQU     $07B8
 glyphBuf       EQU     $07BE
 glyphCode      EQU     $07E0
+drcsCell       EQU     $07E2
 cursorRowMax   EQU     $1B00
 glyphRows      EQU     $1B01
 scrollTop      EQU     $1B1C
@@ -803,13 +805,13 @@ LA284:
         PULA
         ANDA    #$7F
         LDAB    glyphRows
-        STAB    $07B8
+        STAB    blitRows
         LDAB    #$04
 
 LA28F:
         STAA    $03,X
         ABX
-        DEC     $07B8
+        DEC     blitRows
         BNE     LA28F
         DEC     $07B9
         BNE     LA284
@@ -1244,17 +1246,33 @@ LA55B:
         STAA    $608B
         STAA    $61F9
 
+; drcsCell - is this cell a redefined character?
+;
+; Set when the current G-set code is 5, which is what escDesignateG0 stores for
+; an ESC 2/8 2/0 designation. Everything downstream keys off it:
+;
+;   the cell is 12 rows, not 10, so blitRows is loaded with $0C instead of $0A
+;   glyphPtr comes from drcsGlyphPtr rather than fontBaseTable
+;   the blit loop keeps the extra PULs the taller cell needs
+;
+; drcsGlyphPtr at $A7E7 computes it: (glyphCode & $7F) - $20, times 48, plus
+; $07FF. So a defined character is 48 bytes in external RAM above $0800, which
+; is where a finished definition ends up - drcsPlane0..3 at $0426 are only the
+; staging buffers the CEPT stream is decoded into.
+;
+; blitRows is the row counter of the blit loop itself, loaded from glyphRows or
+; from the $0C above and counted down to zero. All 16 of its sites are that.
 LA5AF:
         LDAB    >$00E1
         ANDB    #$07
         CMPB    #$05
         BNE     LA5C0
         LDAA    #$FF
-        STAA    $07E2
-        JMP     LA7E7
+        STAA    drcsCell
+        JMP     drcsGlyphPtr
 
 LA5C0:
-        CLR     $07E2
+        CLR     drcsCell
         LDAB    >$00E0
         ANDB    #$33
         CMPB    #$13
@@ -1569,7 +1587,7 @@ LA7D5:
 LA7E6:
         RTS
 
-LA7E7:
+drcsGlyphPtr:
         LDAB    glyphCode
         ANDB    #$7F
         SUBB    #$20
@@ -1745,7 +1763,7 @@ LA90D:
         LDX     videoPtr
         LDS     glyphPtr
         LDAB    glyphRows
-        STAB    $07B8
+        STAB    blitRows
 
 LA93B:
         PULA
@@ -1760,7 +1778,7 @@ LA93B:
         STD     $06,X
         LDAB    #$08
         ABX
-        DEC     $07B8
+        DEC     blitRows
         BNE     LA93B
         LDS     >$00EC
         CLI
@@ -1772,7 +1790,7 @@ LA95B:
         LDX     videoPtr
         LDS     glyphPtr
         LDAB    glyphRows
-        STAB    $07B8
+        STAB    blitRows
 
 LA96B:
         PULA
@@ -1786,7 +1804,7 @@ LA96B:
         STD     $02,X
         LDAB    #$04
         ABX
-        DEC     $07B8
+        DEC     blitRows
         BNE     LA96B
         LDS     >$00EC
         CLI
@@ -1814,7 +1832,7 @@ LA9AE:
         STS     >$00EC
         LDS     glyphPtr
         LDAB    glyphRows
-        STAB    $07B8
+        STAB    blitRows
 
 LA9BB:
         LDAA    $07DA
@@ -1998,7 +2016,7 @@ LAAEA:
 
 LAAF3:
         STX     videoPtr
-        DEC     $07B8
+        DEC     blitRows
         BEQ     LAAFE
         JMP     LA9BB
 
@@ -2077,7 +2095,7 @@ LAB76:
         PULA
         PULB
         STD     $00,X
-        TST     $07E2
+        TST     drcsCell
         BNE     LAB86
         TSTB
         BMI     LAB86
@@ -2085,7 +2103,7 @@ LAB76:
         CLR     $01,X
 
 LAB86:
-        TST     $07E2
+        TST     drcsCell
         BEQ     LAB8D
         PULA
         PULB
@@ -2119,14 +2137,14 @@ LAB8D:
         PULA
         PULB
         STD     $28,X
-        TST     $07E2
+        TST     drcsCell
         BEQ     LABBA
         PULA
         PULB
 
 LABBA:
         STD     $2C,X
-        TST     $07E2
+        TST     drcsCell
         BNE     LABC8
         TSTB
         BMI     LABC8
@@ -2238,7 +2256,7 @@ LAC76:
         PULB
         STD     $00,X
         STD     $04,X
-        TST     $07E2
+        TST     drcsCell
         BNE     LAC8C
         TSTB
         BMI     LAC8C
@@ -2248,7 +2266,7 @@ LAC76:
         CLR     $05,X
 
 LAC8C:
-        TST     $07E2
+        TST     drcsCell
         BEQ     LAC93
         PULA
         PULB
@@ -2292,7 +2310,7 @@ LAC93:
         PULB
         STD     $50,X
         STD     $54,X
-        TST     $07E2
+        TST     drcsCell
         BEQ     LACD4
         PULA
         PULB
@@ -2300,7 +2318,7 @@ LAC93:
 LACD4:
         STD     $58,X
         STD     $5C,X
-        TST     $07E2
+        TST     drcsCell
         BNE     LACE8
         TSTB
         BMI     LACE8
@@ -2340,13 +2358,13 @@ LACFB:
         STS     >$00EC
         LDS     glyphPtr
         LDAB    #$0A
-        STAB    $07B8
+        STAB    blitRows
         LDAA    >$00EE
         BNE     LAD55
-        LDAA    $07E2
+        LDAA    drcsCell
         BEQ     LAD36
         LDAA    #$0C
-        STAA    $07B8
+        STAA    blitRows
         BRA     LAD55
 
 LAD36:
@@ -2359,7 +2377,7 @@ LAD36:
         INC     PORT3
         STD     $00,X
         DEC     PORT3
-        INC     $07B8
+        INC     blitRows
         BRA     LAD7E
 
 LAD50:
@@ -2408,12 +2426,12 @@ LAD7E:
         BRA     LAD55
 
 LAD9D:
-        DEC     $07B8
+        DEC     blitRows
         BMI     LADCE
         BNE     LAD55
         LDAB    >$00EE
         BNE     LADCE
-        LDAB    $07E2
+        LDAB    drcsCell
         BNE     LADCE
         DES
         PULB
@@ -2468,13 +2486,13 @@ LADE8:
         STS     >$00EC
         LDS     glyphPtr
         LDAB    #$0A
-        STAB    $07B8
+        STAB    blitRows
         LDAB    >$00EE
         BNE     LAE46
-        LDAB    $07E2
+        LDAB    drcsCell
         BEQ     LAE23
         LDAA    #$0C
-        STAA    $07B8
+        STAA    blitRows
         BRA     LAE46
 
 LAE23:
@@ -2489,7 +2507,7 @@ LAE23:
         STD     $00,X
         STD     $04,X
         DEC     PORT3
-        INC     $07B8
+        INC     blitRows
         BRA     LAE73
 
 LAE41:
@@ -2542,12 +2560,12 @@ LAE73:
         BRA     LAE46
 
 LAE96:
-        DEC     $07B8
+        DEC     blitRows
         BMI     LAED2
         BNE     LAE46
         LDAB    >$00EE
         BNE     LAED2
-        LDAB    $07E2
+        LDAB    drcsCell
         BNE     LAED2
         DES
         PULB

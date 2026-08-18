@@ -438,6 +438,13 @@ and the 16-bit pair leaves its top four bits clear — the same shape as the ROM
 character sets, whose ink occupies columns 4–15 of a 16-bit row. A DRCS
 character and a built-in glyph are the same 12-pixel cell.
 
+The planes at `$0426` are staging only. A finished definition lives above
+`$0800`, 48 bytes per character, and `drcsGlyphPtr` at `$A7E7` addresses it as
+`(glyphCode & $7F - $20) * 48 + $07FF`. The renderer decides which store to use
+from `drcsCell`, set when the current G-set code is 5 — the ESC 2/8 2/0
+designation. A DRCS cell is also **12 rows rather than 10**, which is what
+`blitRows` carries into the blit loop.
+
 ### Combining accents
 
 The `$5800` plane is not a duplicate character plane. When a character comes

@@ -447,6 +447,7 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xE35B" = "csiFinalB"
 "0xE367" = "escDefine"
 "0xA210" = "redrawScreen"
+"0xA7E7" = "drcsGlyphPtr"
 "0xF1D8" = "fetchHostByte"
 "0xF434" = "hostFifoGet"
 "0xF45B" = "execHostByte"
@@ -572,6 +573,23 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xFFF0" = "vectors"
 
 [block_comments]
+"0xA5AF" = """
+drcsCell - is this cell a redefined character?
+
+Set when the current G-set code is 5, which is what escDesignateG0 stores for
+an ESC 2/8 2/0 designation. Everything downstream keys off it:
+
+  the cell is 12 rows, not 10, so blitRows is loaded with $0C instead of $0A
+  glyphPtr comes from drcsGlyphPtr rather than fontBaseTable
+  the blit loop keeps the extra PULs the taller cell needs
+
+drcsGlyphPtr at $A7E7 computes it: (glyphCode & $7F) - $20, times 48, plus
+$07FF. So a defined character is 48 bytes in external RAM above $0800, which
+is where a finished definition ends up - drcsPlane0..3 at $0426 are only the
+staging buffers the CEPT stream is decoded into.
+
+blitRows is the row counter of the blit loop itself, loaded from glyphRows or
+from the $0C above and counted down to zero. All 16 of its sites are that."""
 "0xF1D8" = """
 Take the next byte the C64 sent, if there is one.
 
@@ -1818,6 +1836,8 @@ vectors before entering the main firmware."""
 "0xE222" = "attrFillHi"
 
 [symbols]
+"0x07B8" = "blitRows"
+"0x07E2" = "drcsCell"
 "0x04DC" = "pendingByte"
 "0x07B0" = "renderRow"
 "0x07B1" = "renderCol"
