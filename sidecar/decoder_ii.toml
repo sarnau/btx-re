@@ -392,12 +392,26 @@ selects one byte from each value table:
 The 18 keys are sorted and fall into three groups by p2 (1, 2 and 4), each
 holding the same six p1 values (6, 7, A, B, C, F).
 
-CAUTION: the search has no not-found path. If no key matches, DECB rolls 0
-round to $FF, BPL fails, and execution falls into the value lookups with
-B = $FF - reading $D52A, $D53C and $D54E, well past the end of all three
-tables. p1 spans 16 values and p2 spans 8, so 110 of the 128 possible keys are
-unmatched; either the protocol guarantees a valid pair or this is a genuine
-robustness hole. Not yet established which."""
+The search has no not-found path. If no key matches, DECB rolls 0 round to
+$FF, BPL fails, and execution falls into the value lookups with B = $FF,
+reading $D52A, $D53C and $D54E - 255 bytes past all three tables.
+
+That case IS reachable: $D40A gates entry on the first byte being $20, but the
+parameter bytes read afterwards at $D47E and $D483 are unconstrained, so p1
+spans 16 values and p2 spans 8 and 110 of the 128 possible keys miss.
+
+It is nevertheless harmless, because of what the three outputs feed:
+
+  $041C  gets $7F, and $D551 tests only bit 7 (BMI) - reads as clear, i.e.
+         the same as the intended $00
+  $041D  gets $F6, and $D5AA/$D6BB test only bit 7 (BPL) - reads as set, i.e.
+         the same as the intended $FF
+  $041F  gets $DD instead of 1 or 2, but its only consumer at $D706 does
+         ADDA $041F / CMPA #$7F / BCS / LDAA #$7F, so the result is clamped
+
+The three over-read addresses are ordinary ROM locations, so the access is
+well-defined on the bus. A missing bounds check with no crash or corruption
+consequence - worth knowing about, not worth calling a bug."""
 "0xD36A" = """
 CEPT control-code interpreter.
 
