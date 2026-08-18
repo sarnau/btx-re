@@ -99,3 +99,28 @@ def test_binclude_missing_file_is_reported():
     import pytest
     with pytest.raises(ValueError, match="BINCLUDE file not found"):
         assemble('        ORG $8000\n        BINCLUDE "nope.bin"\n        END\n')
+
+
+def test_string_table_renders_as_little_endian_words():
+    """The 6502 pointer table must be DW, not FDB - FDB is big-endian."""
+    src = (OUT / "c64_payload.asm").read_text()
+    assert "c64StrTable:" in src
+    assert "DW      $11F8,$1211," in src
+
+
+def test_dw_is_little_endian_and_fdb_is_big():
+    _, dw = assemble("        ORG $1000\n        DW $1234\n        END\n")
+    _, fdb = assemble("        ORG $1000\n        FDB $1234\n        END\n")
+    assert dw == bytes([0x34, 0x12])
+    assert fdb == bytes([0x12, 0x34])
+
+
+def test_text_block_through_screen_init_is_data():
+    """ROM $B552-$BA55 is records and their pointer table; code resumes at
+    c64ScreenInit."""
+    src = (OUT / "c64_payload.asm").read_text()
+    head, tail = src.split("c64ScreenInit:", 1)
+    table = head.split("c64StrTable:", 1)[1]
+    assert not re.search(r"^\s+(LDA|STA|JSR|JMP)\s", table, re.M), \
+        "the pointer table must not be disassembled as code"
+    assert re.search(r"^\s+LDA\s", tail, re.M), "code should resume after the label"

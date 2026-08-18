@@ -160,6 +160,7 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 
 
 [labels]
+"0xBA18" = "c64StrTable"
 "0xB45F" = "c64VecTableEnd"
 "0xB4B0" = "c64VarBlock"
 "0xB5A5" = "c64TextBlock"
@@ -384,6 +385,25 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xFFF0" = "vectors"
 
 [block_comments]
+"0xBA18" = """
+String table: 31 little-endian pointers, ROM $BA18-$BA55, runtime $1670-$16AD.
+
+This is how the text is reached - nothing addresses a record directly, which is
+why searching for pointers to the visible strings came up empty. Each entry
+points at a record header, not at the text:
+
+    [0] $11F8  18 00 C0 01 98  "von Diskette: File? "
+    [3] $126B  2C 00 C0 01 98  "Load Capture Display Macro Xfer Screen  "
+    [4] $1298  2C 00 C0 01 98  "ASCII Btx Keybd Telesoft Edit Pause Quit"
+
+A record is five header bytes followed by the text. Header byte 0 is the record
+length minus one, which is what makes the stride vary: $2C gives a 45-byte
+record with 40 characters, $18 a 25-byte record with 20, $04 a 5-byte record
+with none. Byte 1 is always $00 and byte 4 always $98; bytes 2 and 3 vary
+($C0/$80, $01/$07) and look like display parameters, not yet established.
+
+The earlier reading of these five bytes as a trailer was wrong - they lead the
+record, and the pointers here prove it."""
 "0xB372" = """
 Handing control to the payload.
 
@@ -1194,11 +1214,16 @@ kind = "bytes"
 
 [[regions]]
 start = 0xB552
-end = 0xBA00
+end = 0xBA18
 kind = "string"
 
 [[regions]]
-start = 0xBA00
+start = 0xBA18
+end = 0xBA56
+kind = "ptr_table"
+
+[[regions]]
+start = 0xBA56
 end = 0xD109
 kind = "code6502"
 

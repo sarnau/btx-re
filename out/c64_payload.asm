@@ -334,49 +334,33 @@ c64TextBlock:
         FCB     $6C,$73,$63,$68,$65,$73,$20,$44,$61,$74,$65,$6E,$66,$6F,$72,$6D
         FCB     $61,$74,$20,$20,$20,$20,$20,$20,$20,$57,$65,$69,$74,$65,$72,$3A
         FCB     $20,$54,$61,$73,$74,$65,$2C,$00,$C0,$01,$98,$4B,$65,$69,$6E,$65
-        FCB     $20,$54,$65,$6C,$65,$73,$6F,$66,$74,$77,$2E
-        JSR     $6D69
-        JSR     $614D
-        FCB     $63,$72,$6F
-        AND     ($20,X)
-        FCB     $57
-        ADC     $69
-        FCB     $74
-        ADC     $72
-        FCB     $3A
-        JSR     $6154
-        FCB     $73,$74
-        ADC     $F8
-        ORA     ($11),Y
-        FCB     $12
-        ROL     $6B12,X
-        FCB     $12
-        TYA
-        FCB     $12
-        CMP     $12
-        FCB     $F2,$12,$1F,$13
-        SEC
-        FCB     $13
-        EOR     ($13),Y
-        LSR     $13,X
-        FCB     $83,$13
-        LDX     #$13
-        LDA     $DA13
-        FCB     $13,$F3,$13
-        ASL     A
-        FCB     $14,$37,$14,$64,$14
-        STA     ($14),Y
-        LDX     $EB14,Y
-        FCB     $14,$07
-        ORA     $1B,X
-        ORA     $48,X
-        ORA     $75,X
-        ORA     $A2,X
-        ORA     $BB,X
-        ORA     $E9,X
-        ORA     $16,X
-        ASL     $43,X
-        FCB     $16
+        FCB     $20,$54,$65,$6C,$65,$73,$6F,$66,$74,$77,$2E,$20,$69,$6D,$20,$4D
+        FCB     $61,$63,$72,$6F,$21,$20,$57,$65,$69,$74,$65,$72,$3A,$20,$54,$61
+        FCB     $73,$74,$65
+
+; String table: 31 little-endian pointers, ROM $BA18-$BA55, runtime $1670-$16AD.
+;
+; This is how the text is reached - nothing addresses a record directly, which is
+; why searching for pointers to the visible strings came up empty. Each entry
+; points at a record header, not at the text:
+;
+;     [0] $11F8  18 00 C0 01 98  "von Diskette: File? "
+;     [3] $126B  2C 00 C0 01 98  "Load Capture Display Macro Xfer Screen  "
+;     [4] $1298  2C 00 C0 01 98  "ASCII Btx Keybd Telesoft Edit Pause Quit"
+;
+; A record is five header bytes followed by the text. Header byte 0 is the record
+; length minus one, which is what makes the stride vary: $2C gives a 45-byte
+; record with 40 characters, $18 a 25-byte record with 20, $04 a 5-byte record
+; with none. Byte 1 is always $00 and byte 4 always $98; bytes 2 and 3 vary
+; ($C0/$80, $01/$07) and look like display parameters, not yet established.
+;
+; The earlier reading of these five bytes as a trailer was wrong - they lead the
+; record, and the pointers here prove it.
+c64StrTable:
+        DW      $11F8,$1211,$123E,$126B,$1298,$12C5,$12F2,$131F
+        DW      $1338,$1351,$1356,$1383,$13A2,$13AD,$13DA,$13F3
+        DW      $140A,$1437,$1464,$1491,$14BE,$14EB,$1507,$151B
+        DW      $1548,$1575,$15A2,$15BB,$15E9,$1616,$1643
 
 c64ScreenInit:
         LDA     #$00                    ; vector 0 at runtime $16AE - CLALL and $D016/$D021/$D800 - screen and colour RAM setup

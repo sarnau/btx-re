@@ -103,7 +103,7 @@ def _sizeof(line: _Line, symbols: dict[str, int], strict: bool, cpu: str) -> int
         return _binclude_size(line)
     if op == "FCB":
         return len(_split_values(line.operand))
-    if op == "FDB":
+    if op in ("FDB", "DW"):
         return 2 * len(_split_values(line.operand))
 
     if cpu == "6502":
@@ -284,10 +284,13 @@ def assemble(source: str, *, include_dir: str | pathlib.Path = ".") -> tuple[int
                 out.append(value)
                 pc += 1
             continue
-        if op == "FDB":
+        if op in ("FDB", "DW"):
+            # FDB is big-endian (Motorola); DW is little-endian, which is what
+            # the 6502 sources need for a pointer table.
+            order = "big" if op == "FDB" else "little"
             for token in _split_values(line.operand):
                 value = _value(token, symbols, line.no)
-                out.extend(value.to_bytes(2, "big"))
+                out.extend(value.to_bytes(2, order))
                 pc += 2
             continue
 

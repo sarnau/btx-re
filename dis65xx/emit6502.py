@@ -61,6 +61,7 @@ def _operand(insn, labels: dict[int, str], symbols: dict[int, str] | None = None
 
 
 _DATA_KINDS = {"bytes", "string", "words", "ptr_table", "chargen"}
+_WORD_KINDS = {"ptr_table", "words"}
 
 
 def _decode_block(data: bytes, base: int, block: C64Block, labels: dict[int, str],
@@ -183,6 +184,7 @@ def emit_block(data: bytes, base: int, block: C64Block, sidecar: Sidecar) -> str
             lines.append(f"{'':{_INDENT}}{'FCB':{_MNEM_WIDTH}}"
                          + ",".join(f"${b:02X}" for b in chunk))
 
+    words_left = 0
     for rt, insn, byte in _decode_block(data, base, block, labels, sidecar):
         if rt in labels:
             flush()
@@ -193,6 +195,21 @@ def emit_block(data: bytes, base: int, block: C64Block, sidecar: Sidecar) -> str
                 for line in block_comment.strip().splitlines():
                     lines.append(f"; {line}" if line else ";")
             lines.append(f"{labels[rt]}:")
+        region = sidecar.region_at(rt + block.offset)
+        if region is not None and region.kind in _WORD_KINDS and insn is None:
+            if words_left == 0:
+                flush()
+                lo = rt + block.offset
+                count = min(8, (min(region.end, block.end) - lo) // 2)
+                if count:
+                    vals = [int.from_bytes(data[lo - base + 2 * i:lo - base + 2 * i + 2],
+                                           "little") for i in range(count)]
+                    lines.append(f"{'':{_INDENT}}{'DW':{_MNEM_WIDTH}}"
+                                 + ",".join(f"${v:04X}" for v in vals))
+                    words_left = count * 2
+            if words_left:
+                words_left -= 1
+                continue
         if insn is None:
             pending.append(byte)
             continue
