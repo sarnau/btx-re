@@ -190,24 +190,40 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 [block_comments]
 "0xFCDB" = """
 Screen line-address tables: four tables of 25 big-endian pointers, one entry
-per display row, $FC45-$FD0C.
+per display row, $FC45-$FD0C. 25 rows of 40 columns - the CEPT 24-row page
+plus a status line.
 
-  lineAddr4000  $FCDB  base $4000  stride  40   $4000-$43C7  1 byte per cell
-  lineAddr4400  $FCA9  base $4400  stride 160   $4400-$539F  4 bytes per cell
-  lineAddr5400  $FC77  base $5400  stride  40   $5400-$57C7  1 byte per cell
-  lineAddr5800  $FC45  base $5800  stride  40   $5800-$5BC7  1 byte per cell
+  table  base    stride  span         role
+  $FCDB  $4000     40    $4000-$43C7  rowRender   derived render byte per cell
+  $FCA9  $4400    160    $4400-$539F  rowAttr     four attribute bytes per cell
+  $FC77  $5400     40    $5400-$57C7  rowChar     character codes
+  $FC45  $5800     40    $5800-$5BC7  rowCharAlt  character codes, secondary
 
-25 rows of 40 columns - the CEPT 24-row page plus a status line. Each is read
-with ASLB / LDX #table / ABX / LDD 0,X into the $0406 scratch pointer, from
-eight call sites around $EA44 and $EB28, which are the scroll routines the
-bounded cursor moves at $EC8D/$ECA1 fall through to.
+$E9A5 reloads all four row pointers into rowChar/rowAttr/rowCharAlt/rowRender
+whenever the cursor row changes. Roles established from the write sites:
 
-Three planes carry one byte per character cell and the fourth carries four,
-so the wide one is per-cell attributes or DRCS and the others hold codes and
-per-cell state; which plane is which is not yet established.
+  rowChar     $E943 on the main character path:
+              LDAB cursorCol / LDX rowChar / ABX / LDAA charCode / ORAA #$80 /
+              STAA 0,X - the character code with bit 7 set. Bit 7 is a per-cell
+              flag rather than data: $A243, $DB1B, $DB96, $E538 and $EE21 all
+              set it on this plane without touching the low seven bits, so it
+              reads as a dirty/redraw marker.
+  rowAttr     $E7E6 writes attr0..attr3 to 0,X..3,X at cursorCol*4. Those four
+              bytes are only ever bit-manipulated by the C1 handlers at
+              $DE00-$DF10 - the CEPT attribute set - and never receive a raw
+              byte, which is what distinguishes them from the character code.
+  rowRender   $E87E stores a byte assembled at $E860 from attribute bits
+              (BITA #$03 -> ORAB #$02, BITA #$04 -> ORAB #$80, and so on), so
+              this plane is derived state for the display hardware, not
+              content.
+  rowCharAlt  $E972, a separate routine off the main path, stores
+              charCode AND $7F and then sets $0496 = $FF.
 
-Together they place the display memory at $4000-$5BC7, filling the gap
-between external RAM and the $6000 C64 interface."""
+OPEN: why the character code is kept in two planes. rowChar carries bit 7 and
+rowCharAlt masks it off, and rowCharAlt is written from its own routine rather
+than the main output path - plausibly a shadow copy for the concealed-text
+reveal or for the serial/parallel attribute modes, but that is not
+established."""
 "0xF14C" = """
 75-baud transmit: a software UART clocked by the timer output compare.
 
@@ -465,6 +481,18 @@ vectors before entering the main firmware."""
 "0x1B1D" = "scrollBottom"
 "0x1B1E" = "cursorRow"
 "0x1B1F" = "cursorCol"
+
+# Current-row pointers, reloaded by $E9A5 whenever the cursor row changes.
+"0x040A" = "rowAttr"
+"0x040C" = "rowCharAlt"
+"0x040E" = "rowRender"
+"0x1B21" = "rowChar"
+# Pending character and its four attribute bytes.
+"0x04B1" = "attr0"
+"0x04B2" = "attr1"
+"0x04B3" = "attr2"
+"0x04B4" = "attr3"
+"0x04B5" = "charCode"
 
 # 75-baud software UART state. See the block comment at $F14C.
 "0x04D0" = "txRingHead"

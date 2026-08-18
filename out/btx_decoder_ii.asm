@@ -34,6 +34,14 @@ softVecOcf   EQU     $F4
 softVecIcf   EQU     $F6
 softVecIrq1  EQU     $F8
 softVecSwi   EQU     $FA
+rowAttr      EQU     $040A
+rowCharAlt   EQU     $040C
+rowRender    EQU     $040E
+attr0        EQU     $04B1
+attr1        EQU     $04B2
+attr2        EQU     $04B3
+attr3        EQU     $04B4
+charCode     EQU     $04B5
 txRingHead   EQU     $04D0
 txRingTail   EQU     $04D1
 txCurBit     EQU     $04EA
@@ -44,6 +52,7 @@ scrollTop    EQU     $1B1C
 scrollBottom EQU     $1B1D
 cursorRow    EQU     $1B1E
 cursorCol    EQU     $1B1F
+rowChar      EQU     $1B21
 c64FifoWr    EQU     $6009
 c64FifoRd    EQU     $600A
 c64XferEn    EQU     $600B
@@ -657,7 +666,7 @@ fontNarrow:
         CLR     $00EE
         TST     $1B20
         BEQ     $A250
-        LDX     $1B21
+        LDX     rowChar
         LDAB    cursorCol
         ABX
         LDAA    $00,X
@@ -3854,7 +3863,7 @@ ctrlIgnored:
         JMP     parseNextByte
         LDAA    #$FF
         STAA    $1B20
-        LDX     $1B21
+        LDX     rowChar
         LDAB    cursorCol
         ABX
         LDAA    $00,X
@@ -3873,7 +3882,7 @@ ctrlIgnored:
         BEQ     $DB58
         LDAA    $04A1
         STAA    $049F
-        LDAA    $04B5
+        LDAA    charCode
         JSR     $E781
         DEC     $0490
         JMP     $DB41
@@ -3883,14 +3892,14 @@ ctrlIgnored:
         JMP     parseNextByte
         CLR     $1B20
         JMP     parseNextByte
-        LDX     $040A
+        LDX     rowAttr
         LDAA    $00,X
         BMI     $DB66
         LDAB    cursorCol
         STAB    $0490
         ASLB
         ASLB
-        LDX     $040A
+        LDX     rowAttr
         ABX
         LDAA    $00,X
         STAA    $0417
@@ -3903,16 +3912,16 @@ ctrlIgnored:
         ANDA    #$BF
         STAA    $041A
         LDAA    #$A0
-        LDX     $1B21
+        LDX     rowChar
         LDAB    cursorCol
         ABX
         STAA    $00,X
-        LDX     $040E
+        LDX     rowRender
         ABX
         CLR     $00,X
         ASLB
         ASLB
-        LDX     $040A
+        LDX     rowAttr
         ABX
         LDAA    $0417
         STAA    $00,X
@@ -4041,7 +4050,7 @@ ctrlIgnored:
         LDAA    #$00
         JSR     $E4FF
         JMP     $DDFB
-        LDX     $040A
+        LDX     rowAttr
         LDAA    $00,X
         BMI     $DD3E
         LDX     #$0400
@@ -4054,7 +4063,7 @@ ctrlIgnored:
         LDAA    #$02
         JSR     $E4FF
         JMP     $DDFB
-        LDX     $040A
+        LDX     rowAttr
         LDAA    $00,X
         BMI     $DD3E
         LDX     #$0400
@@ -4110,7 +4119,7 @@ ctrlIgnored:
         LDAB    cursorCol
         ASLB
         ASLB
-        LDX     $040A
+        LDX     rowAttr
         ABX
         LDAA    $02,X
         STAA    $048C
@@ -4136,7 +4145,7 @@ ctrlIgnored:
         JMP     parseNextByte
         LDAA    $049D
         BPL     $DDEB
-        LDAA    $04B5
+        LDAA    charCode
         STAA    $0498
         JMP     $DDFB
         TST     $04AF
@@ -4156,53 +4165,53 @@ ctrlIgnored:
         BITA    $8607
         JSR     $E9CE
         JMP     parseNextByte
-        LDAA    $04B4
+        LDAA    attr3
         ANDA    #$4F
         ORAA    #$10
-        STAA    $04B4
+        STAA    attr3
         LDAA    #$00
         STAA    $04B0
-        LDAA    $04B2
+        LDAA    attr1
         ANDA    #$3F
         ORAA    #$80
-        STAA    $04B2
+        STAA    attr1
         JMP     parseNextByte
         LDAA    #$00
         STAA    $04B0
-        LDAA    $04B2
+        LDAA    attr1
         ANDA    #$3F
         ORAA    #$80
-        STAA    $04B2
-        LDAA    $04B4
+        STAA    attr1
+        LDAA    attr3
         ANDA    #$DF
         ORAA    #$B0
-        STAA    $04B4
+        STAA    attr3
         JMP     parseNextByte
-        LDAA    $04B1
+        LDAA    attr0
         ANDA    #$FB
-        STAA    $04B1
+        STAA    attr0
         JMP     parseNextByte
-        LDAA    $04B1
+        LDAA    attr0
         ORAA    #$04
-        STAA    $04B1
+        STAA    attr0
         JMP     parseNextByte
-        LDAA    $04B1
+        LDAA    attr0
         ANDA    #$FC
-        STAA    $04B1
+        STAA    attr0
         JMP     parseNextByte
-        LDAA    $04B1
+        LDAA    attr0
         ANDA    #$FC
         ORAA    #$01
-        STAA    $04B1
+        STAA    attr0
         JMP     parseNextByte
-        LDAA    $04B1
+        LDAA    attr0
         ANDA    #$FC
         ORAA    #$02
-        STAA    $04B1
+        STAA    attr0
         JMP     parseNextByte
-        LDAA    $04B1
+        LDAA    attr0
         ORAA    #$03
-        STAA    $04B1
+        STAA    attr0
         JMP     parseNextByte
         LDAA    #$00
         BITA    $8601
@@ -4214,38 +4223,38 @@ ctrlIgnored:
         BITA    $8607
         JSR     $E9FF
         JMP     parseNextByte
-        LDAA    $04B4
+        LDAA    attr3
         ANDA    #$F7
-        STAA    $04B4
+        STAA    attr3
         JMP     parseNextByte
-        LDAA    $04B1
+        LDAA    attr0
         ANDA    #$F7
-        STAA    $04B1
+        STAA    attr0
         JMP     parseNextByte
-        LDAA    $04B1
+        LDAA    attr0
         ORAA    #$08
-        STAA    $04B1
+        STAA    attr0
         JMP     parseNextByte
         JMP     $E9A2
-        LDAA    $04B4
+        LDAA    attr3
         ANDA    #$FB
-        STAA    $04B4
+        STAA    attr3
         JMP     parseNextByte
-        LDAA    $04B4
+        LDAA    attr3
         ORAA    #$04
-        STAA    $04B4
+        STAA    attr3
         JMP     parseNextByte
-        LDAA    $04B4
+        LDAA    attr3
         ANDA    #$FC
         ORAA    #$01
-        STAA    $04B4
-        LDAA    $04B3
+        STAA    attr3
+        LDAA    attr2
         ANDA    #$1F
-        STAA    $04B3
+        STAA    attr2
         JMP     parseNextByte
-        LDAA    $04B4
+        LDAA    attr3
         ORAA    #$08
-        STAA    $04B4
+        STAA    attr3
         JMP     parseNextByte
         LDAA    #$01
         STAA    $049E
@@ -4464,7 +4473,7 @@ ctrlIgnored:
         JSR     $E57B
         JMP     $E4FC
         LDAB    cursorCol
-        LDX     $040E
+        LDX     rowRender
         ABX
         LDAA    $00,X
         ORAA    #$10
@@ -4476,7 +4485,7 @@ ctrlIgnored:
         LDAB    $0490
         ASLB
         ASLB
-        LDX     $040A
+        LDX     rowAttr
         ABX
         LDAA    $01,X
         ANDA    #$7F
@@ -4505,7 +4514,7 @@ ctrlIgnored:
         LDAB    $0490
         CMPB    #$28
         BCC     $E1B3
-        LDX     $040E
+        LDX     rowRender
         ABX
         LDAA    $00,X
         ANDA    #$10
@@ -4528,7 +4537,7 @@ ctrlIgnored:
         JSR     $E57B
         JMP     $E4FC
         LDAB    cursorCol
-        LDX     $040E
+        LDX     rowRender
         ABX
         LDAA    $00,X
         ORAA    #$10
@@ -4540,7 +4549,7 @@ ctrlIgnored:
         LDAB    $0490
         ASLB
         ASLB
-        LDX     $040A
+        LDX     rowAttr
         ABX
         LDAA    $01,X
         ANDA    #$7F
@@ -4569,7 +4578,7 @@ ctrlIgnored:
         LDAB    $0490
         CMPB    #$28
         BCC     $E24C
-        LDX     $040E
+        LDX     rowRender
         ABX
         LDAA    $00,X
         ANDA    #$10
@@ -4863,11 +4872,11 @@ ctrlIgnored:
         COMB
         STAB    $048E
         STX     $04B6
-        LDX     $040A
+        LDX     rowAttr
         LDAA    $00,X
         BPL     $E514
         RTS
-        LDX     $040E
+        LDX     rowRender
         LDAB    cursorCol
         ABX
         LDAA    $00,X
@@ -4883,7 +4892,7 @@ ctrlIgnored:
         ANDA    $04B6
         BEQ     $E525
         LDAB    cursorCol
-        LDX     $1B21
+        LDX     rowChar
         ABX
         LDAB    $048F
         LDAA    $00,X
@@ -4896,7 +4905,7 @@ ctrlIgnored:
         ASLB
         ASLB
         ADDB    $04B7
-        LDX     $040A
+        LDX     rowAttr
         ABX
         LDAB    $048F
         LDAA    $00,X
@@ -5122,10 +5131,10 @@ ctrlIgnored:
         LDAA    $04AD
         STAA    $049A
         RTS
-        STAA    $04B5
+        STAA    charCode
         LDAA    $0497
         BEQ     $E7CB
-        LDAA    $04B1
+        LDAA    attr0
         ANDA    #$01
         BEQ     $E7CB
         LDAA    cursorRow
@@ -5138,7 +5147,7 @@ ctrlIgnored:
         LDAB    cursorCol
         ASLB
         ASLB
-        LDX     $040A
+        LDX     rowAttr
         ABX
         LDAA    $00,X
         BPL     $E7B1
@@ -5156,7 +5165,7 @@ ctrlIgnored:
         ASLB
         ASLB
         STAB    $048E
-        LDX     $040A
+        LDX     rowAttr
         ABX
         LDAA    $00,X
         BPL     $E7DE
@@ -5164,31 +5173,31 @@ ctrlIgnored:
         TST     $0497
         BMI     $E7E6
         JMP     $E8C7
-        LDX     $040A
+        LDX     rowAttr
         LDAB    $048E
         ABX
         LDAA    $00,X
         ANDA    #$20
-        ORAA    $04B1
+        ORAA    attr0
         STAA    $00,X
-        LDAA    $04B2
+        LDAA    attr1
         STAA    $01,X
-        LDAA    $04B3
+        LDAA    attr2
         STAA    $02,X
-        LDAA    $04B4
+        LDAA    attr3
         STAA    $03,X
-        LDAA    $04B1
+        LDAA    attr0
         ANDA    #$02
         BEQ     $E824
         CMPB    #$9C
         BCC     $E824
-        LDAA    $04B1
+        LDAA    attr0
         STAA    $04,X
-        LDAA    $04B2
+        LDAA    attr1
         STAA    $05,X
-        LDAA    $04B3
+        LDAA    attr2
         STAA    $06,X
-        LDAA    $04B4
+        LDAA    attr3
         STAA    $07,X
         TST     cursorCol
         BEQ     $E885
@@ -5237,7 +5246,7 @@ ctrlIgnored:
         ORAB    #$10
         PSHB
         LDAB    cursorCol
-        LDX     $040E
+        LDX     rowRender
         ABX
         PULB
         STAB    $00,X
@@ -5245,30 +5254,30 @@ ctrlIgnored:
         BEQ     $E8C7
         CMPA    #$01
         BEQ     $E8A9
-        LDAA    $04B2
+        LDAA    attr1
         EORA    #$80
-        STAA    $04B2
+        STAA    attr1
         ANDA    #$80
         BEQ     $E8C7
-        LDAA    $04B4
+        LDAA    attr3
         EORA    #$10
-        STAA    $04B4
+        STAA    attr3
         ANDA    #$10
         BEQ     $E8C7
         JMP     $E88E
-        LDAA    $04B2
+        LDAA    attr1
         EORA    #$80
-        STAA    $04B2
+        STAA    attr1
         ANDA    #$80
         BNE     $E8C0
-        LDAA    $04B4
+        LDAA    attr3
         EORA    #$10
-        STAA    $04B4
+        STAA    attr3
         JMP     $E8C7
-        LDAA    $04B4
+        LDAA    attr3
         ANDA    #$10
         BNE     $E8A9
-        LDX     $040A
+        LDX     rowAttr
         LDAB    $048E
         ABX
         INX
@@ -5295,7 +5304,7 @@ ctrlIgnored:
         LDAA    #$04
         STAA    $048F
         JMP     $E91D
-        TST     $04B5
+        TST     charCode
         BMI     $E911
         LDAB    $049D
         BRA     $E914
@@ -5307,12 +5316,12 @@ ctrlIgnored:
         LDAA    $048F
         CMPA    #$01
         BNE     $E930
-        LDAA    $04B5
+        LDAA    charCode
         ANDA    #$70
         CMPA    #$40
         BNE     $E930
         JMP     $E972
-        LDX     $040A
+        LDX     rowAttr
         LDAB    $048E
         ABX
         LDAA    $01,X
@@ -5320,12 +5329,12 @@ ctrlIgnored:
         ORAA    $048F
         STAA    $01,X
         LDAB    cursorCol
-        LDX     $1B21
+        LDX     rowChar
         ABX
-        LDAA    $04B5
+        LDAA    charCode
         ORAA    #$80
         STAA    $00,X
-        LDX     $040A
+        LDX     rowAttr
         LDAB    $048E
         ABX
         LDAA    $00,X
@@ -5340,10 +5349,10 @@ ctrlIgnored:
         JSR     $EC16
         JSR     $E9A5
         RTS
-        LDX     $040C
+        LDX     rowCharAlt
         LDAB    cursorCol
         ABX
-        LDAA    $04B5
+        LDAA    charCode
         ANDA    #$7F
         STAA    $00,X
         LDAA    #$FF
@@ -5368,19 +5377,19 @@ ctrlIgnored:
         LDX     #$FC77
         ABX
         LDX     $00,X
-        STX     $1B21
+        STX     rowChar
         LDX     #$FCA9
         ABX
         LDX     $00,X
-        STX     $040A
+        STX     rowAttr
         LDX     #$FC45
         ABX
         LDX     $00,X
-        STX     $040C
+        STX     rowCharAlt
         LDX     #$FCDB
         ABX
         LDX     $00,X
-        STX     $040E
+        STX     rowRender
         RTS
         STAA    $048D
         TST     $0497
@@ -5399,10 +5408,10 @@ ctrlIgnored:
         ASLA
         ORAA    $048D
         STAA    $048D
-        LDAA    $04B3
+        LDAA    attr2
         ANDA    #$E0
         ORAA    $048D
-        STAA    $04B3
+        STAA    attr2
         RTS
         STAA    $048D
         TST     $0497
@@ -5420,10 +5429,10 @@ ctrlIgnored:
         LDX     #$0202
         LDAB    #$E0
         JMP     $E4FF
-        LDAA    $04B4
+        LDAA    attr3
         ANDA    #$FC
         ORAA    $0495
-        STAA    $04B4
+        STAA    attr3
         LDAA    $048D
         ASLA
         ASLA
@@ -5431,10 +5440,10 @@ ctrlIgnored:
         ASLA
         ASLA
         STAA    $048D
-        LDAA    $04B3
+        LDAA    attr2
         ANDA    #$1F
         ORAA    $048D
-        STAA    $04B3
+        STAA    attr2
         RTS
         TST     scrollTop
         BPL     $EA4A
@@ -5729,13 +5738,13 @@ ctrlIgnored:
         INC     cursorRow
         RTS
         CLR     $04B0
-        CLR     $04B1
+        CLR     attr0
         LDAA    #$80
-        STAA    $04B2
+        STAA    attr1
         LDAA    #$07
-        STAA    $04B3
+        STAA    attr2
         LDAA    #$99
-        STAA    $04B4
+        STAA    attr3
         RTS
         CLR     $04DA
         CLR     $04DB
@@ -5852,7 +5861,7 @@ ctrlIgnored:
         LDAA    $04B8
         COMA
         STAA    $048E
-        LDX     $040A
+        LDX     rowAttr
         LDAB    $04B7
         ABX
         LDAB    #$28
@@ -5866,7 +5875,7 @@ ctrlIgnored:
         INX
         DECB
         BNE     $EE10
-        LDX     $1B21
+        LDX     rowChar
         LDAB    #$28
         LDAA    $00,X
         ORAA    #$80
@@ -7362,24 +7371,40 @@ lineAddr4400:
         FDB     $5300
 
 ; Screen line-address tables: four tables of 25 big-endian pointers, one entry
-; per display row, $FC45-$FD0C.
+; per display row, $FC45-$FD0C. 25 rows of 40 columns - the CEPT 24-row page
+; plus a status line.
 ;
-;   lineAddr4000  $FCDB  base $4000  stride  40   $4000-$43C7  1 byte per cell
-;   lineAddr4400  $FCA9  base $4400  stride 160   $4400-$539F  4 bytes per cell
-;   lineAddr5400  $FC77  base $5400  stride  40   $5400-$57C7  1 byte per cell
-;   lineAddr5800  $FC45  base $5800  stride  40   $5800-$5BC7  1 byte per cell
+;   table  base    stride  span         role
+;   $FCDB  $4000     40    $4000-$43C7  rowRender   derived render byte per cell
+;   $FCA9  $4400    160    $4400-$539F  rowAttr     four attribute bytes per cell
+;   $FC77  $5400     40    $5400-$57C7  rowChar     character codes
+;   $FC45  $5800     40    $5800-$5BC7  rowCharAlt  character codes, secondary
 ;
-; 25 rows of 40 columns - the CEPT 24-row page plus a status line. Each is read
-; with ASLB / LDX #table / ABX / LDD 0,X into the $0406 scratch pointer, from
-; eight call sites around $EA44 and $EB28, which are the scroll routines the
-; bounded cursor moves at $EC8D/$ECA1 fall through to.
+; $E9A5 reloads all four row pointers into rowChar/rowAttr/rowCharAlt/rowRender
+; whenever the cursor row changes. Roles established from the write sites:
 ;
-; Three planes carry one byte per character cell and the fourth carries four,
-; so the wide one is per-cell attributes or DRCS and the others hold codes and
-; per-cell state; which plane is which is not yet established.
+;   rowChar     $E943 on the main character path:
+;               LDAB cursorCol / LDX rowChar / ABX / LDAA charCode / ORAA #$80 /
+;               STAA 0,X - the character code with bit 7 set. Bit 7 is a per-cell
+;               flag rather than data: $A243, $DB1B, $DB96, $E538 and $EE21 all
+;               set it on this plane without touching the low seven bits, so it
+;               reads as a dirty/redraw marker.
+;   rowAttr     $E7E6 writes attr0..attr3 to 0,X..3,X at cursorCol*4. Those four
+;               bytes are only ever bit-manipulated by the C1 handlers at
+;               $DE00-$DF10 - the CEPT attribute set - and never receive a raw
+;               byte, which is what distinguishes them from the character code.
+;   rowRender   $E87E stores a byte assembled at $E860 from attribute bits
+;               (BITA #$03 -> ORAB #$02, BITA #$04 -> ORAB #$80, and so on), so
+;               this plane is derived state for the display hardware, not
+;               content.
+;   rowCharAlt  $E972, a separate routine off the main path, stores
+;               charCode AND $7F and then sets $0496 = $FF.
 ;
-; Together they place the display memory at $4000-$5BC7, filling the gap
-; between external RAM and the $6000 C64 interface.
+; OPEN: why the character code is kept in two planes. rowChar carries bit 7 and
+; rowCharAlt masks it off, and rowCharAlt is written from its own routine rather
+; than the main output path - plausibly a shadow copy for the concealed-text
+; reveal or for the serial/parallel attribute modes, but that is not
+; established.
 lineAddr4000:
         FDB     $4000,$4028,$4050,$4078,$40A0,$40C8,$40F0,$4118
         FDB     $4140,$4168,$4190,$41B8,$41E0,$4208,$4230,$4258
