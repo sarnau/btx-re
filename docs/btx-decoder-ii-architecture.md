@@ -10,9 +10,11 @@ and `out/c64_payload.asm` the C64-side 6502 sources, and
 `docs/cv30113-revision-diff.md` the comparison against the other ROM revision.
 
 This document is checked against those sources by `tools/checkdoc.py`, which
-the test suite runs: every name it cites must still be one the listings define.
-Prose goes stale quietly when a rename lands underneath it, and that is the
-failure it exists to catch.
+the test suite runs. Every name it cites must be one the listings define, and
+the ROM map below must partition `$8000`–`$FFFF` with no gap, no overlap, and
+each row's stated size matching the range it spans. Prose goes stale quietly
+when a rename lands underneath it, and a map that lists landmarks reads like
+one that lists everything; those are the two failures it exists to catch.
 
 ---
 
@@ -1134,12 +1136,17 @@ $B340-$B3A5   c64CartStart, executed at C64 $8000
 $B3A6-$B3A7   c64LoadAddr        $1000
 $B3A8-$D108   C64 terminal application, runs at $1000-$2D60
 $D109-$D348   ctrlTableC0..csiTable, the CEPT dispatch tables
+$D349-$D418   firmware
 $D419-$D460   fmtKeys, fmtVals041C, fmtVals041D, fmtVals041F
-$E000-$EF66   firmware
+$D461-$EF66   firmware
 $EF67-$EFCA   strModeNames       5 records x 20
+$EFCB-$EFF4   firmware
 $EFF5-$F080   strStatusMsgs      7 records x 20, including the version
+$F081-$F9F9   firmware
 $F9FA-$FA39   asciiCtrlTable     32 handler addresses
+$FA3A-$FC44   firmware
 $FC45-$FD0C   lineAddrAccent, lineAddrChar, lineAddrAttr, lineAddrRender
+$FD0D-$FD20   firmware
 $FD21-$FFEF   romPadding         $FF fill, 719 bytes
 $FFF0-$FFFF   vectors            the eight 6801 hardware vectors
 ```

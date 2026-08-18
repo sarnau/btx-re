@@ -9,7 +9,8 @@ checks that have actually caught something:
 
   1. every backticked identifier is defined by one of the three sources
   2. every ROM-map line names something the sources define
-  3. no ROM-map boundary disagrees with the sidecar
+  3. the ROM map partitions $8000-$FFFF with no gap or overlap
+  4. a row claiming "N glyphs x M bytes" spans exactly N*M
 
 An identifier the sources no longer define is the usual finding: a rename
 lands in the listing and the prose keeps the old word.
@@ -59,7 +60,27 @@ def main() -> int:
     for name in sorted(cited - defined):
         findings.append(f"undefined identifier: {name}")
 
-    body = doc.split("## 8. ROM map", 1)[1].split("100% of the image", 1)[0]
+    body = doc.split("## 8. ROM map", 1)[1].split("The payload's own layout", 1)[0]
+    rows = []
+    for m in re.finditer(r"^\$([0-9A-F]{4})(?:-\$([0-9A-F]{4}))?\s+(.+)$", body, re.M):
+        lo = int(m.group(1), 16)
+        rows.append((lo, int(m.group(2), 16) if m.group(2) else lo, m.group(3)))
+    rows.sort()
+    want = 0x8000
+    for lo, hi, name in rows:
+        if lo != want:
+            findings.append(
+                f"ROM map {'gap' if lo > want else 'overlap'} at ${want:04X}"
+                f"-${lo - 1:04X} before {name.split()[0]}")
+        want = hi + 1
+    if rows and want != 0x10000:
+        findings.append(f"ROM map stops at ${want - 1:04X}, not $FFFF")
+    for lo, hi, name in rows:
+        g = re.search(r"(\d+) glyphs x (\d+) bytes", name)
+        if g and int(g.group(1)) * int(g.group(2)) != hi - lo + 1:
+            findings.append(f"{name.split()[0]}: claims "
+                            f"{g.group(1)}x{g.group(2)}, spans {hi - lo + 1}")
+
     for m in re.finditer(r"^\$[0-9A-F]{4}(?:-\$[0-9A-F]{4})?\s+(.+)$", body, re.M):
         for tok in re.findall(r"\b([a-z][A-Za-z0-9_]{3,})\b", m.group(1)):
             if any(c.isupper() for c in tok) and tok not in defined | allowed:
