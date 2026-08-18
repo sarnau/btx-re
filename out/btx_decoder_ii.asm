@@ -34,6 +34,11 @@ softVecOcf   EQU     $F4
 softVecIcf   EQU     $F6
 softVecIrq1  EQU     $F8
 softVecSwi   EQU     $FA
+txRingHead   EQU     $04D0
+txRingTail   EQU     $04D1
+txCurBit     EQU     $04EA
+txShift      EQU     $04EB
+txBitsLeft   EQU     $04EC
 cursorRowMax EQU     $1B00
 scrollTop    EQU     $1B1C
 scrollBottom EQU     $1B1D
@@ -5757,10 +5762,10 @@ ctrlIgnored:
         STD     $05F0
         STD     $05F2
         STD     $05F4
-        CLR     $04D0
-        CLR     $04D1
+        CLR     txRingHead
+        CLR     txRingTail
         CLR     $04D8
-        CLR     $04EC
+        CLR     txBitsLeft
         CLR     $04D6
         CLR     $04ED
         CLR     $04D2
@@ -6157,6 +6162,32 @@ nullHandler:
         RTI                             ; null interrupt handler
         JSR     $F1D8
         RTI
+
+; 75-baud transmit: a software UART clocked by the timer output compare.
+;
+; The BTX line is asymmetric - 1200 baud down, 75 baud up - and the two
+; directions are handled by completely different hardware:
+;
+;   receive   the 6801 SCI, RMCR = $0C (CC1:CC0 = 11, EXTERNAL clock, so the
+;             modem supplies the 1200-baud bit clock). TRCSR = $08 enables the
+;             receiver only; $F5B4 later raises it to $18 for RE + RIE.
+;   transmit  this routine. TRCSR bit 1 (TE) is NEVER set and TDR is never
+;             written anywhere in the image, by any addressing mode - the SCI
+;             transmitter is entirely unused.
+;
+; Each output compare reloads OCR with +$3415 (13333 cycles = 75.002 Hz at a
+; 1 MHz E clock) and drives one bit by writing TCSR bit 0, which is OLVL - the
+; level the compare hardware places on P21. Letting the timer drive the pin
+; keeps the bit timing free of interrupt-latency jitter.
+;
+; Frame: idle -> fetch a byte from the ring at txRing when head != tail, store
+; it complemented in txShift, set txBitsLeft = 9, and raise OLVL for the start
+; bit. Each later tick shifts the next bit into OLVL; when txBitsLeft reaches 1
+; the line is driven low for the stop bit.
+;
+; With nothing to send the routine falls through to $F1B3, which services
+; housekeeping and a countdown at $04CB.
+txBitTick:
         LDAA    TCSR
         LDD     OCRH
         ADDD    #$3415
@@ -6167,20 +6198,20 @@ nullHandler:
         BPL     $F160
         ORAB    #$80
         STAB    P4DDR
-        LDAA    $04EC
+        LDAA    txBitsLeft
         BNE     $F18A
-        LDAB    $04D0
-        CMPB    $04D1
+        LDAB    txRingHead
+        CMPB    txRingTail
         BEQ     $F1B3
         LDX     #$04EE
         INCB
         ABX
-        INC     $04D0
+        INC     txRingHead
         LDAA    $00,X
         COMA
-        STAA    $04EB
+        STAA    txShift
         LDAA    #$09
-        STAA    $04EC
+        STAA    txBitsLeft
         LDAA    TCSR
         ORAA    #$01
         STAA    TCSR
@@ -6190,17 +6221,17 @@ nullHandler:
         LDAA    TCSR
         ANDA    #$FE
         STAA    TCSR
-        DEC     $04EC
+        DEC     txBitsLeft
         BRA     $F1B0
-        LDAA    $04EB
+        LDAA    txShift
         ANDA    #$01
-        STAA    $04EA
+        STAA    txCurBit
         LDAA    TCSR
         ANDA    #$FE
-        ORAA    $04EA
+        ORAA    txCurBit
         STAA    TCSR
-        DEC     $04EC
-        LSR     $04EB
+        DEC     txBitsLeft
+        LSR     txShift
         JMP     $F1D7
         JSR     $F1D8
         TST     $04D9
@@ -6695,31 +6726,173 @@ nullHandler:
         STD     >softVecOcf
         CLI
         RTS
-        FCB     $BD,$F7,$5F,$24,$03,$7E,$F7,$5E,$F6,$04,$D6,$27,$03,$7E,$F7,$1A
-        FCB     $81,$04,$26,$27,$7D,$04,$ED,$27,$22,$86,$08,$97,$11,$7D,$00,$11
-        FCB     $7D,$00,$12,$96,$03,$8A,$12,$97,$03,$96,$08,$84,$FE,$97,$08,$86
-        FCB     $11,$97,$01,$C6,$FF,$F7,$04,$DD,$7E,$F7,$5E,$7F,$04,$ED,$81,$10
-        FCB     $26,$08,$C6,$FF,$F7,$04,$ED,$7E,$F7,$5E,$81,$02,$26,$03,$7E,$F6
-        FCB     $BE,$B7,$04,$CF,$BD,$F8,$18,$B6,$04,$CF,$81,$00,$27,$33,$81,$01
-        FCB     $27,$2F,$81,$03,$27,$50,$81,$04,$27,$2A,$81,$05,$27,$63,$81,$06
-        FCB     $27,$1F,$81,$07,$26,$03,$7E,$F7,$0D,$81,$10,$27,$14,$81,$15,$27
-        FCB     $10,$81,$14,$27,$0C,$81,$17,$27,$2D,$7D,$04,$DA,$26,$03,$BD,$F7
-        FCB     $E4,$7E,$F7,$5E,$86,$30,$B7,$04,$CD,$7F,$04,$D8,$7E,$F7,$5E,$86
-        FCB     $FF,$B7,$04,$D8,$CC,$00,$00,$FD,$04,$D2,$7F,$04,$D6,$FC,$05,$F4
-        FCB     $FD,$05,$F2,$7E,$F7,$5E,$7D,$04,$D8,$2A,$13,$7F,$04,$D8,$B6,$04
-        FCB     $CD,$88,$01,$B7,$04,$CE,$B7,$04,$CD,$86,$02,$B7,$04,$D6,$7E,$F7
-        FCB     $5E,$86,$15,$20,$13,$B6,$04,$CE,$81,$15,$27,$0C,$81,$06,$27,$08
-        FCB     $86,$10,$BD,$F7,$A4,$B6,$04,$CE,$BD,$F7,$A4,$7E,$F7,$5E,$86,$02
-        FCB     $B7,$04,$D6,$86,$06,$B7,$04,$CE,$7E,$F7,$5E,$7F,$04,$ED,$7A,$04
-        FCB     $D6,$27,$06,$B7,$04,$D5,$7E,$F7,$5E,$B7,$04,$D4,$FE,$04,$D2,$BC
-        FCB     $04,$D4,$26,$14,$CC,$00,$00,$FD,$04,$D2,$B6,$04,$D7,$26,$09,$FC
-        FCB     $05,$F2,$FD,$05,$F4,$7E,$F6,$F4,$FC,$05,$F4,$FD,$05,$F2,$7F,$04
-        FCB     $D7,$86,$15,$B7,$04,$CE,$CC,$00,$00,$FD,$04,$D2,$7E,$F6,$F4,$3B
-        FCB     $96,$11,$16,$84,$40,$26,$09,$58,$24,$04,$96,$12,$0C,$39,$0D,$39
-        FCB     $CE,$19,$AA,$96,$03,$84,$08,$26,$24,$09,$26,$F7,$86,$08,$97,$11
-        FCB     $7D,$00,$11,$7D,$00,$12,$96,$03,$8A,$12,$97,$03,$96,$08,$84,$FE
-        FCB     $97,$08,$86,$11,$97,$01,$86,$FF,$B7,$04,$DD,$0D,$39,$86,$01,$B7
-        FCB     $04,$D7,$96,$12,$39
+
+sciRxHandler:
+        JSR     $F75F
+        BCC     $F627
+        JMP     $F75E
+        LDAB    $04D6
+        BEQ     $F62F
+        JMP     $F71A
+        CMPA    #$04
+        BNE     $F65A
+        TST     $04ED
+        BEQ     $F65A
+        LDAA    #$08
+        STAA    TRCSR
+        TST     TRCSR
+        TST     RDR
+        LDAA    PORT2
+        ORAA    #$12
+        STAA    PORT2
+        LDAA    TCSR
+        ANDA    #$FE
+        STAA    TCSR
+        LDAA    #$11
+        STAA    P2DDR
+        LDAB    #$FF
+        STAB    $04DD
+        JMP     $F75E
+        CLR     $04ED
+        CMPA    #$10
+        BNE     $F669
+        LDAB    #$FF
+        STAB    $04ED
+        JMP     $F75E
+        CMPA    #$02
+        BNE     $F670
+        JMP     $F6BE
+        STAA    $04CF
+        JSR     $F818
+        LDAA    $04CF
+        CMPA    #$00
+        BEQ     $F6B0
+        CMPA    #$01
+        BEQ     $F6B0
+        CMPA    #$03
+        BEQ     $F6D5
+        CMPA    #$04
+        BEQ     $F6B3
+        CMPA    #$05
+        BEQ     $F6F0
+        CMPA    #$06
+        BEQ     $F6B0
+        CMPA    #$07
+        BNE     $F698
+        JMP     $F70D
+        CMPA    #$10
+        BEQ     $F6B0
+        CMPA    #$15
+        BEQ     $F6B0
+        CMPA    #$14
+        BEQ     $F6B0
+        CMPA    #$17
+        BEQ     $F6D5
+        TST     $04DA
+        BNE     $F6B0
+        JSR     $F7E4
+        JMP     $F75E
+        LDAA    #$30
+        STAA    $04CD
+        CLR     $04D8
+        JMP     $F75E
+        LDAA    #$FF
+        STAA    $04D8
+        LDD     #$0000
+        STD     $04D2
+        CLR     $04D6
+        LDD     $05F4
+        STD     $05F2
+        JMP     $F75E
+        TST     $04D8
+        BPL     $F6ED
+        CLR     $04D8
+        LDAA    $04CD
+        EORA    #$01
+        STAA    $04CE
+        STAA    $04CD
+        LDAA    #$02
+        STAA    $04D6
+        JMP     $F75E
+        LDAA    #$15
+        BRA     $F707
+        LDAA    $04CE
+        CMPA    #$15
+        BEQ     $F707
+        CMPA    #$06
+        BEQ     $F707
+        LDAA    #$10
+        JSR     $F7A4
+        LDAA    $04CE
+        JSR     $F7A4
+        JMP     $F75E
+        LDAA    #$02
+        STAA    $04D6
+        LDAA    #$06
+        STAA    $04CE
+        JMP     $F75E
+        CLR     $04ED
+        DEC     $04D6
+        BEQ     $F728
+        STAA    $04D5
+        JMP     $F75E
+        STAA    $04D4
+        LDX     $04D2
+        CPX     $04D4
+        BNE     $F747
+        LDD     #$0000
+        STD     $04D2
+        LDAA    $04D7
+        BNE     $F747
+        LDD     $05F2
+        STD     $05F4
+        JMP     $F6F4
+        LDD     $05F4
+        STD     $05F2
+        CLR     $04D7
+        LDAA    #$15
+        STAA    $04CE
+        LDD     #$0000
+        STD     $04D2
+        JMP     $F6F4
+        RTI
+        LDAA    TRCSR
+        TAB
+        ANDA    #$40
+        BNE     $F76F
+        ASLB
+        BCC     $F76D
+        LDAA    RDR
+        CLC
+        RTS
+        SEC
+        RTS
+        LDX     #$19AA
+        LDAA    PORT2
+        ANDA    #$08
+        BNE     $F79C
+        DEX
+        BNE     $F772
+        LDAA    #$08
+        STAA    TRCSR
+        TST     TRCSR
+        TST     RDR
+        LDAA    PORT2
+        ORAA    #$12
+        STAA    PORT2
+        LDAA    TCSR
+        ANDA    #$FE
+        STAA    TCSR
+        LDAA    #$11
+        STAA    P2DDR
+        LDAA    #$FF
+        STAA    $04DD
+        SEC
+        RTS
+        LDAA    #$01
+        STAA    $04D7
+        LDAA    RDR
+        RTS
         LDAB    $1B27
         ORAB    $1B28
         BEQ     $F7D1
@@ -6758,11 +6931,11 @@ nullHandler:
         PULB
         RORB
         RORA
-        LDAB    $04D1
+        LDAB    txRingTail
         INCB
-        CMPB    $04D0
+        CMPB    txRingHead
         BEQ     $F7D1
-        INC     $04D1
+        INC     txRingTail
         LDX     #$04EE
         ABX
         STAA    $00,X
@@ -6790,9 +6963,23 @@ nullHandler:
         STX     $05F0
         LDAA    $00,X
         RTS
-        FCB     $B6,$04,$CF,$B7,$05,$EF,$FC,$04,$D2,$CE,$00,$08,$04,$24,$10,$74
-        FCB     $05,$EF,$25,$04,$88,$A0,$C8,$01,$09,$26,$F1,$FD,$04,$D2,$39,$74
-        FCB     $05,$EF,$25,$F0,$20,$F2
+        LDAA    $04CF
+        STAA    $05EF
+        LDD     $04D2
+        LDX     #$0008
+        LSRD
+        BCC     $F837
+        LSR     $05EF
+        BCS     $F830
+        EORA    #$A0
+        EORB    #$01
+        DEX
+        BNE     $F824
+        STD     $04D2
+        RTS
+        LSR     $05EF
+        BCS     $F82C
+        BRA     $F830
         LDAA    PORT2
         ORAA    #$03
         STAA    PORT2
@@ -7145,8 +7332,13 @@ nullHandler:
         BEQ     $FC24
         JSR     $F979
         RTS
-        FCB     $BD,$F7,$5F,$25,$05,$84,$7F,$BD,$F7,$E4,$3B,$40,$80,$7B,$81,$7C
-        FCB     $82,$7D,$83,$7E,$84,$5B,$85,$5C,$86,$5D,$87,$00,$00
+        JSR     $F75F
+        BCS     $FC2F
+        ANDA    #$7F
+        JSR     $F7E4
+        RTI
+        FCB     $40,$80,$7B,$81,$7C,$82,$7D,$83,$7E,$84,$5B,$85,$5C,$86,$5D,$87
+        FCB     $00,$00
 
 seqIgnored:
         JMP     $E9A2

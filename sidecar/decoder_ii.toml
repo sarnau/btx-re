@@ -17,6 +17,8 @@ entry_points = [
     0xF148,  # follows the NMI RTI
     0xF14C,  # installed into a soft vector by reset
     0xF1D8,  # called from $F148
+    0xF61F,  # SCI receive handler, installed into softVecSci at $B287
+    0xFC25,  # alternate SCI handler, installed into softVecSci at $F9A0
 
     # Targets resolved from the $D3xx control-code jump tables.
     0xD355,
@@ -139,6 +141,9 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 
 
 [labels]
+"0xF14C" = "txBitTick"
+"0xF61F" = "sciRxHandler"
+"0x04EE" = "txRing"
 "0xB2E2" = "sendPayloadToC64"
 "0xB32D" = "c64Bootstrap"
 "0xB3A6" = "c64LoadAddr"
@@ -179,6 +184,31 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xFFF0" = "vectors"
 
 [block_comments]
+"0xF14C" = """
+75-baud transmit: a software UART clocked by the timer output compare.
+
+The BTX line is asymmetric - 1200 baud down, 75 baud up - and the two
+directions are handled by completely different hardware:
+
+  receive   the 6801 SCI, RMCR = $0C (CC1:CC0 = 11, EXTERNAL clock, so the
+            modem supplies the 1200-baud bit clock). TRCSR = $08 enables the
+            receiver only; $F5B4 later raises it to $18 for RE + RIE.
+  transmit  this routine. TRCSR bit 1 (TE) is NEVER set and TDR is never
+            written anywhere in the image, by any addressing mode - the SCI
+            transmitter is entirely unused.
+
+Each output compare reloads OCR with +$3415 (13333 cycles = 75.002 Hz at a
+1 MHz E clock) and drives one bit by writing TCSR bit 0, which is OLVL - the
+level the compare hardware places on P21. Letting the timer drive the pin
+keeps the bit timing free of interrupt-latency jitter.
+
+Frame: idle -> fetch a byte from the ring at txRing when head != tail, store
+it complemented in txShift, set txBitsLeft = 9, and raise OLVL for the start
+bit. Each later tick shifts the next bit into OLVL; when txBitsLeft reaches 1
+the line is driven low for the stop bit.
+
+With nothing to send the routine falls through to $F1B3, which services
+housekeeping and a countdown at $04CB."""
 "0xB2E2" = """
 Ship the C64 payload across the dual-port interface.
 
@@ -409,6 +439,13 @@ vectors before entering the main firmware."""
 "0x1B1D" = "scrollBottom"
 "0x1B1E" = "cursorRow"
 "0x1B1F" = "cursorCol"
+
+# 75-baud software UART state. See the block comment at $F14C.
+"0x04D0" = "txRingHead"
+"0x04D1" = "txRingTail"
+"0x04EA" = "txCurBit"
+"0x04EB" = "txShift"
+"0x04EC" = "txBitsLeft"
 
 # C64 interface: a dual-port window. The 6801 sees it at $6000, the C64 at
 # $8000 - the low offsets match ($x009/$x00A/$x00B).
