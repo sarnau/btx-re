@@ -2985,15 +2985,53 @@ dispatchCsi:
         RTS
         JSR     $E98C
         CMPA    #$20
-        BEQ     $D461
+        BEQ     parseFormatParams
         BCS     $D416
         JMP     $D4BD
         JMP     $E9A2
+
+; Format-parameter lookup: one key table plus three parallel value tables,
+; 18 entries each, $D419-$D460.
+;
+; Two bytes are read from the datastream via $E98C and combined at $D47E-$D48F:
+;
+;     p1 = byte1 & $0F        (also stored at $0488)
+;     p2 = byte2 & $07        (also stored at $041E)
+;     key = (p2 << 4) | p1
+;
+; $D492 then searches fmtKeys backwards from index $11, and the matching index
+; selects one byte from each value table:
+;
+;     fmtVals041C -> $041C      $00/$FF flag
+;     fmtVals041D -> $041D      $00/$FF flag
+;     fmtVals041F -> $041F      $01 or $02
+;
+; The 18 keys are sorted and fall into three groups by p2 (1, 2 and 4), each
+; holding the same six p1 values (6, 7, A, B, C, F).
+;
+; CAUTION: the search has no not-found path. If no key matches, DECB rolls 0
+; round to $FF, BPL fails, and execution falls into the value lookups with
+; B = $FF - reading $D52A, $D53C and $D54E, well past the end of all three
+; tables. p1 spans 16 values and p2 spans 8, so 110 of the 128 possible keys are
+; unmatched; either the protocol guarantees a valid pair or this is a genuine
+; robustness hole. Not yet established which.
+fmtKeys:
         FCB     $16,$17,$1A,$1B,$1C,$1F,$26,$27,$2A,$2B,$2C,$2F,$46,$47,$4A,$4B
-        FCB     $4C,$4F,$00,$00,$FF,$FF,$FF,$FF,$00,$00,$FF,$FF,$FF,$FF,$FF,$FF
-        FCB     $FF,$FF,$FF,$FF,$00,$00,$00,$00,$FF,$FF,$00,$00,$00,$00,$FF,$FF
-        FCB     $00,$00,$00,$00,$FF,$FF,$01,$01,$01,$01,$01,$01,$02,$02,$01,$01
-        FCB     $01,$01,$02,$02,$02,$02,$01,$01
+        FCB     $4C,$4F
+
+fmtVals041C:
+        FCB     $00,$00,$FF,$FF,$FF,$FF,$00,$00,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF
+        FCB     $FF,$FF
+
+fmtVals041D:
+        FCB     $00,$00,$00,$00,$FF,$FF,$00,$00,$00,$00,$FF,$FF,$00,$00,$00,$00
+        FCB     $FF,$FF
+
+fmtVals041F:
+        FCB     $01,$01,$01,$01,$01,$01,$02,$02,$01,$01,$01,$01,$02,$02,$02,$02
+        FCB     $01,$01
+
+parseFormatParams:
         JSR     $E98C
         CMPA    #$40
         BHI     $D47E
@@ -3015,6 +3053,8 @@ dispatchCsi:
         ASLA
         ASLA
         ORAA    $0488
+
+fmtLookup:
         LDAB    #$11
         LDX     #$D419
         ABX
