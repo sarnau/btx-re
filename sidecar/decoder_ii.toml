@@ -585,6 +585,28 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xFFF0" = "vectors"
 
 [block_comments]
+"0x61F9" = """
+The interrupt line to the C64, from both ends.
+
+The 6801 only ever writes $61F9 - never reads it - and every write is the
+instruction after STAA $608B, the flag that says a cell is waiting in the
+mailbox. The C64 only ever reads $81F9 - never writes it - on both exit paths
+of c64IrqPlotCell, after consuming that cell. Write to raise, read to clear,
+with no counterexample on either side.
+
+$81F8 is the C64's control and status half. Its cold start writes #$40 to
+enable, and the IRQ handler tests bit 7 to decide whose interrupt this is:
+
+    L2359:  BIT btxIrqCtrl
+            BMI L2364           ours - service the cell and RTI
+            JSR vecIrqPlotCell
+            JMP KEY             not ours - chain to the KERNAL
+
+$61FC and $61FD are strobes in the same path, and the data written to them is
+ignored by construction. The C64 reads each and writes back what it read; the
+6801 writes both with whatever happened to be in A from PORT1. Each side
+touches them once, at the point it finishes enabling the interface - the C64
+between STA btxIrqCtrl and CLI, the 6801 at the end of the payload transfer."""
 "0xA250" = """
 Clearing videoRam, which is what fixes its extent.
 
@@ -843,12 +865,12 @@ whole table has not been decoded."""
 "0xC701" = """
 The payload's IRQ handler, installed into CINV.
 
-    BIT btxReg1F8 / BMI ...     test a decoder register
+    BIT btxIrqCtrl / BMI ...     test a decoder register
     JSR L104B                   a jump-table entry
     JMP KEY                     chain to the KERNAL handler
 
 So the C64 side services the decoder on interrupt as well as polling it, and
-either passes the interrupt on to the KERNAL or consumes it. btxReg1F8 is one
+either passes the interrupt on to the KERNAL or consumes it. btxIrqCtrl is one
 of the registers whose function is otherwise unestablished; that the handler
 tests it first says it carries a request or status bit."""
 "0xB582" = """
@@ -1908,6 +1930,9 @@ vectors before entering the main firmware."""
 "0xE222" = "attrFillHi"
 
 [symbols]
+"0x61F9" = "c64IrqSet"
+"0x61FC" = "c64IrqArmA"
+"0x61FD" = "c64IrqArmB"
 "0x04CF" = "modemByte"
 "0x0402" = "drcsStorePtr"
 "0x0410" = "sendPtrChar"
@@ -2501,7 +2526,7 @@ org = 0x0FFE
 "0x808A" = "btxFifo0A"
 "0x808B" = "btxFifo0B"
 "0x8090" = "btxStatusMsg"
-"0x81F8" = "btxReg1F8"
-"0x81F9" = "btxReg1F9"
-"0x81FC" = "btxReg1FC"
-"0x81FD" = "btxReg1FD"
+"0x81F8" = "btxIrqCtrl"
+"0x81F9" = "btxIrqAck"
+"0x81FC" = "btxIrqArmA"
+"0x81FD" = "btxIrqArmB"

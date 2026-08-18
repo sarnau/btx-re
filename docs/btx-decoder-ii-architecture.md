@@ -177,6 +177,40 @@ Once the payload is running, `$8080`–`$808B` is reused as a **mailbox**: the
 decoder posts one display cell there and raises `$808B`, and the payload's IRQ
 handler picks it up. `$8080` itself becomes the reduced-display toggle.
 
+### The interrupt line
+
+The mailbox has a doorbell, and both ends of it are unambiguous. The 6801 only
+ever **writes** `$61F9` — never reads it — and every write is the instruction
+after `STAA $608B`, the flag saying a cell is waiting:
+
+```
+        LDAA    renderRow
+        STAA    $6089
+        LDAA    renderCol
+        STAA    $608A
+        LDAA    #$FF
+        STAA    $608B
+        STAA    c64IrqSet
+```
+
+The C64 only ever **reads** `$81F9` — never writes it — on both exit paths of
+`c64IrqPlotCell`, after consuming that cell. Write to raise, read to clear,
+with no counterexample on either side.
+
+`btxIrqCtrl` at `$81F8` is the C64's control and status half. Cold start writes
+`#$40` to enable it, and the IRQ handler tests bit 7 to decide whose interrupt
+this is:
+
+```
+L2359:  BIT     btxIrqCtrl
+        BMI     L2364           ours - service the cell and RTI
+        JSR     vecIrqPlotCell
+        JMP     KEY             not ours - chain to the KERNAL
+```
+
+So the decoder-driven display update is genuinely interrupt-driven on the C64
+side, sharing `CINV` with the KERNAL's keyboard scan rather than displacing it.
+
 `sendPayloadToC64` (`$B2E2`) drives the boot transfer:
 
 ```
@@ -782,10 +816,11 @@ entire C64 payload is byte-for-byte identical. See
 - **`$1B24`–`$1B26`.** Three display options toggled by host commands `R`, `T`
   and `W`, snapshotted for the redraw as `redrawT` and `redrawW`. Named after
   the letters that set them, since what they switch is not established.
-- **`$61F9`–`$61FD`.** Write-only control registers whose function is unknown.
-  Their C64-side counterparts `$81F8`–`$81FD` are touched by the payload's cold
-  start and its IRQ handler, which says they carry an interrupt enable and
-  acknowledge, but not which bit is which.
+- **`$61FC`/`$61FD` and `$81FC`/`$81FD`.** Strobes in the interrupt-enable
+  path, named `c64IrqArmA`/`c64IrqArmB` and `btxIrqArmA`/`btxIrqArmB`. What
+  they gate is not established — only that the data written is ignored, since
+  the C64 writes back what it read and the 6801 writes whatever `PORT1` left in
+  A.
 - **Four interface registers.** `$8005`, `$800F`, `$8011` and `$8012` are read
   or written by the payload without their meaning being established. `$8011` is
   a counter the decoder advances — `c64WaitDecoder` spins on it and

@@ -198,7 +198,7 @@ def test_btx_io_window_is_declared():
     src = (OUT / "c64_payload.asm").read_text()
     for name, addr in (("btxRxWr", 0x8009), ("btxRxRd", 0x800A),
                        ("btxXferEn", 0x800B), ("btxStatus", 0x800C),
-                       ("btxFifo00", 0x8080), ("btxReg1F8", 0x81F8)):
+                       ("btxFifo00", 0x8080), ("btxIrqCtrl", 0x81F8)):
         assert re.search(rf"^{name}\s+EQU\s+\${addr:04X}$", src, re.M), name
     assert not re.search(r"^\s+(LDA|STA|CMP|LDX|LDY|STX|BIT)\s+\$8[01][0-9A-F]{2}$",
                          src, re.M), "no raw BTX I/O addresses should remain"

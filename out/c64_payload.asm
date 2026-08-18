@@ -57,10 +57,10 @@ btxFifo09    EQU     $8089
 btxFifo0A    EQU     $808A
 btxFifo0B    EQU     $808B
 btxStatusMsg EQU     $8090
-btxReg1F8    EQU     $81F8
-btxReg1F9    EQU     $81F9
-btxReg1FC    EQU     $81FC
-btxReg1FD    EQU     $81FD
+btxIrqCtrl   EQU     $81F8
+btxIrqAck    EQU     $81F9
+btxIrqArmA   EQU     $81FC
+btxIrqArmB   EQU     $81FD
 
 ; C64 ROM entry points and tables.
 INITCZ       EQU     $E3BF
@@ -807,13 +807,13 @@ L16B9:
         STA     CINV
         LDA     #L2359>>8
         STA     CINV+1
-        LDA     btxReg1F9
+        LDA     btxIrqAck
         LDA     #$40
-        STA     btxReg1F8
-        LDA     btxReg1FD
-        STA     btxReg1FD
-        LDA     btxReg1FC
-        STA     btxReg1FC
+        STA     btxIrqCtrl
+        LDA     btxIrqArmB
+        STA     btxIrqArmB
+        LDA     btxIrqArmA
+        STA     btxIrqArmA
         CLI
         JSR     L2404
 
@@ -1998,7 +1998,7 @@ L1EC9:
         STA     btxFifo0B
 
 L1ED7:
-        LDA     btxReg1F9
+        LDA     btxIrqAck
         PLP
         RTS
 
@@ -2006,7 +2006,7 @@ L1EDC:
         LDX     btxFifo01
         LDY     btxFifo02
         JSR     vecSetCursor
-        LDA     btxReg1F9
+        LDA     btxIrqAck
         LDA     #$00
         STA     btxFifo0B
         PLP
@@ -2402,7 +2402,7 @@ c64ClearMsg:
 c64WaitDecoder:
 ; vector 41 $107B - spin until the decoder's line counter btxReg011 changes, servicing an active capture, so a macro waits for the page to arrive
         LDA     btxReg011
-        STA     btxReg1FC
+        STA     btxIrqArmA
         STA     c64LineShadow
 
 L219F:
@@ -2414,7 +2414,7 @@ L219F:
 
 L21AC:
         LDA     btxReg011
-        STA     btxReg1FC
+        STA     btxIrqArmA
         CMP     c64LineShadow
         BNE     L21BF
         LDX     #$14
@@ -2694,16 +2694,16 @@ L234C:
 
 ; The payload's IRQ handler, installed into CINV.
 ;
-;     BIT btxReg1F8 / BMI ...     test a decoder register
+;     BIT btxIrqCtrl / BMI ...     test a decoder register
 ;     JSR L104B                   a jump-table entry
 ;     JMP KEY                     chain to the KERNAL handler
 ;
 ; So the C64 side services the decoder on interrupt as well as polling it, and
-; either passes the interrupt on to the KERNAL or consumes it. btxReg1F8 is one
+; either passes the interrupt on to the KERNAL or consumes it. btxIrqCtrl is one
 ; of the registers whose function is otherwise unestablished; that the handler
 ; tests it first says it carries a request or status bit.
 L2359:
-        BIT     btxReg1F8
+        BIT     btxIrqCtrl
         BMI     L2364
         JSR     vecIrqPlotCell
         JMP     KEY

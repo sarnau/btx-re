@@ -233,6 +233,9 @@ c64Status      EQU     $600C
 c64XferDone    EQU     $6010
 c64Fifo        EQU     $6080
 c64StatusMsg   EQU     $6090
+c64IrqSet      EQU     $61F9
+c64IrqArmA     EQU     $61FC
+c64IrqArmB     EQU     $61FD
 
         ORG     $8000
 
@@ -969,7 +972,7 @@ LA2B8:
         LDAA    #$FF
         STAA    $6089
         STAA    $608B
-        STAA    $61F9
+        STAA    c64IrqSet
 
 LA2DF:
         LDAB    #$04
@@ -1365,7 +1368,7 @@ LA55B:
         STAA    $608A
         LDAA    #$FF
         STAA    $608B
-        STAA    $61F9
+        STAA    c64IrqSet
 
 ; drcsCell - is this cell a redefined character?
 ;
@@ -2896,8 +2899,8 @@ LB2C2:
         LDAA    PORT1
         ANDA    #$FE
         STAA    PORT1
-        STAA    $61FD
-        STAA    $61FC
+        STAA    c64IrqArmB
+        STAA    c64IrqArmA
         LDX     #$B3A5
         STX     scrollEnd
 
