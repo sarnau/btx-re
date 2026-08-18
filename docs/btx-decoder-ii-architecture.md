@@ -316,7 +316,9 @@ identified as the serial and parallel sets.
 
 The tables are sparse by design: `ctrlIgnored` fills 14 of 32 C0 slots and
 `seqIgnored` 85 of 96 in *both* the ESC and CSI tables, so only 11 escape
-sequences each are actually implemented.
+sequences each are actually implemented. Slot `$1B` of the C0 table is
+`ctlEsc`, which is what feeds `escTable`; `$9B` reaches `csiTable` the same
+way.
 
 ### Character sets and shifts
 
@@ -333,7 +335,24 @@ firmware then decodes through exactly these tables.
 ### A second interpreter
 
 `$F9FA` is a 32-entry C0 table with its own dispatcher at `$FBA9`, serving the
-ASCII terminal mode. Nine handlers cover its 32 slots.
+ASCII terminal mode. Nine handlers cover its 32 slots, and they are a plain
+glass-tty set over `asciiCol` and `asciiRow` in an 80x24 space:
+
+| Slot | Handler | |
+|---|---|---|
+| `$08` | `asciiBS` | column back one, overwrite with a space |
+| `$09` | `asciiHT` | column to the next multiple of 8, wrapping into `asciiLF` |
+| `$0A` | `asciiLF` | row down, scroll at 23 |
+| `$0B` | `asciiVT` | `JMP asciiLF` |
+| `$0C` | `asciiFF` | home and clear |
+| `$0D` | `asciiCR` | column to 0 |
+| `$12` | `asciiCurLeft` | column down one, floored |
+| `$14` | `asciiCurUp` | row down one, floored |
+
+The other 24 slots are `asciiIgnored`, a bare `RTS`. There is no cursor-right —
+but one of the four dead fragments, at `$FAE4`, sits immediately after
+`asciiVT` and does exactly a column increment with wrap at 80. It is the
+handler that was dropped from the table.
 
 ---
 
@@ -467,7 +486,9 @@ it, so the capture buffer begins where the startup page ends the image.
 
 100% of the image is accounted for: 13663 bytes of code, 19105 of typed data.
 43 bytes in four fragments are unreachable dead code — no reference anywhere in
-the image, no branch target, and each preceded by an instruction that ends flow.
+the image, no branch target, and each preceded by an instruction that ends
+flow. One of them is identifiable: `$FAE4` is the ASCII mode's missing
+cursor-right handler.
 
 ---
 
