@@ -1,0 +1,147 @@
+<!-- This ia an example page that illustrate how a CEPT TCD 6-1
+     looks when it is formatted in the btxml hypertext language
+
+     Purpose: How to use colors -->
+
+<cept>						<!-- Open CEPT page -->
+<head>						<!-- This is the header, it contains meta information for service control -->
+<meta name="next_page" content="*testbild#">	<!-- Define the page that is loaded when '#' is pressed -->
+</head>						<!-- Close the header -->
+<body>						<!-- Open page body segment -->
+
+<!-- DRCS Pixel data (Btx-logo, 6 tiles) -->
+<us><0x2f>
+<us><0x23><0x20> <0x28><0x20><0x40> <0x47><0x41>
+<us><0x23>!
+<0x30><0x40><0x40><0x40><0x40><0x43><0x7f><0x4c><0x40><0x70><0x40><0x70><0x4f><0x70><0x7f><0x71><0x7f><0x70><0x7c><0x70><0x40>
+<0x30><0x40><0x40><0x40><0x40><0x7f><0x7f><0x40><0x40><0x40><0x40><0x7f><0x7f><0x7f><0x7f><0x40><0x40><0x43><0x70><0x4f><0x7c>
+<0x30><0x40><0x40><0x40><0x40><0x7f><0x70><0x40><0x4c><0x40><0x43><0x7c><0x43><0x7f><0x43><0x7f><0x63><0x4f><0x43><0x40><0x43>
+<0x30><0x70><0x4f><0x70><0x7f><0x70><0x7f><0x70><0x7f><0x70><0x7f><0x70><0x40><0x4c><0x40><0x43><0x7f><0x40><0x40><0x40><0x40>
+<0x30><0x4f><0x7c><0x4f><0x7c><0x73><0x73><0x7c><0x4f><0x7f><0x7f><0x40><0x40><0x40><0x40><0x7f><0x7f><0x40><0x40><0x40><0x40>
+<0x30><0x7c><0x43><0x7f><0x43><0x7f><0x43><0x7f><0x43><0x7f><0x43><0x40><0x43><0x40><0x4c><0x7f><0x70><0x40><0x40><0x40><0x40>
+<us>AA
+
+<!-- First we care about a White/Blue ambient -->
+<cs><aph>					<!-- Clear screen -->
+<csi><0x31><0x40>				<!-- Invoke 2nd color table (to get deep blue) -->
+<esc><0x23><0x20><fblb>				<!-- Makes the background blue -->
+<esc><0x28><0x40><0x0f>				<!-- Invoke G0 set -->
+
+<!-- Headline -->
+<esc><0x22><0x41>				<!-- Invoke C1P set -->
+<csi><0x30><0x40>				<!-- Invoke 1nd color table -->
+<trb><whf>
+<esc><0x28><0x20><0x40><0x0f>			<!-- Invoke DRCS set -->
+!"#<apd><apr>
+$%&<apu><apf>
+<esc><0x28><0x40><0x0f>				<!-- Invoke G0 set -->
+<apd><dbh>Bildschirmtrix<apd><apr>
+<esc><0x23><0x21><fblb>				<!-- Maks a blue full row -->
+<apd>
+<esc><0x23><0x21><fblb>				<!-- Maks a blue full row -->
+<csi><0x31><0x40>				<!-- Invoke 2nd color table -->
+<dbh><apr>Testbild:<sp>Farben<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>*colorset#<apd><apr>
+<csi><0x30><0x40>				<!-- Invoke 1nd color table -->
+<nsz><trb><whf>
+
+<!-- Content -->
+<esc><0x28><0x40><0x0f>				<!-- Invoke G0 set (just activate, only for a better understanding) -->
+
+
+<csi><0x30><0x40>				<!-- Invoke 1nd color table -->
+<grb><bkf>Farbtabelle<sp>#1<whf><trb><apd><apr>	<!-- Green foreground with black background and back -->
+<csi><0x30><0x40>				<!-- Invoke 1nd color table (already invoked, only for a better understanding) -->
+<bkb><sp><sp><sp><sp><sp>			<!-- Draw a rainbow -->
+<rdb><sp><sp><sp><sp><sp>
+<grb><sp><sp><sp><sp><sp>
+<ylb><sp><sp><sp><sp><sp>
+<blb><sp><sp><sp><sp><sp>
+<mgb><sp><sp><sp><sp><sp>
+<cnb><sp><sp><sp><sp><sp>
+<whb><sp><sp><sp><sp><sp>
+<bkb><sp><sp><sp><sp><sp>			<!-- Draw a rainbow -->
+<rdb><sp><sp><sp><sp><sp>
+<grb><sp><sp><sp><sp><sp>
+<ylb><sp><sp><sp><sp><sp>
+<blb><sp><sp><sp><sp><sp>
+<mgb><sp><sp><sp><sp><sp>
+<cnb><sp><sp><sp><sp><sp>
+<whb><sp><sp><sp><sp><sp>
+<apd><apr>
+
+<csi><0x30><0x40>				<!-- Invoke 1nd color table -->
+<grb><bkf>Farbtabelle<sp>#2<whf><trb><apd><apr>	<!-- Green foreground with black background and back -->
+<csi><0x31><0x40>				<!-- Invoke 2nd color table -->
+<bkb><sp><sp><sp><sp><sp>			<!-- Draw a rainbow -->
+<rdb><sp><sp><sp><sp><sp>
+<grb><sp><sp><sp><sp><sp>
+<ylb><sp><sp><sp><sp><sp>
+<blb><sp><sp><sp><sp><sp>
+<mgb><sp><sp><sp><sp><sp>
+<cnb><sp><sp><sp><sp><sp>
+<whb><sp><sp><sp><sp><sp>
+<bkb><sp><sp><sp><sp><sp>			<!-- Draw a rainbow -->
+<rdb><sp><sp><sp><sp><sp>
+<grb><sp><sp><sp><sp><sp>
+<ylb><sp><sp><sp><sp><sp>
+<blb><sp><sp><sp><sp><sp>
+<mgb><sp><sp><sp><sp><sp>
+<cnb><sp><sp><sp><sp><sp>
+<whb><sp><sp><sp><sp><sp>
+<apd><apr>
+
+<csi><0x30><0x40>				<!-- Invoke 1nd color table -->
+<grb><bkf>Farbtabelle<sp>#3<sp>(Frei<sp>definierbar)<whf><trb><apd><apr>		<!-- Green foreground with black background and back -->
+<csi><0x32><0x40>				<!-- Invoke 2nd color table -->
+<bkb><sp><sp><sp><sp><sp>			<!-- Draw a rainbow -->
+<rdb><sp><sp><sp><sp><sp>
+<grb><sp><sp><sp><sp><sp>
+<ylb><sp><sp><sp><sp><sp>
+<blb><sp><sp><sp><sp><sp>
+<mgb><sp><sp><sp><sp><sp>
+<cnb><sp><sp><sp><sp><sp>
+<whb><sp><sp><sp><sp><sp>
+<bkb><sp><sp><sp><sp><sp>			<!-- Draw a rainbow -->
+<rdb><sp><sp><sp><sp><sp>
+<grb><sp><sp><sp><sp><sp>
+<ylb><sp><sp><sp><sp><sp>
+<blb><sp><sp><sp><sp><sp>
+<mgb><sp><sp><sp><sp><sp>
+<cnb><sp><sp><sp><sp><sp>
+<whb><sp><sp><sp><sp><sp>
+<apd><apr>
+
+<csi><0x30><0x40>				<!-- Invoke 1nd color table -->
+<grb><bkf>Farbtabelle<sp>#4<sp>(Frei<sp>definierbar)<whf><trb><apd><apr>		<!-- Green foreground with black background and back -->
+<csi><0x33><0x40>				<!-- Invoke 2nd color table -->
+<bkb><sp><sp><sp><sp><sp>			<!-- Draw a rainbow -->
+<rdb><sp><sp><sp><sp><sp>
+<grb><sp><sp><sp><sp><sp>
+<ylb><sp><sp><sp><sp><sp>
+<blb><sp><sp><sp><sp><sp>
+<mgb><sp><sp><sp><sp><sp>
+<cnb><sp><sp><sp><sp><sp>
+<whb><sp><sp><sp><sp><sp>
+<bkb><sp><sp><sp><sp><sp>			<!-- Draw a rainbow -->
+<rdb><sp><sp><sp><sp><sp>
+<grb><sp><sp><sp><sp><sp>
+<ylb><sp><sp><sp><sp><sp>
+<blb><sp><sp><sp><sp><sp>
+<mgb><sp><sp><sp><sp><sp>
+<cnb><sp><sp><sp><sp><sp>
+<whb><sp><sp><sp><sp><sp>
+<apd><apr>
+
+
+<csi><0x30><0x40>				<!-- Invoke 1nd color table -->
+<apd><apr>
+<trb><whf>
+<esc><0x28><0x40><0x0f>				<!-- Invoke G0 set -->
+
+<!-- Input prompt -->
+<esc><0x23><0x21><fblb>				<!-- Maks a blue full row -->
+Weiter<sp>mit<sp>#<sp><sp>oder<sp><sp>*Seitennummer#<apd><apr>
+Eingabe<sp>==><sp>
+
+</body>						<!-- Close page body segment -->
+</cept>						<!-- Close CEPT page -->

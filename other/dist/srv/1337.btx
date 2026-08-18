@@ -1,0 +1,67 @@
+<!-- This ia an example page that illustrate how a CEPT TCD 6-1
+     looks when it is formatted in the btxml hypertext language
+
+     Propose: How to use the different character sets -->
+
+<cept>						<!-- Open CEPT page -->
+<head>						<!-- This is the header, it contains meta information for service control -->
+<meta name="next_page" content="*0#">	<!-- Define the page that is loaded when '#' is pressed -->
+<meta name="hyperlinks" content="10*1337d1a#,20*1337d2a#">
+</head>						<!-- Close the header -->
+<body>						<!-- Open page body segment -->
+
+
+<!-- First we care about a Black/White ambient -->
+<cs>						<!-- Clear screen -->
+<csi><0x30><0x40>				<!-- Invoke 1nd color table -->
+<esc><0x23><0x20><fwhb>				<!-- Makes the background blue -->
+<esc><0x28><0x40><0x0f>				<!-- Invoke G0 set -->
+
+<trb><bkf>					<!-- Select Transparent background with white foreground -->
+
+
+<!-- Hunde Grafik -->
+<esc><0x28><0x63><0x0f> 				<!-- Invoke G1 set -->
+
+<sp><sp><sp><sp><sp><sp>`t<sp><sp><apd><apr>
+<sp>~p||6<sp>b}0<apd><apr>
+j____5<sp>j_}<apd><apr>
+j_____<sp>~__<apd><apr>
+<sp>+________<apd><apr>
+<sp><sp>"o______<apd><apr>
+<sp><sp>(t______<apd><apr>
+
+<esc><0x28><0x40><0x0f> 				<!-- Invoke G0 set -->
+
+<apu><apu><apu><apu><apu><apu>			<!-- Go upstairs -->
+
+
+<apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf> <sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp> Date<sp>:<sp>2008.12.29
+<apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf> <sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp> Place:<sp>25C3   <apd><apr><apd><apr><apd><apr>
+<apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf> <dbs> Don't<sp>Panic! <nsz> <apd><apr>
+<apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf> Free<sp>Software<sp>is<sp>on<sp>the<sp>way.<apd><apr>
+
+<sp>-<sp>-<sp>-<sp>-<sp>-<sp>-<sp>-<sp>-<sp>-<sp>-<sp>-<sp>-<sp>-<sp>-<sp>-<sp>-<sp>-<sp>-<sp>-<sp>-
+
+<trb><bkf>					<!-- Select Transparent background with white foreground -->
+
+<apd><apr><apd><apr>
+
+Windows<sp>is<sp>not<sp>the<sp>anwser.<apd><apr>
+Windows<sp>is<sp>the<sp>question---<apd><apr>
+and<sp>the<sp>anwser<sp>is<sp>Linux.
+<apd><apr><apd><apr>
+...or<sp>any<sp>other<sp>free<sp>OS.
+
+<apd><apr><apd><apr><apd><apr>
+Freedom<sp>now<sp>.........................10<apd><apr>
+More<sp>info<sp>...........................#<apd><apr>
+
+<apd><apr><apd><apr>
+<apd><apr>
+Selection:<sp>
+
+
+
+</body>						<!-- Close page body segment -->
+</cept>						<!-- Close CEPT page -->

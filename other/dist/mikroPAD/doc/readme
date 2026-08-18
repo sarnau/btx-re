@@ -1,0 +1,206 @@
+mikroPAD
+==========================================================================================================
+
+==Abstract==
+The mikroPAD stands for Page Assembler Device (Originaly PAD stands for Packet Assember/Disassembler). And that is what it does: It fetches a hypertext formatted videotex page from an http-server on the internet, converts it to the binary cept format and sends it to the terminal. The pcb-board of the device fits into a dbt03 box - so you can reuse your old dbt03 box to get the feeling right. The great advantage is that you just can use any http-server with any script language. You bring anything to your btx-terminal: rss-feeds, instant messaging, webmail...
+
+
+
+==Hardware==
+The design is based on the Mikrowebserver device by Dirk Broßwick. The name Mikrowebserver is a little bit confusing. The device is not only a webserver. It is a free programmable, multifunctional, scaleable network device. The processor is an AVR, which is widely used by many hobbyists today. The Mikrowebserver is the ideal device if you want to do something with embedded networking without knowing something about networking. You can just write your application as ususal extended with the power of networking. The Mikrowebserver brings the internet to Mikrocontrollers.
+
+I did some modifications to the Mikrowebserver. The first thing was to add a miniBTX circuit that does the dbt03 stuff and the sacond thing was to add a simple multiplexer (see uart-multiplexer.png). This allows you to receive debug messages on a serial port as well as communication with the BTX-Terminal through the miniBTX circuit with one UART. The serial port that outputs the debug messages is 5V TTL, you will need an RS232 Converter to see the messages. That is all.
+
+
+
+==Software==
+The operating system of the Mikrowebserver is called openMCP and works silent in the background. Of cause, you get some restrictions on timing, but you get the amazing power of the internet on a microcontroller. 
+
+I just ripped off the existing applications (webser, mp3-streaming-client, telnet ect..) from the Mikrowebserver and added my btx application. You find it into /apps/btx/ the BTX-Application constits off three parts: a http-client which downloads the hypertext btx-pages from the server. a parser that parses the hypertext and translates it to a format that is understood by the terminal. And a browser that manages the access to specific pageges.
+
+
+
+==Ulm-Setup==
+Ulm stands for nothing than Ulm. In germany the BTX datacenter (An IBM/360) was located in Ulm - that is the reason why we talk about Ulm when we mean the http server where we store our BTX-Pages. Almost any http server can serve as an ulm. You can generate sites with the script language of choice or just put textfiles on the server.
+
+The Ulm parameters are set by the config.h, you find it in /apps/btx:
+
+#define BTX_ULM_HOST "www.example.net"
+This macro sets the ulm domain. (e.g. www.example.net) Almost any HTTP server can be used as a btx datacenter. There is no additional modification on the server site needed. 
+
+#define BTX_ULM_PORT 80
+Configures the port where the http server is running. HTTP servers normaly running at port 80.
+
+#define BTX_ULM_STYLE 1
+This sets the ulm style. There are 2 styles available. The style sets how the URL that is called with the http-get request is styled. Style 1 is optmized for static page constructs. Style 2 is optimized for dynamic generated page constructs (CMS systems and so on...)
+
+An example explains it best:
+	Imagine you would have a page named *12345678#
+	Style 1: URL will be like this /12345678.btx
+	Style 2: URL will be like this page.btx?id=12345678
+
+#define BTX_ULM_PAGE_BASENAME "page"
+#define BTX_ULM_PAGE_REQUESTVAR "id"
+If you have selected style 2 you may wish to customize the filename of the file that generates tha dynamic content as well as the name of the variable that is handed over. You can do this, if necessary with that two macros.
+
+#define BTX_ULM_PAGE_FILE_SUFFIX "btx"
+This macro sets the ending of btx files. If you have the ability to configure your server to execute *.btx you should do so. If you can not, you can change this to "php", "pl" or what ever your server is able to execute. If you so not whish to use scripts than the ending can left unchanged in both cases.
+
+#define BTX_ULM_PAGE_ID_MAXLENGTH 9
+To limit the size of a valid page identifier you cen set a maximum size here. If you alter this, keep in mind that the Screen width of an BTX-Terminal has only 40 Characters and the mikroPAD can not handle warp around in this case. (Note: This meand the length including * and #!)
+
+#define BTX_ULM_HYPERLINK_ID_MAXLENGTH 2
+You know the way to enter videotext page ids on your TV. The same input method is used in a Videotex system too. The number you enter is linked to a page id (e.g. number 23 points to *foobar#). This value configures the number of the digits a hyperlink can be long. A length of 2 makes absoluty sense. 
+
+#define BTYX_ULM_INITIAL_PAGE "*index#"
+This is the initial page that will automaticly be loaded on startup and displayed as wellcomescreen. You can change this, but you should not.
+
+#define BTX_ULM_IP_RESOLVE_RETRYS 3
+The mikroPAD resolves the ULM-IP once on startup. If that fails the pad will be halted. Here you can configury how often the pad should retry to resolve the ip-address of ulm.
+
+
+
+==Internal messages==
+Internal messages are btx-pages that are generated by the mikroPAD to notify errors or semilar events. The messages are displayed in double size so they may contain up to 40 characters. You can configure the messages by editing the following macros. 
+
+#define BTX_MESSAGE_HTTPERROR "SEITE NICHT VERFUEGBAR"
+#define BTX_MESSAGE_CONNECTIONERROR "ZENTRALE NICHT ERREICHBAR"
+#define BTX_MESSAGE_PARSEERROR "SEITE BESCHAEDIGT"
+
+
+
+==Network interface setup==
+The mikroPAD has an built in ethernet interface. The basic ethernet setup is not done through config.h. The mikroPAD by default supports DHCP, so it is not a must to edit the network configuration. But to gurantee a smooth operation (Or if you do not have a DHCP server running in your network) you might want to change some paramters.
+
+*Mac adress:
+If you have some experiance with ethernet based networks you will know that every device must have an uniqe MAC (=Media Access Control) adress. Unique means unique in your local network, not in the wohle internet so you only really must change that MAC address if you have 2 or more mikroPAD (or maybe other solutions that are also based on the Mikrowebserver design). In /makefile you will find the follwing section - change ist to the value of your choice:
+
+# define the mac address
+MY_MAC_ADRESS = \
+	-DENC28J60_MAC0=0x00 \
+	-DENC28J60_MAC1=0x03 \
+	-DENC28J60_MAC2=0x6f \
+	-DENC28J60_MAC3=0x55 \
+	-DENC28J60_MAC4=0x1c \
+	-DENC28J60_MAC5=0xc7
+
+Note: You can re-use the MAC of old or defective network equipment!
+
+*IP-Adress,Gateway,Netmask,DNS-Server
+The IP-Adress, the Gateway adress, netmask and the DNS-Server ip can be customized in /system/net/ip.c these values are automaticly used if no DHCP server is available. Setting this values are a bit more difficult. First take a look at /system/net/ip.c and look for the following section:
+
+#ifndef MY_IP_ADDRESS
+unsigned long myIP = 0x6102a8c0;
+#else
+unsigned long myIP = MY_IP_ADDRESS;
+#endif
+
+#ifndef MY_IP_NETWORK_MASK
+unsigned long Netmask = 0x00ffffff;
+#else
+unsigned long Netmask = MY_IP_NETWORK_MASK;
+#endif
+
+unsigned long Gateway = 0x0102a8c0;
+
+unsigned long DNSserver = 0x0102a8c0;
+
+You find the well known descriptions (DNSserver, Netmask and so on). The ip-adresses and the netmask are supplied in a reverse hexadecimal writing. Here is an example:
+
+Imagine you would want to configure the ip (myIP) to 192.168.2.97 than you can do the following:
+
+  -Step 1: Calculete the hexadecimal pendants of the four numbers:
+           192=C0 168=A8 2=02 97=61
+  -Step 2: Reverse the order:
+           61 02 A8 C0
+  -Step 3: Tie the digits together and add a 0x at the beginning:
+           0x6102A8C0
+
+Now you know how to calculate the magic numbers. Do not wonder about that kind of writing. It is simply because the c-compiler can handle 0x6102A8C0 better than 192.168.2.97.
+
+Note: The hexadecimal writing is not case sensitive. It does not matter if you write fa8 or FA8 it is
+      both the same.
+
+
+
+==Disable DHCP==
+You might want to disable DHCP. You can do that by editing /main.c. Look for the following section and comment it out. Than DHCP is no longer active.
+
+// DHCP-Config holen
+printf_P( PSTR(" |-> Versuche DHCP-Config zu holen. "));
+if ( !DHCP_GetConfig () ) printf_P( PSTR("DHCP-Config geholt\r\n"));
+else printf_P( PSTR("DHCP-Config Fehlgeschlagen\r\n"));
+
+
+
+==Debug Port==
+As mentiond above the system has a debug port. The pinout of the port is compatible to the RS232 converter by fd0. To activate the debug port you must set DEBUGPORT in /mikroPAD/src/apps/btx/config.h to 1 (#define DEBUGPORT 1). The debug-port should be never left avtivated when using the Videotex system productivly because the debug messages are slowing down the operation.
+
+For your reference, here is a pinout:
+
+      [ o o o o ]
+        A A A A
+        | | | |
+        | | | +----GND
+        | | +------VCC
+        | +--------RX
+        +----------TX
+
+   Orientation when TEST-SW
+     points to the top
+
+Note: You find the debug port in the middle of the board near the network controller.
+
+Parameter: 1200 Baud, 8n1
+
+
+
+==Test procedure==
+The first tests should always be done with a debug console connected. The debug console will tell you if something goes wrong. If you use the device in the wild where no test console is available you also can do some simple tests to the source of the problem.
+
+For debugging the built in speaker is used. The notification is done through ticks:
+
+	low tone = Fatal Error
+	high tone = OK/Performed
+
+Here is a list of the tests that will be performed:
+
+	1. Boot ok (Ram-test passed; Network initalized)
+	2. Internt ok (system can resolve ULM-IP)
+	3. Terminal ready (checks if terminal ready signal is present)
+	4. Terminal check (requests the user to type some characters)
+
+
+==Error handling==
+a) HTTP-Errors: If you run the system in style 1 (Static pages on a http-server) there is always the danger that the user enters a nonexisting page. Also other unexpected HTTP-Errors are possible. To handle sough situations you can place in prepared error-pages in your directory that contain a user friendly error message. The page names are the same as the error numbers (*404# (404.btx) for HTTP-Error 404 and so on) If there is no prepared error message available on the server the PAD firmware displays an integrated error page instead.
+
+b) Gneral-Errors: General errors defer to *error# (error.btx when style 1 is avtive)
+
+
+==System pages and control commands==
+There are a number of reserved system pages and control sequences available. Here is a list of all implemented control sequences:
+
+a) System pages
+System pages are special pages that are stored onto the ULM (http-server). Some of the pages are directly called by the PAD-Firmware so they must be available to ensure a proper operation of the system.
+*0# ................................. Contains overviews, table of content and semilar things
+*9# ................................. Terminates the videotex session
+*error# and *[http-err-number]# ..... Error pages, see also section "Error handling"
+*index# ............................. Contains a logo or a wellcomscreen.
+
+b) Control sequences
+The control sequences are not directly linked with a page on the ULM (http-server). They primarly call embedded navigation functions in the PAD.
+*00# and *09# ....................... Reserved for reloading the page that has been loaded before
+# ................................... Go forward (if possible)
+*# .................................. Go backward (uses integrated history)
+** .................................. Corrector sign, aborts the input (e.g. *foobar** reults in a new prompt)
+<- (Backspace) ...................... Backspace works on all inputs to correct something
+
+c) User pages
+User pages are pages that are stored on the ulm. The length of the name must not exceed the
+limit that is set with BTX_ULM_PAGE_ID_MAXLENGTH.
+*[name or number]# .................. Download and displa a page from ULM (http-server)
+
+
+==Support==
+If you have any questions (Especially the BTX related one), please first ask me: (philipp.maier@runningserver.com) If i can not help or if it is a question that affects the mikrowebserver operating system you should ask Dirk Broßwick
+

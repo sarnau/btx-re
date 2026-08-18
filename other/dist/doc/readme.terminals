@@ -1,0 +1,79 @@
+==ABSTRACT==
+
+There were various type of terminals from differen supplyers available. By my historical research i found out that the situation with the terminals seems to be similar to the situation we have today with webbrowesers. Every terminal behaves a little different! In this file you will finde detailed reports about the behaviour of the Terminals i used with my reimplementation of Bildschirmtext.
+
+
+==SUPPORTED==
+
+The following terminals are fully supported by Bildschirmtrix. I used that terminals to test and debug the Bildschirmtrix infrastructure. If you use Bildschirmtrix successfully with a terminal that is not listed here, you are wellcome to send me an email. I will add your terminal to the list. If you have a terminal that does not work with Bildschirmtrix, you are wellcome to contact me, maybe we can solve the problem remotely if that fails you are wellcome to travel to Berlin and visit me at the CCCB-Headquarter on a thursday.
+
+________________________________________________________________________________________________________
+* Siemens Multitel 11/12 (also known as Bitel)
+
+This terminal is easy to handle. You just send a CEPT formatted string and you will get it displayed. STX, ETX, and CRC can be left away. Keyboard input is sent out directly witout persuation.
+
+Note: The Multitel was available in different design iterations and under different names (e.g. Bitel).
+
+________________________________________________________________________________________________________
+* Siemens Multitel 20 
+
+This is the most luxorious BTX-Terminal ever made. This terminal is also very easy to handle. You just send a CEPT formatted string and you will get it displayed. STX, ETX, and CRC can be left away. Keyboard input is sent out directly witout persuation.
+
+________________________________________________________________________________________________________
+* Siemens BtxTV
+
+Eric Danke once used a BtxTV. This terminals is unfortunately a bit problematic. The problems might come from a more acurrat (or more crappy?) or implementation. The terminal also features an autologon mecanism that transmits the user id / password automaticly 
+
+The terminal can receive block data such as STX, text, ETX, CRC. It also works if you send the data without STX, ETX and CRC. If you send the data in a block you get a response. NAK (0x15) indicates that the CRC was incorrect. DLE, 0x30 or DLE, 0x31 indicates that the CRC was correct.
+
+The keyboard behaves a little bit strange. If you do nothing special the keyboard is completely dead at first. If you wait a few minuts the terminal suddenly begins the transmission of the logindata. After that the keyboard works fine.
+
+It is possible to animate the keyboard by sending DCT. I never understood what the problem is.
+
+________________________________________________________________________________________________________
+* Commodore (Siemens) BTX-Cartrigde
+
+This is more a complete terminal than a BTX-Cartrige. You plug it into the Expansion port of your Commodore and the Program in the Eprom turns your Commodore into a dumb Keyboard. The Monitor must be plugged into the Video Port of the Cartrige. Yes, it is possible to display BTX-Pages on the Commodores own video output in a limited form, but this has no practical use. Maybe a video-switch could lessen the pain.
+
+________________________________________________________________________________________________________
+* Amaris BTX/3 Softwaredoecoder
+
+Works with pcPAD. However, the software runs incredibly slow on my WindowsXP VM. Also most of my videotex pages appear distorted. For my experiment I used two USB to serial adapters, bridged together with a nullmodem cable. One was connected to the Windows VM, one to the linux host where pcPAD was started some seconds after the connect button in Amaris has been pressed. In Amaris itsself I have selected an acoustic coupler as modem to make sure no Hayes commands or anything would disturb the connection.
+
+________________________________________________________________________________________________________
+* XBTX Softwaredoecoder from Jürgen Buchmüller (Public domain)
+
+Works, but does not support any graphics at all - that means, all the fun is removed. But it seems to run stable.
+
+________________________________________________________________________________________________________
+* Loewe DBT01
+
+Works like a charm!
+
+
+
+==UNSUPPORTED==
+
+The terminals listed here are unsupported. Up to now Bildschirmtrix supports only terminals that have a dbt03 interface. Principially it would be possible to attach terminals with a V24 interface with very little afford but the first thing is that i do not have the time to do research on V24 terminals and the sacond thing is 
+
+________________________________________________________________________________________________________
+* Siemens Multikom S1
+
+Not easy to handle. Has no dbt03 interface, has a V24 port and a built in modem instead. All attemts to talk to that terminal failed - i do not know what the problem was. Anyone who want to do some further research? 
+
+Note: The Mulitikom S1 includes an end to end messageing feature that once was introduced for persons with 
+      hearing disabilities. Maybe that could be used to start something?
+
+Note: When you take a closer look to the board you will find a piggyboard with an AM7911 modem IC. This is
+      a very rare FSK modem IC from AMD. Nearly the same (AM7910) is used in the legendary datenklo-modem
+      from the CCC (http://de.wikipedia.org/wiki/Datenklo). So you got an AM7911, why not build your own
+      datenklo and have some advanced retrocomputing fun.
+
+________________________________________________________________________________________________________
+* Telefunken BTX-Decoder FZ650
+
+The unit was broken when it came to me so i could not perform my tests. It has a dbt03 interface so may be it works. However, lets thread it as unspported.
+
+
+
+04102015 Philipp Fabian Benedikt Maier

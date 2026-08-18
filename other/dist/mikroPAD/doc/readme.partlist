@@ -1,0 +1,61 @@
+mikroPAD Partlist
+================================================================================
+
+==SYSTEM CPU==
+3x	470R
+2x	10K
+1x	16mhz Oscillator (large version)
+3x	1,5mm LED (Green)
+1x	ATmega256-16AI (TQFP 64)
+1x	74HCT573N (DIL20)
+1x	628128P (DIL32)
+1x	10nF
+
+==SERIAL PORT MULTIPLEXER==
+1x	74xx32 (SO14)
+1x	74xx00 (SO14)
+1x	10k
+
+==ETHERNET INTERFACE==
+1x	2k
+2x	470R
+4x	51R
+1x	ENC28J60-DIL (DIL-28-3)
+1x	220uF
+1x	25Mhz Crystal
+2x	18pF
+2x	10nF
+1x	L (value not critical, you also can use a wirebridge instead)
+1x	HFJ11-2450E-L12 (Ethernet connector with built in magnetics)
+
+==MINI-BTX DBT03 MODEM EMULATOR==
+1x	4k7
+2x	10k
+1x	ATmega8 16AU (TQFP32-08)
+
+==POWER SUPPLY==
+1x	1N4446	(Used as flyback diode for the power on relais, 
+	        any other semilar diode should do well)
+1x	BC337	(You find lots of them on the old DBT03 PCB)
+1x	10k
+1x	LM3940
+2x	220uF
+6x	10nF
+
+
+Note: There some more trivial parts (Relais, TEST-SW, Speaker ect...) needed 
+      you will find them all on the old DBT03 PCB. Alternatively you can 
+      try to find compatible parts. If the alternative parts do not fit into
+      the mounting holes, just wire them to the Pinheaders instead.
+
+Note: You will need some pinheaders. Make sure that you have enough pinheaders
+      at home.
+
+Note: Do not forget to by solder sucker strand!
+
+
+
+
+
+
+

@@ -1,0 +1,54 @@
+8
+
+dir
+70
+http://213.239.212.163/usvn/svn/webserver2561/apps/udp-echo
+http://213.239.212.163/usvn/svn/webserver2561
+
+
+
+2008-06-05T14:39:53.500957Z
+1
+sharan
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+20c90a3d-ec4e-0410-8a5d-d30652974d9e
+
+udp-echo.c
+file
+
+
+
+
+2008-10-19T15:47:51.000000Z
+1e106a590c681d03656d785bcca842fd
+2008-06-05T14:39:53.500957Z
+1
+sharan
+has-props
+
+udp-echo.h
+file
+
+
+
+
+2008-10-19T15:47:51.000000Z
+dbc86f99bca21c5bbd35cf5f31f58358
+2008-06-05T14:39:53.500957Z
+1
+sharan
+has-props
+

@@ -1,0 +1,59 @@
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/usvn/svn/webserver2561/!svn/ver/68/apps/httpd
+END
+files_data.h
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/usvn/svn/webserver2561/!svn/ver/68/apps/httpd/files_data.h
+END
+files.c
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/usvn/svn/webserver2561/!svn/ver/35/apps/httpd/files.c
+END
+httpd2.c
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/usvn/svn/webserver2561/!svn/ver/45/apps/httpd/httpd2.c
+END
+files.h
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/usvn/svn/webserver2561/!svn/ver/33/apps/httpd/files.h
+END
+httpd2_pharse.c
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/usvn/svn/webserver2561/!svn/ver/63/apps/httpd/httpd2_pharse.c
+END
+cgi-bin.c
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/usvn/svn/webserver2561/!svn/ver/66/apps/httpd/cgi-bin.c
+END
+httpd2.h
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/usvn/svn/webserver2561/!svn/ver/33/apps/httpd/httpd2.h
+END
+httpd2_pharse.h
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/usvn/svn/webserver2561/!svn/ver/63/apps/httpd/httpd2_pharse.h
+END
+cgi-bin.h
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/usvn/svn/webserver2561/!svn/ver/63/apps/httpd/cgi-bin.h
+END

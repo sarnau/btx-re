@@ -1,0 +1,70 @@
+<!-- This ia an example page that illustrate how a CEPT TCD 6-1
+     looks when it is formatted in the btxml hypertext language
+
+     Propose: How to use the different character sets -->
+
+<cept>						<!-- Open CEPT page -->
+<head>						<!-- This is the header, it contains meta information for service control -->
+<meta name="next_page" content="*25c3d1c#">	<!-- Define the page that is loaded when '#' is pressed -->
+<meta name="hyperlinks" content="42*0#">
+</head>						<!-- Close the header -->
+<body>						<!-- Open page body segment -->
+
+
+<!-- First we care about a Black/White ambient -->
+<cs>						<!-- Clear screen -->
+<csi><0x30><0x40>				<!-- Invoke 1nd color table -->
+<esc><0x23><0x20><fwhb>				<!-- Makes the background blue -->
+<esc><0x28><0x40><0x0f>				<!-- Invoke G0 set -->
+
+
+
+<trb><bkf>					<!-- Select Transparent background with white foreground -->
+
+<esc><0x28><0x63><0x0f> 				<!-- Invoke G1 set -->
+
+<!-- Draw 25C3 Logo -->
+<rdf>~___}h___}<bkf> <sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp> <sp><sp>`(<sp><sp>$d<sp><sp><!--apd apr-->
+<rdf>||~__j_}||<bkf> <sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp> <sp>:p~w_?<sp>*0<!--apd apr-->
+<rdf>__}||h|~__<bkf> <sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp> *z___7!<sp><sp>"<!--apd apr-->
+<rdf>bssssbsss1<bkf> <sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp> 4__7l8l<sp><sp>0<!--apd apr-->
+<rdf>__k__j_7__<bkf> <sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp> <sp>o5<sp>"#4y~a<!--apd apr-->
+<rdf>__bssbs1_u<bkf> <sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp> <sp>&o}0<sp>z_e&<!--apd apr-->
+<rdf>o_~_?*_}_?<bkf> <sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp> <sp><sp>(c-,3!<sp><sp><!--apd apr-->
+
+<esc><0x28><0x40><0x0f>				<!-- Invoke G0 set -->
+
+<apu><apu><apu><apu><apu><apu>			<!-- Go upstairs -->
+
+
+<apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf> <bkb><sp><sp><sp><trb><sp>Nothing<sp><bkb><sp><sp><sp><sp><sp><trb> <apd><apr><apd><apr>
+<apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf> <bkb><sp><sp><sp><sp><sp><sp><trb><sp>to<sp><bkb><sp><sp><sp><sp><sp><sp><trb> <apd><apr><apd><apr>
+<apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf> <bkb><sp><sp><sp><sp><sp><sp><sp><sp><trb><sp>hide<sp><bkb><sp><sp><sp><trb> <apd><apr><apd><apr>
+<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>Chaos<sp>Communication<sp>Congress<!--apd apr-->
+<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>Berlin,<sp>27.-30.12.2008,<sp>bcc<apd><apr>
+
+
+
+<apd><apr>
+<dbs>Schedule<sp>day<sp>1:<nsz><apd><apr>
+
+<!-- 16:00h -->
+16:00h:Saal<sp>1:<sp>Building<sp>an<sp>int.<sp>movemnt:<!--apd apr-->
+<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>hackerspaces.org<apd><apr>
+<sp><sp><sp><sp><sp><sp><sp>Saal<sp>2:<sp>About<sp>Cyborgs<sp>and<apd><apr>
+<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>Gargoyles<sp>...<apd><apr>
+
+<!-- 17:15h -->
+17:15h:Saal<sp>1:<sp>Terrorist<sp>All-Stars<apd><apr>
+<sp><sp><sp><sp><sp><sp><sp>Saal<sp>2:<sp>Der<sp>Staat<sp>als<apd><apr>
+<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>Virenprogrammierer?<apd><apr>
+<sp><sp><sp><sp><sp><sp><sp>Saal<sp>3:<sp>Just<sp>Estonia<sp>and<sp>Georgia?<apd><apr>
+
+<apd><apr>
+<apd><apr>
+<apd><apr>
+continue<sp>with<sp>#,<sp>back<sp>with<sp>*#<sp>
+
+
+</body>						<!-- Close page body segment -->
+</cept>						<!-- Close CEPT page -->

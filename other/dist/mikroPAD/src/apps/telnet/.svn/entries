@@ -1,0 +1,54 @@
+8
+
+dir
+70
+http://213.239.212.163/usvn/svn/webserver2561/apps/telnet
+http://213.239.212.163/usvn/svn/webserver2561
+
+
+
+2008-08-24T14:25:55.602489Z
+58
+sharan
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+20c90a3d-ec4e-0410-8a5d-d30652974d9e
+
+telnet.h
+file
+
+
+
+
+2008-10-19T15:47:51.000000Z
+07eafd3adad418f18b0e65755aed0f55
+2008-06-28T17:35:57.634329Z
+39
+sharan
+has-props
+
+telnet.c
+file
+
+
+
+
+2008-10-19T15:47:51.000000Z
+2d956c833c29717353acae7994eead9a
+2008-08-24T14:25:55.602489Z
+58
+sharan
+has-props
+

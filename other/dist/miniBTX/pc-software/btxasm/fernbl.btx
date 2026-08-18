@@ -1,0 +1,63 @@
+<!-- This is a system page of the fictional online service 'Bildschirmtrix' -->
+
+<cept>						<!-- Open CEPT page -->
+<head>						<!-- This is the header, it contains meta information for service control -->
+<meta name="load_page" content="*fernbl2#">
+<meta name="load_timeout" content="5">
+</head>						<!-- Close the header -->
+<body>						<!-- Open page body segment -->
+
+
+<!-- First we care about a White/Blue ambient -->
+<cs>						<!-- Clear screen -->
+<csi><0x31><0x40>				<!-- Invoke 2nd color table (to get deep blue) -->
+<esc><0x23><0x20><fblb>				<!-- Makes the background blue -->
+<esc><0x28><0x40>				<!-- Invoke G0 set -->
+
+
+<!-- Headline -->
+<esc><0x22><0x41>				<!-- Invoke C1P set -->
+<csi><0x30><0x40>				<!-- Invoke 1nd color table -->
+<trb><whf>					<!-- Select Transparent background with white foreground -->
+<aph>						<!-- Set cursor to home position -->
+Bildschirmtrix<apd><apr>
+<csi><0x30><0x40>				<!-- Invoke 1nd color table (to get a real white) -->
+<esc><0x23><0x21><fwhb>				<!-- Maks a white full row -->
+<apd>
+<esc><0x23><0x21><fwhb>				<!-- Maks a white full row -->
+<csi><0x31><0x40>				<!-- Invoke 2nd color table (to get deep blue) -->
+<trb><blf>					<!-- Select Transparent background with blue foreground -->
+
+<csi><0x31><0x40>				<!-- Invoke 2nd color table -->
+<dbs><apr>Neue<sp>Mitteilungen<apd><apr>
+<csi><0x30><0x40>				<!-- Invoke 1nd color table -->
+
+<trb><whf>					<!-- Select Transparent background with white foreground -->
+<nsz>						<!-- Select normal size font -->
+
+<apd><apr>
+Von<sp><sp>Chaos<sp>Team<sp>Hamburg<apd><apr>
+An<sp>die<sp>Bundesdatenschutzbeauftragten<apd><apr>
+<apd><apr>
+<apd><apr>
+Liebe<sp>Datensch<ss2>Hutzer,<apd><apr>
+wir<sp>werden<sp>Sie<sp>mit<sp>diesem<sp>Schreiben<apd><apr>
+fernbeleidigen<sp>Wir<sp>bitten<sp>Sie<sp>uns<apd><apr>
+1<sp>St<ss2>Huck<sp>ihres<sp>letzten<sp>T<ss2>Hatigkeitsberichts<!-- apd apr -->
+zuzusenden<sp>
+<apd><apr>
+<apd><apr>
+Mit<sp>freundlichen<sp>Gr<ss2>Hussen<apd><apr>
+Chaos<sp>Team<sp>Hamburg<apd><apr>
+
+<apd><apr>
+<apd><apr>
+<apd><apr>
+<apd><apr>
+<apd><apr>
+<apd><apr>
+Zur<ss2>Huck<sp>mit<sp>#<apd><apr>
+Eingabe<sp>==><sp>
+</body>
+</cept>
+ 

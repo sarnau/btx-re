@@ -1,0 +1,212 @@
+<!-- This is the donation-page of the CCC-BTX-Page, reconstructed from video material (Tagesschau) -->
+
+<cept>						<!-- Open CEPT page -->
+<head>						<!-- This is the header, it contains meta information for service control -->
+<meta name="load_page" content="*raumpflege3#">
+</head>						<!-- Close the header -->
+<body>						<!-- Open page body segment -->
+
+
+<!-- Setup page -->
+<cs>						<!-- Clear screen -->
+<csi><0x31><0x40>				<!-- Invoke 2nd color table -->
+<esc><0x23><0x20><fblb>				<!-- Makes the background blue -->
+<esc><0x28><0x40><0x0f>				<!-- Invoke G0 set -->
+
+
+<!-- Bottomlone -->
+<esc><0x22><0x41>				<!-- Invoke C1P set -->
+<aph>						<!-- Set cursor to home position -->
+<apd><apd><apd><apd><apd><apd><apd><apd><apd><apd><apd><apd><apd><apd><apd><apd><apd><apd><apd><apd><apr>
+<csi><0x30><0x40>				<!-- Invoke 1nd color table -->
+<esc><0x23><0x21><fgrb>				<!-- Maks a blue green row -->
+<apd>
+<esc><0x23><0x21><fgrb>				<!-- Maks a blue green row -->
+<apd>
+<csi><0x31><0x40>				<!-- Invoke 2nd color table -->
+<any>CHAOS-Movie<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><esc><0x28><0x62><0x0f>S<esc><0x28><0x40><0x0f>by<sp>BITE
+
+
+<!-- Sky -->
+<csi><0x30><0x40>				<!-- Invoke 1nd color table -->
+<aph><trb><whf>
+<esc><0x28><0x63><0x0f> 				<!-- Invoke G1 set -->
+<fsh>
+<csi><0x31><0x41>
+<sp><sp>!<sp><sp><sp><sp><sp><sp><sp><sp>!<sp><sp><sp><sp><sp><sp><sp><sp><sp>0<sp><sp><sp><sp><sp><sp><sp><sp><sp>0<sp><sp><sp><sp><sp>!
+<apd><apr>
+<sp><sp><sp><sp><sp><sp><sp>!<sp><sp><sp><sp><sp><std><csi><0x32><0x41>!<fsh><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>!
+<apd><apr>
+<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>!
+<apd><apr>
+<csi><0x30><0x41>
+<sp><sp><sp><sp><sp><sp>0<sp><sp><sp><sp><sp><sp><sp><sp>!<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><any><esc><0x28><0x64><0x0f><std>N<fsh><esc><0x28><0x63><0x0f><whf><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>!
+<apd><apr>
+<sp><sp>0<sp><sp><sp><sp><sp><sp><sp><sp><csi><0x34><0x41>0<sp><sp><sp><sp><sp><sp><sp>!<sp><sp><sp><sp>0<sp><sp><sp><sp><sp>!
+<apd><apr>
+<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><csi><0x34><0x41><std>0<fsh><sp><sp><sp><sp><sp><any><esc><0x28><0x64><0x0f>M<esc><0x28><0x63><0x0f><whf><sp><sp><sp>!
+<apd><apr>
+<csi><0x31><0x41>
+<sp><sp><sp><sp><sp><sp>0<sp><sp><sp><sp><sp><sp><sp><sp>!<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>0<sp><sp><sp><sp>!
+<apd><apr>
+<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><csi><0x32><0x41>0!<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>0
+<apd><apr>
+<sp><sp><sp><sp>0<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>!<sp><sp><sp><sp><sp><sp>!
+<apd><apr>
+<std>
+
+
+<!-- Absetzen der Posthoernchen -->
+<esc><0x28><0x20><0x40><0x0f>			<!-- Invoke DRCS set -->
+<apd>
+<apd>
+<apd>
+<apd>
+<apd>
+<apd>
+<apd>
+<apd>
+<apd>
+
+<csi><0x31><0x40>				<!-- Invoke 2nd color table -->
+
+#$#$<apb><apb><apb><apb><apd>
+<mgb>()*+<trb><apb><apb><apb><apb><apu>
+
+
+<sp>#$#$<apb><apb><apb><apb><apb><apd>
+<sp><mgb>()*+<trb><apb><apb><apb><apb><apu>
+
+<sp>#$#$<apb><apb><apb><apb><apb><apd>
+<sp><mgb>()*+<trb><apb><apb><apb><apb><apu>
+
+<sp>#$#$<apb><apb><apb><apb><apb><apd>
+<sp><mgb>()*+<trb><apb><apb><apb><apb><apu>
+
+<sp>#$#$<apb><apb><apb><apb><apb><apd>
+<sp><mgb>()*+<trb><apb><apb><apb><apb><apu>
+
+<sp>#$#$<apb><apb><apb><apb><apb><apd>
+<sp><mgb>()*+<trb><apb><apb><apb><apb><apu>
+
+<sp>#$#$<apb><apb><apb><apb><apb><apd>
+<sp><mgb>()*+<trb><apb><apb><apb><apb><apu>
+
+<sp>#$#$<apb><apb><apb><apb><apb><apd>
+<sp><mgb>()*+<trb><apb><apb><apb><apb><apu>
+
+<sp>#$#$<apb><apb><apb><apb><apb><apd>
+<sp><mgb>()*+<trb><apb><apb><apb><apb><apu>
+
+<csi><0x30><0x40>				<!-- Invoke 1nd color table -->
+<apb><apb>#$<apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apb><apb><sp><sp>
+<apd><apb><apb><any>#$<whf><apu>
+<csi><0x31><0x40>				<!-- Invoke 2nd color table -->
+
+<sp>#$#$<apb><apb><apb><apb><apb><apd>
+<sp><mgb>()*+<trb><apb><apb><apb><apb><apu>
+
+<sp>#$#$<apb><apb><apb><apb><apb><apd>
+<sp><mgb>()*+<trb><apb><apb><apb><apb><apu>
+
+<sp>#$#$<apb><apb><apb><apb><apb><apd>
+<sp><mgb>()*+<trb><apb><apb><apb><apb><apu>
+
+<sp>#$#$<apb><apb><apb><apb><apb><apd>
+<sp><mgb>()*+<trb><apb><apb><apb><apb><apu>
+
+<sp>#$#$<apb><apb><apb><apb><apb><apd>
+<sp><mgb>()*+<trb><apb><apb><apb><apb><apu>
+
+<sp>#$#$<apb><apb><apb><apb><apb><apd>
+<sp><mgb>()*+<trb><apb><apb><apb><apb><apu>
+
+<sp>#$#$<apb><apb><apb><apb><apb><apd>
+<sp><mgb>()*+<trb><apb><apb><apb><apb><apu>
+
+<sp>#$#$<apb><apb><apb><apb><apb><apd>
+<sp><mgb>()*+<trb><apb><apb><apb><apb><apu>
+
+<csi><0x30><0x40>				<!-- Invoke 1nd color table -->
+<apb><apb>#$<apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apb><apb><sp><sp>
+<apd><apb><apb><any>#$<whf><apu>
+<csi><0x31><0x40>				<!-- Invoke 2nd color table -->
+
+<sp>#$#$<apb><apb><apb><apb><apb><apd>
+<sp><mgb>()*+<trb><apb><apb><apb><apb><apu>
+
+<sp>#$#$<apb><apb><apb><apb><apb><apd>
+<sp><mgb>()*+<trb><apb><apb><apb><apb><apu>
+
+<sp>#$#$<apb><apb><apb><apb><apb><apd>
+<sp><mgb>()*+<trb><apb><apb><apb><apb><apu>
+
+<sp>#$#$<apb><apb><apb><apb><apb><apd>
+<sp><mgb>()*+<trb><apb><apb><apb><apb><apu>
+
+<sp>#$#$<apb><apb><apb><apb><apb><apd>
+<sp><mgb>()*+<trb><apb><apb><apb><apb><apu>
+
+<sp>#$#$<apb><apb><apb><apb><apb><apd>
+<sp><mgb>()*+<trb><apb><apb><apb><apb><apu>
+
+<sp>#$#$<apb><apb><apb><apb><apb><apd>
+<sp><mgb>()*+<trb><apb><apb><apb><apb><apu>
+
+<sp>#$#$<apb><apb><apb><apb><apb><apd>
+<sp><mgb>()*+<trb><apb><apb><apb><apb><apu>
+
+<csi><0x30><0x40>				<!-- Invoke 1nd color table -->
+<apb><apb>#$<apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apb><apb><sp><sp>
+<apd><apb><apb><any>#$<whf><apu>
+<csi><0x31><0x40>				<!-- Invoke 2nd color table -->
+
+<sp>#$<sp><sp><apb><apb><apb><apb><apb><apd>
+<sp><mgb>()*+<trb><apb><apb><apb><apb><apu>
+
+<sp>#$<sp><sp><apb><apb><apb><apb><apb><apd>
+<sp><mgb>()*+<trb><apb><apb><apb><apb><apu>
+
+<sp>#$<sp><sp><apb><apb><apb><apb><apb><apd>
+<sp><mgb>()*+<trb><apb><apb><apb><apb><apu>
+
+<sp>#$<sp><sp><apb><apb><apb><apb><apb><apd>
+<sp><mgb>()*+<trb><apb><apb><apb><apb><apu>
+
+<sp>#$<sp><sp><apb><apb><apb><apb><apb><apd>
+<sp><mgb>()*+<trb><apb><apb><apb><apb><apu>
+
+<sp>#$<sp><sp><apb><apb><apb><apb><apb><apd>
+<sp><mgb>()*+<trb><apb><apb><apb><apb><apu>
+
+<sp>#$<sp><sp><apb><apb><apb><apb><apb><apd>
+<sp><mgb>()*+<trb><apb><apb><apb><apb><apu>
+
+<sp>#$<sp><sp><apb><apb><apb><apb><apb><apd>
+<sp><mgb>()*+<trb><apb><apb><apb><apb><apu>
+
+<csi><0x30><0x40>				<!-- Invoke 1nd color table -->
+<apb><apb>#$<apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apb><apb><sp><sp>
+<apd><apb><apb><any>#$<whf><apu>
+<csi><0x31><0x40>				<!-- Invoke 2nd color table -->
+
+<sp><sp><sp><sp><sp><apb><apb><apb><apb><apb><apd>
+<sp><mgb>()*+<trb><apb><apb><apb><apb><apu>
+
+<sp><sp><sp><sp><sp><apb><apb><apb><apb><apb><apd>
+<sp><mgb>()*+<trb><apb><apb><apb><apb><apu>
+
+<sp><sp><sp><sp><sp><apb><apb><apb><apb><apb><apd>
+<sp><mgb>()*+<trb><apb><apb><apb><apb><apu>
+
+<sp><sp><sp><sp><sp><apb><apb><apb><apb><apb><apd>
+<sp><mgb>()*+<trb><apb><apb><apb><apb><apu>
+
+<apd>
+<sp><sp><sp><sp><sp>
+
+
+</body>
+</cept>
+
+

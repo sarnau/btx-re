@@ -1,0 +1,52 @@
+8
+
+dir
+70
+http://213.239.212.163/usvn/svn/webserver2561/hardware/vs10xx
+http://213.239.212.163/usvn/svn/webserver2561
+
+
+
+2008-09-06T23:36:44.572975Z
+63
+sharan
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+20c90a3d-ec4e-0410-8a5d-d30652974d9e
+
+vs10xx.h
+file
+
+
+
+
+2008-10-19T15:47:51.000000Z
+6d90142dde5f57e31178b43c8d0449b8
+2008-09-06T23:36:44.572975Z
+63
+sharan
+
+vs10xx.c
+file
+
+
+
+
+2008-10-19T15:47:51.000000Z
+8bd6e27a3e19ee07643ad9d8fe312cf8
+2008-09-06T23:36:44.572975Z
+63
+sharan
+

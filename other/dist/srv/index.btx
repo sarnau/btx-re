@@ -1,0 +1,58 @@
+<!-- This is a system page of the fictional online service 'Bildschirmtrix' -->
+
+<cept>						<!-- Open CEPT page -->
+<head>						<!-- This is the header, it contains meta information for service control -->
+<meta name="load_page" content="*welcome#">
+<meta name="load_timeout" content="2">
+</head>						<!-- Close the header -->
+<body>						<!-- Open page body segment -->
+
+
+<!-- First we care about a White/Blue ambient -->
+<cs>						<!-- Clear screen -->
+<csi><0x31><0x40>				<!-- Invoke 2nd color table (to get deep blue) -->
+<esc><0x23><0x20><fblb>				<!-- Makes the background blue -->
+<esc><0x28><0x40><0x0f>				<!-- Invoke G0 set -->
+
+
+<!-- Headline -->
+<esc><0x22><0x41>				<!-- Invoke C1P set -->
+<csi><0x30><0x40>				<!-- Invoke 1nd color table -->
+<trb><whf>					<!-- Select Transparent background with white foreground -->
+<apd>
+<apd><apr>
+
+<!-- Logo -->
+<esc><0x28><0x63><0x0f> 			<!-- Invoke G1 set -->
+<sp><sp><sp><sp><sp><sp><sp><sp>8######################)0<apd><apr>
+<sp><sp><sp><sp><sp><sp><sp>j<sp><sp><sp><sp>`x|__________}|p<sp><sp><sp><sp>j<apd><apr>
+<sp><sp><sp><sp><sp><sp><sp>j<sp><sp><sp>h____w######c____}<sp><sp><sp>j<apd><apr>
+<sp><sp><sp><sp><sp><sp><sp>j<sp><sp><sp>*___/'`~___t"/o__?<sp><sp><sp>j<apd><apr>
+<sp><sp><sp><sp><sp><sp><sp>j<sp><sp><sp><sp>"cx~_j_____j_|r#<sp><sp><sp><sp>j<apd><apr>
+<sp><sp><sp><sp><sp><sp><sp>j<sp><sp><sp><sp><sp>____j_____j___5<sp><sp><sp><sp>j<apd><apr>
+<sp><sp><sp><sp><sp><sp><sp>j<sp><sp><sp><sp><sp>____};///y____5<sp><sp><sp><sp>j<apd><apr>
+<sp><sp><sp><sp><sp><sp><sp>j<sp><sp><sp><sp><sp>______________5<sp><sp><sp><sp>j<apd><apr>
+<sp><sp><sp><sp><sp><sp><sp>j<sp>p000<sp>0`<sp><sp>0<sp>0<sp><sp><sp><sp>`<sp><sp>`<sp><sp><sp>j<apd><apr>
+<sp><sp><sp><sp><sp><sp><sp>j<sp>=14575mh$7547jkkj!7h"6<sp>j<apd><apr>
+<sp><sp><sp><sp><sp><sp><sp>"d#!!!#!#"!!!!!""""!!"""`&<apd><apr>
+<sp><sp><sp><sp><sp><sp><sp><sp><sp>######################!<apd><apr>
+<esc><0x28><0x40><0x0f>				<!-- Invoke G0 set -->
+
+<apd>
+________________________________________<apd><apr>
+<sp><sp><sp>BTX-Nummer<sp><sp><sp><sp>:<sp><sp><any>23422342235<sp><sp>-<sp><sp>1<whf><apd><apr>
+<sp><sp><sp>pers.<sp>Kennwort:<sp><sp><any>usd7000011<whf><apd><apr>
+________________________________________<apd><apr>
+
+<!-- Its not really clear what DCT does and -->
+<!-- if it needs to be sent or not. On some -->
+<!-- terminals it seems to be necessary to  -->
+<!-- send it to acknowledge the connection, -->
+<!-- while it causes problems on others. -->
+<dct>
+
+<apd>
+Bitte<sp>warten...
+
+</body>
+</cept>

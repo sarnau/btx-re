@@ -1,0 +1,91 @@
+
+==Abstract==
+This file contains some hints that might be useful to solve some beginners
+programming problems.
+
+
+==Changing the programmer==
+The progject makes use of the avrdude programmer tool which supports several
+types of programmers. I prefer the avrispMKII and the stk200 Parallport 
+programmer. Anyway, you can change the makefile to use your favourite programmer
+
+Find the section that is labeled with:
+"Programming Options (avrdude)"
+
+Set the variable AVRDUDE_PROGRAMMER to the programmer type you use. To find
+out which programmer types are supported type  
+
+  avrdude -c x
+
+to get a list of the supported programmers. Then pick out your programmer and
+configure it in the makefile. Here are two examples:
+
+  AVRDUDE_PROGRAMMER = stk200	#Parallelport
+  AVRDUDE_PROGRAMMER = avrispv2	#USB 
+
+Then find and set the AVRDUDE_PORT variable acording your needs:
+
+  AVRDUDE_PORT = /dev/parport0  #Parallelport
+  AVRDUDE_PORT = usb	 #USB
+
+Now you should be ready to program the AVR device directly via the makefile.
+
+
+
+==Set programming speed==
+When using an AVRispMKII the following hints might be useful:
+
+When you use your AVR isp you might want to change the programming speed 
+acording your needs. A slow clocked device needs a slow programming speed
+a fast clocked device cen be programmed at a higher speed. To change
+the programming speed do the following:
+
+* Enter the terminal mode:
+  
+  avrdude -p m16 -c avrispmkII -P usb -t
+
+	Note: change the -p option to the device you are using. In this 
+              example a mega 16 is used. The terminal mode can only be 
+              entered when an AVR device is connected correctly.
+
+* Set the sck clock devider by typing:
+
+  sck 1   for a fast programming speed (e.g. Avr with 16 Mhz)
+  sck 10  for a slow programming speed
+  sck 100 for a very slow programming speed
+
+
+Note: You might think that the programmer works without a VCC supply. (Because
+      it gets its power from the USB port) But this is not correct. You need
+      to contact the VCC pin in your layout. Otherwise the programmer will
+      refuse to work.
+
+
+
+==Pinout of the ISP Header==
+
+The most of my projects are using a customized ISP-Pinheader. It has only one
+row of pins instead of two. That makes it much easier to layout. Here is the
+pinout:
+
+       +---------------------+
+       |  o  o  o  o  o  o   |
+       |   1  2  3  4  5  6  |
+       +---------------------+
+
+      1 = VCC
+      2 = SCK
+      3 = RESET
+      4 = MOSI
+      5 = MISO
+      6 = GND
+
+
+20112009 Philipp Fabian Benedikt Maier
+
+
+
+
+
+
+

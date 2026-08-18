@@ -1,0 +1,55 @@
+miniBTX
+=======
+
+==Abstract== 
+MiniBTX is an intelligent adapter that adapts the dbt03 interface to a normal V.24 serial interface. It is useful if you whish to connect a BTX (Videotex) terminal to your PC to use it with the pcPAD software.
+
+
+==Control signals==
+The device emulates a real dbt03 modem. If the device is hooked to another device via RS232 you will want to know if a terminal is connected and if the (fake) dialin process is done. When the START line turns to high the miniBTX adaptor sends a 0x01 by itsself. When the dialin is complete and the terminal is ready for data the miniBTX adaptor sends a 0x00. For the use in embedded devices TTL signals somethimes are a better way to indicate the state miniBTX serves sough signals too, see section "Control lines".
+
+
+==Control lines==
+There are 4 control lines. /Reset, /Inhibit /Terminate and Ready. Reset is directly connected to the START signal pin of the terminal (see dbt03.h for detailed description of dbt03 signals). START is mentiond here because you cen use it in an embedded device for activating power or something.
+
+Inhibt and /Ready are also for use in embedded devices when the miniBTX circuit is integrated in another device. /Ready and /Inhibit are low active. /Ready goes to low level when a (faked) dialin process is finished. /Inhibit can be used to lock the receiving part of the miniBTX circuit. If you do not want to receive anything from the terminal just pull /Inhibt low.
+
+The /Terminate signal can be used to cause a termination of the connection between the miniBTX circuit and the BTX-Terminal. To be sure that the termination signal is proper detected you must send at least one character (e.g. 0x00 or something). Effectively it drives the sending I/O line to the terminal to a constant high level. The BTX-Terminal interprets that as a termination of the connection and switches of the circuit immediately (If that fails the user should press the termination button on the terminal to terminate manualy) and the next connection cycle can begin.
+
+Note: It is very important that the START line from the terminal is connected with the Reset input of the controller. The Firmware expects that a hardware reset is caused after every connection cycle! Keep that in mind when you layout your embedded circuit!
+
+
+==Power supply==
+The circuit needs 5V DC-Powersupply.
+
+
+==How the dbt03 works==
+The dbt03 is a very easy and straight forward implementation of e modem. You just have to pull an I/O pin to high level and 3 seconds later, the modem starts to dial. While the modem is dialing in you get the dialtones handed through to the TX I/O pin. While all this happens the neutral status of the I/O line is high. When the dialin process is finished the TX I/O line goes to low level (This is the new neutral status) and we are ready to transmit serial data. That is all.
+
+
+==What is the problem?==
+There are two problems to solve when you connect a BTX-Terminal to PC. The first thing is that the Terminals have thier own special way to set up a connection and the sacond thing is that you have an asymetric baudrate (V.23). The adapter solves this problem by acting like a real dbt03 on the one side and like a normal V.24 interface on the other side. To do this an ATmega8 is used.
+
+
+==Duplex==
+The original dbt03 was designed to operate in full duplex. miniBTX up to now leaks full duplex support. That is really a problem because if the terminal starts a transmission while you transmit data to the terminal the data will be garbeled. To make this missfeature less painful you can use the /inhibit signal line to lock up the receiver.
+
+
+==Talking CEPT?==
+The adapter has nothing to do with the CEPT-Protocol. Al it does is handing the data through. The included PC-Software illustrates how to talk to a BTX-Terminal. It implements a testpage that can be transmitted again an again by pressing the terminator (#) key. All transmission events are logged on the screen. But please be careful with the software, it is only a quick and dirty reference implementation, you should rewrite it to get a serious implementation.
+
+Getting information about the CEPT-Protocol is a bit problematic, but not impossible if you know the magic words. You will find lots of useful information at http://www.etsi.org
+
+The document numbers are:
+
+T/TE 06-01 / T/CD 06-01  =  ETS 300 072
+T/TE 06-01               =  ETS 300 073
+T/TE 06-03               =  ETS 300 074
+T/TE 06-04 / T/CD 06-04  =  ETS 300 075
+T/TE 06-05 / T/CD 06-05  =  ETS 300 076
+
+
+Note: The article "INTERPRETATION OF THE INTERFACE SIGNALS BY THE D-BT03", published in the Hackerbibel by the CCC is not really recomandable. Especially the explaination of the dbt03 signals seems to be wrong. However you can get the article at: http://www.trust-us.ch/habi1/156_dbt03.html
+
+
+08072015 Philipp Fabian Benedikt Maier

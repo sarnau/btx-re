@@ -1,0 +1,172 @@
+ASSEMBELY
+========================================================================
+
+The device is optimized to be built by hobbyists. Here are some hints
+concerning the assembely of the device. 
+
+==POWER ON VIA TEST-SW==
+The test SW initiates the Test-Routines when it is pressed within powering
+on the device. Normaly you would press the switch, and than you would 
+press the connect-key on the terminal. If you want to initiate the test
+routines without a terminal hooked to the device you can add two wires
+to the free side of the switch and short circuit the power-on-relais with.
+Then you initiate the test routines without a terminal.
+
+
+Note: This modification is strongly recommanded if you wish to modify/develop
+      the software on the device.
+
+       
+      ________________        
+        Bottom-Vidw
+
+            o o
+            o o <--+----- Free switch contacts 
+            o o <--+
+
+
+
+                          |
+                  oooo oo |
+                  AA   AA |
+                  ||   ||
+                  ++   |+-----GND
+                   |   +------+5V
+                   |
+               Relais 
+           Switch contacts
+             
+
+==PROGRAMMING THE DEVICE==
+1) Override the standby functions
+The first programming of the device is a bit difficult because the device
+has a standby-circuit installed. So the first thing to do is to override
+the standby functions. If you have made the modification mentiond above
+you can just press the test-sw continously. If not you should short cicuit
+the Relais-Switch-Contacts:
+
+                          |
+                  oooo oo |
+                  AA   AA |
+                  ||   ||
+                  ++   |+-----GND
+                   |   +------+5V
+                   |
+               Relais 
+           Switch contacts
+             
+Now you have a continous powered device and you can proceed with the
+programming procedure.
+
+2) Fusebit configuration
+Both, the miniBTX as well as the main CPU requie a fuse configuration.
+I prefer to set up fusebits with the program ponyprog because it has
+a nice grafical frontend to program the fusebits. And when everything
+works perfect i usually take a screenshot of the fusebit configuration.
+
+For the miniBTX fusbit configuration see: /miniBTX/doc/fusemap.bmp
+For the main CPU fusbit configuration see: /mikroPAD/doc/fusemap.bmp
+
+Note: Do not use "make fuse" command! The fusemap in the makefile is
+      obsolete and will cause problems because the brown-out-detection
+      is not enabled in this configuration.
+
+To test if the controller had survived the fusebit programming procedure
+just try to reread it. If the controller answers, everything should be
+ok. If you do not get a response, check if the external clock signal
+is present.
+
+Note: The programmer port has the standart atmel UISP pinout. The left
+      on of the two ports is for the miniBTX circuit and the right
+      one for the main CPU.
+
+Note: If programming with the UISP programmer fails check if the 
+      programming speed is set correctly. Imagine that the controller
+      runs with the internal, slow oscillator before it is configured
+      to use the fast external 16Mhz oscillator.
+
+3) Flashing the firmware
+It is recommanded to program the miniBTX controller first. When the 
+programming is finished the miniBTX part of the device should work.
+You can easyly verify the miniBTX circuit by connecting a terminal
+and initiating a dial attempt. You should hear the dialtones and 
+your terminal should say "ONLINE" or something. Of cause you will
+get a blank screen.
+
+The next thing is a bit more difficult. The atmega2561 CPU is not 
+officially supported by the GCC so we used a patched version of
+the gcc to compile the sources. However, you do not need to hassle
+around with patching and recompiling your gcc - you can use the
+ready built .deb packages in /gcc. Just uninstall your courrent
+compiler and then install the the .deb packages.
+
+If the sourcecode of for the main-cpu compiles successfully you
+should program the device to test if it comes alive. Later you
+can do the necessary configurations explained in ./readme.
+
+Note: It is recomanded to use an avr UISP (USB version) to program
+      the AVRs. If you have a different programmer you can alter
+      the makefile or program the resulting .hex files manualy.
+
+Now your device is ready to boot. If the Left LED or the LED
+in the middle lights up continously the RAM-Test failed. If the
+right LED is flashing once per second the operating system has
+successfully booted. If the RAM-Test fails it is not a problem
+the experiance has shown that most of our home made PCBs do not
+boot correctly when powered the first time. You must check all
+whires now. If everything fails, try to replace the RAM and the
+Adress-Latch. Thats the reason why i strongly recomand to mount
+the RAM and the Adress-latch in precision sockets.
+
+Note: Homebrew PCBs mostly have problems with short or open 
+      circuit. This is normal - so check the connections
+      with a multimeter. The connections to the network 
+      intrface should be checked excessivly before mounting 
+      the RJ45 socket because the coils of the built in
+      magnetics look like a short-circuit on the multimeter.
+
+If the system boots and does the dhcp request correctly the most
+critical parts are working. Now you are ready to execute the basic
+system check. See ==Test procedure== in ./readme for instructions.
+
+The assembely of the device is now finished. now you can go ahead 
+with the configuration of the device.
+
+
+==ORIENTATION==
+When mounting the SMD parts to the board you must keep in mind that the
+view on the placement plan is mirrored. This is a mistake that is very
+often made (i made it when mounting the 74x32/74x00 ics and was wondering
+about the high power consumption). So be careful if when you mount the
+smd-parts.
+
+
+==WIREBRIDGES==
+The device contains lots of wirebridges. If you have an industrial process
+you would drill a hole and mout the wire on the component side. You can
+sorten this process by just adding the wirebridges on the component side,
+just like if it would be an SMD-Component.
+
+
+==PRECISION-SOCKETS==
+I recommand to use precesion sockets - especially if you need the device for
+developing proposes. Precesion sockets make it easyer to change suspected
+defective parts.
+
+
+==FIRST POWER ON==
+The first power on should be done with a laboratory power supply that limits
+the courrent if something strange happens. Set the courrent limit to about
+300mA. That is the maximum power the device should consume. To avoid damage
+of parts you should place a finger of every part on the board doing this
+you will notice if parts get hot. If you feel pain in your fingers you better
+turn of the device and check if everything is correctly soldered.
+
+There also a nother hint. Just solder the main CPU (ATmega256) and the ISP
+connector first. Than check if the CPU can be programmed. If it responds to
+the programmer you know that the CPU is working. 
+
+
+
+
+

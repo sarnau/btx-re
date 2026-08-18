@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/usvn/svn/webserver2561/!svn/ver/68/apps/mp3-streamingclient
+END
+mp3-clientserver.c
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/usvn/svn/webserver2561/!svn/ver/63/apps/mp3-streamingclient/mp3-clientserver.c
+END
+mp3-streaming.c
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/usvn/svn/webserver2561/!svn/ver/67/apps/mp3-streamingclient/mp3-streaming.c
+END
+mp3-clientserver.h
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/usvn/svn/webserver2561/!svn/ver/63/apps/mp3-streamingclient/mp3-clientserver.h
+END
+mp3-streaming.h
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/usvn/svn/webserver2561/!svn/ver/68/apps/mp3-streamingclient/mp3-streaming.h
+END

@@ -1,0 +1,41 @@
+<!-- This is a system page of the fictional online service 'Bildschirmtrix' -->
+
+<cept>						<!-- Open CEPT page -->
+<head>						<!-- This is the header, it contains meta information for service control -->
+<meta name="next_page" content="*0#">		<!-- Define the page that is loaded when '#' is pressed -->
+</head>						<!-- Close the header -->
+<body>						<!-- Open page body segment -->
+
+<!-- Modify inifo box -->
+<aph>
+<apd>
+<apd>
+<apd>
+<apd>
+<apd>
+<bkf><ylb>
+<apf><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><apd><apr>
+<apf><sp><stl>Was<sp>ist<sp>denn<sp>da<sp>passiert?<spl><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><apd><apr>
+<apf><sp>Man<sp>konnte<sp>Nachrichten<sp>durch<sp>einen<sp><sp><sp><apd><apr>
+<apf><sp>Designfehler<sp>im<sp>BTX-System<sp>nach-<sp><sp><sp><sp><sp><apd><apr>
+<apf><sp>tr<ss2>Haglich<sp>verändern<sp>in<sp>dem<sp>man<sp>die<sp><sp><sp><sp><sp><apd><apr>
+<apf><sp>Zeichen,<sp>die<sp>man<sp>ver<ss2>Handerbar<sp>haben<sp><sp><sp><apd><apr>
+<apf><sp>wollte<sp>durch<sp>frei<sp>definierbare<sp><sp><sp><sp><sp><sp><sp><apd><apr>
+<apf><sp>Grafikzeichen<sp>(DRCS)<sp>ersetzte,<sp><sp><sp><sp><sp><sp><sp><apd><apr>
+<apf><sp>denn<sp>diese<sp>lagen<sp>im<sp>Speicher-<sp><sp><sp><sp><sp><sp><sp><sp><apd><apr>
+<apf><sp>bereich<sp>des<sp>Absenders<sp>und<sp>konnten<sp><sp><sp><sp><apd><apr>
+<apf><sp>deshalb<sp>jederzeit<sp>von<sp>ihm<sp>verändert<sp><sp><sp><apd><apr>
+<apf><sp>werden.<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><apd><apr>
+<apf><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><apd><apr>
+<apf><sp>Mit<sp>diesem<sp>Trick<sp>konnte<sp>man<sp>jemandem<sp><apd><apr>
+<apf><sp>also<sp>im<sp>wahrsten<sp>sinne<sp>des<sp>Wortes<sp><sp><sp><sp><apd><apr>
+<apf><sp>ein<sp>X<sp>f<ss2>Hur<sp>ein<sp>U<sp>vormachen.<apd><apr>
+<apf><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><apd><apr>
+<apf><sp>Beenden<sp>mit<sp>#,<sp>Eingabe<sp>==><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><apd><apr>
+<apf><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><apr>
+<apu><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf>
+
+
+</body>
+</cept>
+ 

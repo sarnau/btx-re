@@ -1,0 +1,54 @@
+8
+
+dir
+70
+http://213.239.212.163/usvn/svn/webserver2561/system/clock
+http://213.239.212.163/usvn/svn/webserver2561
+
+
+
+2008-06-05T14:39:53.500957Z
+1
+sharan
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+20c90a3d-ec4e-0410-8a5d-d30652974d9e
+
+clock.h
+file
+
+
+
+
+2008-10-19T15:47:51.000000Z
+68b7cb7b8ee719df6ba9229ad3dea8e3
+2008-06-05T14:39:53.500957Z
+1
+sharan
+has-props
+
+clock.c
+file
+
+
+
+
+2008-10-19T15:47:51.000000Z
+587551855213d1bcd196674a9359d410
+2008-06-05T14:39:53.500957Z
+1
+sharan
+has-props
+

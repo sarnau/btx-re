@@ -1,0 +1,158 @@
+<!-- This is the donation-page of the CCC-BTX-Page, reconstructed from video material (Tagesschau) -->
+
+<cept>						<!-- Open CEPT page -->
+<head>						<!-- This is the header, it contains meta information for service control -->
+<meta name="load_page" content="*62#">
+</head>						<!-- Close the header -->
+<body>						<!-- Open page body segment -->
+
+
+<!-- Setup page -->
+<aph>						<!-- Clear screen -->
+<esc><0x28><0x20><0x40><0x0f>			<!-- Invoke DRCS set -->
+<csi><0x30><0x40>				<!-- Invoke 1nd color table -->
+
+
+<!-- Shoot em up scene -->
+<apd><apd><apd><apd><apd><apd><apd><apd><apd><apd><apd><apd><apd><apd><apd><apd><apd><apd><apd>
+<apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf>#$
+
+<apb><apb><sp><sp><apb><apb>
+<apu>
+#$<apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb>
+
+<apb><apb><sp><sp><apb><apb>
+<apu>
+#$<apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb>
+
+<apb><apb><sp><sp><apb><apb>
+<apu>
+#$<apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb>
+
+<apb><apb><sp><sp><apb><apb>
+<apu><apf>
+#$<apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb>
+
+<apb><apb><sp><sp><apb><apb>
+<apu><apf>
+#$<apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb>
+
+<apb><apb>
+<csi><0x31><0x40>				<!-- Invoke 2nd color table -->
+<any>
+#$
+<apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf>
+
+<csi><0x30><0x40>				<!-- Invoke 1nd color table -->
+<any><apb><apb>
+#$
+<whf>
+
+<apr>
+
+!"
+
+<apb><apb><sp><sp><apb><apb>
+<apf>
+!"<apf><apb><apf><apb><apf><apb><apf><apb><apf><apb>
+
+<apb><apb><sp><sp><apb><apb>
+<apf>
+!"<apf><apb><apf><apb><apf><apb><apf><apb><apf><apb>
+
+<apb><apb><sp><sp><apb><apb>
+<apf>
+!"<apf><apb><apf><apb><apf><apb><apf><apb><apf><apb>
+
+<apb><apb><sp><sp><apb><apb>
+<apf>
+!"<apf><apb><apf><apb><apf><apb><apf><apb><apf><apb>
+
+<apb><apb><sp><sp><apb><apb>
+<apf>
+!"<apf><apb><apf><apb><apf><apb><apf><apb><apf><apb>
+
+<apb><apb><sp><sp><apb><apb>
+<apf>
+!"<apf><apb><apf><apb><apf><apb><apf><apb><apf><apb>
+
+<apb><apb><sp><sp><apb><apb>
+<apf>
+!"<apf><apb><apf><apb><apf><apb><apf><apb><apf><apb>
+
+<apb><apb><sp><sp><apb><apb>
+<apf>
+!"<apf><apb><apf><apb><apf><apb><apf><apb><apf><apb>
+
+<apb><apb><sp><sp><apb><apb>
+<apf>
+!"<apf><apb><apf><apb><apf><apb><apf><apb><apf><apb>
+
+<apb><apb><sp><sp><apb><apb>
+<apf>
+!"<apf><apb><apf><apb><apf><apb><apf><apb><apf><apb>
+
+<apb><apb><sp><sp><apb><apb>
+<apf>
+!"<apf><apb><apf><apb><apf><apb><apf><apb><apf><apb>
+
+<apb><apb><sp><sp><apb><apb>
+<apf>
+!"<apf><apb><apf><apb><apf><apb><apf><apb><apf><apb>
+
+<apb><apb><sp><sp><apb><apb>
+<apf>
+!"<apf><apb><apf><apb><apf><apb><apf><apb><apf><apb>
+
+<apb><apb><sp><sp><apb><apb>
+<apf>
+!"<apf><apb><apf><apb><apf><apb><apf><apb><apf><apb>
+
+<apb><apb><sp><sp><apb><apb>
+<apf>
+!"<apf><apb><apf><apb><apf><apb><apf><apb><apf><apb>
+
+<apb><apb><sp><sp><apb><apb>
+<apf>
+!"<apf><apb><apf><apb><apf><apb><apf><apb><apf><apb>
+
+<apb><apb><sp><sp><apb><apb>
+<apf>
+!"<apf><apb><apf><apb><apf><apb><apf><apb><apf><apb>
+
+<csi><0x31><0x40>				<!-- Invoke 2nd color table -->
+<any>
+22
+<apb><apb><sp>22
+<apb><apb><sp>22
+<apb><apb><sp>22
+<apb><apb><sp>22
+<apb><apb><sp>22
+<apb><apb><sp>22
+<apb><apb><sp>22
+<apb><apb><sp>22
+<apb><apb><sp>22
+<apb><apb><sp>22
+<apb><apb><sp>22
+<apb><apb><sp><sp>
+
+<csi><0x30><0x40>				<!-- Invoke 1nd color table -->
+<whf>
+,-<apb><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb>
+./<apb><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb>
+,-<apb><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb>
+./<apb><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb>
+,-<apb><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb>
+./<apb><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb>
+,-<apb><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb>
+./<apb><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb>
+,-<apb><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb>
+./<apb><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb>
+,-<apb><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb>
+./<apb><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb>
+
+
+</body>
+</cept>
+
+

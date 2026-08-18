@@ -1,0 +1,56 @@
+BILDSCHIRMTRIX
+===========================================================================================================
+                                                                                           Online anno 1983
+==Abstract==
+Bildschirmtrix is a combination of hard and software that allows you to set up you own 
+Bildschirmtext network. Bildschirmtrix brings the good old days back to your BTX-Terminal.
+
+
+==Access via HTTP==
+With the mikroPAD hardware you are able to use your existing http-server as a btx datacenter. 
+BTX-Pages will be encoded as a html like hypertext pages so you can use your favourite script 
+lanuguage to do the hypertext preprocessing (php, perl, ruby or whatever). And the best of all: 
+The mikroPAD board exactly fits into an DBT-03 case.
+
+All about the mikroPAD device can be found in ./mikroPAD
+
+Note: The mikroPAD is based on the Mikrowebserver by Dirk Broßwick.
+
+Also see folder ./pcPAD for a PAD-Software that runs on PCs
+
+
+==DBT-02 to RS232==
+Besides the very complex mikroPAD hardware device the project also includes an adapter that 
+is easy to build and suitable for embedded projects (mikroPAD uses exactly that adaptor): 
+miniBTX. The package also contains an example C-Program that illustrates how to handle the 
+adapter and the CEPT page encoding which makes it ideal for testing and experimenting 
+(I had to do many experiments to find out how BTX really works.)
+
+
+
+==Exemples==
+Exemple pages can be found in ./srv Just upload ./srv to an http server and have a lot of
+fun with your mikroPAD.
+
+
+==Tools==
+I wrote some tools that make it easyer to create own BTX sites. You will find them in 
+./tools 
+
+
+==Protocol==
+
+BTX-Terminals are working with the the CEPT T/CD 6-1 specification. Getting information 
+about that CEPT-Protocol is a bit problematic, but not impossible if you know the magic 
+words. You will find lots of useful information at http://www.etsi.org
+
+The document numbers are:
+
+T/TE 06-01 / T/CD 06-01  =  ETS 300 072
+T/TE 06-01               =  ETS 300 073
+T/TE 06-03               =  ETS 300 074
+T/TE 06-04 / T/CD 06-04  =  ETS 300 075
+T/TE 06-05 / T/CD 06-05  =  ETS 300 076
+
+
+02.11.2008 Philipp Fabian Benedikt Maier

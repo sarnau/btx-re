@@ -1,0 +1,3 @@
+
+This is a small programm that loads a BTXML Hypertext page and transmits it
+to the terminal through the miniBTX interface.

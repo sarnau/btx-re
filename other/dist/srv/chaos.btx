@@ -1,0 +1,67 @@
+<!-- This ia an example page that illustrate how a CEPT TCD 6-1
+     looks when it is formatted in the btxml hypertext language
+
+     Propose: How to use the different character sets -->
+
+<cept>						<!-- Open CEPT page -->
+<head>						<!-- This is the header, it contains meta information for service control -->
+<meta name="next_page" content="*655321#">	<!-- Define the page that is loaded when '#' is pressed -->
+</head>						<!-- Close the header -->
+<body>						<!-- Open page body segment -->
+
+
+<!-- First we care about a Brown/Yellow ambient -->
+<cs>						<!-- Clear screen -->
+<csi><0x30><0x40>				<!-- Invoke 1nd color table -->
+<esc><0x23><0x20><fylb>				<!-- Makes the background blue -->
+<esc><0x28><0x40><0x0f>				<!-- Invoke G0 set -->
+
+<trb><bkf>					<!-- Select Transparent background with white foreground -->
+
+<esc><0x28><0x63><0x0f> 				<!-- Invoke G1 set -->
+
+<sp><sp><sp><sp><sp><sp>`ppppppp0<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>
+<sp>z_?////o?///_///_}<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>
+<sp>_7<sp><sp><sp><sp><sp>"o4<sp><sp>_%<sp><sp>"_4<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>
+<sp>_<sp><sp><sp><sp><sp><sp><sp>"ot<sp>_uppp{uppppp<sp><sp>p0t<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>
+j_<sp><sp><sp><sp><sp><sp><sp><sp><sp>k|ps{____ssss{?mv_;}jt<sp><sp><sp><sp><sp><sp><sp>
+j_<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>bsssss{________~__{u_x<sp><sp><sp><sp><sp><sp>
+<sp>_<sp><sp><sp><sp><sp><sp><sp><sp>`~?'sssssssssssss___}___t<sp><sp><sp><sp><sp>
+<sp>_0<sp><sp><sp><sp><sp><sp>`~'<sp>~'###s3######+___o___u0<sp><sp><sp><sp>
+<sp>_5<sp><sp><sp><sp><sp>h_!<sp><sp>_<sp><sp><sp><sp>_%<sp><sp><sp><sp><sp><sp><sp>(__/g_w_!<sp><sp><sp><sp>
+<sp>k_tpppp_qppp_pppz_<sp><sp><sp><sp><sp><sp><sp><sp><sp>||~?c_'<sp><sp><sp><sp><sp>
+<sp>"////////////////!<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>!l~oi}<sp><sp><sp><sp><sp>
+<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>z_4k}ppp0
+<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>x?k5"_+//!
+<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>h_!j5<sp>_<sp><sp><sp><sp>
+<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>j5<sp>~5j7<sp><sp><sp><sp>
+<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>ppp_x/<sp><sp><sp><sp><sp>
+<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>##k?<sp><sp><sp><sp><sp><sp><sp>
+<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>j_<sp><sp><sp><sp><sp><sp><sp>
+<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>"ot<sp><sp><sp><sp><sp><sp>
+<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>#<sp><sp><sp><sp><sp><sp>
+
+
+
+<!-- Text and input prompt -->
+<esc><0x28><0x40><0x0f>				<!-- Invoke G0 set -->
+<apu>
+<apu>
+<apu>
+<apu>
+<apu>
+<apu>
+Chaos<sp>Computer<sp>Club<apd><apr>
+<apd><apr>
+<apd><apr>
+#=Zur<ss2>Huck<sp>zum<apd><apr>
+Hauptmen<ss2>Hu<apd><apr>
+<apd><apr>
+<apd><apr>
+Infos<sp>zum<sp>Congress<sp>unter:<sp>*23c3#<apd><apr>
+
+Eingabe==><sp>
+
+
+</body>						<!-- Close page body segment -->
+</cept>						<!-- Close CEPT page -->

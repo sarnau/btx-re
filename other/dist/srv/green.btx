@@ -1,0 +1,15 @@
+<!-- This is a testpage to set up the purity of a CRT television -->
+
+<cept>						<!-- Open CEPT page -->
+<head>						<!-- This is the header, it contains meta information for service control -->
+<meta name="next_page" content="*testbild#">	<!-- Define the page that is loaded when '#' is pressed -->
+</head>						<!-- Close the header -->
+<body>						<!-- Open page body segment -->
+
+<!-- First we care about a White/Blue ambient -->
+<cs><aph>					<!-- Clear screen -->
+<esc><0x23><0x20><fgrb>				<!-- Makes the background green -->
+<bkf>
+</body>
+</cept>
+ 

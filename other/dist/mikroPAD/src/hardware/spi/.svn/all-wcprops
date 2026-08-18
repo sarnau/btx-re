@@ -1,0 +1,41 @@
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/usvn/svn/webserver2561/!svn/ver/69/hardware/spi
+END
+spi_0.h
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/usvn/svn/webserver2561/!svn/ver/1/hardware/spi/spi_0.h
+END
+spi_1.h
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/usvn/svn/webserver2561/!svn/ver/1/hardware/spi/spi_1.h
+END
+spi_2.h
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/usvn/svn/webserver2561/!svn/ver/1/hardware/spi/spi_2.h
+END
+spi_0.c
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/usvn/svn/webserver2561/!svn/ver/1/hardware/spi/spi_0.c
+END
+spi_1.c
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/usvn/svn/webserver2561/!svn/ver/69/hardware/spi/spi_1.c
+END
+spi_2.c
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/usvn/svn/webserver2561/!svn/ver/1/hardware/spi/spi_2.c
+END

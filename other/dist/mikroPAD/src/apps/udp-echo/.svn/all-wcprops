@@ -1,0 +1,17 @@
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/usvn/svn/webserver2561/!svn/ver/1/apps/udp-echo
+END
+udp-echo.c
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/usvn/svn/webserver2561/!svn/ver/1/apps/udp-echo/udp-echo.c
+END
+udp-echo.h
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/usvn/svn/webserver2561/!svn/ver/1/apps/udp-echo/udp-echo.h
+END

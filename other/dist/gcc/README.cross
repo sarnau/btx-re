@@ -1,0 +1,13 @@
+Unpack cross.tar to your home directory.
+e.g /home/dexter/bin/cross/...
+
+
+Set the pathes in the makefile accordingly:
+
+DIRAVR = /home/dexter/bin/cross/
+DIRAVRBIN = /home/dexter/bin/cross/bin/
+DIRAVRUTILS = /home/dexter/bin/cross/utils/bin
+DIRINC = /home/dexter/bin/cross/avr/lib
+DIRLIB = /home/dexter/bin/cross/avr/lib
+
+

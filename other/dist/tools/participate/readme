@@ -1,0 +1,45 @@
+==Abstract==
+Participate is a simple btx-page uploader tool that should run out of the box
+on any php enabled http-server. Users can upload thier home made btx pages.
+To ensure that one user can not overwrite the pages of another user you can 
+assign every user a numeric range for his pages. The tool does not support
+textual page-ids. Only numbers like *2342# are allowed.
+
+==Access configuration==
+The access configuration is managed directly in the code through php arrays.
+$USER_NUMBER configures how many users you have. Here is an example with 3
+users:
+
+$USER_NUMBER = 3;
+
+$USER_NAME[0] = "foo";
+$USER_PASS[0] = "bar";
+$USER_RANGE_FROM[0] = 23;
+$USER_RANGE_TO[0] = 42;
+
+$USER_NAME[1] = "fnord";
+$USER_PASS[1] = "dronf";
+$USER_RANGE_FROM[1] = 100;
+$USER_RANGE_TO[1] = 220;
+
+$USER_NAME[1] = "gabriel";
+$USER_PASS[1] = "swordfish";
+$USER_RANGE_FROM[1] = 221;
+$USER_RANGE_TO[1] = 300;
+
+==Warning==
+Do not expect so much about the security of this tool. There is no user login
+failure counter or anything that would prevent bruteforce attacks. If your
+server is misconfigured it might handout the sourcecode, including all passwords
+and usernames. Use it on your own risk and improve it yourself if necessary.
+
+
+111208 Philipp Fabian Benedikt Maier
+
+
+
+
+
+
+
+

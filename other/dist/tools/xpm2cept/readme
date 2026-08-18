@@ -1,0 +1,121 @@
+cept2xpm
+========
+
+
+==Abstract==
+cept2xpm is a simple tool to convert xpm bitmaps to Cept mosaic graphics.
+So you can create graphics using a sophisticated graphic editing tool and
+than you can convert them to a BTX compliant format without hassle.
+
+
+==XPM Format==
+The great advantage of the xpm format is, that it is not a binary format 
+and it is very easy to parse with a program. That is the reason why i 
+choosed this format.
+
+Unfortunately there exist some different types of the format. The converter
+accepts only monochrome images. The width must be a mulitple of 2 and the
+height must be a multiple of 3. That is because the mosaic graphics on an
+cept-videotex screen have a size of 2x3 and the image must fit in that grid.
+
+However, if you take a look with a texteditor to your xpm-file you should
+see something like this. If the program does not work you should alter
+the file to the format shown below.
+
+/* XPM */
+static char * test_xpm[] = {
+"60 60 2 1",
+" 	c #FFFFFF",
+".	c #000000",
+"                                                            ",
+"                                                            ",
+"                                   ..... .....        ..... ",
+"                          .............. ......      ...... ",
+"                       ................. ......      ...... ",
+"                    .................... .......    ....... ",
+"                    .................... .......    ....... ",
+"                    ...................   .......  ........ ",
+"                    .............         .......  .......  ",
+"           ......   ....... .....          ..............   ",
+"       ...........  .....   .....          ..............   ",
+"     .............          .....          .............    ",
+"   ................         ......          ............    ",
+"  .................         ......           ..........     ",
+" ...................        ......           .........      ",
+"...........  .......        ......           .........      ",
+".........     .......        .....            ........      ",
+".......       .......        .....            .......       ",
+"......         ......        .....            .......       ",
+"......         ......        .....           .........      ",
+".......       .......        .....           .........      ",
+".......     .........        .....          ...........     ",
+" .......    .........        ......         ...........     ",
+" .......    .........        ......        ............     ",
+"  ......    ........         ......        .............    ",
+"  .......   .........        ......        .............    ",
+"   ......   ..........        .....       ....... ......    ",
+"   ......     ........        .....      .......  .......   ",
+"   .......     ........       ......     .......   ......   ",
+"    ......      .......       ......     .......   .......  ",
+"    ......       ......       ......    .......    .......  ",
+"    .......      .......      ......    ......      ......  ",
+"     ......       ......       .....    ......      ......  ",
+"     ......       ......       .....   .......       .....  ",
+"     .......      ......       .....   .......       .....  ",
+"      ......       .....       .....   ......        .....  ",
+"      ......       .....       .....   ......               ",
+"      .......      .....       .....   .....           .....",
+"       ......     ......       .....               .........",
+"       ......    .......       .....             ...........",
+"       ......  .........                      ..............",
+"        ................                    ................",
+"        ...............                   ..................",
+"        ..............                   ..............     ",
+"        .............                 ...............       ",
+"         ..........                  ..............         ",
+"         ........                 ..............            ",
+"         ......                  .............              ",
+"         .....                ...............               ",
+"                           ...............                  ",
+"                     ....................                   ",
+"                  ....................                      ",
+"                .....................                       ",
+"             .....................                          ",
+"            ...................                             ",
+"          ...............                                   ",
+"         .............                                      ",
+"        ............                                        ",
+"        .........                                           ",
+"       .........                                            "};
+
+
+
+==Output==
+The output is in the btxml format that the mikropad accepts. That means
+that all whitspaces are already replaced with a <sp> tag. The invokation
+of the G1 Character set is not done here. You will need to do that manualy.
+
+<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>`pp`pp<sp><sp><sp><sp>pp0<apd><apr>
+<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>px|_______j__u<sp><sp>z__5<apd><apr>
+<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>______?//'"___4h___%<apd><apr>
+<sp><sp>`x|~__}<sp>//'!__5<sp><sp><sp><sp>j______%<sp><apd><apr>
+`~_______u<sp><sp><sp><sp>___<sp><sp><sp><sp><sp>k____'<sp><sp><apd><apr>
+___?'!"___4<sp><sp><sp>k__<sp><sp><sp><sp><sp>"___?<sp><sp><sp><apd><apr>
+___0<sp><sp><sp>z__5<sp><sp><sp>j__<sp><sp><sp><sp><sp>h___}<sp><sp><sp><apd><apr>
+k__}<sp><sp>____5<sp><sp><sp>j__4<sp><sp><sp>`_____5<sp><sp><apd><apr>
+<sp>o__4<sp>____t<sp><sp><sp>*__5<sp><sp><sp>z__?___<sp><sp><apd><apr>
+<sp>*__}<sp><sp>+___4<sp><sp><sp>__}<sp><sp>j___<sp>k__u<sp><apd><apr>
+<sp><sp>o__4<sp><sp>*__}<sp><sp><sp>o__<sp><sp>___!<sp>"___<sp><apd><apr>
+<sp><sp>*__}<sp><sp><sp>o__<sp><sp><sp>j__<sp>j__?<sp><sp><sp>j__<sp><apd><apr>
+<sp><sp><sp>o__4<sp><sp>z__<sp><sp><sp>j__<sp>*//!<sp><sp>`px||<apd><apr>
+<sp><sp><sp>*__ux~___<sp><sp><sp>"##<sp><sp><sp><sp>p|~_____<apd><apr>
+<sp><sp><sp><sp>______?!<sp><sp><sp><sp><sp><sp><sp>px_____?'##<apd><apr>
+<sp><sp><sp><sp>j__?'!<sp><sp><sp><sp><sp><sp>`|~____/#!<sp><sp><sp><sp><apd><apr>
+<sp><sp><sp><sp>"##<sp><sp><sp>`ppx|_____?#!<sp><sp><sp><sp><sp><sp><sp><apd><apr>
+<sp><sp><sp><sp><sp><sp>`p|________/'<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><apd><apr>
+<sp><sp><sp><sp>`|_____/'##!<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><apd><apr>
+<sp><sp><sp>`____'#<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><apd><apr>
+
+
+
+111208 Philipp Fabian Benedikt Maier

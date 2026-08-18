@@ -1,0 +1,139 @@
+<!-- This is the donation-page of the CCC-BTX-Page, reconstructed from video material (Tagesschau) -->
+
+<cept>						<!-- Open CEPT page -->
+<head>						<!-- This is the header, it contains meta information for service control -->
+<meta name="load_page" content="*raumpflege2#">
+<meta name="load_timeout" content="2">
+</head>						<!-- Close the header -->
+<body>						<!-- Open page body segment -->
+
+
+<!-- DRCS Pixel data -->
+<us><0x2f>
+<us><0x23><0x20> <0x28><0x20><0x40> <0x47><0x41>
+<us><0x23>!
+<0x30><0x40><0x40><0x40><0x40><0x40><0x47><0x40><0x40><0x4f><0x7f><0x79><0x66><0x5f><0x7f><0x40><0x47><0x46><0x43><0x46><0x41>
+<0x30><0x70><0x40><0x60><0x40><0x78><0x40><0x60><0x40><0x7f><0x7c><0x59><0x67><0x7f><0x7e><0x78><0x40><0x70><0x58><0x60><0x58>
+<0x30><0x43><0x67><0x43><0x68><0x41><0x70><0x41><0x70><0x40><0x7f><0x40><0x5f><0x41><0x40><0x43><0x7f><0x41><0x46><0x40><0x58>
+<0x30><0x7c><0x70><0x46><0x70><0x47><0x70><0x47><0x60><0x7f><0x40><0x7e><0x40><0x40><0x60><0x7f><0x70><0x58><0x60><0x46><0x40>
+<0x30><0x40><0x40><0x40><0x40><0x40><0x40><0x40><0x40><0x40><0x40><0x40><0x40><0x40><0x40><0x40><0x43><0x40><0x5f><0x47><0x7f>
+<0x30><0x40><0x40><0x40><0x40><0x40><0x40><0x40><0x40><0x40><0x40><0x40><0x40><0x40><0x40><0x70><0x40><0x7e><0x40><0x7f><0x78>
+<0x30><0x40><0x40><0x40><0x40><0x43><0x70><0x4f><0x7c><0x4f><0x7c><0x4f><0x7c><0x4f><0x7c><0x43><0x70><0x40><0x40><0x40><0x40>
+<0x30><0x7f><0x60><0x7f><0x60><0x7f><0x60><0x7f><0x60><0x7f><0x60><0x40><0x5f><0x40><0x5f><0x40><0x5f><0x40><0x5f><0x40><0x5f>
+<0x30><0x5f><0x78><0x5f><0x78><0x5f><0x78><0x5f><0x78><0x5f><0x78><0x60><0x47><0x60><0x47><0x60><0x47><0x60><0x47><0x60><0x47>
+<0x30><0x47><0x7e><0x47><0x7e><0x47><0x7e><0x47><0x7e><0x47><0x7e><0x78><0x41><0x78><0x41><0x78><0x41><0x78><0x41><0x78><0x41>
+<0x30><0x41><0x7f><0x41><0x7f><0x41><0x7f><0x41><0x7f><0x41><0x7f><0x7e><0x40><0x7e><0x40><0x7e><0x40><0x7e><0x40><0x7e><0x40>
+<0x30><0x40><0x68><0x47><0x6f><0x47><0x48><0x78><0x7f><0x5b><0x4b><0x59><0x5f><0x57><0x55><0x53><0x5f><0x4f><0x61><0x63><0x46>
+<0x30><0x4c><0x40><0x6b><0x78><0x67><0x78><0x7c><0x58><0x44><0x5c><0x44><0x57><0x68><0x71><0x4d><0x63><0x5f><0x48><0x7d><0x70>
+<0x30><0x40><0x7f><0x41><0x64><0x4f><0x44><0x52><0x47><0x50><0x7a><0x72><0x60><0x53><0x70><0x5b><0x67><0x47><0x60><0x60><0x76>
+<0x30><0x5d><0x60><0x78><0x60><0x4e><0x78><0x61><0x4c><0x7e><0x46><0x46><0x76><0x46><0x48><0x4e><0x58><0x55><0x74><0x53><0x78>
+<0x30><0x40><0x5f><0x40><0x40><0x40><0x5f><0x40><0x72><0x40><0x78><0x40><0x7e><0x41><0x59><0x40><0x4f><0x42><0x77><0x66><0x40>
+<0x30><0x4c><0x40><0x64><0x40><0x68><0x40><0x48><0x40><0x7c><0x40><0x7c><0x40><0x7e><0x40><0x7a><0x40><0x61><0x40><0x70><0x40>
+<0x30><0x40><0x40><0x40><0x40><0x40><0x40><0x40><0x40><0x7f><0x7f><0x7f><0x7f><0x40><0x40><0x40><0x40><0x40><0x40><0x40><0x40>
+<us>AA
+
+
+<!-- Setup page -->
+<cs>						<!-- Clear screen -->
+<csi><0x31><0x40>				<!-- Invoke 2nd color table (to get deep blue) -->
+<esc><0x23><0x20><fbkb>				<!-- Makes the background black -->
+<esc><0x28><0x40><0x0f>				<!-- Invoke G0 set -->
+
+
+<!-- Headline -->
+<esc><0x22><0x41>				<!-- Invoke C1P set -->
+<csi><0x30><0x40>				<!-- Invoke 1nd color table -->
+<trb><whf>					<!-- Select Transparent background with white foreground -->
+<aph>						<!-- Set cursor to home position -->
+Chaos<sp>Computer<sp>Club<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>9,79<sp>DM<apr><apd>
+
+
+<!-- Opening: Es erforderte ein ... -->
+<dbh>
+<any>
+<apd><apd><apd><apd><apd><apd><apd><apd><apd><apd><apd><apd><apd><apd><apd><apd><apd><apd><apd><apd>
+zu<sp>befreien.<apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf>
+<apu><apu>
+Menschen<apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>Millionen<apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>von<sp>60<apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>ein<sp><sp>Volk
+<apu><apu>
+<apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf>
+weisen<sp>und<apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><ss2>Huckzu<apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>GILB<sp>zur<apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>Team<sp>,<sp>den
+<apu><apu>
+<apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf>
+rkenswertes<apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>ein<sp>beme<apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>Es<sp>erforderte
+
+
+
+<!-- Marquee: Chaos movie presents ... -->
+<aph><apd><apd>
+<apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf>
+<dbs><any>
+CH<apb><apb><apb><apb><apb><apb>
+CHA<apb><apb><apb><apb><apb><apb><apb><apb>
+CHAO<apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>
+CHAOS<apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>
+CHAOS-<apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>
+CHAOS-M<apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>
+CHAOS-Mo<apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>
+CHAOS-Mov<apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>
+CHAOS-Movi<apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>
+CHAOS-Movie<apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>
+CHAOS-Movie<sp><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>
+CHAOS-Movie<sp>p<apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>
+CHAOS-Movie<sp>pr<apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>
+CHAOS-Movie<sp>pre<apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>
+CHAOS-Movie<sp>pres<apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>
+CHAOS-Movie<sp>prese<apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>
+CHAOS-Movie<sp>presen<apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>
+CHAOS-Movie<sp>present<apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>
+CHAOS-Movie<sp>presents<apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>
+<apr><dbw>CHAOS-Movie<sp>presents<apd><apd><apr>
+
+
+<!-- Raumpflege -->
+<dbs><apf><apf><apf><apf><apf><apf><apf><apf><apf>Raumpflege<apd><apd><apr>
+
+
+<!-- Starring -->
+<apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf>
+<dbw><anc>
+s<apb><apb>
+st<apb><apb><apb><apb><apb><apb>
+sta<apb><apb><apb><apb><apb><apb><apb><apb>
+star<apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>
+starr<apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>
+starri<apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>
+starrin<apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>
+starring<apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>
+starring:
+
+
+<!-- Player -->
+<apd><apd>
+<nsz><anw>
+<apr>
+<esc><0x28><0x20><0x40><0x0f>			<!-- Invoke DRCS set -->
+!"<apb><apb> <apb><apf><apb><apf><apb><apf><apb><apf><apb><apf> <sp>
+!"<apb><apb> <apb><apf><apb><apf><apb><apf><apb><apf><apb><apf> <sp>
+!"<apb><apb> <apb><apf><apb><apf><apb><apf><apb><apf><apb><apf> <sp>
+!"
+<esc><0x28><0x40><0x0f>				<!-- Invoke G0 set -->
+<sp><sp>CHAOS-Mobil<sp><sp><sp><sp>
+<esc><0x28><0x20><0x40><0x0f>			<!-- Invoke DRCS set -->
+<csi><0x31><0x40>				<!-- Invoke 2nd color table -->
+<any>
+#$
+<apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf><apb><apf>
+
+<csi><0x30><0x40>				<!-- Invoke 1nd color table -->
+<any><apb><apb>
+#$
+<esc><0x28><0x40><0x0f>				<!-- Invoke G0 set -->
+<sp>
+<anw>
+<sp>A-H<ss2>Hornchen<sp>TOM
+
+</body>
+</cept>
+ 
+

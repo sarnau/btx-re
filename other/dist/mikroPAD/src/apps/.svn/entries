@@ -1,0 +1,40 @@
+8
+
+dir
+70
+http://213.239.212.163/usvn/svn/webserver2561/apps
+http://213.239.212.163/usvn/svn/webserver2561
+
+
+
+2008-09-13T13:18:31.104096Z
+68
+sharan
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+20c90a3d-ec4e-0410-8a5d-d30652974d9e
+
+httpd
+dir
+
+udp-echo
+dir
+
+mp3-streamingclient
+dir
+
+telnet
+dir
+

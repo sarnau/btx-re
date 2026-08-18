@@ -1,0 +1,75 @@
+<!-- This ia an example page that illustrate how a CEPT TCD 6-1
+     looks when it is formatted in the btxml hypertext language
+
+     Propose: How to use the different character sets -->
+
+<cept>						<!-- Open CEPT page -->
+<head>						<!-- This is the header, it contains meta information for service control -->
+<meta name="next_page" content="*test2#">	<!-- Define the page that is loaded when '#' is pressed -->
+</head>						<!-- Close the header -->
+<body>						<!-- Open page body segment -->
+
+
+<!-- First we care about a White/Blue ambient -->
+<cs>						<!-- Clear screen -->
+<csi><0x31><0x40>				<!-- Invoke 2nd color table (to get deep blue) -->
+<esc><0x23><0x20><fblb>				<!-- Makes the background blue -->
+<esc><0x28><0x40>				<!-- Invoke G0 set -->
+
+
+<!-- Headline -->
+<esc><0x22><0x41>				<!-- Invoke C1P set -->
+<csi><0x30><0x40>				<!-- Invoke 1nd color table -->
+<trb><whf>					<!-- Select Transparent background with white foreground -->
+<aph>						<!-- Set cursor to home position -->
+Bildschirmtrix<apd><apr>
+<csi><0x30><0x40>				<!-- Invoke 1nd color table (to get a real white) -->
+<esc><0x23><0x21><fwhb>				<!-- Maks a white full row -->
+<apd>
+<esc><0x23><0x21><fwhb>				<!-- Maks a white full row -->
+<csi><0x31><0x40>				<!-- Invoke 2nd color table (to get deep blue) -->
+<trb><blf>					<!-- Select Transparent background with blue foreground -->
+
+<csi><0x31><0x40>				<!-- Invoke 2nd color table -->
+<dbs><apr>Testbild<sp><sp><sp><sp><sp><sp>*test#<apd><apr>
+<csi><0x30><0x40>				<!-- Invoke 1nd color table -->
+
+<trb><whf>					<!-- Select Transparent background with white foreground -->
+<nsz>						<!-- Select normal size font -->
+
+
+<!-- Test-Text -->
+BTX<sp>Testbild<sp>nach<sp>CEPT<sp>T/CD<sp>6-1<apd><apd><apr>
+
+<esc><0x28><0x40>				<!-- Invoke G0 set (just activate, only for a better understanding) -->
+<grb><bkf>G0-SET:<whf><trb>			<!-- Green foreground with black background and back -->
+<sp>!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~<apd><apr>
+<apd><apr>
+
+<esc><0x28><0x40>				<!-- Invoke G0 set -->
+<grb><bkf>G1-SET:<whf><trb>			<!-- Green foreground with black background and back -->
+<esc><0x28><0x63> 				<!-- Invoke G1 set -->
+<sp>!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~<apd><apr>
+<apd><apr>
+
+<esc><0x28><0x40>				<!-- Invoke G0 set -->
+<grb><bkf>G2-SET:<whf><trb>			<!-- Green foreground with black background and back -->
+<esc><0x28><0x62>				<!-- Invoke G2 set -->
+<sp>!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~<apd><apr>
+<apd><apr>
+
+<esc><0x28><0x40>				<!-- Invoke G0 set -->
+<grb><bkf>G3-SET:<whf><trb>			<!-- Green foreground with black background and back -->
+<esc><0x28><0x64>				<!-- Invoke G3 set -->
+<sp>!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~<apd><apr>
+<apd><apr>
+
+
+<!-- Input prompt -->
+<esc><0x28><0x40>				<!-- Invoke G0 set -->
+#<sp>um<sp>naechste<sp>Testseite<sp>abzurufen<apd><apr>
+Eingabe<sp>==><sp>
+
+
+</body>						<!-- Close page body segment -->
+</cept>						<!-- Close CEPT page -->

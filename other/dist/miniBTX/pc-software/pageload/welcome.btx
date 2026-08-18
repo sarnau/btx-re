@@ -1,0 +1,61 @@
+<!-- This is a system page of the fictional online service 'Bildschirmtrix' -->
+
+<cept>						<!-- Open CEPT page -->
+<head>						<!-- This is the header, it contains meta information for service control -->
+<meta name="next_page" content="*0#">		<!-- Define the page that is loaded when '#' is pressed -->
+<meta name="hyperlinks" content="06*88#">
+</head>						<!-- Close the header -->
+<body>						<!-- Open page body segment -->
+
+
+<!-- First we care about a White/Blue ambient -->
+<cs>						<!-- Clear screen -->
+<csi><0x31><0x40>				<!-- Invoke 2nd color table (to get deep blue) -->
+<esc><0x23><0x20><fblb>				<!-- Makes the background blue -->
+<esc><0x28><0x40>				<!-- Invoke G0 set -->
+
+
+<!-- Headline -->
+<esc><0x22><0x41>				<!-- Invoke C1P set -->
+<csi><0x30><0x40>				<!-- Invoke 1nd color table -->
+<trb><whf>					<!-- Select Transparent background with white foreground -->
+<aph>						<!-- Set cursor to home position -->
+Bildschirmtrix<apd><apr>
+<csi><0x30><0x40>				<!-- Invoke 1nd color table (to get a real white) -->
+<esc><0x23><0x21><fwhb>				<!-- Maks a white full row -->
+<apd>
+<esc><0x23><0x21><fwhb>				<!-- Maks a white full row -->
+<csi><0x31><0x40>				<!-- Invoke 2nd color table (to get deep blue) -->
+<trb><blf>					<!-- Select Transparent background with blue foreground -->
+
+<csi><0x31><0x40>				<!-- Invoke 2nd color table -->
+<dbs><apr>Deutsche<sp>Chaospost<apd><apr>
+<csi><0x30><0x40>				<!-- Invoke 1nd color table -->
+
+<trb><whf>					<!-- Select Transparent background with white foreground -->
+<nsz>						<!-- Select normal size font -->
+
+<apd><apr>
+<nsz>02.09.1983<sp><sp>23:23<apd><apr>
+<apd><apr>
+Guten<sp>Tag<apd><apr>
+Frau<apd><apr>
+Eris<apd><apr>
+Discordia<apd><apr>
+<apd><apr>
+Mitteilungsempfang<sp><ss2>Hoffnen<sp>mit<sp>06<apd><apr>
+<apd>
+<apd>
+<apd>
+<apd>
+<apd>
+<apd><apr>
+Sie<sp>benutzten<sp>Bildschirmtext<sp>zuletzt<apd><apr>
+am<sp>31.12.2001<sp>bis<sp>23:59<apd><apr>
+<apd><apr>
+<apd><apr>
+Weiter<sp>mit<sp>#<sp>oder<sp><sp><sp>*Seitennummer#<apd><apr>
+Eingabe<sp>==><sp>
+</body>
+</cept>
+ 

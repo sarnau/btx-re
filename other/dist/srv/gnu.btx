@@ -1,0 +1,68 @@
+<!-- This ia an example page that illustrate how a CEPT TCD 6-1
+     looks when it is formatted in the btxml hypertext language
+
+     Propose: How to use the different character sets -->
+
+<cept>						<!-- Open CEPT page -->
+<head>						<!-- This is the header, it contains meta information for service control -->
+<meta name="next_page" content="*0#">		<!-- Define the page that is loaded when '#' is pressed -->
+</head>						<!-- Close the header -->
+<body>						<!-- Open page body segment -->
+
+
+<!-- First we care about a Brown/Yellow ambient -->
+<cs>						<!-- Clear screen -->
+<csi><0x30><0x40>				<!-- Invoke 1nd color table -->
+<esc><0x23><0x20><fylb>				<!-- Makes the background yellow -->
+<esc><0x28><0x40><0x0f>				<!-- Invoke G0 set -->
+
+<csi><0x31><0x40>				<!-- Invoke 2nd color table -->
+
+<trb><ylf>					<!-- Select Transparent background with white foreground -->
+
+<esc><0x28><0x63><0x0f> 				<!-- Invoke G1 set -->
+
+<sp><sp><sp><sp><sp><sp><sp>ppppp<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>`0<sp><sp><sp><sp><sp><sp><sp><sp><apd><apr>
+<sp><sp><sp>`x.sq|||~_-tp0<sp><sp><sp><sp><sp><sp><sp>`px~s_sws<t0<sp><sp><sp><apd><apr>
+<sp><sp>x'x~?cy./-,,,'<sp><sp><sp><sp><sp><sp><sp><sp>"/,,,,/w/}|+t<sp><sp><apd><apr>
+<sp>h%z_7>!<sp><sp><sp><sp><sp><sp>`ppp0<sp><sp><sp><sp>pp0<sp><sp><sp><sp><sp><sp>+6_}*4<sp><apd><apr>
+<sp>5(_7:<sp><sp><sp><sp><sp><sp>`.ap|tsmp|sx|r+d<sp><sp><sp><sp><sp>*~_5k<sp><apd><apr>
+j!j__5<sp><sp><sp><sp><sp>8a~_____}6+wo___ti0<sp><sp><sp><sp>w_=j0<apd><apr>
+j<sp>*_?5<sp><sp><sp>`>y_______/5<sp>+h____})0<sp><sp><sp>w_5j5<apd><apr>
+"5*_w)p<sp>xg~?/##<sp>p0<sp>`",z1<sp>j3#o};tp:{_7j!<apd><apr>
+<sp>m"__}rs|_'<sp><sp><sp>xo?<sp>`2+0*%~5k<sp><sp>+_}x|__!><sp><apd><apr>
+<sp>"u"_____!<sp><sp><sp>"!<sp>`ppz<sp>k<sp><sp>_|~<sp><sp><sp>o___?!>!<sp><apd><apr>
+<sp><sp>"m0#'_5<sp><sp><sp><sp><sp>j<sp>*w_e<sp><sp><sp><sp>+_w!<sp><sp>"o7!p.!<sp><sp><apd><apr>
+<sp><sp><sp><sp>"-,~<sp><sp><sp><sp><sp>`5<sp><sp><sp>"!&<sp><sp><sp><sp>*?t<sp><sp><sp>"_#<sp><sp><sp><sp><sp><apd><apr>
+<sp><sp><sp><sp><sp><sp>`?<sp><sp><sp><sp>`7m<sp><sp><sp><sp><sp>`pt0<sp><sp>*5+,tpz?<sp><sp><sp><sp><sp><apd><apr>
+<sp><sp><sp><sp><sp><sp>z<sp><sp>`p~'<sp><sp><sp><sp><sp><sp><sp>_/0#-p<sp>#'k0<sp><sp><sp><sp><sp><sp><sp><sp><apd><apr>
+<sp><sp><sp><sp><sp>vqxo7!j4<sp><sp><sp>($<sp><sp>#*/m<sp><sp>!<sp><sp>j5<sp><sp><sp><sp><sp><sp><sp><sp><apd><apr>
+<sp><sp><sp><sp><sp>#<sp><sp>j5<sp>*u<sp><sp><sp><sp><sp>+|<sp><sp><sp><sp><sp><sp><sp>`x'<sp><sp><sp><sp><sp><sp><sp><sp><sp><apd><apr>
+<sp><sp><sp><sp><sp><sp><sp><sp>j5<sp><sp>op<sp><sp><sp><sp><sp>*4<sp><sp><sp><sp><sp><sp>#m0<sp><sp><sp><sp><sp><sp><sp><sp><sp><apd><apr>
+<sp><sp><sp><sp><sp><sp><sp><sp>*u<sp><sp><sp>+|<sp><sp><sp><sp><sp>+lpp|,,|.!<sp><sp><sp><sp><sp><sp><sp><sp><sp><apd><apr>
+<sp><sp><sp><sp><sp><sp><sp><sp><sp>o0<sp><sp><sp>}p<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>j!<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><apd><apr>
+<sp><sp><sp><sp><sp><sp><sp><sp><sp>"m<sp><sp><sp><sp>+_<sp>0<sp><sp><sp>n?o?##<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><apd><apr>
+<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>)0<sp><sp>*w_}4<sp><sp><sp><sp>"u<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><apd><apr>
+<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>"$<sp><sp>"o?}p<sp>p~<%<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><apd><apr>
+<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>h?!{_z__up<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><apd><apr>
+<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>'o_____%<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><apd><apr>
+
+
+<!-- Text and input prompt -->
+<esc><0x28><0x40><0x0f>				<!-- Invoke G0 set -->
+<apu>
+<apu>
+<apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf>Press<sp>#<apd><apr>
+<apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf>to<sp>continue!<!--apd apr-->
+<apu>
+<apu>
+<apu>
+<apu>
+GNU<apd><apr>
+Not<apd><apr>
+Unix<apd><apr>
+#<sp>
+
+
+</body>						<!-- Close page body segment -->
+</cept>						<!-- Close CEPT page -->

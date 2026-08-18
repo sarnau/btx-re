@@ -1,0 +1,511 @@
+
+main.elf:     file format elf32-avr
+
+Sections:
+Idx Name          Size      VMA       LMA       File off  Algn
+  0 .text         00000358  00000000  00000000  00000074  2**1
+                  CONTENTS, ALLOC, LOAD, READONLY, CODE
+  1 .data         00000000  00800060  00000358  000003cc  2**0
+                  CONTENTS, ALLOC, LOAD, DATA
+  2 .stab         000006cc  00000000  00000000  000003cc  2**2
+                  CONTENTS, READONLY, DEBUGGING
+  3 .stabstr      00000054  00000000  00000000  00000a98  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  4 .comment      00000011  00000000  00000000  00000aec  2**0
+                  CONTENTS, READONLY
+
+Disassembly of section .text:
+
+00000000 <__vectors>:
+   0:	12 c0       	rjmp	.+36     	; 0x26 <__ctors_end>
+   2:	36 c1       	rjmp	.+620    	; 0x270 <__vector_1>
+   4:	18 c0       	rjmp	.+48     	; 0x36 <__bad_interrupt>
+   6:	17 c0       	rjmp	.+46     	; 0x36 <__bad_interrupt>
+   8:	16 c0       	rjmp	.+44     	; 0x36 <__bad_interrupt>
+   a:	15 c0       	rjmp	.+42     	; 0x36 <__bad_interrupt>
+   c:	14 c0       	rjmp	.+40     	; 0x36 <__bad_interrupt>
+   e:	13 c0       	rjmp	.+38     	; 0x36 <__bad_interrupt>
+  10:	12 c0       	rjmp	.+36     	; 0x36 <__bad_interrupt>
+  12:	11 c0       	rjmp	.+34     	; 0x36 <__bad_interrupt>
+  14:	10 c0       	rjmp	.+32     	; 0x36 <__bad_interrupt>
+  16:	0f c0       	rjmp	.+30     	; 0x36 <__bad_interrupt>
+  18:	0e c0       	rjmp	.+28     	; 0x36 <__bad_interrupt>
+  1a:	0d c0       	rjmp	.+26     	; 0x36 <__bad_interrupt>
+  1c:	0c c0       	rjmp	.+24     	; 0x36 <__bad_interrupt>
+  1e:	0b c0       	rjmp	.+22     	; 0x36 <__bad_interrupt>
+  20:	0a c0       	rjmp	.+20     	; 0x36 <__bad_interrupt>
+  22:	09 c0       	rjmp	.+18     	; 0x36 <__bad_interrupt>
+  24:	08 c0       	rjmp	.+16     	; 0x36 <__bad_interrupt>
+
+00000026 <__ctors_end>:
+  26:	11 24       	eor	r1, r1
+  28:	1f be       	out	0x3f, r1	; 63
+  2a:	cf e5       	ldi	r28, 0x5F	; 95
+  2c:	d4 e0       	ldi	r29, 0x04	; 4
+  2e:	de bf       	out	0x3e, r29	; 62
+  30:	cd bf       	out	0x3d, r28	; 61
+  32:	7e d1       	rcall	.+764    	; 0x330 <main>
+  34:	8f c1       	rjmp	.+798    	; 0x354 <_exit>
+
+00000036 <__bad_interrupt>:
+  36:	e4 cf       	rjmp	.-56     	; 0x0 <__vectors>
+
+00000038 <systemUartInit>:
+  38:	20 b5       	in	r18, 0x20	; 32
+  3a:	28 60       	ori	r18, 0x08	; 8
+  3c:	20 bd       	out	0x20, r18	; 32
+  3e:	20 b5       	in	r18, 0x20	; 32
+  40:	20 bd       	out	0x20, r18	; 32
+  42:	20 b5       	in	r18, 0x20	; 32
+  44:	24 60       	ori	r18, 0x04	; 4
+  46:	20 bd       	out	0x20, r18	; 32
+  48:	20 b5       	in	r18, 0x20	; 32
+  4a:	22 60       	ori	r18, 0x02	; 2
+  4c:	20 bd       	out	0x20, r18	; 32
+  4e:	20 b5       	in	r18, 0x20	; 32
+  50:	20 bd       	out	0x20, r18	; 32
+  52:	20 b5       	in	r18, 0x20	; 32
+  54:	20 bd       	out	0x20, r18	; 32
+  56:	90 bd       	out	0x20, r25	; 32
+  58:	89 b9       	out	0x09, r24	; 9
+  5a:	53 9a       	sbi	0x0a, 3	; 10
+  5c:	54 9a       	sbi	0x0a, 4	; 10
+  5e:	08 95       	ret
+
+00000060 <systemUartTransmit>:
+  60:	5d 9b       	sbis	0x0b, 5	; 11
+  62:	fe cf       	rjmp	.-4      	; 0x60 <systemUartTransmit>
+  64:	8c b9       	out	0x0c, r24	; 12
+  66:	08 95       	ret
+
+00000068 <systemUartRecive>:
+  68:	5f 9b       	sbis	0x0b, 7	; 11
+  6a:	fe cf       	rjmp	.-4      	; 0x68 <systemUartRecive>
+  6c:	8c b1       	in	r24, 0x0c	; 12
+  6e:	08 95       	ret
+
+00000070 <USART0_RX_vect>:
+  70:	1f 92       	push	r1
+  72:	0f 92       	push	r0
+  74:	0f b6       	in	r0, 0x3f	; 63
+  76:	0f 92       	push	r0
+  78:	11 24       	eor	r1, r1
+  7a:	0f 90       	pop	r0
+  7c:	0f be       	out	0x3f, r0	; 63
+  7e:	0f 90       	pop	r0
+  80:	1f 90       	pop	r1
+  82:	18 95       	reti
+
+00000084 <systemDelay10ms>:
+  84:	88 23       	and	r24, r24
+  86:	41 f0       	breq	.+16     	; 0x98 <systemDelay10ms+0x14>
+  88:	ef e3       	ldi	r30, 0x3F	; 63
+  8a:	fc e9       	ldi	r31, 0x9C	; 156
+  8c:	31 97       	sbiw	r30, 0x01	; 1
+  8e:	f1 f7       	brne	.-4      	; 0x8c <systemDelay10ms+0x8>
+  90:	00 c0       	rjmp	.+0      	; 0x92 <systemDelay10ms+0xe>
+  92:	00 00       	nop
+  94:	81 50       	subi	r24, 0x01	; 1
+  96:	f6 cf       	rjmp	.-20     	; 0x84 <systemDelay10ms>
+  98:	08 95       	ret
+
+0000009a <systemDelay1s>:
+  9a:	cf 93       	push	r28
+  9c:	c8 2f       	mov	r28, r24
+  9e:	cc 23       	and	r28, r28
+  a0:	21 f0       	breq	.+8      	; 0xaa <systemDelay1s+0x10>
+  a2:	84 e6       	ldi	r24, 0x64	; 100
+  a4:	ef df       	rcall	.-34     	; 0x84 <systemDelay10ms>
+  a6:	c1 50       	subi	r28, 0x01	; 1
+  a8:	fa cf       	rjmp	.-12     	; 0x9e <systemDelay1s+0x4>
+  aa:	cf 91       	pop	r28
+  ac:	08 95       	ret
+
+000000ae <systemDelay100ms>:
+  ae:	cf 93       	push	r28
+  b0:	c8 2f       	mov	r28, r24
+  b2:	cc 23       	and	r28, r28
+  b4:	21 f0       	breq	.+8      	; 0xbe <systemDelay100ms+0x10>
+  b6:	8a e0       	ldi	r24, 0x0A	; 10
+  b8:	e5 df       	rcall	.-54     	; 0x84 <systemDelay10ms>
+  ba:	c1 50       	subi	r28, 0x01	; 1
+  bc:	fa cf       	rjmp	.-12     	; 0xb2 <systemDelay100ms+0x4>
+  be:	cf 91       	pop	r28
+  c0:	08 95       	ret
+
+000000c2 <systemDelay1ms>:
+  c2:	88 23       	and	r24, r24
+  c4:	41 f0       	breq	.+16     	; 0xd6 <systemDelay1ms+0x14>
+  c6:	ef e9       	ldi	r30, 0x9F	; 159
+  c8:	ff e0       	ldi	r31, 0x0F	; 15
+  ca:	31 97       	sbiw	r30, 0x01	; 1
+  cc:	f1 f7       	brne	.-4      	; 0xca <systemDelay1ms+0x8>
+  ce:	00 c0       	rjmp	.+0      	; 0xd0 <systemDelay1ms+0xe>
+  d0:	00 00       	nop
+  d2:	81 50       	subi	r24, 0x01	; 1
+  d4:	f6 cf       	rjmp	.-20     	; 0xc2 <systemDelay1ms>
+  d6:	08 95       	ret
+
+000000d8 <systemDelay10us>:
+  d8:	88 23       	and	r24, r24
+  da:	31 f0       	breq	.+12     	; 0xe8 <systemDelay10us+0x10>
+  dc:	95 e3       	ldi	r25, 0x35	; 53
+  de:	9a 95       	dec	r25
+  e0:	f1 f7       	brne	.-4      	; 0xde <systemDelay10us+0x6>
+  e2:	00 00       	nop
+  e4:	81 50       	subi	r24, 0x01	; 1
+  e6:	f8 cf       	rjmp	.-16     	; 0xd8 <systemDelay10us>
+  e8:	08 95       	ret
+
+000000ea <systemDelay100us>:
+  ea:	cf 93       	push	r28
+  ec:	c8 2f       	mov	r28, r24
+  ee:	cc 23       	and	r28, r28
+  f0:	21 f0       	breq	.+8      	; 0xfa <systemDelay100us+0x10>
+  f2:	8a e0       	ldi	r24, 0x0A	; 10
+  f4:	f1 df       	rcall	.-30     	; 0xd8 <systemDelay10us>
+  f6:	c1 50       	subi	r28, 0x01	; 1
+  f8:	fa cf       	rjmp	.-12     	; 0xee <systemDelay100us+0x4>
+  fa:	cf 91       	pop	r28
+  fc:	08 95       	ret
+
+000000fe <systemDelay1us>:
+  fe:	88 23       	and	r24, r24
+ 100:	31 f0       	breq	.+12     	; 0x10e <systemDelay1us+0x10>
+ 102:	95 e0       	ldi	r25, 0x05	; 5
+ 104:	9a 95       	dec	r25
+ 106:	f1 f7       	brne	.-4      	; 0x104 <systemDelay1us+0x6>
+ 108:	00 00       	nop
+ 10a:	81 50       	subi	r24, 0x01	; 1
+ 10c:	f8 cf       	rjmp	.-16     	; 0xfe <systemDelay1us>
+ 10e:	08 95       	ret
+
+00000110 <systemDelay05us>:
+ 110:	88 23       	and	r24, r24
+ 112:	31 f0       	breq	.+12     	; 0x120 <systemDelay05us+0x10>
+ 114:	92 e0       	ldi	r25, 0x02	; 2
+ 116:	9a 95       	dec	r25
+ 118:	f1 f7       	brne	.-4      	; 0x116 <systemDelay05us+0x6>
+ 11a:	00 c0       	rjmp	.+0      	; 0x11c <systemDelay05us+0xc>
+ 11c:	81 50       	subi	r24, 0x01	; 1
+ 11e:	f8 cf       	rjmp	.-16     	; 0x110 <systemDelay05us>
+ 120:	08 95       	ret
+
+00000122 <systemDelay01us>:
+ 122:	88 23       	and	r24, r24
+ 124:	19 f0       	breq	.+6      	; 0x12c <systemDelay01us+0xa>
+ 126:	00 c0       	rjmp	.+0      	; 0x128 <systemDelay01us+0x6>
+ 128:	81 50       	subi	r24, 0x01	; 1
+ 12a:	fb cf       	rjmp	.-10     	; 0x122 <systemDelay01us>
+ 12c:	08 95       	ret
+
+0000012e <systemDelay16>:
+ 12e:	01 97       	sbiw	r24, 0x01	; 1
+ 130:	f1 f7       	brne	.-4      	; 0x12e <systemDelay16>
+ 132:	08 95       	ret
+
+00000134 <systemDelay8>:
+ 134:	8a 95       	dec	r24
+ 136:	f1 f7       	brne	.-4      	; 0x134 <systemDelay8>
+ 138:	08 95       	ret
+
+0000013a <dbt03IoCtrl.part.0>:
+ 13a:	c0 9a       	sbi	0x18, 0	; 24
+ 13c:	08 95       	ret
+
+0000013e <dbt03Dialtone>:
+ 13e:	0f 93       	push	r16
+ 140:	1f 93       	push	r17
+ 142:	cf 93       	push	r28
+ 144:	df 93       	push	r29
+ 146:	8c 01       	movw	r16, r24
+ 148:	c0 e0       	ldi	r28, 0x00	; 0
+ 14a:	d0 e0       	ldi	r29, 0x00	; 0
+ 14c:	c0 17       	cp	r28, r16
+ 14e:	d1 07       	cpc	r29, r17
+ 150:	41 f0       	breq	.+16     	; 0x162 <dbt03Dialtone+0x24>
+ 152:	c0 98       	cbi	0x18, 0	; 24
+ 154:	8a e0       	ldi	r24, 0x0A	; 10
+ 156:	c9 df       	rcall	.-110    	; 0xea <systemDelay100us>
+ 158:	f0 df       	rcall	.-32     	; 0x13a <dbt03IoCtrl.part.0>
+ 15a:	8a e0       	ldi	r24, 0x0A	; 10
+ 15c:	c6 df       	rcall	.-116    	; 0xea <systemDelay100us>
+ 15e:	21 96       	adiw	r28, 0x01	; 1
+ 160:	f5 cf       	rjmp	.-22     	; 0x14c <dbt03Dialtone+0xe>
+ 162:	df 91       	pop	r29
+ 164:	cf 91       	pop	r28
+ 166:	1f 91       	pop	r17
+ 168:	0f 91       	pop	r16
+ 16a:	08 95       	ret
+
+0000016c <systemDbt03Init>:
+ 16c:	e6 df       	rcall	.-52     	; 0x13a <dbt03IoCtrl.part.0>
+ 16e:	b8 9a       	sbi	0x17, 0	; 23
+ 170:	92 98       	cbi	0x12, 2	; 18
+ 172:	8b b7       	in	r24, 0x3b	; 59
+ 174:	80 64       	ori	r24, 0x40	; 64
+ 176:	8b bf       	out	0x3b, r24	; 59
+ 178:	85 b7       	in	r24, 0x35	; 53
+ 17a:	82 60       	ori	r24, 0x02	; 2
+ 17c:	85 bf       	out	0x35, r24	; 53
+ 17e:	78 94       	sei
+ 180:	08 95       	ret
+
+00000182 <systemDbt03Transmit>:
+ 182:	0f 93       	push	r16
+ 184:	1f 93       	push	r17
+ 186:	cf 93       	push	r28
+ 188:	df 93       	push	r29
+ 18a:	08 2f       	mov	r16, r24
+ 18c:	f8 94       	cli
+ 18e:	d5 df       	rcall	.-86     	; 0x13a <dbt03IoCtrl.part.0>
+ 190:	82 e5       	ldi	r24, 0x52	; 82
+ 192:	a2 df       	rcall	.-188    	; 0xd8 <systemDelay10us>
+ 194:	c0 e0       	ldi	r28, 0x00	; 0
+ 196:	d0 e0       	ldi	r29, 0x00	; 0
+ 198:	10 e0       	ldi	r17, 0x00	; 0
+ 19a:	00 95       	com	r16
+ 19c:	10 95       	com	r17
+ 19e:	c8 01       	movw	r24, r16
+ 1a0:	0c 2e       	mov	r0, r28
+ 1a2:	02 c0       	rjmp	.+4      	; 0x1a8 <systemDbt03Transmit+0x26>
+ 1a4:	95 95       	asr	r25
+ 1a6:	87 95       	ror	r24
+ 1a8:	0a 94       	dec	r0
+ 1aa:	e2 f7       	brpl	.-8      	; 0x1a4 <systemDbt03Transmit+0x22>
+ 1ac:	80 ff       	sbrs	r24, 0
+ 1ae:	02 c0       	rjmp	.+4      	; 0x1b4 <systemDbt03Transmit+0x32>
+ 1b0:	c4 df       	rcall	.-120    	; 0x13a <dbt03IoCtrl.part.0>
+ 1b2:	01 c0       	rjmp	.+2      	; 0x1b6 <systemDbt03Transmit+0x34>
+ 1b4:	c0 98       	cbi	0x18, 0	; 24
+ 1b6:	82 e5       	ldi	r24, 0x52	; 82
+ 1b8:	8f df       	rcall	.-226    	; 0xd8 <systemDelay10us>
+ 1ba:	21 96       	adiw	r28, 0x01	; 1
+ 1bc:	c8 30       	cpi	r28, 0x08	; 8
+ 1be:	d1 05       	cpc	r29, r1
+ 1c0:	71 f7       	brne	.-36     	; 0x19e <systemDbt03Transmit+0x1c>
+ 1c2:	c0 98       	cbi	0x18, 0	; 24
+ 1c4:	82 e5       	ldi	r24, 0x52	; 82
+ 1c6:	88 df       	rcall	.-240    	; 0xd8 <systemDelay10us>
+ 1c8:	78 94       	sei
+ 1ca:	df 91       	pop	r29
+ 1cc:	cf 91       	pop	r28
+ 1ce:	1f 91       	pop	r17
+ 1d0:	0f 91       	pop	r16
+ 1d2:	08 95       	ret
+
+000001d4 <systemDbt03Receive>:
+ 1d4:	ff 92       	push	r15
+ 1d6:	0f 93       	push	r16
+ 1d8:	1f 93       	push	r17
+ 1da:	cf 93       	push	r28
+ 1dc:	df 93       	push	r29
+ 1de:	9f d0       	rcall	.+318    	; 0x31e <systemCtrlCheckInhibit>
+ 1e0:	81 11       	cpse	r24, r1
+ 1e2:	1e c0       	rjmp	.+60     	; 0x220 <systemDbt03Receive+0x4c>
+ 1e4:	f8 94       	cli
+ 1e6:	82 99       	sbic	0x10, 2	; 16
+ 1e8:	fe cf       	rjmp	.-4      	; 0x1e6 <systemDbt03Receive+0x12>
+ 1ea:	85 e8       	ldi	r24, 0x85	; 133
+ 1ec:	7e df       	rcall	.-260    	; 0xea <systemDelay100us>
+ 1ee:	00 e0       	ldi	r16, 0x00	; 0
+ 1f0:	10 e0       	ldi	r17, 0x00	; 0
+ 1f2:	f1 2c       	mov	r15, r1
+ 1f4:	82 e4       	ldi	r24, 0x42	; 66
+ 1f6:	79 df       	rcall	.-270    	; 0xea <systemDelay100us>
+ 1f8:	80 b3       	in	r24, 0x10	; 16
+ 1fa:	82 fb       	bst	r24, 2
+ 1fc:	88 27       	eor	r24, r24
+ 1fe:	80 f9       	bld	r24, 0
+ 200:	c8 2f       	mov	r28, r24
+ 202:	00 2e       	mov	r0, r16
+ 204:	01 c0       	rjmp	.+2      	; 0x208 <systemDbt03Receive+0x34>
+ 206:	cc 0f       	add	r28, r28
+ 208:	0a 94       	dec	r0
+ 20a:	ea f7       	brpl	.-6      	; 0x206 <systemDbt03Receive+0x32>
+ 20c:	fc 2a       	or	r15, r28
+ 20e:	82 e4       	ldi	r24, 0x42	; 66
+ 210:	6c df       	rcall	.-296    	; 0xea <systemDelay100us>
+ 212:	0f 5f       	subi	r16, 0xFF	; 255
+ 214:	1f 4f       	sbci	r17, 0xFF	; 255
+ 216:	08 30       	cpi	r16, 0x08	; 8
+ 218:	11 05       	cpc	r17, r1
+ 21a:	61 f7       	brne	.-40     	; 0x1f4 <systemDbt03Receive+0x20>
+ 21c:	78 94       	sei
+ 21e:	01 c0       	rjmp	.+2      	; 0x222 <systemDbt03Receive+0x4e>
+ 220:	f1 2c       	mov	r15, r1
+ 222:	8f 2d       	mov	r24, r15
+ 224:	df 91       	pop	r29
+ 226:	cf 91       	pop	r28
+ 228:	1f 91       	pop	r17
+ 22a:	0f 91       	pop	r16
+ 22c:	ff 90       	pop	r15
+ 22e:	08 95       	ret
+
+00000230 <systemDbt03ConnectionOk>:
+ 230:	cf 93       	push	r28
+ 232:	df 93       	push	r29
+ 234:	8e e1       	ldi	r24, 0x1E	; 30
+ 236:	3b df       	rcall	.-394    	; 0xae <systemDelay100ms>
+ 238:	80 e2       	ldi	r24, 0x20	; 32
+ 23a:	93 e0       	ldi	r25, 0x03	; 3
+ 23c:	80 df       	rcall	.-256    	; 0x13e <dbt03Dialtone>
+ 23e:	88 e2       	ldi	r24, 0x28	; 40
+ 240:	36 df       	rcall	.-404    	; 0xae <systemDelay100ms>
+ 242:	88 ec       	ldi	r24, 0xC8	; 200
+ 244:	90 e0       	ldi	r25, 0x00	; 0
+ 246:	7b df       	rcall	.-266    	; 0x13e <dbt03Dialtone>
+ 248:	85 e0       	ldi	r24, 0x05	; 5
+ 24a:	31 df       	rcall	.-414    	; 0xae <systemDelay100ms>
+ 24c:	c0 e2       	ldi	r28, 0x20	; 32
+ 24e:	d8 e0       	ldi	r29, 0x08	; 8
+ 250:	c0 98       	cbi	0x18, 0	; 24
+ 252:	86 e2       	ldi	r24, 0x26	; 38
+ 254:	41 df       	rcall	.-382    	; 0xd8 <systemDelay10us>
+ 256:	71 df       	rcall	.-286    	; 0x13a <dbt03IoCtrl.part.0>
+ 258:	86 e2       	ldi	r24, 0x26	; 38
+ 25a:	3e df       	rcall	.-388    	; 0xd8 <systemDelay10us>
+ 25c:	21 97       	sbiw	r28, 0x01	; 1
+ 25e:	20 97       	sbiw	r28, 0x00	; 0
+ 260:	b9 f7       	brne	.-18     	; 0x250 <systemDbt03ConnectionOk+0x20>
+ 262:	c0 98       	cbi	0x18, 0	; 24
+ 264:	85 e0       	ldi	r24, 0x05	; 5
+ 266:	df 91       	pop	r29
+ 268:	cf 91       	pop	r28
+ 26a:	21 cf       	rjmp	.-446    	; 0xae <systemDelay100ms>
+
+0000026c <systemDbt03ConnectionTerminate>:
+ 26c:	66 df       	rcall	.-308    	; 0x13a <dbt03IoCtrl.part.0>
+ 26e:	ff cf       	rjmp	.-2      	; 0x26e <systemDbt03ConnectionTerminate+0x2>
+
+00000270 <__vector_1>:
+ 270:	1f 92       	push	r1
+ 272:	0f 92       	push	r0
+ 274:	0f b6       	in	r0, 0x3f	; 63
+ 276:	0f 92       	push	r0
+ 278:	11 24       	eor	r1, r1
+ 27a:	ff 92       	push	r15
+ 27c:	0f 93       	push	r16
+ 27e:	1f 93       	push	r17
+ 280:	2f 93       	push	r18
+ 282:	3f 93       	push	r19
+ 284:	4f 93       	push	r20
+ 286:	5f 93       	push	r21
+ 288:	6f 93       	push	r22
+ 28a:	7f 93       	push	r23
+ 28c:	8f 93       	push	r24
+ 28e:	9f 93       	push	r25
+ 290:	af 93       	push	r26
+ 292:	bf 93       	push	r27
+ 294:	cf 93       	push	r28
+ 296:	df 93       	push	r29
+ 298:	ef 93       	push	r30
+ 29a:	ff 93       	push	r31
+ 29c:	40 d0       	rcall	.+128    	; 0x31e <systemCtrlCheckInhibit>
+ 29e:	81 30       	cpi	r24, 0x01	; 1
+ 2a0:	09 f5       	brne	.+66     	; 0x2e4 <__vector_1+0x74>
+ 2a2:	82 e4       	ldi	r24, 0x42	; 66
+ 2a4:	22 df       	rcall	.-444    	; 0xea <systemDelay100us>
+ 2a6:	82 99       	sbic	0x10, 2	; 16
+ 2a8:	1d c0       	rjmp	.+58     	; 0x2e4 <__vector_1+0x74>
+ 2aa:	82 e4       	ldi	r24, 0x42	; 66
+ 2ac:	1e df       	rcall	.-452    	; 0xea <systemDelay100us>
+ 2ae:	00 e0       	ldi	r16, 0x00	; 0
+ 2b0:	10 e0       	ldi	r17, 0x00	; 0
+ 2b2:	f1 2c       	mov	r15, r1
+ 2b4:	82 e4       	ldi	r24, 0x42	; 66
+ 2b6:	19 df       	rcall	.-462    	; 0xea <systemDelay100us>
+ 2b8:	80 b3       	in	r24, 0x10	; 16
+ 2ba:	82 fb       	bst	r24, 2
+ 2bc:	88 27       	eor	r24, r24
+ 2be:	80 f9       	bld	r24, 0
+ 2c0:	c8 2f       	mov	r28, r24
+ 2c2:	00 2e       	mov	r0, r16
+ 2c4:	01 c0       	rjmp	.+2      	; 0x2c8 <__vector_1+0x58>
+ 2c6:	cc 0f       	add	r28, r28
+ 2c8:	0a 94       	dec	r0
+ 2ca:	ea f7       	brpl	.-6      	; 0x2c6 <__vector_1+0x56>
+ 2cc:	fc 2a       	or	r15, r28
+ 2ce:	82 e4       	ldi	r24, 0x42	; 66
+ 2d0:	0c df       	rcall	.-488    	; 0xea <systemDelay100us>
+ 2d2:	0f 5f       	subi	r16, 0xFF	; 255
+ 2d4:	1f 4f       	sbci	r17, 0xFF	; 255
+ 2d6:	08 30       	cpi	r16, 0x08	; 8
+ 2d8:	11 05       	cpc	r17, r1
+ 2da:	61 f7       	brne	.-40     	; 0x2b4 <__vector_1+0x44>
+ 2dc:	82 e4       	ldi	r24, 0x42	; 66
+ 2de:	05 df       	rcall	.-502    	; 0xea <systemDelay100us>
+ 2e0:	8f 2d       	mov	r24, r15
+ 2e2:	be de       	rcall	.-644    	; 0x60 <systemUartTransmit>
+ 2e4:	ff 91       	pop	r31
+ 2e6:	ef 91       	pop	r30
+ 2e8:	df 91       	pop	r29
+ 2ea:	cf 91       	pop	r28
+ 2ec:	bf 91       	pop	r27
+ 2ee:	af 91       	pop	r26
+ 2f0:	9f 91       	pop	r25
+ 2f2:	8f 91       	pop	r24
+ 2f4:	7f 91       	pop	r23
+ 2f6:	6f 91       	pop	r22
+ 2f8:	5f 91       	pop	r21
+ 2fa:	4f 91       	pop	r20
+ 2fc:	3f 91       	pop	r19
+ 2fe:	2f 91       	pop	r18
+ 300:	1f 91       	pop	r17
+ 302:	0f 91       	pop	r16
+ 304:	ff 90       	pop	r15
+ 306:	0f 90       	pop	r0
+ 308:	0f be       	out	0x3f, r0	; 63
+ 30a:	0f 90       	pop	r0
+ 30c:	1f 90       	pop	r1
+ 30e:	18 95       	reti
+
+00000310 <systemCtrlInit>:
+ 310:	c1 9a       	sbi	0x18, 1	; 24
+ 312:	b9 9a       	sbi	0x17, 1	; 23
+ 314:	c2 9a       	sbi	0x18, 2	; 24
+ 316:	94 9a       	sbi	0x12, 4	; 18
+ 318:	08 95       	ret
+
+0000031a <systemCtrlReady>:
+ 31a:	c1 98       	cbi	0x18, 1	; 24
+ 31c:	08 95       	ret
+
+0000031e <systemCtrlCheckInhibit>:
+ 31e:	86 b3       	in	r24, 0x16	; 22
+ 320:	82 fb       	bst	r24, 2
+ 322:	88 27       	eor	r24, r24
+ 324:	80 f9       	bld	r24, 0
+ 326:	08 95       	ret
+
+00000328 <systemCtrlCheckTerminate>:
+ 328:	80 b3       	in	r24, 0x10	; 16
+ 32a:	82 95       	swap	r24
+ 32c:	81 70       	andi	r24, 0x01	; 1
+ 32e:	08 95       	ret
+
+00000330 <main>:
+ 330:	80 e4       	ldi	r24, 0x40	; 64
+ 332:	93 e0       	ldi	r25, 0x03	; 3
+ 334:	81 de       	rcall	.-766    	; 0x38 <systemUartInit>
+ 336:	ec df       	rcall	.-40     	; 0x310 <systemCtrlInit>
+ 338:	19 df       	rcall	.-462    	; 0x16c <systemDbt03Init>
+ 33a:	81 e0       	ldi	r24, 0x01	; 1
+ 33c:	91 de       	rcall	.-734    	; 0x60 <systemUartTransmit>
+ 33e:	78 df       	rcall	.-272    	; 0x230 <systemDbt03ConnectionOk>
+ 340:	80 e0       	ldi	r24, 0x00	; 0
+ 342:	8e de       	rcall	.-740    	; 0x60 <systemUartTransmit>
+ 344:	ea df       	rcall	.-44     	; 0x31a <systemCtrlReady>
+ 346:	90 de       	rcall	.-736    	; 0x68 <systemUartRecive>
+ 348:	1c df       	rcall	.-456    	; 0x182 <systemDbt03Transmit>
+ 34a:	ee df       	rcall	.-36     	; 0x328 <systemCtrlCheckTerminate>
+ 34c:	81 11       	cpse	r24, r1
+ 34e:	fb cf       	rjmp	.-10     	; 0x346 <main+0x16>
+ 350:	8d df       	rcall	.-230    	; 0x26c <systemDbt03ConnectionTerminate>
+ 352:	f9 cf       	rjmp	.-14     	; 0x346 <main+0x16>
+
+00000354 <_exit>:
+ 354:	f8 94       	cli
+
+00000356 <__stop_program>:
+ 356:	ff cf       	rjmp	.-2      	; 0x356 <__stop_program>

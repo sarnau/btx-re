@@ -1,0 +1,62 @@
+<!-- This is a system page of the fictional online service 'Bildschirmtrix' -->
+
+<cept>						<!-- Open CEPT page -->
+<head>						<!-- This is the header, it contains meta information for service control -->
+<meta name="next_page" content="*welcome#">	<!-- Define the page that is loaded when '#' is pressed -->
+<meta name="hyperlinks" content="10*fernbl#">
+</head>						<!-- Close the header -->
+<body>						<!-- Open page body segment -->
+
+
+<!-- First we care about a White/Blue ambient -->
+<cs>						<!-- Clear screen -->
+<csi><0x31><0x40>				<!-- Invoke 2nd color table (to get deep blue) -->
+<esc><0x23><0x20><fblb>				<!-- Makes the background blue -->
+<esc><0x28><0x40>				<!-- Invoke G0 set -->
+
+
+<!-- Headline -->
+<esc><0x22><0x41>				<!-- Invoke C1P set -->
+<csi><0x30><0x40>				<!-- Invoke 1nd color table -->
+<trb><whf>					<!-- Select Transparent background with white foreground -->
+<aph>						<!-- Set cursor to home position -->
+Bildschirmtrix<apd><apr>
+<csi><0x30><0x40>				<!-- Invoke 1nd color table (to get a real white) -->
+<esc><0x23><0x21><fwhb>				<!-- Maks a white full row -->
+<apd>
+<esc><0x23><0x21><fwhb>				<!-- Maks a white full row -->
+<csi><0x31><0x40>				<!-- Invoke 2nd color table (to get deep blue) -->
+<trb><blf>					<!-- Select Transparent background with blue foreground -->
+
+<csi><0x31><0x40>				<!-- Invoke 2nd color table -->
+<dbs><apr>Neue<sp>Mitteilungen<apd><apr>
+<csi><0x30><0x40>				<!-- Invoke 1nd color table -->
+
+<trb><whf>					<!-- Select Transparent background with white foreground -->
+<nsz>						<!-- Select normal size font -->
+
+<apd><apr>
+10<sp><sp>Chaos<sp>Team<sp>Hamburg<apd><apr>
+<sp><sp><sp><sp>23.05.84<sp>23:23:23<sp>012345678901-0001<apd><apr>
+<apd><apr>
+<apd><apr>
+<apd><apr>
+<apd><apr>
+<apd><apr>
+<apd><apr>
+<apd><apr>
+<apd><apr>
+<apd><apr>
+<apd><apr>
+<apd><apr>
+<apd><apr>
+<apd><apr>
+Zum<sp><ss2>HOffnen<sp>der<sp>Mitteilung<sp>nebenstehende<apd><apr>
+zweistellige<sp>Zahl<sp>eingeben.
+<apd><apr>
+<apd><apr>
+Zur<ss2>Huck<sp>mit<sp>#<apd><apr>
+Eingabe<sp>==><sp>
+</body>
+</cept>
+ 

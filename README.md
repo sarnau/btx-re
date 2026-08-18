@@ -125,6 +125,7 @@ Ghidra would produce plausible-looking but wrong disassembly.
     c64_BTX_decoder_CV30113 C375-B1-1 (EX).BIN the other revision
     third_party/         asl and c64rom sources, see third_party/README.md
     PDFs/                datasheets and specifications, see below
+    other/               third-party BTX material, see below
 
 Both ROM images live in this repository, so nothing here depends on a path
 outside it. `sidecar/decoder_ii.toml` names the primary one under `meta.rom`
@@ -137,6 +138,18 @@ service manual for this cartridge, and datasheets for the parts on the board —
 the 65005 gate array, the MC1377 encoder, the M41464 DRAMs, and the handful of
 74-series glue chips. They are the reason a claim about the hardware can be
 checked against something other than the ROM.
+
+`other/` is third-party BTX material kept for reference, not built by anything
+here: a small BTX server in JavaScript with a page set, and the 2015
+*Bildschirm Trix* distribution — the mikroPAD and miniBTX terminal projects
+with their schematics, a CEPT decoder, documentation and photographs. These
+describe modern recreations rather than Commodore's cartridge, so they inform
+the CEPT side of this work but do not answer the open hardware questions about
+the Decoder II itself.
+
+Three archives in `other/` are deliberately untracked, listed in `.gitignore`
+and roughly 113 MB in total. Committing them is effectively irreversible, since
+they stay in the history forever, whereas adding them later is trivial.
 
 `conftest.py` at the repository root is load-bearing: its presence is what puts
 the repository root on `sys.path` for pytest. Deleting it breaks every test.

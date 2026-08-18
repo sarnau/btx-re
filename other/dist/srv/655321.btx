@@ -1,0 +1,184 @@
+<!-- This a remake of the CCC BTX Page i reconstructed from a picture i found at  -->
+<!-- http://ausgehackt.c3t.de/category/hacks/ -->
+<!-- http://ausgehackt.c3t.de/wp-content/uploads/2009/09/Ccc_btx-450x298.jpg -->
+
+<cept>						<!-- Open CEPT page -->
+<head>						<!-- This is the header, it contains meta information for service control -->
+<meta name="next_page" content="*chaos#">	<!-- Define the page that is loaded when '#' is pressed -->
+<meta name="hyperlinks" content="01*raumpflege#,02*raumpflege#,04*raumpflege#,05*raumpflege#,06*raumpflege#,07*raumpflege#,08*raumpflege#,09*raumpflege#">
+</head>						<!-- Close the header -->
+<body>						<!-- Open page body segment -->
+
+
+<!-- Load DRCS -->
+<us> <0x2f>
+<us> <0x23><0x20> <0x28><0x20><0x40> <0x4b><0x41>
+<us> <0x23>!
+<0x30><0x40><0x5f><0x60><0x67><0x69><0x68><0x68><0x68><0x68><0x68>
+<0x30><0x40><0x7f><0x40><0x7f><0x48><0x67><0x52><0x4f><0x40><0x4f>
+<0x30><0x40><0x7e><0x41><0x41><0x61><0x79><0x6d><0x7d><0x69><0x7d>
+<0x30><0x68><0x68><0x69><0x67><0x60><0x60><0x60><0x60><0x5f><0x40>
+<0x30><0x52><0x67><0x48><0x7f><0x40><0x40><0x40><0x40><0x7f><0x40>
+<0x30><0x6d><0x79><0x69><0x4d><0x49><0x55><0x65><0x41><0x7e><0x40>
+<us>AAAAAAAA
+
+
+<!-- First we care about a White/Blue ambient -->
+<cs>						<!-- Clear screen -->
+<esc><0x23><0x20><fcnb>				<!-- Makes the background blue -->
+<esc><0x28><0x40><0x0f>				<!-- Invoke G0 set -->
+
+
+<!-- Headline -->
+<esc><0x22><0x41>				<!-- Invoke C1P set -->
+<csi><0x30><0x40>				<!-- Invoke 1nd color table -->
+<trb><whf>					<!-- Select Transparent background with white foreground -->
+<aph>						<!-- Set cursor to home position -->
+Chaos<sp>Computer<sp>Club<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>0,00<sp>DM<apr><apd>
+<esc><0x28><0x20><0x40><0x0f>			<!-- Invoke DRCS set -->
+<csi><0x30><0x40>				<!-- Invoke 1nd color table (to get a real white) -->
+<esc><0x23><0x21><fylb>				<!-- Maks a yellow full row -->
+
+<csi><0x31><0x40>				<!-- Invoke 2nd color table (to get deep blue) -->
+<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>
+<anb>!"#<apd><apb><apb><apb>$%&
+<csi><0x30><0x40>				<!-- Invoke 1nd color table (to get a real white) -->
+
+<esc><0x23><0x21><fylb>				<!-- Maks a yellow full row -->
+<csi><0x31><0x40>				<!-- Invoke 2nd color table (to get deep blue) -->
+<esc><0x28><0x40><0x0f>				<!-- Invoke G0 set -->
+<trb><blf>					<!-- Select Transparent background with blue foreground -->
+
+<csi><0x31><0x40>				<!-- Invoke 2nd color table -->
+<apr><dbh>Nullseite<sp><sp><dbs>*655321#<apd><apr>
+<nsz>						<!-- Select normal size font -->
+<csi><0x30><0x40>				<!-- Invoke 1nd color table -->
+<trb><whf>					<!-- Select Transparent background with white foreground -->
+
+
+<!-- Create liporello background -->
+<csi><0x31><0x40>				<!-- Invoke 2nd color table (to get deep blue and cyan) -->
+<esc><0x23><0x21><fblb>				<!-- Maks a yellow blue row -->
+<apd>
+<esc><0x23><0x21><fcnb>				<!-- Maks a yellow cyan row -->
+<apd>
+<esc><0x23><0x21><fblb>				<!-- Maks a yellow blue row -->
+<apd>
+<esc><0x23><0x21><fcnb>				<!-- Maks a yellow cyan row -->
+<apd>
+<esc><0x23><0x21><fblb>				<!-- Maks a yellow blue row -->
+<apd>
+<esc><0x23><0x21><fcnb>				<!-- Maks a yellow cyan row -->
+<apd>
+<esc><0x23><0x21><fblb>				<!-- Maks a yellow blue row -->
+<apd>
+<esc><0x23><0x21><fcnb>				<!-- Maks a yellow cyan row -->
+<apd>
+<esc><0x23><0x21><fblb>				<!-- Maks a yellow blue row -->
+<apd>
+<esc><0x23><0x21><fcnb>				<!-- Maks a yellow cyan row -->
+<apd>
+<esc><0x23><0x21><fblb>				<!-- Maks a yellow blue row -->
+<apd>
+<esc><0x23><0x21><fcnb>				<!-- Maks a yellow cyan row -->
+<apd>
+<esc><0x23><0x21><fblb>				<!-- Maks a yellow blue row -->
+<apd>
+<esc><0x23><0x21><fcnb>				<!-- Maks a yellow cyan row -->
+<apd>
+<esc><0x23><0x21><fblb>				<!-- Maks a yellow blue row -->
+<apd>
+<esc><0x23><0x21><fcnb>				<!-- Maks a yellow cyan row -->
+<apd>
+<esc><0x23><0x21><fblb>				<!-- Maks a yellow blue row -->
+<apd>
+<esc><0x23><0x21><fcnb>				<!-- Maks a yellow cyan row -->
+<apd>
+
+
+<!-- Create bottom line -->
+<csi><0x30><0x40>				<!-- Invoke 1nd color table -->
+<esc><0x23><0x21><fylb>				<!-- Maks a yellow full row -->
+<apd>
+<esc><0x23><0x21><fylb>				<!-- Maks a yellow full row -->
+<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><abk>Impressum<sp>#
+
+
+<!-- Draw menue -->
+<apu><apu><apu><apu><apu><apu><apu><apu><apu><apu><apu><apu><apu><apu><apu><apu><apu><apu>
+<apr><anw>
+01<sp><sp>Der<sp>CCC<sp>stellt<sp>sich<apd><apd><apr>
+02<sp><sp>Hacker<sp>Szene<apd><apd><apr>
+--<sp><sp>-<apd><apd><apr>
+04<sp><sp>Aktuelles<apd><apd><apr>
+05<sp><sp>BTX-Spielwiese<apd><apd><apr>
+06<sp><sp>Die<sp>Datenschleuder<apd><apd><apr>
+08<sp><sp>Leitseite<sp>(Verweise)<apd><apd><apr>
+09<sp><sp>Dialog,<sp>Spenden<sp>und<apd><apr>
+<sp><sp><sp><sp>Bestellungen
+
+
+<!-- Draw help box -->
+<apu><apu><apu><apu><apu><apu><apu><apu><apu><apu><apu><apu><apu><apu><apu>
+<apr>
+<apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf><apf>
+<cnb>
+<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>
+<apd><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>
+<sp>HILFE<sp>mit<sp>07!<sp>
+<apd><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>
+<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>
+<apd><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>
+
+
+<!-- Draw census box -->
+<any>
+<apd>
+<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>
+<apd><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>
+<sp>Volksz<ss2>Hahmung<sp><sp>
+<apd><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>
+<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>
+<apd><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>
+<sp><sp><sp><sp>
+<esc><0x28><0x64><0x0f>				<!-- Invoke G3 set -->
+<abk>VNNNQW
+<esc><0x28><0x40><0x0f>				<!-- Invoke G0 set -->
+<sp><sp><sp><sp><sp>
+<apd><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>
+<sp><sp><sp><sp>
+<esc><0x28><0x64><0x0f>				<!-- Invoke G3 set -->
+<anr>VNNNQW
+<esc><0x28><0x40><0x0f>				<!-- Invoke G0 set -->
+<sp><sp><sp><sp><sp>
+<apd><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>
+<sp><sp><sp><sp>
+<esc><0x28><0x64><0x0f>				<!-- Invoke G3 set -->
+<any>VNNQNW
+<esc><0x28><0x40><0x0f>				<!-- Invoke G0 set -->
+<sp><sp><sp><sp><sp>
+<apd><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>
+<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>
+<apd><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>
+<sp>"Wer<sp>sich<sp>er-<sp>
+<apd><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>
+<sp><sp>fassen<sp>l<ss2>Ha<ss2>{t,<sp>
+<apd><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>
+<sp><sp>geh<ss2>Hort<sp><sp><sp><sp><sp><sp><sp>
+<apd><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>
+<sp><sp>registriert"<sp>
+<apd><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb><apb>
+<csi><0x31><0x40><ang>
+<sp><sp><sp><sp><sp><sp><sp><sp><sp>(BHP)<sp>
+<trb>
+
+
+<!-- Park cursor -->
+<apd>
+<apd>
+<apd>
+
+
+</body>
+</cept>
+ 

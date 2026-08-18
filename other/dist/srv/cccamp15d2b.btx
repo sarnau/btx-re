@@ -1,0 +1,73 @@
+<cept>						<!-- Open CEPT page -->
+<head>						<!-- This is the header, it contains meta information for service control -->
+<meta name="next_page" content="*cccamp15d2c#">
+</head>						<!-- Close the header -->
+<body>						<!-- Open page body segment -->
+
+<!-- DRCS Pixel data (Btx-logo, 6 tiles) -->
+<us><0x2f>
+<us><0x23><0x20> <0x28><0x20><0x40> <0x47><0x41>
+<us><0x23>!
+<!-- Camp logo mini -->
+<0x30><0x40><0x44><0x40><0x47><0x40><0x47><0x40><0x4f><0x40><0x5c><0x40><0x78><0x41><0x70><0x43><0x40><0x46><0x40><0x7f><0x7f>
+<0x30><0x40><0x40><0x7f><0x7f><0x7f><0x7f><0x60><0x41><0x70><0x43><0x58><0x46><0x4c><0x4e><0x46><0x5c><0x43><0x70><0x7f><0x7f>
+<0x30><0x50><0x40><0x70><0x40><0x78><0x40><0x6c><0x40><0x46><0x40><0x43><0x40><0x41><0x60><0x40><0x70><0x40><0x58><0x7f><0x7f>
+<0x30><0x5f><0x7f><0x47><0x40><0x43><0x60><0x41><0x70><0x40><0x78><0x40><0x58><0x40><0x4d><0x40><0x47><0x40><0x47><0x40><0x4c>
+<0x30><0x7f><0x7f><0x46><0x58><0x4c><0x4c><0x48><0x44><0x58><0x46><0x70><0x43><0x60><0x41><0x7f><0x7f><0x7f><0x7f><0x40><0x40>
+<0x30><0x7f><0x7e><0x40><0x58><0x40><0x70><0x41><0x60><0x43><0x40><0x4e><0x40><0x7c><0x40><0x78><0x40><0x70><0x40><0x58><0x40>
+
+<us>AA
+
+<!-- First we care about a White/Blue ambient -->
+<cs><aph>					<!-- Clear screen -->
+<csi><0x30><0x40>				<!-- Invoke 1nd color table -->
+<esc><0x23><0x20><fwhb>				<!-- Makes the background white -->
+<esc><0x28><0x40><0x0f>				<!-- Invoke G0 set -->
+
+<!-- Headline -->
+<esc><0x22><0x41>				<!-- Invoke C1P set -->
+<csi><0x30><0x40>				<!-- Invoke 1nd color table -->
+<trb><bkf>
+<esc><0x28><0x20><0x40><0x0f>			<!-- Invoke DRCS set -->
+!"#<apd><apr>
+$%&<apu><apf>
+<esc><0x28><0x40><0x0f>				<!-- Invoke G0 set -->
+<apd><dbh>Chaos<sp>Communication<sp>Camp<sp>2015<apd><apr>
+<esc><0x23><0x21><fgrb>				<!-- Maks a green full row -->
+<apd>
+<esc><0x23><0x21><fgrb>				<!-- Maks a green full row -->
+<csi><0x31><0x40>				<!-- Invoke 2nd color table -->
+<dbh><apr>Online<sp>Schedule<sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp><sp>*cccamp15#<apd><apr>
+<csi><0x30><0x40>				<!-- Invoke 1nd color table -->
+<nsz><trb><bkf>
+
+<!-- Content -->
+<dbw>Schedule<sp>day<sp>2:<nsz><apd><apr>
+<apd><apr>
+
+<!-- Schedule -->
+<cnb><sp><trb><grb>16:30<trb><sp>Freie<sp>Software<sp>gegen<apd><apr>
+<sp><sp><sp><sp><sp><sp><sp>unsere<sp>Freiheit?<apd><apr>
+<cnb><sp><trb><grb>17:15<trb><sp>Encrypted<sp>Email<sp>for<sp>Planet<sp>Earth<apd><apr>
+<cnb><sp><trb><grb>17:45<trb><sp>Security<sp>and<sp>Usability<sp>in<apd><apr>
+<sp><sp><sp><sp><sp><sp><sp>Open<sp>Source<apd><apr>
+<cnb><sp><trb><grb>18:30<trb><sp>Locking<sp>the<sp>Web<sp>Open:<sp>Call<sp>for<apd><apr>
+<sp><sp><sp><sp><sp><sp><sp>a<sp>Distributed<sp>Web<apd><apr>
+<mgb><sp><trb><grb>18:30<trb><sp>Basics<sp>of<sp>hydroponics<apd><apr>
+<cnb><sp><trb><grb>19:15<trb><sp>Mexican<sp>Botnet<sp>Dirty<sp>Wars<apd><apr>
+<mgb><sp><trb><grb>19:15<trb><sp>operational<sp>glitches<apd><apr>
+<apd><apr>
+<apd><apr>
+<!-- Schedule -->
+
+<apd><apr>
+Schedule<sp>continues<sp>on<sp>the<sp>next<sp>page...<apd><apr>
+Rooms:<sp><cnb><sp><trb>=Project<sp>2501<sp><mgb><sp><trb>=Simulacron-3<apd><apr>
+<esc><0x23><0x21><fgrb>				<!-- Maks a green full row -->
+Continue<sp>with<sp>#<sp>or<sp>*pagenumber#<apd><apr>
+Your<sp>choice<sp>==><sp>
+
+</body>
+</cept>
+ 
+
