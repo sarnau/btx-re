@@ -31,7 +31,7 @@ def test_data_inside_the_span_still_renders_as_fcb():
 def test_6502_region_disassembles_rather_than_dumping_bytes():
     listing = build.run(write=False).listing
     body = listing.split("c64ColdStart:", 1)[1][:600]
-    for expected in ("LDX     #$00", "STX     $D016", "JSR     $FDA3", "STA     ($61),Y"):
+    for expected in ("LDX     #$00", "STX     $D016", "JSR     IOINIT", "STA     ($61),Y"):
         assert expected in body, expected
 
 

@@ -60,8 +60,17 @@ carry a cross-reference comment instead:
 
     JMP     $174C                   ; c64Vec02 ($BAF4)
 
+    JSR     IOINIT
+    JSR     L804D                   ; LB37A ($B37A)
+
 Relative branches are PC-relative and so resolve correctly in listing space;
 they use labels on both CPUs.
+
+C64 ROM entry points are named rather than given `L<addr>` forms - see
+`dis65xx/c64kernal.py`. That is not only for readability: `LFDA3` would share a
+namespace with a listing label at ROM `$FDA3` on the 6801 side. Entries whose
+identity is well established carry their usual name; anything else gets
+`KERNAL_<addr>`, which says C64 ROM without claiming to know what it does.
 
 ## Two instruction sets
 

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import dataclasses
 
-from dis65xx import codec6502
+from dis65xx import c64kernal, codec6502
 from dis65xx.decode import Insn
 from dis65xx.opcodes import Mode, modes_for
 from dis65xx.opcodes6502 import Mode as M65
@@ -23,7 +23,53 @@ _MNEM_WIDTH = 8  # column width the mnemonic is padded to
 _JUMPS = ("JMP", "JSR")
 
 
-def collect_targets(data: bytes, result: TraceResult, sidecar: Sidecar) -> dict[int, str]:
+def _sweep_6502(data: bytes, base: int, end: int, region, known: dict[int, str]):
+    """Linear 6502 sweep that splits at known labels, exactly as _emit_6502 does.
+
+    The emitter breaks an instruction when a label falls inside it, which shifts
+    its framing. A collector that ignored that would decode different
+    instructions after the first split and miss the branches in them.
+    """
+    addr = region.start
+    while addr < min(region.end, end):
+        try:
+            insn = codec6502.decode(data, addr - base, addr)
+        except ValueError:
+            addr += 1
+            continue
+        if insn.end > end:
+            addr += 1
+            continue
+        split = next((x for x in range(insn.addr + 1, insn.end) if x in known), None)
+        if split is not None:
+            addr = split
+            continue
+        yield insn
+        addr = insn.end
+
+
+def collect_c64_targets(data: bytes, result: TraceResult, sidecar: Sidecar) -> set[int]:
+    """Absolute JMP/JSR operands in the 6502 code.
+
+    These name locations in the C64's address space - the cartridge window at
+    $8000 or the payload's home at $1000 - not positions in this listing. They
+    are emitted as L<addr> symbols defined by EQU to the address itself, so the
+    operand still assembles to the same bytes while reading as a name.
+    """
+    base = result.base
+    end = base + len(data)
+    out: set[int] = set()
+    for region in sidecar.regions:
+        if region.kind != "code6502":
+            continue
+        for insn in _sweep_6502(data, base, end, region, sidecar.labels):
+            if insn.mode is M65.ABS and insn.mnemonic in _JUMPS:
+                out.add(insn.operand)
+    return out
+
+
+def collect_targets(data: bytes, result: TraceResult, sidecar: Sidecar,
+                    known: dict[int, str] | None = None) -> dict[int, str]:
     """Auto-label every branch and jump target that has no name of its own.
 
     Named L<addr>, so a target reads as a label instead of a bare address. Only
@@ -41,19 +87,13 @@ def collect_targets(data: bytes, result: TraceResult, sidecar: Sidecar) -> dict[
         elif insn.mnemonic in _JUMPS and insn.mode in (Mode.EXT, Mode.DIR):
             targets.add(insn.operand)
 
+    labels = {**(known or {}), **sidecar.labels}
     for region in sidecar.regions:
         if region.kind != "code6502":
             continue
-        addr = region.start
-        while addr < min(region.end, end):
-            try:
-                insn = codec6502.decode(data, addr - base, addr)
-            except ValueError:
-                addr += 1
-                continue
+        for insn in _sweep_6502(data, base, end, region, labels):
             if insn.mode is M65.REL:
                 targets.add(insn.operand)
-            addr = insn.end
 
     return {a: f"L{a:04X}" for a in targets
             if base <= a < end and a not in sidecar.labels}
@@ -107,6 +147,8 @@ def format_operand_6502(insn, sidecar: Sidecar | None = None) -> str:
         return f"(${v:02X}),Y"
     if m is M65.IND:
         return f"(${v:04X})"
+    if m is M65.ABS and insn.mnemonic in _JUMPS:
+        return c64kernal.name_for(v) or f"L{v:04X}"
     if m is M65.REL:
         if sidecar is not None:
             named = sidecar.labels.get(v)
@@ -212,6 +254,22 @@ def _fcb_line(chunk: bytes) -> str:
     return f"{'':{_INDENT}}{'FCB':{_MNEM_WIDTH}}{values}"
 
 
+def _c64_equ_lines(targets: set[int], sidecar: Sidecar) -> list[str]:
+    """EQU definitions for the 6502 control-flow targets."""
+    if not targets:
+        return []
+    lines = ["; C64-space jump and call targets. Defined by EQU rather than as",
+             "; listing labels: they name addresses in the C64's memory, not",
+             "; positions in this ROM, so the operands assemble unchanged.",
+             ""]
+    width = max((len(c64kernal.name_for(a) or f"L{a:04X}") for a in targets), default=8)
+    for addr in sorted(targets):
+        name = c64kernal.name_for(addr) or f"L{addr:04X}"
+        lines.append(f"{name:<{max(width, 8)}} EQU     ${addr:04X}")
+    lines.append("")
+    return lines
+
+
 def _equ_lines(sidecar: Sidecar) -> list[str]:
     """Declare sidecar symbols so the listing is self-contained.
 
@@ -238,8 +296,25 @@ def _fdb_line(words: list[int]) -> str:
 def emit(data: bytes, result: TraceResult, sidecar: Sidecar) -> str:
     # Branch and jump targets become labels. The sidecar's own names win, so a
     # routine that has been identified keeps its name instead of an L-address.
-    auto = collect_targets(data, result, sidecar)
+    # Collecting changes the emitter's framing (a label splits an instruction),
+    # which can expose branches that were not visible on the previous pass, so
+    # iterate until the label set stops growing.
+    auto: dict[int, str] = {}
+    for _ in range(8):
+        found = collect_targets(data, result, sidecar, auto)
+        if found == auto:
+            break
+        auto = found
+    else:
+        raise ValueError("branch-label collection did not converge")
     sidecar = dataclasses.replace(sidecar, labels={**auto, **sidecar.labels})
+    c64_targets = collect_c64_targets(data, result, sidecar)
+
+    clash = {a for a in c64_targets
+             if (c64kernal.name_for(a) or f"L{a:04X}") in sidecar.labels.values()}
+    if clash:
+        raise ValueError("L-name collision between a listing label and a C64 "
+                         "target: " + ", ".join(f"${a:04X}" for a in sorted(clash)))
 
     base = result.base
     lines: list[str] = [
@@ -252,6 +327,7 @@ def emit(data: bytes, result: TraceResult, sidecar: Sidecar) -> str:
         "",
     ]
     lines += _equ_lines(sidecar)
+    lines += _c64_equ_lines(c64_targets, sidecar)
     lines += [
         f"{'':{_INDENT}}{'ORG':{_MNEM_WIDTH}}${base:04X}",
         "",
