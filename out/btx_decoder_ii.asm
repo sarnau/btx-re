@@ -1534,7 +1534,7 @@ LA61D:
         DEC     glyphPass
 
 LA639:
-        LDX     $AEF2
+        LDX     fontBaseTable+2
         DEX
         STX     glyphPtr2
         LDAB    accentCode
@@ -1714,7 +1714,7 @@ LA75F:
         STD     >walkAttr
         INC     renderCol
         LDAA    renderCol
-        CMPA    $AEFA
+        CMPA    lineWidthMax
         BLS     LA7C4
         LDAA    #$00
         STAA    renderCol
@@ -2033,7 +2033,7 @@ LA9C5:
         ROLB
         ASLB
         ANDB    #$7E
-        LDX     #$AEFB
+        LDX     #bitDoubleTable
         ABX
         LDD     $00,X
         LDX     videoPtr
@@ -2046,7 +2046,7 @@ LA9C5:
 LA9E5:
         LDAB    colourBits
         ANDB    #$7E
-        LDX     #$AEFB
+        LDX     #bitDoubleTable
         ABX
         LDD     $00,X
         LDX     videoPtr
@@ -2068,7 +2068,7 @@ LAA01:
         ROLB
         ASLB
         ANDB    #$7E
-        LDX     #$AEFB
+        LDX     #bitDoubleTable
         ABX
         LDD     $00,X
         LDX     videoPtr
@@ -2082,7 +2082,7 @@ LAA01:
 LAA28:
         LDAB    colourBits
         ANDB    #$7E
-        LDX     #$AEFB
+        LDX     #bitDoubleTable
         ABX
         LDD     $00,X
         LDX     videoPtr
@@ -2111,7 +2111,7 @@ LAA4E:
         LSRB
         ANDB    #$70
         ORAB    colourBits
-        LDX     #$AEFB
+        LDX     #bitDoubleTable
         ABX
         LDD     $00,X
         ORAB    #$30
@@ -2134,7 +2134,7 @@ LAA79:
         LSRB
         ANDB    #$70
         ORAB    colourBits
-        LDX     #$AEFB
+        LDX     #bitDoubleTable
         ABX
         LDD     $00,X
         EORA    invMaskHi
@@ -2157,7 +2157,7 @@ LAAA2:
         LSRD
         LSRB
         ANDB    #$FE
-        LDX     #$AEFB
+        LDX     #bitDoubleTable
         ABX
         LDD     $00,X
         LDX     videoPtr
@@ -2179,7 +2179,7 @@ LAAC7:
         LSRD
         LSRB
         ANDB    #$FE
-        LDX     #$AEFB
+        LDX     #bitDoubleTable
         ABX
         LDD     $00,X
         LDX     videoPtr
@@ -2572,7 +2572,7 @@ LAD55:
         INC     PORT3
         ANDB    #$3F
         ASLB
-        LDX     #$AEFB
+        LDX     #bitDoubleTable
         ABX
         LDD     $00,X
         LDX     videoPtr
@@ -2586,7 +2586,7 @@ LAD55:
         ASLA
         ANDA    #$7E
         TAB
-        LDX     #$AEFB
+        LDX     #bitDoubleTable
         ABX
         LDD     $00,X
         LDX     videoPtr
@@ -2702,7 +2702,7 @@ LAE46:
         INC     PORT3
         ANDB    #$3F
         ASLB
-        LDX     #$AEFB
+        LDX     #bitDoubleTable
         ABX
         LDD     $00,X
         LDX     videoPtr
@@ -2717,7 +2717,7 @@ LAE46:
         ASLA
         ANDA    #$7E
         TAB
-        LDX     #$AEFB
+        LDX     #bitDoubleTable
         ABX
         LDD     $00,X
         LDX     videoPtr
@@ -2792,27 +2792,46 @@ LAED2:
 LAEEF:
         RTS
 
-; Font bases, then a bit-doubling table.
+; Four tables packed together, $AEF0-$AF8E, with no gaps.
 ;
-; $AEF0 holds the five character-generator base addresses - $8000, $8780, $8F00,
-; $9680 and $9E00 - followed by $2700.
+;   $AEF0  fontBaseTable   5 big-endian words, the base of each character set.
+;                          The glyph fetch indexes it with 2 x the set code:
+;                          ASLB / LDX #fontBaseTable / ABX / LDX 0,X
+;   $AEFA  lineWidthMax    $27 - renderCol wraps when it exceeds this, so the
+;                          line width is a ROM constant and not an immediate
+;   $AEFB  bitDoubleTable  64 words. Entry n is n with every bit duplicated,
+;                          BYTE-SWAPPED: entry 1 reads FDB $0300, not $0003.
+;                          All 64 verified against the doubling by computation
+;   $AF7B  separationMask  20 bytes, see the character generator at $8000
 ;
-; $AEFC begins a lookup that expands each bit of an index into two, which is the
-; transform double-width rendering needs. Entries 1..15 are exactly
-; bit-double(index) ($0003, $000C, $000F, $0030, ...), and the table continues in
-; 16-entry blocks past $AF1A. It feeds the DBW and DBS attribute handlers.
+; The swap is the same one the font rows use, and for the same reason: the value
+; goes straight into a display word rather than being arithmetic. Readers do
+; LDX #bitDoubleTable / ABX / LDD 0,X with an even index, so what LDD yields is
+; already in display order.
+;
+; It is emitted as FDB, which is how the CPU loads it. Writing it as DW to show
+; the doubling directly would be a lie about the bytes - asl's DW follows the
+; target's endianness, so on a 6801 it emits big-endian and the round trip
+; breaks. The cross-check caught exactly that.
+;
+; 10 bytes, then one, then 128, then 20 - which is what pins each boundary: the
+; old note here had bitDoubleTable starting at $AEFC and read the region past
+; $AF1A as 16-entry blocks, and neither survives the arithmetic.
 fontBaseTable:
-        FCB     $80,$00,$87,$80,$8F,$00,$96,$80,$9E,$00,$27,$00
+        FDB     fontG0,fontAccents,fontMosaic,fontSet3,fontNarrow
+
+lineWidthMax:
+        FCB     $27
 
 bitDoubleTable:
-        FCB     $00,$03,$00,$0C,$00,$0F,$00,$30,$00,$33,$00,$3C,$00,$3F,$00,$C0
-        FCB     $00,$C3,$00,$CC,$00,$CF,$00,$F0,$00,$F3,$00,$FC,$00,$FF,$00,$00
-        FCB     $03,$03,$03,$0C,$03,$0F,$03,$30,$03,$33,$03,$3C,$03,$3F,$03,$C0
-        FCB     $03,$C3,$03,$CC,$03,$CF,$03,$F0,$03,$F3,$03,$FC,$03,$FF,$03,$00
-        FCB     $0C,$03,$0C,$0C,$0C,$0F,$0C,$30,$0C,$33,$0C,$3C,$0C,$3F,$0C,$C0
-        FCB     $0C,$C3,$0C,$CC,$0C,$CF,$0C,$F0,$0C,$F3,$0C,$FC,$0C,$FF,$0C,$00
-        FCB     $0F,$03,$0F,$0C,$0F,$0F,$0F,$30,$0F,$33,$0F,$3C,$0F,$3F,$0F,$C0
-        FCB     $0F,$C3,$0F,$CC,$0F,$CF,$0F,$F0,$0F,$F3,$0F,$FC,$0F,$FF,$0F
+        FDB     $0000,$0300,$0C00,$0F00,$3000,$3300,$3C00,$3F00
+        FDB     $C000,$C300,$CC00,$CF00,$F000,$F300,$FC00,$FF00
+        FDB     $0003,$0303,$0C03,$0F03,$3003,$3303,$3C03,$3F03
+        FDB     $C003,$C303,$CC03,$CF03,$F003,$F303,$FC03,$FF03
+        FDB     $000C,$030C,$0C0C,$0F0C,$300C,$330C,$3C0C,$3F0C
+        FDB     $C00C,$C30C,$CC0C,$CF0C,$F00C,$F30C,$FC0C,$FF0C
+        FDB     $000F,$030F,$0C0F,$0F0F,$300F,$330F,$3C0F,$3F0F
+        FDB     $C00F,$C30F,$CC0F,$CF0F,$F00F,$F30F,$FC0F,$FF0F
 
 separationMask:
         FCB     $F3,$CF,$F3,$CF,$F0,$00,$F3,$CF,$F3,$CF,$F3,$CF,$F0,$00,$F3,$CF
@@ -2877,7 +2896,7 @@ reset:
         STD     >softVecOcf
         LDD     #sciRxHandler
         STD     >softVecSci
-        LDD     #$F148
+        LDD     #hostIrq
         STD     >softVecIrq1
         LDD     #$787F
         STAA    PORT4
@@ -7577,6 +7596,8 @@ stubSwi:
 
 nullHandler:
         RTI                             ; null interrupt handler
+
+hostIrq:
         JSR     fetchHostByte
         RTI
 

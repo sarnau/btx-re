@@ -340,7 +340,8 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xFBA9" = "asciiDispatchC0"
 "0xF954" = "timerHandlerAlt"
 "0xAEF0" = "fontBaseTable"
-"0xAEFC" = "bitDoubleTable"
+"0xAEFA" = "lineWidthMax"
+"0xAEFB" = "bitDoubleTable"
 "0xEF67" = "strModeNames"
 "0xEFF5" = "strStatusMsgs"
 "0xFD21" = "romPadding"
@@ -583,9 +584,36 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xF13D" = "stubIrq1"
 "0xF142" = "stubSwi"
 "0xF147" = "nullHandler"
+"0xF148" = "hostIrq"
 "0xFFF0" = "vectors"
 
 [block_comments]
+"0xAEF0" = """
+Four tables packed together, $AEF0-$AF8E, with no gaps.
+
+  $AEF0  fontBaseTable   5 big-endian words, the base of each character set.
+                         The glyph fetch indexes it with 2 x the set code:
+                         ASLB / LDX #fontBaseTable / ABX / LDX 0,X
+  $AEFA  lineWidthMax    $27 - renderCol wraps when it exceeds this, so the
+                         line width is a ROM constant and not an immediate
+  $AEFB  bitDoubleTable  64 words. Entry n is n with every bit duplicated,
+                         BYTE-SWAPPED: entry 1 reads FDB $0300, not $0003.
+                         All 64 verified against the doubling by computation
+  $AF7B  separationMask  20 bytes, see the character generator at $8000
+
+The swap is the same one the font rows use, and for the same reason: the value
+goes straight into a display word rather than being arithmetic. Readers do
+LDX #bitDoubleTable / ABX / LDD 0,X with an even index, so what LDD yields is
+already in display order.
+
+It is emitted as FDB, which is how the CPU loads it. Writing it as DW to show
+the doubling directly would be a lie about the bytes - asl's DW follows the
+target's endianness, so on a 6801 it emits big-endian and the round trip
+breaks. The cross-check caught exactly that.
+
+10 bytes, then one, then 128, then 20 - which is what pins each boundary: the
+old note here had bitDoubleTable starting at $AEFC and read the region past
+$AF1A as 16-entry blocks, and neither survives the arithmetic."""
 "0xA312" = """
 The current cell, unpacked into internal RAM.
 
@@ -1288,16 +1316,6 @@ $00-$1F through this table:
 This is a second, much smaller control-code interpreter, separate from the CEPT
 one at $D36A - it serves the ASCII Terminal-Mode listed in strModeNames. Nine
 distinct handlers cover the 32 slots."""
-"0xAEF0" = """
-Font bases, then a bit-doubling table.
-
-$AEF0 holds the five character-generator base addresses - $8000, $8780, $8F00,
-$9680 and $9E00 - followed by $2700.
-
-$AEFC begins a lookup that expands each bit of an index into two, which is the
-transform double-width rendering needs. Entries 1..15 are exactly
-bit-double(index) ($0003, $000C, $000F, $0030, ...), and the table continues in
-16-entry blocks past $AF1A. It feeds the DBW and DBS attribute handlers."""
 "0xEFF5" = """
 Status messages, 20 columns each, and the version string.
 
@@ -2494,6 +2512,21 @@ kind = "ptr_table"
 # Tables and strings identified from the unclassified sweep.
 [[regions]]
 start = 0xAEF0
+end = 0xAEFA
+kind = "words"
+
+[[regions]]
+start = 0xAEFA
+end = 0xAEFB
+kind = "bytes"
+
+[[regions]]
+start = 0xAEFB
+end = 0xAF7B
+kind = "words_raw"
+
+[[regions]]
+start = 0xAF7B
 end = 0xB200
 kind = "bytes"
 

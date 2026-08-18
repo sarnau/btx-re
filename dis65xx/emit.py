@@ -87,6 +87,16 @@ def format_operand(insn: Insn, sidecar: Sidecar) -> str:
         return site or sidecar.symbols.get(value) or f"${value:02X}"
     if mode is Mode.EXT:
         name = site or sidecar.symbols.get(value) or sidecar.labels.get(value)
+        if name is None:
+            # An address inside a labelled word table is an entry of it, so it
+            # reads as an offset from the table rather than as a loose address.
+            # Restricted to word regions: anywhere else an offset could name a
+            # point inside an instruction.
+            reg = sidecar.region_at(value)
+            if reg is not None and reg.kind in ("words", "words_le", "ptr_table"):
+                base_name = sidecar.labels.get(reg.start) or sidecar.symbols.get(reg.start)
+                if base_name:
+                    name = f"{base_name}+{value - reg.start}"
         # Force extended when a shortest-fit assembler would choose direct.
         prefix = ">" if value < 0x100 and Mode.DIR in modes_for(insn.mnemonic) else ""
         return prefix + (name if name else f"${value:04X}")
@@ -131,7 +141,8 @@ def _equ_lines(sidecar: Sidecar, aliases: dict[str, int]) -> list[str]:
 _MAX_OFFSET = 0x1000
 
 
-def _word_name(word: int, names: dict[int, str], symbols: dict[int, str]) -> str:
+def _word_name(word: int, names: dict[int, str], symbols: dict[int, str],
+               offsets: bool = True) -> str:
     """The name of what a word points at, as NAME or NAME+offset."""
     if word in names:
         return names[word]
@@ -139,6 +150,8 @@ def _word_name(word: int, names: dict[int, str], symbols: dict[int, str]) -> str
     # stride, so it reads as an offset from the plane. Only data symbols
     # qualify: a code label plus an offset would be naming a point inside an
     # instruction, which is never what a table entry means.
+    if not offsets:
+        return f"${word:04X}"
     base = max((a for a in symbols if a <= word and word - a < _MAX_OFFSET),
                default=None)
     if base is not None:
@@ -147,14 +160,19 @@ def _word_name(word: int, names: dict[int, str], symbols: dict[int, str]) -> str
 
 
 def _fdb_line(words: list[int], names: dict[int, str] | None = None,
-              symbols: dict[int, str] | None = None) -> str:
+              symbols: dict[int, str] | None = None, resolve: bool = True,
+              offsets: bool = True) -> str:
     """A word that is the address of something named prints the name.
 
     Every entry of a ptr_table is a handler address, and the hardware vectors
     are addresses too, so showing them as hex hides the one thing the table is
     for - which handler each slot reaches."""
+    if not resolve:
+        # A table of values, not addresses: $0000 is zero, not P1DDR.
+        return (f"{'':{_INDENT}}{'FDB':{_MNEM_WIDTH}}"
+                + ",".join(f"${w:04X}" for w in words))
     names, symbols = names or {}, symbols or {}
-    values = ",".join(_word_name(w, names, symbols) for w in words)
+    values = ",".join(_word_name(w, names, symbols, offsets) for w in words)
     return f"{'':{_INDENT}}{'FDB':{_MNEM_WIDTH}}{values}"
 
 
@@ -281,7 +299,22 @@ def emit(data: bytes, result: TraceResult, sidecar: Sidecar) -> str:
                 lines.append(f"{label}:")
 
 
-        if region is not None and region.kind in ("words", "ptr_table") and not is_code:
+        if region is not None and region.kind == "words_le" and not is_code:
+            # Stored low byte first, like the font rows, because the value goes
+            # straight into a display word rather than through the CPU.
+            flush()
+            count = min(8, (min(region.end, end) - addr) // 2)
+            if count:
+                vals = [int.from_bytes(data[addr - base + 2*i: addr - base + 2*i + 2],
+                                       "little") for i in range(count)]
+                lines.append(f"{'':{_INDENT}}{'DW':{_MNEM_WIDTH}}"
+                             + ",".join(f"${v:04X}" for v in vals))
+                addr += 2 * count
+                continue
+
+        if (region is not None
+                and region.kind in ("words", "words_raw", "ptr_table")
+                and not is_code):
             flush()
             count = min(8, (min(region.end, end) - addr) // 2)
             if count:
@@ -289,7 +322,10 @@ def emit(data: bytes, result: TraceResult, sidecar: Sidecar) -> str:
                     int.from_bytes(data[addr - base + 2 * i: addr - base + 2 * i + 2], "big")
                     for i in range(count)
                 ]
-                lines.append(_fdb_line(words, names, sidecar.symbols))
+                lines.append(_fdb_line(
+                    words, names, sidecar.symbols,
+                    resolve=region.kind != "words_raw",
+                    offsets=region.kind == "ptr_table"))
                 addr += 2 * count
                 continue
 

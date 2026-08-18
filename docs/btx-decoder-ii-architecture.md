@@ -52,8 +52,18 @@ $F129:  LDX  softVecSci        ; FE 00 F0
 ```
 
 so every interrupt is revectorable at runtime through internal RAM at
-`$00F0`–`$00FB`. `$F147` is a bare `RTI`, used as the null handler that reset
-installs into the vectors it does not need. That the soft vectors live in
+`$00F0`–`$00FB`. `nullHandler` at `$F147` is a bare `RTI`, installed into the
+vectors reset does not need. IRQ1 gets the two instructions right after it,
+`hostIrq`:
+
+```
+hostIrq:
+        JSR     fetchHostByte
+        RTI
+```
+
+so an interrupt from the C64 side is answered by pulling a byte out of the ring
+and nothing else. That the soft vectors live in
 `$00F0`–`$00FB` establishes that **internal RAM is enabled**.
 
 ### Memory map
@@ -482,7 +492,7 @@ anywhere in the image by any addressing mode; the SCI transmitter is unused.
 - each tick reloads OCR with `+$3415` — 13333 cycles, **75.002 Hz** at a 1 MHz E clock
 - each bit is written to `TCSR` bit 0, which is **OLVL**, so the compare
   hardware places the level on P21 at the exact compare instant
-- 9-bit frame shifted out of `txShift`, fed from a ring buffer at `$04EE`
+- 9-bit frame shifted out of `txShift`, fed from `txRing` at `$04EE`
 
 Letting the timer drive the pin rather than the ISR keeps the bit timing free
 of interrupt-latency jitter — which matters when the CPU is simultaneously
@@ -557,7 +567,7 @@ PSHA / ANDA #mask / ASLA / TAB / LDX #table / ABX / LDX 0,X / PULA / JMP 0,X
 | `$D1C9` `escTable` | 96 | ESC (`$1B`) sequences, `$20-$7F` |
 | `$D289` `csiTable` | 96 | CSI (`$9B`) sequences, `$20-$7F` |
 
-`$0497` chooses between the two C1 sets. `escSelectC1Set` (ESC `$22` — CEPT's
+`parallelMode` chooses between the two C1 sets. `escSelectC1Set` (ESC `$22` — CEPT's
 serial/parallel mode select) is what writes it, which is how the two tables are
 identified as the serial and parallel sets.
 
@@ -572,7 +582,7 @@ way.
 The escape assignments are ISO 2022: `$28`–`$2B` designate G0–G3, `$6E`/`$6F`
 are the locking shifts LS2/LS3, `$7C`–`$7E` the single shifts. The distinction
 shows in the code — `escLS2` sets both the current and the saved G-set
-(`$049D`, `$04A2`), while `ctlSS2` sets only `$049F`.
+(`gsetGL` and `gsetGLDefault`), while `ctlSS2` sets only `gsetSS`.
 
 The C64 side speaks the same protocol back: `c64XlatKey`'s tables emit CEPT
 sequences directly, and the pages the payload sends — the startup page, the
@@ -611,8 +621,8 @@ moves the cursor to the last row. `leaveStatusLine` at `$E744` puts all nine
 back.
 
 `inStatusLine` is then tested by sixteen CEPT handlers, which is how the page's
-own control codes are kept from disturbing the overlay — and it is the `$04AF`
-guard the CV30113 revision still has on `CAN`.
+own control codes are kept from disturbing the overlay — and it is the guard
+the CV30113 revision still has on `CAN`.
 
 ### A second interpreter
 
@@ -644,12 +654,12 @@ handler that was dropped from the table.
 
 `$8000`–`$9DFF` holds **four 96-glyph sets** of 20 bytes each:
 
-| Address | Set |
-|---|---|
-| `$8000` | G0 Latin alphanumerics |
-| `$8780` | non-spacing diacriticals and symbols (G2) |
-| `$8F00` | 2×3 block mosaics (G1) |
-| `$9680` | line drawing and diagonals |
+| | Address | Set |
+|---|---|---|
+| `fontG0` | `$8000` | Latin alphanumerics |
+| `fontAccents` | `$8780` | non-spacing diacriticals and symbols (G2) |
+| `fontMosaic` | `$8F00` | 2×3 block mosaics (G1) |
+| `fontSet3` | `$9680` | line drawing and diagonals |
 
 Each glyph is 10 rows of 2 bytes, and **rows are stored little-endian** — the
 first byte of a row is its *right* half. Read in the 6801's usual big-endian
@@ -707,12 +717,12 @@ firmware never touches the font. That was wrong: the glyph fetch reads through
 the stack pointer with `PUL` and the flag test is an indexed byte off
 `glyphPtr`, so neither appears as a font reference under ordinary addressing.*
 
-`$9E00`–`$A20F` holds a second font: 104 glyphs, 8 pixels wide, one byte per
+`fontNarrow` at `$9E00`–`$A20F` is a second font: 104 glyphs, 8 pixels wide, one byte per
 row, no byte-order surprise.
 
 ### Display memory
 
-Four planes, addressed through line tables at `$FC45`–`$FD0C` — 25 rows of 40
+Four planes, addressed through the `lineAddr` tables at `$FC45`–`$FD0C` — 25 rows of 40
 columns, the CEPT page plus a status line:
 
 | Plane | Base | Per cell | Row stride | Role |
@@ -723,7 +733,7 @@ columns, the CEPT page plus a status line:
 | `planeAccent` | `$5800` | 1 byte | 40 | combining-accent overlay |
 
 `$E9A5` reloads all four row pointers whenever the cursor row changes, from the
-four tables at `$FC45`–`$FD0C`.
+four `lineAddr` tables.
 
 The redraw walks the planes with a second set of pointers in internal RAM —
 `walkChar`, `walkAttr` and `walkAccent` — and unpacks each cell's four
@@ -735,9 +745,10 @@ payload's `c64CellSet` are the same byte two processors apart. Those strides are
 layout anywhere in the image: three planes are one byte per cell across 40
 columns, and `planeAttr` is four, which is exactly why its rows sit 160 apart.
 
-What separates attributes from content is decisive: `$04B1`–`$04B4` are never
+What separates attributes from content is decisive: `attr0`–`attr3` are never
 assigned a raw byte — only ever bit-manipulated by the C1 handlers — whereas
-the incoming character lands in `$04B5` and only that value reaches `$5400`.
+the incoming character lands in `charCode` and only that value reaches
+`planeChar`.
 
 ### DRCS
 
@@ -782,12 +793,12 @@ rather than 10**, which is what `blitRows` carries into the blit loop.
 
 ### Combining accents
 
-The `$5800` plane is not a duplicate character plane. When a character comes
+`planeAccent` is not a duplicate character plane. When a character comes
 from G2 and its code lies in `$40`–`$4F` — where CEPT puts the non-spacing
 diacriticals — `$E972` stores it there and returns **without advancing the
 cursor**, which is what makes it combining rather than spacing. The next
-character picks up an attribute bit from `accentPending` and goes to `$5400`
-normally. The firmware never reads `$5800`, so the video hardware composites
+character picks up an attribute bit from `accentPending` and goes to `planeChar`
+normally. The firmware never reads `planeAccent`, so the video hardware composites
 the mark over the base glyph.
 
 The C64 side shows the same design from the other end: the cell it receives has
@@ -811,14 +822,14 @@ line. 25 rows times `glyphRows` of 10 is 250 units, which is why the clear
 fills the six-unit tail separately. Within a unit the renderer writes `$00,X`
 and `$02,X` — plus `$04,X` and `$06,X` when `tallCell` is set — while the clear
 touches only `$03,X`, from `rowFlags`. `redrawReq` at `$1B23` is how the CEPT handlers
-ask for that: they set it, and the main loops test it against `$04AE` and call
+ask for that: they set it, and the main loops test it against `statusDirty` and call
 in.
 
 Fetching a glyph is done in an unusual way. `glyphPtr` is set to the font base
 for the current set — through `fontBaseTable` — plus 20 times `glyphCode`,
 then decremented, because the 6801's `PUL` pre-increments. The rows are then
 read with `PULA`: **S is loaded from `glyphPtr`** and the real stack is parked
-in `$00EC` under `SEI` for the duration.
+in `savedS` under `SEI` for the duration.
 
 ```
         LDS     glyphPtr
@@ -843,12 +854,27 @@ either reaches `videoRam`.
 ### Cursor and scrolling
 
 `cursorCol` (`$1B1F`) wraps against 40 and 39; `cursorRow` (`$1B1E`) is clamped
-between `scrollTop` and `scrollBottom` with a ceiling in `$1B00`. `$EC16` is
+between `scrollTop` and `scrollBottom` with a ceiling in `cursorRowMax`. `$EC16` is
 the wrap logic; `$EC8D` and `$ECA1` are the bounded row moves, each falling
 through to scroll at the window edge.
 
-Double-width rendering uses the bit-doubling table at `$AEFC`, whose entries
-are the index with each bit duplicated.
+Double-width rendering uses `bitDoubleTable` at `$AEFB` — 64 words, entry n
+being n with every bit duplicated, **byte-swapped**: entry 1 reads `FDB $0300`,
+not `$0003`. All 64 were checked against the doubling by computation. The swap
+is the one the font rows use and is there for the same reason — readers do
+`LDX #bitDoubleTable / ABX / LDD $00,X` with an even index, so what `LDD`
+yields is already in display order.
+
+Four tables sit back to back with no gaps, and the sizes are what pin each
+boundary — 10 bytes, then one, then 128, then 20:
+
+```
+$AEF0  fontBaseTable   FDB fontG0,fontAccents,fontMosaic,fontSet3,fontNarrow
+$AEFA  lineWidthMax    $27 - renderCol wraps against this, so the line width
+                       is a ROM constant rather than an immediate
+$AEFB  bitDoubleTable  64 little-endian words
+$AF7B  separationMask  20 bytes
+```
 
 ---
 
@@ -954,7 +980,7 @@ entire C64 payload is byte-for-byte identical. See
 - **The `$D419` no-match path.** Reachable, but harmless: two of its three
   outputs are read only for bit 7 and the third is clamped. Documented in the
   sidecar rather than treated as a bug.
-- **Two cell bytes.** The decoder puts `$00E0` and `$00E2` into `cellAttr0` and
+- **Two cell bytes.** The decoder puts `curAttr0` and `curAttr2` into `cellAttr0` and
   `cellAttr2`, and the C64 stores them as `c64Cell3` and `c64Cell5` and never
   reads them back. Both sides carry the fields; neither uses them.
 

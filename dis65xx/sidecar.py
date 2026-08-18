@@ -10,7 +10,7 @@ import dataclasses
 import pathlib
 import tomllib
 
-REGION_KINDS = {"code", "bytes", "words", "string", "ptr_table", "chargen",
+REGION_KINDS = {"code", "bytes", "words", "words_le", "words_raw", "string", "ptr_table", "chargen",
                 "code6502", "petscii", "byte_word"}
 
 

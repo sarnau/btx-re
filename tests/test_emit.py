@@ -87,8 +87,8 @@ def test_dispatch_tables_name_their_handlers():
     # only data symbols take an offset - a code label plus one would be naming
     # a point inside an instruction
     offsets = set(re.findall(r"\b([A-Za-z_][A-Za-z0-9_]*)\+\d+", src))
-    assert offsets <= {"planeRender", "planeAttr", "planeChar", "planeAccent"}, \
-        sorted(offsets)
+    assert offsets <= {"planeRender", "planeAttr", "planeChar", "planeAccent",
+                       "fontBaseTable"}, sorted(offsets)
 
 
 def test_string_regions_render_as_text():
