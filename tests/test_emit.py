@@ -97,3 +97,29 @@ def test_string_regions_render_as_text():
     assert 'FCC     "ASCII Terminal-Mode "' in src
     assert 'FCC     "Decodersoftware V3.3"' in src
     assert "FCB     $43,$45,$50,$54" not in src, "still emitting the text as bytes"
+
+
+def test_address_immediates_take_names_but_constants_do_not():
+    """LDX #table / ABX is an address; ADDD #$0002 is arithmetic. The 6801
+    register file sits below $0100, so small constants collide with it."""
+    src = (OUT / "btx_decoder_ii.asm").read_text()
+    assert "LDX     #lineAddrChar" in src
+    assert "LDD     #nullHandler" in src
+    assert "ADDD    #$0002" in src and "ADDD    #PORT1" not in src
+    assert "LDX     #$0000" in src and "LDX     #P1DDR" not in src
+
+
+def test_literal_immediates_are_left_as_numbers():
+    """$E4FF takes a two-byte parameter pair in X and stores it with STX, so
+    the $4000 its callers load is not planeRender."""
+    src = (OUT / "btx_decoder_ii.asm").read_text()
+    body = src.split("c1aEBX:", 1)[1][:120]
+    assert "LDX     #$4000" in body and "planeRender" not in body
+
+
+def test_clear_planes_lands_on_an_instruction():
+    """A label placed mid-instruction is emitted as FCB with an 'overlapped'
+    note - which is how a wrong address announces itself."""
+    src = (OUT / "btx_decoder_ii.asm").read_text()
+    body = src.split("clearPlanes:", 1)[1][:80]
+    assert "FCB" not in body, body

@@ -1,3 +1,9 @@
+# 16-bit immediates that are constants, not addresses, at instructions where
+# the value collides with a named location. c1aEBX and c1aSBX load $4000 into X
+# as a two-byte parameter pair for $E4FF - which stores it with STX $04B6 and
+# never indexes through it - so it is not planeRender.
+literal_immediates = [0xDCD1, 0xDCDE]
+
 # Analysis metadata for the Commodore BTX Decoder II firmware.
 #
 # This file is the source of truth for everything we learn about the ROM.
@@ -440,6 +446,8 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xE34E" = "csiDigit9"
 "0xE35B" = "csiFinalB"
 "0xE367" = "escDefine"
+"0xE9A5" = "setRowPointers"
+"0xEE4B" = "clearPlanes"
 "0xFC45" = "lineAddrAccent"
 "0xFC77" = "lineAddrChar"
 "0xFCA9" = "lineAddrAttr"
@@ -553,6 +561,30 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xFFF0" = "vectors"
 
 [block_comments]
+"0xEE4B" = """
+Clear all four display planes to their power-on state.
+
+    planeChar    $A0 across every cell    (the space of the G0 set)
+    planeRender  $00
+    planeAttr    four passes, one per byte of the cell, ABX stepping 4:
+                 byte 0 = $00, byte 1 = $80, byte 2 = $07, byte 3 = $99
+
+Those four passes are the plainest evidence anywhere in the image that a cell
+of planeAttr is four bytes wide: the loops differ only in their STAA offset,
+0 through 3, and all step by 4. The line tables say the same thing with a row
+stride of 160 against the other planes' 40."""
+"0xE9A5" = """
+Point the four row pointers at the current cursor row.
+
+    LDAB cursorRow / ASLB
+    LDX #lineAddrChar   / ABX / LDX 0,X / STX rowChar
+    LDX #lineAddrAttr   / ABX / LDX 0,X / STX rowAttr
+    LDX #lineAddrAccent / ABX / LDX 0,X / STX rowAccent
+    LDX #lineAddrRender / ABX / LDX 0,X / STX rowRender
+
+Every plane write goes through one of those four, so this is the only place
+that has to know the geometry. The scroll routines index the same tables
+directly with scrollTop and scrollBottom rather than through the cursor."""
 "0xFC45" = """
 Row start addresses for the four display planes, 25 entries each. $E9A5 reloads
 all four whenever the cursor row changes, which is what keeps the planes in
@@ -1402,6 +1434,7 @@ Sets up the stack, configures ports 1 and 2, and installs the interrupt soft
 vectors before entering the main firmware."""
 
 [line_comments]
+"0xB2F5" = "one past c64Payload's last byte - the address is also where ctrlTableC0 starts"
 "0xB340" = "runs at C64 $8000 from cartridge ROM - the terminal's own cold start is c64ColdStart, in the payload"
 "0xB363" = "copy one byte, 256 at a time, until c64BootGetByte reports end of stream"
 "0xB37A" = "the bootstrap's own c64GetByte: one byte from the transfer FIFO, C=1 when the decoder has finished sending"

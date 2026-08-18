@@ -67,7 +67,15 @@ def format_operand(insn: Insn, sidecar: Sidecar) -> str:
     if mode is Mode.IMM8:
         return f"#${value:02X}"
     if mode is Mode.IMM16:
-        return f"#${value:04X}"
+        # A 16-bit immediate is usually an address being loaded into X - a
+        # table base to index, or a handler to install in a soft vector - so
+        # it takes a name when one exists. Only exact matches qualify, and
+        # nothing below $0100: the 6801 register file lives there, so small
+        # constants collide with it and ADDD #$0002 would print as ADDD #PORT1.
+        name = (sidecar.symbols.get(value) or sidecar.labels.get(value)
+                if value >= 0x0100 and insn.addr not in sidecar.literal_immediates
+                else None)
+        return f"#{name}" if name else f"#${value:04X}"
     if mode is Mode.IDX:
         return f"${value:02X},X"
     if mode is Mode.REL:

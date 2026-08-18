@@ -804,11 +804,11 @@ LA2E4:
         LDAA    #$00
         STAA    $07B0
         STAA    $07B1
-        LDD     #$5400
+        LDD     #planeChar
         STD     >$00E6
-        LDD     #$4400
+        LDD     #planeAttr
         STD     >$00E4
-        LDD     #$5800
+        LDD     #planeAccent
         STD     >$00E8
         TST     $1B28
         BEQ     LA312
@@ -1202,7 +1202,7 @@ LA5D6:
 
 LA5F3:
         ASLB
-        LDX     #$AEF0
+        LDX     #fontBaseTable
         ABX
         LDX     $00,X
         DEX
@@ -2573,13 +2573,13 @@ reset:
         LDAA    #$11
         STAA    P2DDR
         STAA    PORT2
-        LDD     #$F147
+        LDD     #nullHandler
         STD     >softVecTof
         STD     >softVecIcf
         STD     >softVecSwi
-        LDD     #$F14C
+        LDD     #txBitTick
         STD     >softVecOcf
-        LDD     #$F61F
+        LDD     #sciRxHandler
         STD     >softVecSci
         LDD     #$F148
         STD     >softVecIrq1
@@ -2608,7 +2608,7 @@ reset:
         JSR     LEE9A
         JSR     LD849
         JSR     LD3E5
-        JSR     LE9A5
+        JSR     setRowPointers
         JSR     LECCB
         JSR     LB2A3
         JSR     LEED2
@@ -2621,7 +2621,7 @@ reset:
 LB280:
         SEI
         LDS     #$0400
-        LDD     #$F61F
+        LDD     #sciRxHandler
         STD     >softVecSci
         CLI
         CLR     $1B28
@@ -2710,14 +2710,14 @@ LB2E7:
 LB2F1:
         LDX     $0406
         INX
-        CPX     #$D109
+        CPX     #ctrlTableC0            ; one past c64Payload's last byte - the address is also where ctrlTableC0 starts
         BEQ     LB31A
         STX     $0406
         LDAA    $00,X
 
 LB2FF:
         LDAB    c64FifoWr
-        LDX     #$6080
+        LDX     #c64Fifo
         ABX
         INCB
         ANDB    #$0F
@@ -2856,7 +2856,7 @@ dispatchC0:
         PSHA
         ASLA
         TAB
-        LDX     #$D109
+        LDX     #ctrlTableC0
         ABX
         LDX     $00,X
         PULA
@@ -2878,7 +2878,7 @@ dispatchC1a:
         ANDA    #$1F
         ASLA
         TAB
-        LDX     #$D149
+        LDX     #ctrlTableC1a
         ABX
         LDX     $00,X
         PULA
@@ -2889,7 +2889,7 @@ dispatchC1b:
         ANDA    #$1F
         ASLA
         TAB
-        LDX     #$D189
+        LDX     #ctrlTableC1b
         ABX
         LDX     $00,X
         PULA
@@ -2914,7 +2914,7 @@ LD3B8:
         ANDA    #$7F
         ASLA
         TAB
-        LDX     #$D1C9
+        LDX     #escTable
         ABX
         LDX     $00,X
         PULA
@@ -2936,7 +2936,7 @@ LD3D8:
         ANDA    #$7F
         ASLA
         TAB
-        LDX     #$D289
+        LDX     #csiTable
         ABX
         LDX     $00,X
         PULA
@@ -3062,7 +3062,7 @@ fmtLookup:
         LDAB    #$11
 
 LD494:
-        LDX     #$D419
+        LDX     #fmtKeys
         ABX
         CMPA    $00,X
         BEQ     LD49F
@@ -3070,15 +3070,15 @@ LD494:
         BPL     LD494
 
 LD49F:
-        LDX     #$D42B
+        LDX     #fmtVals041C
         ABX
         LDAA    $00,X
         STAA    $041C
-        LDX     #$D43D
+        LDX     #fmtVals041D
         ABX
         LDAA    $00,X
         STAA    $041D
-        LDX     #$D44F
+        LDX     #fmtVals041F
         ABX
         LDAA    $00,X
         STAA    $041F
@@ -3914,7 +3914,7 @@ LDA5D:
 LDA73:
         INC     cursorRow
         JSR     LEC16
-        JSR     LE9A5
+        JSR     setRowPointers
         JMP     parseNextByte
 
 ctlAPU:
@@ -3935,7 +3935,7 @@ LDA87:
 LDA9D:
         DEC     cursorRow
         JSR     LEC16
-        JSR     LE9A5
+        JSR     setRowPointers
         JMP     parseNextByte
 
 ctlCS:
@@ -3948,11 +3948,11 @@ LDAB1:
         STAA    scrollTop
         STAA    scrollBottom
         STAA    $04A3
-        JSR     LEE4B
+        JSR     clearPlanes
         LDAA    #$18
         STAA    cursorRow
         CLR     cursorCol
-        JSR     LE9A5
+        JSR     setRowPointers
         LDAA    $1B25
         STAA    $1B23
         CLR     $0495
@@ -3963,7 +3963,7 @@ LDAB1:
 ctlAPR:
         CLR     cursorCol               ; C0 $0D APR - cursor to start of line
         JSR     LEC16
-        JSR     LE9A5
+        JSR     setRowPointers
         JMP     parseNextByte
 
 ctlSO:
@@ -4114,7 +4114,7 @@ ctlAPH:
         CLR     cursorRow               ; C0 $1E APH - cursor home
         CLR     cursorCol
         JSR     LECB5
-        JSR     LE9A5
+        JSR     setRowPointers
         JSR     LEE3A
         JMP     parseNextByte
 
@@ -4173,7 +4173,7 @@ LDC45:
         ANDA    #$3F
         STAA    cursorCol
         DEC     cursorCol
-        JSR     LE9A5
+        JSR     setRowPointers
         JMP     parseNextByte
 
 LDC6A:
@@ -4315,7 +4315,7 @@ LDD2A:
         JSR     LEA44
         DEC     cursorRow
         JSR     LEC16
-        JSR     LE9A5
+        JSR     setRowPointers
 
 LDD3E:
         JMP     LDDFB
@@ -5623,7 +5623,7 @@ LE57B:
         COMB
         STAB    $04B8
         STX     $04B6
-        LDX     #$04B1
+        LDX     #attr0
         LDAB    $04B7
         ABX
         LDAA    $00,X
@@ -5645,7 +5645,7 @@ LE5A1:
         STAA    cursorRow
         LDAA    #$00
         STAA    cursorCol
-        JSR     LE9A5
+        JSR     setRowPointers
         LDX     #$0000
         LDAB    #$FF
         LDAA    #$00
@@ -5678,7 +5678,7 @@ LE5D7:
         STAA    cursorCol
         PULA
         STAA    cursorRow
-        JSR     LE9A5
+        JSR     setRowPointers
         RTS
 
 LE5FA:
@@ -5770,7 +5770,7 @@ LE669:
 LE69A:
         STAA    $00,X
         INX
-        CPX     #$1B1C
+        CPX     #scrollTop
         BNE     LE69A
         JMP     ctlCS
 
@@ -5818,7 +5818,7 @@ LE6C6:
         ANDA    #$1F
         STAA    cursorRow
         DEC     cursorRow
-        JSR     LE9A5
+        JSR     setRowPointers
         JSR     LEE3A
         CLR     $0499
         LDAA    #$01
@@ -5843,7 +5843,7 @@ LE744:
         STAA    cursorCol
         LDAA    $04A5
         STAA    cursorRow
-        JSR     LE9A5
+        JSR     setRowPointers
         LDAA    $04A7
         STAA    $04A4
         LDAA    $04A8
@@ -5895,7 +5895,7 @@ LE7B1:
 
 LE7C2:
         DEC     cursorRow
-        JSR     LE9A5
+        JSR     setRowPointers
         INC     cursorRow
 
 LE7CB:
@@ -6137,7 +6137,7 @@ LE94E:
 LE968:
         INC     cursorCol
         JSR     LEC16
-        JSR     LE9A5
+        JSR     setRowPointers
         RTS
 
 LE972:
@@ -6175,22 +6175,33 @@ LE99F:
 LE9A2:
         JMP     parseNextByte
 
-LE9A5:
+; Point the four row pointers at the current cursor row.
+;
+;     LDAB cursorRow / ASLB
+;     LDX #lineAddrChar   / ABX / LDX 0,X / STX rowChar
+;     LDX #lineAddrAttr   / ABX / LDX 0,X / STX rowAttr
+;     LDX #lineAddrAccent / ABX / LDX 0,X / STX rowAccent
+;     LDX #lineAddrRender / ABX / LDX 0,X / STX rowRender
+;
+; Every plane write goes through one of those four, so this is the only place
+; that has to know the geometry. The scroll routines index the same tables
+; directly with scrollTop and scrollBottom rather than through the cursor.
+setRowPointers:
         LDAB    cursorRow
         ASLB
-        LDX     #$FC77
+        LDX     #lineAddrChar
         ABX
         LDX     $00,X
         STX     rowChar
-        LDX     #$FCA9
+        LDX     #lineAddrAttr
         ABX
         LDX     $00,X
         STX     rowAttr
-        LDX     #$FC45
+        LDX     #lineAddrAccent
         ABX
         LDX     $00,X
         STX     rowAccent
-        LDX     #$FCDB
+        LDX     #lineAddrRender
         ABX
         LDX     $00,X
         STX     rowRender
@@ -6266,13 +6277,13 @@ LEA44:
 LEA4A:
         LDAB    scrollBottom
         ASLB
-        LDX     #$FC77
+        LDX     #lineAddrChar
         ABX
         LDD     $00,X
         STD     $0406
         LDAB    scrollTop
         ASLB
-        LDX     #$FC77
+        LDX     #lineAddrChar
         ABX
         LDD     $00,X
         STD     $0408
@@ -6299,13 +6310,13 @@ LEA7C:
         BNE     LEA7C
         LDAB    scrollBottom
         ASLB
-        LDX     #$FC45
+        LDX     #lineAddrAccent
         ABX
         LDD     $00,X
         STD     $0406
         LDAB    scrollTop
         ASLB
-        LDX     #$FC45
+        LDX     #lineAddrAccent
         ABX
         LDD     $00,X
         STD     $0408
@@ -6323,13 +6334,13 @@ LEAA4:
 LEAAE:
         LDAB    scrollBottom
         ASLB
-        LDX     #$FCDB
+        LDX     #lineAddrRender
         ABX
         LDD     $00,X
         STD     $0406
         LDAB    scrollTop
         ASLB
-        LDX     #$FCDB
+        LDX     #lineAddrRender
         ABX
         LDD     $00,X
         STD     $0408
@@ -6354,13 +6365,13 @@ LEADC:
         BNE     LEADC
         LDAB    scrollBottom
         ASLB
-        LDX     #$FCA9
+        LDX     #lineAddrAttr
         ABX
         LDD     $00,X
         STD     $0406
         LDAB    scrollTop
         ASLB
-        LDX     #$FCA9
+        LDX     #lineAddrAttr
         ABX
         LDD     $00,X
         STD     $0408
@@ -6405,13 +6416,13 @@ LEB28:
 LEB2E:
         LDAB    scrollTop
         ASLB
-        LDX     #$FC77
+        LDX     #lineAddrChar
         ABX
         LDD     $00,X
         STD     $0406
         LDAB    scrollBottom
         ASLB
-        LDX     #$FC77
+        LDX     #lineAddrChar
         ABX
         LDD     $00,X
         STD     $0408
@@ -6440,13 +6451,13 @@ LEB62:
         BNE     LEB62
         LDAB    scrollTop
         ASLB
-        LDX     #$FC45
+        LDX     #lineAddrAccent
         ABX
         LDD     $00,X
         STD     $0406
         LDAB    scrollBottom
         ASLB
-        LDX     #$FC45
+        LDX     #lineAddrAccent
         ABX
         LDD     $00,X
         STD     $0408
@@ -6465,13 +6476,13 @@ LEB8B:
 LEB95:
         LDAB    scrollTop
         ASLB
-        LDX     #$FCDB
+        LDX     #lineAddrRender
         ABX
         LDD     $00,X
         STD     $0406
         LDAB    scrollBottom
         ASLB
-        LDX     #$FCDB
+        LDX     #lineAddrRender
         ABX
         LDD     $00,X
         STD     $0408
@@ -6498,13 +6509,13 @@ LEBC5:
         BNE     LEBC5
         LDAB    scrollTop
         ASLB
-        LDX     #$FCA9
+        LDX     #lineAddrAttr
         ABX
         LDD     $00,X
         STD     $0406
         LDAB    scrollBottom
         ASLB
-        LDX     #$FCA9
+        LDX     #lineAddrAttr
         ABX
         LDD     $00,X
         STD     $0408
@@ -6558,7 +6569,7 @@ LEC22:
         LDAA    #$27
         STAA    cursorCol
         JSR     LEC8D
-        JSR     LE9A5
+        JSR     setRowPointers
         JMP     LEC5A
 
 LEC38:
@@ -6571,7 +6582,7 @@ LEC3E:
         JSR     LEE3A
         CLR     cursorCol
         JSR     LECA1
-        JSR     LE9A5
+        JSR     setRowPointers
         JMP     LEC5A
 
 LEC52:
@@ -6591,22 +6602,22 @@ LEC65:
         BPL     LEC73
         LDAA    cursorRowMax
         STAA    cursorRow
-        JMP     LE9A5
+        JMP     setRowPointers
 
 LEC73:
         CLR     cursorRow
-        JMP     LE9A5
+        JMP     setRowPointers
 
 LEC79:
         TST     $04A4
         BPL     LEC84
         CLR     cursorRow
-        JMP     LE9A5
+        JMP     setRowPointers
 
 LEC84:
         LDAA    cursorRowMax
         STAA    cursorRow
-        JMP     LE9A5
+        JMP     setRowPointers
 
 LEC8D:
         LDAA    cursorRow
@@ -6696,7 +6707,7 @@ LECCB:
         CLR     accentPending
         CLR     cursorRow
         CLR     cursorCol
-        JSR     LE9A5
+        JSR     setRowPointers
         CLR     $0495
         LDAA    #$FF
         STAA    scrollTop
@@ -6713,7 +6724,7 @@ LECCB:
         CLR     $04E0
         CLR     cursorRow
         CLR     cursorCol
-        JSR     LE9A5
+        JSR     setRowPointers
         CLR     $04D9
         LDAA    #$64
         STAA    $04E2
@@ -6805,23 +6816,34 @@ LEE45:
         STAA    $0498
         RTS
 
-LEE4B:
+; Clear all four display planes to their power-on state.
+;
+;     planeChar    $A0 across every cell    (the space of the G0 set)
+;     planeRender  $00
+;     planeAttr    four passes, one per byte of the cell, ABX stepping 4:
+;                  byte 0 = $00, byte 1 = $80, byte 2 = $07, byte 3 = $99
+;
+; Those four passes are the plainest evidence anywhere in the image that a cell
+; of planeAttr is four bytes wide: the loops differ only in their STAA offset,
+; 0 through 3, and all step by 4. The line tables say the same thing with a row
+; stride of 160 against the other planes' 40.
+clearPlanes:
         LDAA    #$A0
-        LDX     #$5400
+        LDX     #planeChar
 
 LEE50:
         STAA    $00,X
         INX
         CPX     #$57C0
         BNE     LEE50
-        LDX     #$4000
+        LDX     #planeRender
 
 LEE5B:
         CLR     $00,X
         INX
         CPX     #$43C0
         BNE     LEE5B
-        LDX     #$4400
+        LDX     #planeAttr
         LDAB    #$04
 
 LEE68:
@@ -6829,7 +6851,7 @@ LEE68:
         ABX
         CPX     #$53A0
         BCS     LEE68
-        LDX     #$4400
+        LDX     #planeAttr
         LDAA    #$80
 
 LEE75:
@@ -6838,7 +6860,7 @@ LEE75:
         CPX     #$5300
         BCS     LEE75
         LDAA    #$07
-        LDX     #$4400
+        LDX     #planeAttr
         LDAA    #$07
 
 LEE84:
@@ -6846,7 +6868,7 @@ LEE84:
         ABX
         CPX     #$5300
         BCS     LEE84
-        LDX     #$4400
+        LDX     #planeAttr
         LDAA    #$99
 
 LEE91:
@@ -6857,7 +6879,7 @@ LEE91:
         RTS
 
 LEE9A:
-        JSR     LEE4B
+        JSR     clearPlanes
         CLR     $1B23
         LDX     #$1B03
         LDAA    #$0F
@@ -7001,7 +7023,7 @@ LEFCB:
         SEI
         STS     $048A
         LDAB    $04E2
-        LDX     #$EFF5
+        LDX     #strStatusMsgs
         ABX
         TXS
         LDX     #$57D4
@@ -7215,7 +7237,7 @@ LF160:
         LDAB    txRingHead
         CMPB    txRingTail
         BEQ     LF1B3
-        LDX     #$04EE
+        LDX     #txRing
         INCB
         ABX
         INC     txRingHead
@@ -7793,15 +7815,15 @@ LF52D:
         TAB
         SUBB    #$11
         ASLB
-        LDX     #$FC77
+        LDX     #lineAddrChar
         ABX
         LDX     $00,X
         STX     $0410
-        LDX     #$FC45
+        LDX     #lineAddrAccent
         ABX
         LDX     $00,X
         STX     $0414
-        LDX     #$FCA9
+        LDX     #lineAddrAttr
         ABX
         LDX     $00,X
         STX     $0412
@@ -7866,7 +7888,7 @@ LF5A4:
         STD     OCRH
 
 LF5C7:
-        LDD     #$F14C
+        LDD     #txBitTick
         STD     >softVecOcf
         CLI
         RTS
@@ -7885,7 +7907,7 @@ LF5CF:
         CLR     $04D9
         CLR     $04D8
         SEI
-        LDD     #$F954
+        LDD     #timerHandlerAlt
         STD     >softVecOcf
         LDD     COUNTH
         ADDD    #$03E8
@@ -7905,7 +7927,7 @@ LF601:
         JSR     LEFCB
         JSR     LA210
         SEI
-        LDD     #$F14C
+        LDD     #txBitTick
         STD     >softVecOcf
         CLI
         RTS
@@ -8171,7 +8193,7 @@ LF7D1:
         CMPB    txRingHead
         BEQ     LF7D1
         INC     txRingTail
-        LDX     #$04EE
+        LDX     #txRing
         ABX
         STAA    $00,X
         RTS
@@ -8253,7 +8275,7 @@ LF83E:
         LDAA    TCSR
         ORAA    #$08
         STAA    TCSR
-        LDD     #$F954
+        LDD     #timerHandlerAlt
         STD     >softVecOcf
         LDD     #$84D0
         STD     $04E3
@@ -8422,7 +8444,7 @@ LF999:
         CLR     $1B29
         LDAA    #$FF
         STAA    $1B28
-        JSR     LEE4B
+        JSR     clearPlanes
         JSR     LEED2
         CLR     $1B20
         CLR     $04DC
@@ -8640,7 +8662,7 @@ LFB23:
         SUBA    #$20
         LDAB    #$0A
         MUL
-        ADDD    #$9E00
+        ADDD    #fontNarrow
         STD     $061C
         LDAA    asciiCol
         LSRA
@@ -8714,7 +8736,7 @@ LFBAA:
         BHI     LFBBC
         TAB
         ASLB
-        LDX     #$F9FA
+        LDX     #asciiCtrlTable
         ABX
         LDX     $00,X
         JSR     $00,X

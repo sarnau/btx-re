@@ -56,6 +56,9 @@ class Sidecar:
     block_comments: dict[int, str]
     symbols: dict[int, str]
     regions: list[Region]
+    # Instructions whose 16-bit immediate is a constant that happens to
+    # collide with a named address, so it must not be printed as the name.
+    literal_immediates: frozenset[int] = frozenset()
     c64_blocks: list[C64Block] = dataclasses.field(default_factory=list)
     c64_symbols: dict[int, str] = dataclasses.field(default_factory=dict)
     c64_pointers: list[int] = dataclasses.field(default_factory=list)
@@ -84,11 +87,12 @@ def load_sidecar(path: str | pathlib.Path) -> Sidecar:
     # TOML assigns bare keys written after a [table] header to that table. An
     # entry_points list placed below [meta] therefore becomes meta.entry_points
     # and vanishes from the top level, producing a silently empty disassembly.
-    if "entry_points" in meta:
-        raise ValueError(
-            "entry_points must be a top-level key placed ABOVE the [meta] header; "
-            "found it nested under [meta]"
-        )
+    for key in ("entry_points", "literal_immediates"):
+        if key in meta:
+            raise ValueError(
+                f"{key} must be a top-level key placed ABOVE the [meta] header; "
+                f"found it nested under [meta]"
+            )
 
     regions = []
     for r in raw.get("regions", []):
@@ -122,6 +126,7 @@ def load_sidecar(path: str | pathlib.Path) -> Sidecar:
         block_comments=_int_keys(raw.get("block_comments", {})),
         symbols=_int_keys(raw.get("symbols", {})),
         regions=regions,
+        literal_immediates=frozenset(raw.get("literal_immediates", [])),
         c64_blocks=blocks,
         c64_symbols=_int_keys(raw.get("c64_symbols", {})),
         c64_pointers=list(raw.get("c64_pointers", [])),
