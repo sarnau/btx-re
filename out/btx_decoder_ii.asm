@@ -2329,35 +2329,49 @@ reset:
         STAA    $6010
         RTS
 
-; C64-side 6502 program, $B32D-$D108 (~7.9 KB).
+; C64-side 6502 code, $B32D-$D108. Not 6801 - the cartridge carries the C64's
+; BTX terminal application in the same 32 KB image as the 68B01 firmware, which
+; is why a 6801 trace never reaches it.
 ;
-; This is NOT 6801 code. The cartridge carries the C64's BTX terminal
-; application embedded in the same 32 KB image as the 68B01 decoder firmware,
-; which is why a 6801 trace never reaches it and why the earlier Ghidra project
-; was named BTX_6502.
+; $B32D-$B3A5  c64Bootstrap  cartridge cold-start, runs at C64 $8000
+; $B3A6-$B3A7  c64LoadAddr   $00 $10 - little-endian load address $1000
+; $B3A8-$D108  c64Payload    7521 bytes, loaded to C64 $1000-$2D60
 ;
-; Evidence:
-;   - Sweeping as 6502 gives 0.0-0.5% illegal opcodes over $C000-$C700 and
-;     $CA00-$CBFF, where known 6801 code scores 34-40% under the same test.
-;     Sweeping those same blocks as 6801 is not clean.
-;   - A 38-entry 6502 JMP table at $B3AE ($4C lo hi, little-endian targets
-;     $174C-$2943 - C64 RAM, not cartridge ROM).
-;   - German terminal UI strings padded to 40 columns, the C64 screen width.
+; The bootstrap runs from cartridge ROM at C64 $8000 (ROM $B32D maps to $8000,
+; confirmed by the JMP $8036 at $B36D landing exactly on $B363):
 ;
-; Strings begin at $B552 and run to about $B9F0: menu lines such as
-; "Load Capture Display Macro Xfer Screen", "ASCII Btx Keybd Telesoft Edit
-; Pause Quit", "Capture-Modus ein - Ende: STOP-Taste", "Telesoftware: File?",
-; and the macro filename prefix "@:BTX-MAK-".
+;     JSR $FDA3 / $FD90 / $FD15 / $FF5B   KERNAL init, restore vectors, CINT
+;     LDX #$00 / STX $D016                VIC setup
+;     JSR $804D / STA $61                 fetch load address low byte
+;     JSR $804D / STA $62                 fetch load address high byte
+;     LDY #$00
+;   loop:
+;     JSR $804D / BCS done / STA ($61),Y  copy one byte
+;     INY / BNE loop / INC $62 / JMP loop
 ;
-; OPEN: the runtime load address is not established. The JMP table targets bound
-; the ROM-to-runtime offset to $9BE1-$AA06, but neither a pointer-table scan nor
-; a search for the LDA #<ptr / LDY #>ptr idiom produced a consistent value, so
-; the strings must be reached some other way. Finding the 6801 routine that
-; transfers this payload to the C64 would settle it.
+; $804D fetches the next byte from the decoder; carry set marks end of stream.
+; The two bytes at c64LoadAddr are the first thing that loop consumes, which is
+; what puts the payload at $1000. Ports $8000, $8001, $8009, $800A and $800B are
+; the C64's window onto the decoder hardware.
+;
+; The payload begins with a 61-entry JMP table at runtime $1000-$10B6 - the
+; module's dispatch vector - with bodies at $174C-$2943.
+;
+; Load address established three independent ways:
+;   1. the $00 $10 PRG header at $B3A6, consumed by the loader above;
+;   2. offset $A3A8 puts 97.6% of the payload's own JSR/JMP targets on real
+;      instruction boundaries, against 11.7% and 5.9% one byte either side;
+;   3. call sites JSR into a series spaced 3 apart based at $1009, which is
+;      entry 3 of the jump table at $1000.
+;
+; German UI strings run $B552-$B9FF (runtime $11AA-$1657), padded to 40 columns:
+; "Load Capture Display Macro Xfer Screen", "ASCII Btx Keybd Telesoft Edit Pause
+; Quit", "Capture-Modus ein - Ende: STOP-Taste", and the macro prefix
+; "@:BTX-MAK-".
 ;
 ; Note $D109-$D348 is NOT part of this payload - those are the 6801 control-code
 ; dispatch tables documented at $D36A.
-c64Payload:
+c64Bootstrap:
         FCB     $13,$80,$72,$FE,$C3,$C2,$CD,$38,$30,$00,$00,$00,$FF,$00,$00,$00
         FCB     $00,$00,$00,$A2,$00,$8E,$16,$D0,$20,$A3,$FD,$20,$90,$FD,$20,$15
         FCB     $FD,$20,$5B,$FF,$20,$4D,$80,$8D,$00,$80,$85,$61,$20,$4D,$80,$8D
@@ -2365,37 +2379,39 @@ c64Payload:
         FCB     $E6,$62,$4C,$36,$80,$A9,$00,$8D,$0C,$80,$6C,$00,$80,$AD,$09,$80
         FCB     $CD,$09,$80,$D0,$F8,$CD,$0A,$80,$D0,$0C,$2C,$0B,$80,$30,$EE,$2C
         FCB     $0B,$80,$30,$E9,$38,$60,$AD,$0A,$80,$AA,$BD,$80,$80,$E8,$E0,$10
-        FCB     $D0,$02,$A2,$00,$8E,$0A,$80,$18,$60,$00,$10,$4C,$AE,$16,$4C,$FF
-        FCB     $16
+        FCB     $D0,$02,$A2,$00,$8E,$0A,$80,$18,$60
 
-c64JumpTable:
-        FCB     $4C,$4C,$17,$4C,$82,$17,$4C,$4E,$19,$4C,$B6,$17,$4C,$8F,$18,$4C
-        FCB     $BC,$18,$4C,$C2,$18,$4C,$E1,$18,$4C,$F6,$18,$4C,$30,$19,$4C,$BF
-        FCB     $19,$4C,$CF,$19,$4C,$DF,$19,$4C,$9B,$1A,$4C,$AA,$28,$4C,$ED,$28
-        FCB     $4C,$43,$29,$4C,$22,$1B,$4C,$1A,$1C,$4C,$3F,$1C,$4C,$95,$1C,$4C
-        FCB     $F3,$1C,$4C,$39,$1E,$4C,$65,$1E,$4C,$EF,$1E,$4C,$2B,$1F,$4C,$54
-        FCB     $1F,$4C,$5F,$20,$4C,$03,$21,$4C,$ED,$20,$4C,$36,$21,$4C,$0D,$29
-        FCB     $4C,$D9,$26,$4C,$1F,$27,$4C,$1E,$29,$4C,$37,$29,$4C,$D6,$25,$4C
-        FCB     $54,$26,$4C,$90,$21,$4C,$96,$21,$4C,$C0,$21,$4C,$F4,$21,$4C,$0B
-        FCB     $22,$4C,$0B,$22,$4C,$6D,$22,$4C,$A9,$26,$4C,$52,$27,$4C,$0C,$23
-        FCB     $4C,$B7,$27,$4C,$D6,$27,$4C,$46,$28,$4C,$6D,$23,$4C,$72,$24,$4C
-        FCB     $A5,$25,$4C,$BD,$25,$4C,$9B,$29,$4C,$17,$2B,$4C,$52,$29,$4C,$32
-        FCB     $27,$00,$00,$00,$00,$00,$00,$00,$00,$00,$BD,$2B,$00,$80,$BD,$2B
-        FCB     $CE,$10,$4A,$11,$6F,$29,$70,$16,$0D,$0D,$00,$00,$8D,$0D,$0A,$00
-        FCB     $91,$0B,$00,$00,$11,$0A,$00,$00,$1D,$09,$00,$00,$14,$08,$00,$00
-        FCB     $9D,$08,$00,$00,$13,$1E,$00,$00,$93,$0C,$00,$00,$85,$13,$00,$00
-        FCB     $86,$1C,$00,$00,$87,$1A,$00,$00,$89,$10,$52,$00,$8B,$10,$41,$00
-        FCB     $8A,$10,$54,$00,$8C,$10,$45,$00,$90,$80,$00,$00,$05,$87,$00,$00
-        FCB     $1C,$81,$00,$00,$9F,$86,$00,$00,$9C,$85,$00,$00,$1E,$82,$00,$00
-        FCB     $1F,$84,$00,$00,$9E,$83,$00,$00,$5F,$11,$00,$00,$06,$14,$00,$00
-        FCB     $AE,$13,$00,$00,$AB,$11,$00,$00,$24,$A4,$00,$00,$5C,$A3,$00,$00
-        FCB     $00,$00,$00,$00,$23,$19,$27,$00,$27,$2F,$00,$00,$2B,$19,$7B,$00
-        FCB     $DB,$3F,$00,$00,$2D,$19,$42,$20,$DD,$19,$41,$20,$5C,$5B,$00,$00
-        FCB     $A9,$19,$2D,$00,$40,$19,$48,$75,$BA,$19,$48,$55,$2A,$2B,$00,$00
-        FCB     $C0,$2A,$00,$00,$5E,$5D,$00,$00,$DE,$5C,$00,$00,$3A,$19,$48,$6F
-        FCB     $5B,$19,$48,$4F,$3B,$19,$48,$61,$5D,$19,$48,$41,$3D,$23,$00,$00
-        FCB     $3C,$3B,$00,$00,$3E,$3A,$00,$00,$2F,$2D,$00,$00,$3F,$3D,$00,$00
-        FCB     $00,$00,$00,$00
+c64LoadAddr:
+        FCB     $00,$10
+
+c64Payload:
+        FCB     $4C,$AE,$16,$4C,$FF,$16,$4C,$4C,$17,$4C,$82,$17,$4C,$4E,$19,$4C
+        FCB     $B6,$17,$4C,$8F,$18,$4C,$BC,$18,$4C,$C2,$18,$4C,$E1,$18,$4C,$F6
+        FCB     $18,$4C,$30,$19,$4C,$BF,$19,$4C,$CF,$19,$4C,$DF,$19,$4C,$9B,$1A
+        FCB     $4C,$AA,$28,$4C,$ED,$28,$4C,$43,$29,$4C,$22,$1B,$4C,$1A,$1C,$4C
+        FCB     $3F,$1C,$4C,$95,$1C,$4C,$F3,$1C,$4C,$39,$1E,$4C,$65,$1E,$4C,$EF
+        FCB     $1E,$4C,$2B,$1F,$4C,$54,$1F,$4C,$5F,$20,$4C,$03,$21,$4C,$ED,$20
+        FCB     $4C,$36,$21,$4C,$0D,$29,$4C,$D9,$26,$4C,$1F,$27,$4C,$1E,$29,$4C
+        FCB     $37,$29,$4C,$D6,$25,$4C,$54,$26,$4C,$90,$21,$4C,$96,$21,$4C,$C0
+        FCB     $21,$4C,$F4,$21,$4C,$0B,$22,$4C,$0B,$22,$4C,$6D,$22,$4C,$A9,$26
+        FCB     $4C,$52,$27,$4C,$0C,$23,$4C,$B7,$27,$4C,$D6,$27,$4C,$46,$28,$4C
+        FCB     $6D,$23,$4C,$72,$24,$4C,$A5,$25,$4C,$BD,$25,$4C,$9B,$29,$4C,$17
+        FCB     $2B,$4C,$52,$29,$4C,$32,$27,$00,$00,$00,$00,$00,$00,$00,$00,$00
+        FCB     $BD,$2B,$00,$80,$BD,$2B,$CE,$10,$4A,$11,$6F,$29,$70,$16,$0D,$0D
+        FCB     $00,$00,$8D,$0D,$0A,$00,$91,$0B,$00,$00,$11,$0A,$00,$00,$1D,$09
+        FCB     $00,$00,$14,$08,$00,$00,$9D,$08,$00,$00,$13,$1E,$00,$00,$93,$0C
+        FCB     $00,$00,$85,$13,$00,$00,$86,$1C,$00,$00,$87,$1A,$00,$00,$89,$10
+        FCB     $52,$00,$8B,$10,$41,$00,$8A,$10,$54,$00,$8C,$10,$45,$00,$90,$80
+        FCB     $00,$00,$05,$87,$00,$00,$1C,$81,$00,$00,$9F,$86,$00,$00,$9C,$85
+        FCB     $00,$00,$1E,$82,$00,$00,$1F,$84,$00,$00,$9E,$83,$00,$00,$5F,$11
+        FCB     $00,$00,$06,$14,$00,$00,$AE,$13,$00,$00,$AB,$11,$00,$00,$24,$A4
+        FCB     $00,$00,$5C,$A3,$00,$00,$00,$00,$00,$00,$23,$19,$27,$00,$27,$2F
+        FCB     $00,$00,$2B,$19,$7B,$00,$DB,$3F,$00,$00,$2D,$19,$42,$20,$DD,$19
+        FCB     $41,$20,$5C,$5B,$00,$00,$A9,$19,$2D,$00,$40,$19,$48,$75,$BA,$19
+        FCB     $48,$55,$2A,$2B,$00,$00,$C0,$2A,$00,$00,$5E,$5D,$00,$00,$DE,$5C
+        FCB     $00,$00,$3A,$19,$48,$6F,$5B,$19,$48,$4F,$3B,$19,$48,$61,$5D,$19
+        FCB     $48,$41,$3D,$23,$00,$00,$3C,$3B,$00,$00,$3E,$3A,$00,$00,$2F,$2D
+        FCB     $00,$00,$3F,$3D,$00,$00,$00,$00,$00,$00
 
 c64Strings:
         FCB     $40,$3A,$42,$54,$58,$2D,$4D,$41,$4B,$2D,$00,$2C,$53,$2C,$57,$00
