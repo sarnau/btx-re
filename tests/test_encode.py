@@ -1,8 +1,8 @@
 import pytest
 
-from dis6801.decode import decode
-from dis6801.encode import encode
-from dis6801.opcodes import TABLE, Mode
+from dis65xx.decode import decode
+from dis65xx.encode import encode
+from dis65xx.opcodes import TABLE, Mode
 
 
 def test_encodes_known_instructions():

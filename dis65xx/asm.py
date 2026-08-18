@@ -1,6 +1,6 @@
 """A two-pass MC6801 assembler.
 
-Accepts exactly the syntax dis6801.emit produces, which is a subset of asl's.
+Accepts exactly the syntax dis65xx.emit produces, which is a subset of asl's.
 Its only job is to prove the generated listing reassembles to the original ROM,
 so it deliberately supports no macros, expressions, or conditional assembly.
 """
@@ -9,12 +9,12 @@ from __future__ import annotations
 
 import re
 
-from dis6801 import codec6502
-from dis6801.encode import encode
-from dis6801.opcodes import SIZE, Mode, modes_for
-from dis6801.opcodes6502 import SIZE as SIZE65
-from dis6801.opcodes6502 import Mode as M65
-from dis6801.opcodes6502 import modes_for as modes_for_65
+from dis65xx import codec6502
+from dis65xx.encode import encode
+from dis65xx.opcodes import SIZE, Mode, modes_for
+from dis65xx.opcodes6502 import SIZE as SIZE65
+from dis65xx.opcodes6502 import Mode as M65
+from dis65xx.opcodes6502 import modes_for as modes_for_65
 
 _LABEL = re.compile(r"^(?P<label>[A-Za-z_][A-Za-z0-9_]*):?\s*(?P<rest>.*)$")
 

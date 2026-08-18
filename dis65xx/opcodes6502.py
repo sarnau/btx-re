@@ -2,7 +2,7 @@
 
 The ROM embeds a C64-side 6502 program alongside the 68B01 firmware (see the
 $B32D block comment in the sidecar), so the toolchain needs both instruction
-sets. This module mirrors dis6801.opcodes: pure data plus lookup helpers.
+sets. This module mirrors dis65xx.opcodes: pure data plus lookup helpers.
 
 Only the 151 documented opcodes are listed. Undocumented ones stay absent so a
 sweep over data fails loudly rather than inventing instructions.

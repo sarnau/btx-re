@@ -1,4 +1,4 @@
-# dis6801 Toolchain Implementation Plan
+# dis65xx Toolchain Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -6,7 +6,7 @@
 
 **Architecture:** Four pure modules with narrow interfaces — an opcode table (data only), a recursive-descent tracer (bytes + entry points → code/data map), an emitter (map + sidecar → listing text), and an assembler (listing text → bytes). `build.py` chains them and enforces byte-identity. All analysis lives in `sidecar/decoder_ii.toml`; the `.asm` is always generated, never hand-edited.
 
-**Tech Stack:** Python 3.14 (stdlib only — `tomllib` is built in), pytest 9.0.3. Output targets asl (Macro Assembler AS) syntax; `dis6801/asm.py` is the zero-dependency verifier.
+**Tech Stack:** Python 3.14 (stdlib only — `tomllib` is built in), pytest 9.0.3. Output targets asl (Macro Assembler AS) syntax; `dis65xx/asm.py` is the zero-dependency verifier.
 
 **Spec:** `docs/superpowers/specs/2026-08-17-c64-btx-decoder-re-design.md`
 
@@ -16,12 +16,12 @@
 
 | File | Responsibility |
 |---|---|
-| `dis6801/opcodes.py` | The MC6801 opcode table plus mode metadata. Pure data, no I/O, no state. |
-| `dis6801/decode.py` | Bytes → one `Insn`. Knows nothing about control flow or output syntax. |
-| `dis6801/trace.py` | ROM bytes + entry points → code/data map. Control-flow knowledge lives here. |
-| `dis6801/emit.py` | Map + sidecar → listing text. Pure formatting, no analysis decisions. |
-| `dis6801/asm.py` | Listing text → bytes. Two-pass. Shares only the opcode table with the decoder. |
-| `dis6801/sidecar.py` | TOML loading and validation of the analysis metadata. |
+| `dis65xx/opcodes.py` | The MC6801 opcode table plus mode metadata. Pure data, no I/O, no state. |
+| `dis65xx/decode.py` | Bytes → one `Insn`. Knows nothing about control flow or output syntax. |
+| `dis65xx/trace.py` | ROM bytes + entry points → code/data map. Control-flow knowledge lives here. |
+| `dis65xx/emit.py` | Map + sidecar → listing text. Pure formatting, no analysis decisions. |
+| `dis65xx/asm.py` | Listing text → bytes. Two-pass. Shares only the opcode table with the decoder. |
+| `dis65xx/sidecar.py` | TOML loading and validation of the analysis metadata. |
 | `build.py` | Regenerate, assemble, compare, report coverage. The invariant lives here. |
 | `sidecar/decoder_ii.toml` | All analysis: entry points, labels, comments, regions, symbols. |
 | `out/btx_decoder_ii.asm` | Generated deliverable. |
@@ -33,7 +33,7 @@
 ### Task 1: Project scaffolding and ROM fixture
 
 **Files:**
-- Create: `dis6801/__init__.py`
+- Create: `dis65xx/__init__.py`
 - Create: `conftest.py`
 - Create: `tests/conftest.py`
 - Create: `tests/test_rom.py`
@@ -42,7 +42,7 @@
 
 - [ ] **Step 1: Create the package and config files**
 
-`dis6801/__init__.py`:
+`dis65xx/__init__.py`:
 
 ```python
 """MC6801 disassembler/assembler toolchain for the Commodore BTX Decoder II ROM."""
@@ -50,7 +50,7 @@
 
 `conftest.py` at the **repository root**. This file must exist and must be at the
 root: pytest prepends the directory containing the topmost `conftest.py` to
-`sys.path`, which is what makes `import dis6801`, `import build` and
+`sys.path`, which is what makes `import dis65xx`, `import build` and
 `import tools.report` resolve from the test suite. Without it every test module
 fails with `ModuleNotFoundError`.
 
@@ -123,7 +123,7 @@ Expected: 2 passed. (This task has no implementation — it establishes the fixt
 - [ ] **Step 4: Commit**
 
 ```bash
-git add dis6801/__init__.py conftest.py tests/conftest.py tests/test_rom.py pytest.ini .gitignore
+git add dis65xx/__init__.py conftest.py tests/conftest.py tests/test_rom.py pytest.ini .gitignore
 git commit -m "test: add ROM fixture with SHA-256 verification"
 ```
 
@@ -132,7 +132,7 @@ git commit -m "test: add ROM fixture with SHA-256 verification"
 ### Task 2: Opcode table
 
 **Files:**
-- Create: `dis6801/opcodes.py`
+- Create: `dis65xx/opcodes.py`
 - Test: `tests/test_opcodes.py`
 
 - [ ] **Step 1: Write the failing test**
@@ -140,7 +140,7 @@ git commit -m "test: add ROM fixture with SHA-256 verification"
 `tests/test_opcodes.py`:
 
 ```python
-from dis6801.opcodes import Mode, SIZE, TABLE, modes_for
+from dis65xx.opcodes import Mode, SIZE, TABLE, modes_for
 
 
 def test_known_encodings_from_the_rom():
@@ -187,11 +187,11 @@ def test_opcode_map_is_dense_enough():
 - [ ] **Step 2: Run the test to verify it fails**
 
 Run: `python3 -m pytest tests/test_opcodes.py -v`
-Expected: FAIL with `ModuleNotFoundError: No module named 'dis6801.opcodes'`
+Expected: FAIL with `ModuleNotFoundError: No module named 'dis65xx.opcodes'`
 
 - [ ] **Step 3: Write the implementation**
 
-`dis6801/opcodes.py`:
+`dis65xx/opcodes.py`:
 
 ```python
 """The MC6801 opcode table.
@@ -413,7 +413,7 @@ Expected: 5 passed
 - [ ] **Step 5: Commit**
 
 ```bash
-git add dis6801/opcodes.py tests/test_opcodes.py
+git add dis65xx/opcodes.py tests/test_opcodes.py
 git commit -m "feat: add MC6801 opcode table"
 ```
 
@@ -422,7 +422,7 @@ git commit -m "feat: add MC6801 opcode table"
 ### Task 3: Instruction decoder
 
 **Files:**
-- Create: `dis6801/decode.py`
+- Create: `dis65xx/decode.py`
 - Test: `tests/test_decode.py`
 
 - [ ] **Step 1: Write the failing test**
@@ -433,8 +433,8 @@ git commit -m "feat: add MC6801 opcode table"
 import pytest
 
 from conftest import ROM_BASE
-from dis6801.decode import Insn, decode
-from dis6801.opcodes import Mode
+from dis65xx.decode import Insn, decode
+from dis65xx.opcodes import Mode
 
 
 def test_decodes_the_sci_vector_stub():
@@ -483,11 +483,11 @@ def test_truncated_instruction_raises():
 - [ ] **Step 2: Run the test to verify it fails**
 
 Run: `python3 -m pytest tests/test_decode.py -v`
-Expected: FAIL with `ModuleNotFoundError: No module named 'dis6801.decode'`
+Expected: FAIL with `ModuleNotFoundError: No module named 'dis65xx.decode'`
 
 - [ ] **Step 3: Write the implementation**
 
-`dis6801/decode.py`:
+`dis65xx/decode.py`:
 
 ```python
 """Single-instruction decoding. No control-flow knowledge, no output formatting."""
@@ -496,7 +496,7 @@ from __future__ import annotations
 
 import dataclasses
 
-from dis6801.opcodes import SIZE, TABLE, Mode
+from dis65xx.opcodes import SIZE, TABLE, Mode
 
 
 @dataclasses.dataclass(frozen=True)
@@ -554,7 +554,7 @@ Expected: 6 passed
 - [ ] **Step 5: Commit**
 
 ```bash
-git add dis6801/decode.py tests/test_decode.py
+git add dis65xx/decode.py tests/test_decode.py
 git commit -m "feat: add MC6801 instruction decoder"
 ```
 
@@ -565,7 +565,7 @@ git commit -m "feat: add MC6801 instruction decoder"
 This is the check that catches a wrong table entry — byte-identity alone cannot, because the decoder and assembler share the table. Encoding every opcode and decoding it back proves the table is at least self-consistent and correctly sized; the manual cross-check in Task 12 proves it is *correct*.
 
 **Files:**
-- Create: `dis6801/encode.py`
+- Create: `dis65xx/encode.py`
 - Test: `tests/test_encode.py`
 
 - [ ] **Step 1: Write the failing test**
@@ -575,9 +575,9 @@ This is the check that catches a wrong table entry — byte-identity alone canno
 ```python
 import pytest
 
-from dis6801.decode import decode
-from dis6801.encode import encode
-from dis6801.opcodes import TABLE, Mode
+from dis65xx.decode import decode
+from dis65xx.encode import encode
+from dis65xx.opcodes import TABLE, Mode
 
 
 def test_encodes_known_instructions():
@@ -631,18 +631,18 @@ def _sample_operand(mode: Mode, addr: int) -> int | None:
 - [ ] **Step 2: Run the test to verify it fails**
 
 Run: `python3 -m pytest tests/test_encode.py -v`
-Expected: FAIL with `ModuleNotFoundError: No module named 'dis6801.encode'`
+Expected: FAIL with `ModuleNotFoundError: No module named 'dis65xx.encode'`
 
 - [ ] **Step 3: Write the implementation**
 
-`dis6801/encode.py`:
+`dis65xx/encode.py`:
 
 ```python
-"""Single-instruction encoding, the inverse of dis6801.decode."""
+"""Single-instruction encoding, the inverse of dis65xx.decode."""
 
 from __future__ import annotations
 
-from dis6801.opcodes import SIZE, Mode, opcode_for
+from dis65xx.opcodes import SIZE, Mode, opcode_for
 
 
 def encode(mnemonic: str, mode: Mode, operand: int | None, *, addr: int) -> bytes:
@@ -691,7 +691,7 @@ Expected: 5 passed
 - [ ] **Step 5: Commit**
 
 ```bash
-git add dis6801/encode.py tests/test_encode.py
+git add dis65xx/encode.py tests/test_encode.py
 git commit -m "feat: add MC6801 instruction encoder with table fixpoint test"
 ```
 
@@ -700,7 +700,7 @@ git commit -m "feat: add MC6801 instruction encoder with table fixpoint test"
 ### Task 5: Control-flow tracer
 
 **Files:**
-- Create: `dis6801/trace.py`
+- Create: `dis65xx/trace.py`
 - Test: `tests/test_trace.py`
 
 - [ ] **Step 1: Write the failing test**
@@ -709,7 +709,7 @@ git commit -m "feat: add MC6801 instruction encoder with table fixpoint test"
 
 ```python
 from conftest import ROM_BASE
-from dis6801.trace import CODE, UNKNOWN, trace
+from dis65xx.trace import CODE, UNKNOWN, trace
 
 
 def test_traces_a_straight_line_until_rts():
@@ -784,11 +784,11 @@ def test_traces_the_real_rom_vector_stubs(rom):
 - [ ] **Step 2: Run the test to verify it fails**
 
 Run: `python3 -m pytest tests/test_trace.py -v`
-Expected: FAIL with `ModuleNotFoundError: No module named 'dis6801.trace'`
+Expected: FAIL with `ModuleNotFoundError: No module named 'dis65xx.trace'`
 
 - [ ] **Step 3: Write the implementation**
 
-`dis6801/trace.py`:
+`dis65xx/trace.py`:
 
 ```python
 """Recursive-descent code discovery.
@@ -801,8 +801,8 @@ from __future__ import annotations
 
 import dataclasses
 
-from dis6801.decode import Insn, decode
-from dis6801.opcodes import Mode
+from dis65xx.decode import Insn, decode
+from dis65xx.opcodes import Mode
 
 UNKNOWN = "unknown"
 CODE = "code"
@@ -921,7 +921,7 @@ Expected: 7 passed
 - [ ] **Step 5: Commit**
 
 ```bash
-git add dis6801/trace.py tests/test_trace.py
+git add dis65xx/trace.py tests/test_trace.py
 git commit -m "feat: add recursive-descent control-flow tracer"
 ```
 
@@ -930,7 +930,7 @@ git commit -m "feat: add recursive-descent control-flow tracer"
 ### Task 6: Sidecar loader
 
 **Files:**
-- Create: `dis6801/sidecar.py`
+- Create: `dis65xx/sidecar.py`
 - Create: `sidecar/decoder_ii.toml`
 - Test: `tests/test_sidecar.py`
 
@@ -941,7 +941,7 @@ git commit -m "feat: add recursive-descent control-flow tracer"
 ```python
 import pytest
 
-from dis6801.sidecar import Region, Sidecar, load_sidecar
+from dis65xx.sidecar import Region, Sidecar, load_sidecar
 
 TOML = """
 [meta]
@@ -1023,11 +1023,11 @@ def test_the_real_sidecar_loads():
 - [ ] **Step 2: Run the test to verify it fails**
 
 Run: `python3 -m pytest tests/test_sidecar.py -v`
-Expected: FAIL with `ModuleNotFoundError: No module named 'dis6801.sidecar'`
+Expected: FAIL with `ModuleNotFoundError: No module named 'dis65xx.sidecar'`
 
 - [ ] **Step 3: Write the implementation**
 
-`dis6801/sidecar.py`:
+`dis65xx/sidecar.py`:
 
 ```python
 """Loading and validation of the analysis metadata.
@@ -1210,7 +1210,7 @@ Expected: 5 passed
 - [ ] **Step 6: Commit**
 
 ```bash
-git add dis6801/sidecar.py sidecar/decoder_ii.toml tests/test_sidecar.py
+git add dis65xx/sidecar.py sidecar/decoder_ii.toml tests/test_sidecar.py
 git commit -m "feat: add sidecar metadata loader and seed the analysis file"
 ```
 
@@ -1219,7 +1219,7 @@ git commit -m "feat: add sidecar metadata loader and seed the analysis file"
 ### Task 7: Listing emitter
 
 **Files:**
-- Create: `dis6801/emit.py`
+- Create: `dis65xx/emit.py`
 - Test: `tests/test_emit.py`
 
 - [ ] **Step 1: Write the failing test**
@@ -1227,11 +1227,11 @@ git commit -m "feat: add sidecar metadata loader and seed the analysis file"
 `tests/test_emit.py`:
 
 ```python
-from dis6801.emit import emit, format_operand
-from dis6801.decode import decode
-from dis6801.opcodes import Mode
-from dis6801.sidecar import Sidecar
-from dis6801.trace import trace
+from dis65xx.emit import emit, format_operand
+from dis65xx.decode import decode
+from dis65xx.opcodes import Mode
+from dis65xx.sidecar import Sidecar
+from dis65xx.trace import trace
 
 
 def _sidecar(**kw) -> Sidecar:
@@ -1300,25 +1300,25 @@ def test_unreached_bytes_are_grouped_sixteen_per_line():
 - [ ] **Step 2: Run the test to verify it fails**
 
 Run: `python3 -m pytest tests/test_emit.py -v`
-Expected: FAIL with `ModuleNotFoundError: No module named 'dis6801.emit'`
+Expected: FAIL with `ModuleNotFoundError: No module named 'dis65xx.emit'`
 
 - [ ] **Step 3: Write the implementation**
 
-`dis6801/emit.py`:
+`dis65xx/emit.py`:
 
 ```python
 """Listing generation. Pure formatting — no analysis decisions are made here.
 
 Output targets asl (Macro Assembler AS) syntax and is also accepted verbatim by
-dis6801.asm, which is what enforces byte-identity.
+dis65xx.asm, which is what enforces byte-identity.
 """
 
 from __future__ import annotations
 
-from dis6801.decode import Insn
-from dis6801.opcodes import Mode, modes_for
-from dis6801.sidecar import Sidecar
-from dis6801.trace import CODE, TraceResult
+from dis65xx.decode import Insn
+from dis65xx.opcodes import Mode, modes_for
+from dis65xx.sidecar import Sidecar
+from dis65xx.trace import CODE, TraceResult
 
 BYTES_PER_FCB = 16
 _INDENT = 8      # leading spaces before a mnemonic
@@ -1371,7 +1371,7 @@ def emit(data: bytes, result: TraceResult, sidecar: Sidecar) -> str:
     base = result.base
     lines: list[str] = [
         "; Commodore BTX Decoder II firmware",
-        "; GENERATED by dis6801 from sidecar/decoder_ii.toml - DO NOT EDIT.",
+        "; GENERATED by dis65xx from sidecar/decoder_ii.toml - DO NOT EDIT.",
         ";",
         "; Regenerate and verify with:  python3 build.py",
         "",
@@ -1444,7 +1444,7 @@ Expected: 7 passed
 - [ ] **Step 5: Commit**
 
 ```bash
-git add dis6801/emit.py tests/test_emit.py
+git add dis65xx/emit.py tests/test_emit.py
 git commit -m "feat: add listing emitter with extended-addressing disambiguation"
 ```
 
@@ -1453,7 +1453,7 @@ git commit -m "feat: add listing emitter with extended-addressing disambiguation
 ### Task 8: Assembler
 
 **Files:**
-- Create: `dis6801/asm.py`
+- Create: `dis65xx/asm.py`
 - Test: `tests/test_asm.py`
 
 - [ ] **Step 1: Write the failing test**
@@ -1463,7 +1463,7 @@ git commit -m "feat: add listing emitter with extended-addressing disambiguation
 ```python
 import pytest
 
-from dis6801.asm import assemble
+from dis65xx.asm import assemble
 
 
 def test_assembles_a_minimal_program():
@@ -1544,16 +1544,16 @@ def test_undefined_symbol_is_reported():
 - [ ] **Step 2: Run the test to verify it fails**
 
 Run: `python3 -m pytest tests/test_asm.py -v`
-Expected: FAIL with `ModuleNotFoundError: No module named 'dis6801.asm'`
+Expected: FAIL with `ModuleNotFoundError: No module named 'dis65xx.asm'`
 
 - [ ] **Step 3: Write the implementation**
 
-`dis6801/asm.py`:
+`dis65xx/asm.py`:
 
 ```python
 """A two-pass MC6801 assembler.
 
-Accepts exactly the syntax dis6801.emit produces, which is a subset of asl's.
+Accepts exactly the syntax dis65xx.emit produces, which is a subset of asl's.
 Its only job is to prove the generated listing reassembles to the original ROM,
 so it deliberately supports no macros, expressions, or conditional assembly.
 """
@@ -1562,8 +1562,8 @@ from __future__ import annotations
 
 import re
 
-from dis6801.encode import encode
-from dis6801.opcodes import SIZE, Mode, modes_for
+from dis65xx.encode import encode
+from dis65xx.opcodes import SIZE, Mode, modes_for
 
 _LABEL = re.compile(r"^(?P<label>[A-Za-z_][A-Za-z0-9_]*):?\s*(?P<rest>.*)$")
 _DIRECTIVES = {"CPU", "ORG", "END", "FCB", "FDB", "EQU"}
@@ -1764,7 +1764,7 @@ Expected: 10 passed
 - [ ] **Step 5: Commit**
 
 ```bash
-git add dis6801/asm.py tests/test_asm.py
+git add dis65xx/asm.py tests/test_asm.py
 git commit -m "feat: add two-pass MC6801 assembler"
 ```
 
@@ -1833,10 +1833,10 @@ import hashlib
 import pathlib
 import sys
 
-from dis6801.asm import assemble
-from dis6801.emit import emit
-from dis6801.sidecar import load_sidecar
-from dis6801.trace import trace
+from dis65xx.asm import assemble
+from dis65xx.emit import emit
+from dis65xx.sidecar import load_sidecar
+from dis65xx.trace import trace
 
 ROOT = pathlib.Path(__file__).resolve().parent
 SIDECAR_PATH = ROOT / "sidecar" / "decoder_ii.toml"
@@ -2166,13 +2166,13 @@ Ghidra would produce plausible-looking but wrong disassembly.
 
 ## Layout
 
-    dis6801/opcodes.py   MC6801 opcode table (pure data)
-    dis6801/decode.py    bytes -> one instruction
-    dis6801/encode.py    one instruction -> bytes
-    dis6801/trace.py     recursive-descent code discovery
-    dis6801/emit.py      code/data map + sidecar -> listing text
-    dis6801/asm.py       listing text -> bytes (the round-trip verifier)
-    dis6801/sidecar.py   analysis metadata loading
+    dis65xx/opcodes.py   MC6801 opcode table (pure data)
+    dis65xx/decode.py    bytes -> one instruction
+    dis65xx/encode.py    one instruction -> bytes
+    dis65xx/trace.py     recursive-descent code discovery
+    dis65xx/emit.py      code/data map + sidecar -> listing text
+    dis65xx/asm.py       listing text -> bytes (the round-trip verifier)
+    dis65xx/sidecar.py   analysis metadata loading
     tools/report.py      unresolved jumps and coverage gaps
     build.py             regenerate, assemble, compare, report
 
@@ -2208,7 +2208,7 @@ make
 ```
 
 Expected: an `asl` binary in the build directory. If the download or build fails,
-skip to Step 4 — `dis6801/asm.py` remains the primary verifier and the project is
+skip to Step 4 — `dis65xx/asm.py` remains the primary verifier and the project is
 not blocked. Record the failure in the README instead of leaving it silent.
 
 - [ ] **Step 2: Write the cross-check script**
@@ -2218,7 +2218,7 @@ not blocked. Record the failure in the README instead of leaving it silent.
 ```bash
 #!/usr/bin/env bash
 # Independent verification: assemble the generated listing with asl and compare
-# against the ROM. dis6801/asm.py shares an opcode table with the disassembler;
+# against the ROM. dis65xx/asm.py shares an opcode table with the disassembler;
 # asl does not, so this catches table errors that round-trip cleanly.
 set -euo pipefail
 
@@ -2260,11 +2260,11 @@ Expected: `OK  asl output is byte-identical to the ROM`, exit 0.
 
 If asl rejects syntax, the emitter needs adjusting — likely candidates are the
 `FCB`/`FDB` pseudo-op names (asl also accepts `BYT`/`ADR`) or the `>` prefix. Fix
-`dis6801/emit.py`, keep `python3 build.py` green, and re-run.
+`dis65xx/emit.py`, keep `python3 build.py` green, and re-run.
 
 If the binaries differ, **asl is right and our table is wrong.** Find the differing
 address, look up the instruction in `MC6801RM_AD2_MC6801_Reference_Manual_May84.pdf`,
-and correct `dis6801/opcodes.py`.
+and correct `dis65xx/opcodes.py`.
 
 - [ ] **Step 4: Record the outcome in the README**
 
@@ -2274,7 +2274,7 @@ Append to `README.md`:
 ## Independent verification
 
 `tools/check_asl.sh` reassembles the generated listing with asl (Macro Assembler
-AS) and compares against the ROM. `dis6801/asm.py` shares an opcode table with the
+AS) and compares against the ROM. `dis65xx/asm.py` shares an opcode table with the
 disassembler, so a wrong table entry round-trips cleanly through it; asl does not
 share that table and will catch such an error.
 

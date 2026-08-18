@@ -1,8 +1,8 @@
 import pytest
 
 from conftest import ROM_BASE
-from dis6801.decode import Insn, decode
-from dis6801.opcodes import Mode
+from dis65xx.decode import Insn, decode
+from dis65xx.opcodes import Mode
 
 
 def test_decodes_the_sci_vector_stub():

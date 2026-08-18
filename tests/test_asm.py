@@ -1,6 +1,6 @@
 import pytest
 
-from dis6801.asm import assemble
+from dis65xx.asm import assemble
 
 
 def test_assembles_a_minimal_program():

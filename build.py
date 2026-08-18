@@ -16,10 +16,10 @@ import hashlib
 import pathlib
 import sys
 
-from dis6801.asm import assemble
-from dis6801.emit import emit
-from dis6801.sidecar import load_sidecar
-from dis6801.trace import trace
+from dis65xx.asm import assemble
+from dis65xx.emit import emit
+from dis65xx.sidecar import load_sidecar
+from dis65xx.trace import trace
 from tools.report import format_report
 
 ROOT = pathlib.Path(__file__).resolve().parent

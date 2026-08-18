@@ -1,8 +1,8 @@
-"""Single-instruction encoding, the inverse of dis6801.decode."""
+"""Single-instruction encoding, the inverse of dis65xx.decode."""
 
 from __future__ import annotations
 
-from dis6801.opcodes import SIZE, Mode, opcode_for
+from dis65xx.opcodes import SIZE, Mode, opcode_for
 
 
 def encode(mnemonic: str, mode: Mode, operand: int | None, *, addr: int) -> bytes:

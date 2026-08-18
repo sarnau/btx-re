@@ -1,5 +1,5 @@
 from conftest import ROM_BASE
-from dis6801.trace import CODE, OPERAND, UNKNOWN, trace
+from dis65xx.trace import CODE, OPERAND, UNKNOWN, trace
 
 
 def test_traces_a_straight_line_until_rts():

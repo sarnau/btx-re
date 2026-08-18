@@ -1,4 +1,4 @@
-"""6502 instruction decode and encode, mirroring dis6801.decode/encode.
+"""6502 instruction decode and encode, mirroring dis65xx.decode/encode.
 
 Absolute operands are emitted verbatim. The embedded C64 payload is stored at
 one address and runs at another, so its absolute references are runtime
@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import dataclasses
 
-from dis6801.opcodes6502 import SIZE, TABLE, Mode, opcode_for
+from dis65xx.opcodes6502 import SIZE, TABLE, Mode, opcode_for
 
 
 @dataclasses.dataclass(frozen=True)

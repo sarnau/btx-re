@@ -1,8 +1,8 @@
 import pytest
 
 from conftest import ROM_BASE
-from dis6801.codec6502 import Insn6502, decode, encode
-from dis6801.opcodes6502 import Mode
+from dis65xx.codec6502 import Insn6502, decode, encode
+from dis65xx.opcodes6502 import Mode
 
 
 def test_decodes_the_cartridge_bootstrap(rom):
@@ -39,7 +39,7 @@ def test_illegal_opcode_raises():
 
 
 def test_encode_round_trips_every_opcode():
-    from dis6801.opcodes6502 import TABLE
+    from dis65xx.opcodes6502 import TABLE
 
     addr = 0x1000
     for op, (mnem, mode) in sorted(TABLE.items()):

@@ -1,7 +1,7 @@
 """The listing mixes two instruction sets; these guard the switch."""
 
 import build
-from dis6801.asm import assemble
+from dis65xx.asm import assemble
 
 
 def test_listing_switches_cpu_around_the_6502_regions():

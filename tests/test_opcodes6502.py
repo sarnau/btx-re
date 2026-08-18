@@ -1,4 +1,4 @@
-from dis6801.opcodes6502 import SIZE, TABLE, Mode, modes_for, opcode_for
+from dis65xx.opcodes6502 import SIZE, TABLE, Mode, modes_for, opcode_for
 
 
 def test_encodings_from_the_c64_bootstrap():

@@ -3,6 +3,10 @@
 **Date:** 2026-08-17
 **Status:** Approved
 
+> Module paths in this document say `dis65xx/`. The package was called
+> `dis6801/` when the spec was written and was renamed on 2026-08-18, once the
+> embedded C64 6502 payload was found and a second instruction set was added.
+
 ## Goal
 
 Produce a fully commented, byte-identical re-assemblable source listing of the
@@ -148,7 +152,7 @@ Rejected alternatives:
 
 ```
 btx-re/
-  dis6801/
+  dis65xx/
     opcodes.py     complete MC6801 table — all addressing modes, 6801-only ops
     trace.py       recursive-descent code/data discovery from entry points
     emit.py        asl-syntax listing generator

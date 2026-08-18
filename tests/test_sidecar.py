@@ -1,6 +1,6 @@
 import pytest
 
-from dis6801.sidecar import Region, Sidecar, load_sidecar
+from dis65xx.sidecar import Region, Sidecar, load_sidecar
 
 TOML = """
 entry_points = [0xB200, 0xF129]

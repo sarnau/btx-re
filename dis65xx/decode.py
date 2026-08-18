@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import dataclasses
 
-from dis6801.opcodes import SIZE, TABLE, Mode
+from dis65xx.opcodes import SIZE, TABLE, Mode
 
 
 @dataclasses.dataclass(frozen=True)

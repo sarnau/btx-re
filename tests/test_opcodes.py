@@ -1,4 +1,4 @@
-from dis6801.opcodes import Mode, SIZE, TABLE, modes_for
+from dis65xx.opcodes import Mode, SIZE, TABLE, modes_for
 
 
 def test_known_encodings_from_the_rom():

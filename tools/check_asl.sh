@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Independent verification: assemble the generated listing with asl and compare
-# against the ROM. dis6801/asm.py shares an opcode table with the disassembler;
+# against the ROM. dis65xx/asm.py shares an opcode table with the disassembler;
 # asl does not, so this catches table errors that round-trip cleanly.
 set -euo pipefail
 

@@ -39,11 +39,16 @@ Use `--report` to find the next thing to work on: unresolved computed jumps are
 where code coverage is being lost, and the largest unreached regions are either
 undiscovered code or data that needs a region entry.
 
+The package was originally `dis6801`, renamed to `dis65xx` once the embedded
+6502 payload was identified and the toolchain grew a second instruction set.
+The design spec and plan under `docs/superpowers/` were updated to match, so
+their paths point at real files.
+
 ## Two instruction sets
 
 The image holds a C64-side 6502 program as well as the 68B01 firmware, so the
 listing carries both. A `code6502` region is linear-disassembled as 6502 and
-bracketed with `CPU 6502` / `CPU 6801`, which asl and `dis6801/asm.py` both
+bracketed with `CPU 6502` / `CPU 6801`, which asl and `dis65xx/asm.py` both
 honour. Undecodable bytes inside such a region fall back to `FCB`.
 
 The payload is stored at one address and runs at another, so its absolute
@@ -60,15 +65,15 @@ Ghidra would produce plausible-looking but wrong disassembly.
 
 ## Layout
 
-    dis6801/opcodes.py     MC6801 opcode table (pure data)
-    dis6801/decode.py      bytes -> one 6801 instruction
-    dis6801/encode.py      one 6801 instruction -> bytes
-    dis6801/opcodes6502.py NMOS 6502 opcode table (151 documented opcodes)
-    dis6801/codec6502.py   6502 decode and encode
-    dis6801/trace.py     recursive-descent code discovery
-    dis6801/emit.py      code/data map + sidecar -> listing text
-    dis6801/asm.py       listing text -> bytes (the round-trip verifier)
-    dis6801/sidecar.py   analysis metadata loading
+    dis65xx/opcodes.py     MC6801 opcode table (pure data)
+    dis65xx/decode.py      bytes -> one 6801 instruction
+    dis65xx/encode.py      one 6801 instruction -> bytes
+    dis65xx/opcodes6502.py NMOS 6502 opcode table (151 documented opcodes)
+    dis65xx/codec6502.py   6502 decode and encode
+    dis65xx/trace.py     recursive-descent code discovery
+    dis65xx/emit.py      code/data map + sidecar -> listing text
+    dis65xx/asm.py       listing text -> bytes (the round-trip verifier)
+    dis65xx/sidecar.py   analysis metadata loading
     tools/report.py      unresolved jumps and coverage gaps
     build.py             regenerate, assemble, compare, report
 
@@ -87,7 +92,7 @@ of computed jumps looks like table dispatch and is the obvious next target.
 ## Independent verification
 
 `tools/check_asl.sh` reassembles the generated listing with asl (Macro Assembler
-AS) and compares against the ROM. `dis6801/asm.py` shares an opcode table with the
+AS) and compares against the ROM. `dis65xx/asm.py` shares an opcode table with the
 disassembler, so a wrong table entry round-trips cleanly through it; asl does not
 share that table and will catch such an error.
 

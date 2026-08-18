@@ -1,8 +1,8 @@
-from dis6801.emit import emit, format_operand
-from dis6801.decode import decode
-from dis6801.opcodes import Mode
-from dis6801.sidecar import Sidecar
-from dis6801.trace import trace
+from dis65xx.emit import emit, format_operand
+from dis65xx.decode import decode
+from dis65xx.opcodes import Mode
+from dis65xx.sidecar import Sidecar
+from dis65xx.trace import trace
 
 
 def _sidecar(**kw) -> Sidecar:
