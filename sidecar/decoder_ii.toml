@@ -362,7 +362,8 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xB340" = "c64ColdStart"
 "0xB3A6" = "c64LoadAddr"
 "0xB3A8" = "c64Payload"
-"0xB552" = "c64Strings"
+"0xB552" = "c64MacroFile"
+"0xB55C" = "c64MacroId"
 "0xD419" = "fmtKeys"
 "0xD42B" = "fmtVals041C"
 "0xD43D" = "fmtVals041D"
@@ -398,6 +399,21 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xFFF0" = "vectors"
 
 [block_comments]
+"0xB552" = """
+CBM DOS filename template, 15 bytes at runtime $11AA:
+
+    40 3A 42 54 58 2D 4D 41 4B 2D 00 2C 53 2C 57
+    @  :  B  T  X  -  M  A  K  -  ..  ,  S  ,  W
+
+"@:" overwrites an existing file, "BTX-MAK-" is the prefix, and ",S,W" opens a
+sequential file for writing. The $00 in the middle is a slot the code fills in
+with the macro identifier - the "Kennung" the prompt asks for - so one template
+serves every macro. That slot is labelled c64MacroId, and the code writing to
+it is what confirms the reading.
+
+It is pointed at with FNADR before the open, which is what identifies it. The
+label used to read c64Strings, from before the string table at $BA18 was found;
+this block is a filename, not the strings."""
 "0xB4B0" = """
 Data between the jump table and the string records.
 
@@ -1387,6 +1403,11 @@ kind = "bytes"
 
 [[regions]]
 start = 0xB552
+end = 0xB561
+kind = "string"
+
+[[regions]]
+start = 0xB561
 end = 0xBA18
 kind = "string"
 

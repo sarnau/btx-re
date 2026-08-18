@@ -248,7 +248,7 @@ def test_pointer_pairs_name_their_target():
     src = (OUT / "c64_payload.asm").read_text()
     assert "LDA     #c64SplashText&255" in src
     assert "LDA     #c64SplashText>>8" in src
-    assert "LDA     #c64Strings&255" in src
+    assert "LDA     #c64MacroFile&255" in src
     # the low/high halves must pair with the right zero-page bytes
     lines = [ln.strip() for ln in src.splitlines()]
     i = lines.index("LDA     #c64SplashText&255")
@@ -479,3 +479,13 @@ def test_time_is_renamed_around_an_asl_builtin():
     underscore - my assembler accepted TIME, asl refused it."""
     src = (OUT / "c64_payload.asm").read_text()
     assert re.search(r"^TIME_\s+EQU\s+\$00A0$", src, re.M)
+
+
+def test_macro_filename_template():
+    """A CBM DOS filename with a slot for the macro identifier, not a string
+    table - "@:" overwrites, ",S,W" opens sequential for write."""
+    src = (OUT / "c64_payload.asm").read_text()
+    body = src.split("c64MacroFile:", 1)[1][:200]
+    assert 'FCC     "@:BTX-MAK-"' in body
+    assert "c64MacroId:" in body
+    assert '",S,W"' in body

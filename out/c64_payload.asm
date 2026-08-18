@@ -355,10 +355,24 @@ L114A:
         FCB     $00,$00,$3C,$3B,$00,$00,$3E,$3A,$00,$00,$2F,$2D,$00,$00,$3F,$3D
         FCB     $00,$00,$00,$00,$00,$00
 
-c64Strings:
+; CBM DOS filename template, 15 bytes at runtime $11AA:
+;
+;     40 3A 42 54 58 2D 4D 41 4B 2D 00 2C 53 2C 57
+;     @  :  B  T  X  -  M  A  K  -  ..  ,  S  ,  W
+;
+; "@:" overwrites an existing file, "BTX-MAK-" is the prefix, and ",S,W" opens a
+; sequential file for writing. The $00 in the middle is a slot the code fills in
+; with the macro identifier - the "Kennung" the prompt asks for - so one template
+; serves every macro. That slot is labelled c64MacroId, and the code writing to
+; it is what confirms the reading.
+;
+; It is pointed at with FNADR before the open, which is what identifies it. The
+; label used to read c64Strings, from before the string table at $BA18 was found;
+; this block is a filename, not the strings.
+c64MacroFile:
         FCC     "@:BTX-MAK-"
 
-L11B4:
+c64MacroId:
         FCB     $00
         FCC     ",S,W"
 
@@ -1402,12 +1416,12 @@ L1B7C:
         BCS     L1B59
 
 L1B8E:
-        STA     L11B4
+        STA     c64MacroId
         LDA     #$08
         JSR     L1012
         LDA     #$20
         JSR     L1012
-        LDA     L11B4
+        LDA     c64MacroId
         JSR     L1012
         LDA     #$00
         JSR     L1012
@@ -1461,7 +1475,7 @@ L1BEA:
         JSR     L1078
         LDA     #$0C
         JSR     L105D
-        LDA     L11B4
+        LDA     c64MacroId
         JSR     L1012
         LDA     #$20
         JSR     L1012
@@ -1991,12 +2005,12 @@ L1FB4:
         BCS     L1F91
 
 L1FC6:
-        STA     L11B4
+        STA     c64MacroId
         LDA     #$08
         JSR     L1012
         LDA     #$20
         JSR     L1012
-        LDA     L11B4
+        LDA     c64MacroId
         JSR     L1012
         LDA     #$00
         JSR     L1012
@@ -2017,7 +2031,7 @@ L1FED:
 L1FF8:
         LDA     #$0C
         JSR     L105D
-        LDA     L11B4
+        LDA     c64MacroId
         JSR     L1012
         LDA     #$00
         JSR     L1012
@@ -2989,9 +3003,9 @@ c64Vec47:
         STA     FA
         LDA     #$65
         STA     SA
-        LDA     #c64Strings&255
+        LDA     #c64MacroFile&255
         STA     FNADR
-        LDA     #c64Strings>>8
+        LDA     #c64MacroFile>>8
         STA     FNADR+1
         LDA     #$00
         STA     STATUS
@@ -3149,9 +3163,9 @@ c64Vec50:
         STA     FA
         LDA     #$66
         STA     SA
-        LDA     #c64Strings&255
+        LDA     #c64MacroFile&255
         STA     FNADR
-        LDA     #c64Strings>>8
+        LDA     #c64MacroFile>>8
         STA     FNADR+1
         LDA     #$0B
         STA     FNLEN
@@ -3182,27 +3196,27 @@ L27EF:
 
 L2801:
         LDA     #$30
-        STA     L11B4
+        STA     c64MacroId
 
 L2806:
         JSR     L109C
         BCS     L2833
         JSR     STOP
         BEQ     L2833
-        INC     L11B4
-        LDA     L11B4
+        INC     c64MacroId
+        LDA     c64MacroId
         CMP     #$3A
         BNE     L2806
         LDA     #$41
-        STA     L11B4
+        STA     c64MacroId
 
 L281F:
         JSR     L109C
         BCS     L2833
         JSR     STOP
         BEQ     L2833
-        INC     L11B4
-        LDA     L11B4
+        INC     c64MacroId
+        LDA     c64MacroId
         CMP     #$5B
         BNE     L281F
 
@@ -3220,7 +3234,7 @@ L2845:
 
 c64Vec52:
 ; vector 52 at runtime $2846 - jump-table entry 52
-        LDA     L11B4
+        LDA     c64MacroId
         JSR     L1012
         LDA     #$3A
         JSR     L1012
