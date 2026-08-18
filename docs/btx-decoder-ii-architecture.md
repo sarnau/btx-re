@@ -198,7 +198,7 @@ rings**, and the boot one is not the one used afterwards:
 | `$6080` | `btxFifo00` `$8080` | 16 | payload transfer only |
 
 The masks prove the sizes on both sides independently: the 6801 uses
-`ANDB #$1F` at `$6020` and `CMPB #$40` at `$6040`, the C64 `CPX #$20` on
+`ANDB #$1F` on `c64OutFifo` and `CMPB #$40` on `hostInFifo`, the C64 `CPX #$20` on
 `btxRxFifo` and `CPX #$40` on `btxTxFifo`. `sendPayloadToC64` uses `ANDB #$0F`
 over `$6080`, and `c64BootGetByte` `CPX #$10` — a third, smaller ring that
 exists only during the transfer.
@@ -432,7 +432,7 @@ mailbox whenever the decoder posts it. For a hardcopy, `c64MenuXfer` walks rows
 
 Everything the C64 sends arrives through one byte. `fetchHostByte` at `$F1D8`
 runs masked, returns at once if `pendingByte` is already occupied, and
-otherwise pulls from `hostFifoGet` — the `$6040` end of the ring the C64 fills
+otherwise pulls from `hostFifoGet` — the `hostInFifo` end of the ring the C64 fills
 through `c64SendByte`. `execHostByte` at `$F45B` is the consumer, and `CLR
 pendingByte` is how it says it is done.
 
@@ -657,7 +657,7 @@ the CV30113 revision still has on `CAN`.
 
 ### A second interpreter
 
-`$F9FA` is a 32-entry C0 table with its own dispatcher at `$FBA9`, serving the
+`asciiCtrlTable` is a 32-entry C0 table with its own dispatcher, `asciiDispatchC0`, serving the
 ASCII terminal mode. Nine handlers cover its 32 slots, and they are a plain
 glass-tty set over `asciiCol` and `asciiRow` in an 80x24 space:
 
@@ -797,7 +797,7 @@ Four planes is what makes a DRCS cell colour: each contributes one bit per
 pixel, and the selectors say which of them the incoming rows go into.
 
 Each data byte carries six pixels (`ANDA #$3F`). Whether they are expanded
-depends on the format `fmtLookup` resolved from the `$D419` tables:
+depends on the format `fmtLookup` resolved from the `fmtKeys` tables:
 
 - `drcsWide` — `LSRA / ROR / ASR`, eight times. `ROR` walks a bit out of A into
   bit 7 and `ASR` then copies it down one, so **every input bit lands twice**.
@@ -812,7 +812,7 @@ and the 16-bit pair leaves its top four bits clear — the same shape as the ROM
 character sets, whose ink occupies columns 4–15 of a 16-bit row. A DRCS
 character and a built-in glyph are the same 12-pixel cell.
 
-The planes at `$0426` are staging only. A finished definition lives in
+The `drcsPlane` buffers are staging only. A finished definition lives in
 `drcsStore` above `$0800`, 48 bytes per character, written by `drcsWriteRow`
 through `drcsStorePtr` and cleared 96 characters at a time by
 `drcsClearStore`. `drcsGlyphPtr` at `$A7E7` addresses it as
@@ -1066,7 +1066,7 @@ entire C64 payload is byte-for-byte identical. See
 - **`videoReg0`–`videoReg3`.** Four bytes at `$1B2A` written to `P3CSR` with
   `AND #$1F`, initialised to 0, 1, 2, 3. They select something in the video
   hardware; nothing in the ROM says what.
-- **The `$D419` no-match path.** Reachable, but harmless: two of its three
+- **The `fmtLookup` no-match path.** Reachable, but harmless: two of its three
   outputs are read only for bit 7 and the third is clamped. Documented in the
   sidecar rather than treated as a bug.
 - **Two cell bytes.** The decoder puts `curAttr0` and `curAttr2` into `cellAttr0` and
@@ -1091,13 +1091,23 @@ counter, `statusMsg` and `btxStatusMsg` the same index — so a question about
 one processor can be answered from the other. Several findings here came out
 that way rather than from either image alone.
 
-The names are not uniformly strong, and the difference matters when reading
-them. Most are evidenced — `inStatusLine` by the routine pair that saves and
-restores around it, `modeAscii` by the record `showModeName` prints for it,
-`drcsCell` by the G-set code that sets it and the 12 rows that follow. A few
-are structural: `modeR`, `modeT` and `modeW` are named after the host command
-letters that toggle them because what they switch is not established, and
-`spare0616` and `spare04D3` are cleared at reset and never touched again.
+Every named routine also carries a note saying what it does, and a test fails
+if one gains a name without one — a name says what something is called, which
+is not the same thing.
 
-The open questions above are what is left, and they share a shape: they need
-either a schematic or a specification, not more reading of this ROM.
+The names are not uniformly strong, and the difference matters when reading
+them. Most are evidenced from behaviour: `inStatusLine` by the routine pair
+that saves and restores around it, `modeAscii` by the record `showModeName`
+prints for it, `drcsCell` by the G-set code that sets it and the twelve rows
+that follow, `modeReveal` by the bit it forces and what clearing that bit does
+to the cell.
+
+A few are named for where they sit rather than what they do, and those are
+exactly the open questions above: `btxIrqArmA`/`btxIrqArmB` name a position in
+the interrupt-enable sequence, `btxHostActive` the two places it is written,
+and `videoReg0`–`videoReg3` the register they are shifted into. `spare0616`
+and `spare04D3` are cleared at reset and never touched again.
+
+That is the shape of what is left. Each needs a schematic — the ROM writes
+these locations and never reads them back, so no amount of further reading
+will say what is on the other side of the write.
