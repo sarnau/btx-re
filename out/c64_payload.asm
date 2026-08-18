@@ -433,35 +433,101 @@ c64MacroId:
         FCB     $00
         FCC     ",S,W"
 
-L11B9:
+; The payload's variables, runtime $11B9-$11F7, followed by the 31 CEPT status
+; records at $11F8-$166F and the c64StrTable that indexes them.
+;
+; The ROM image holds their initial values, all $00, which is why this area first
+; reads as unprintable filler in front of the text.
+;
+;   $11B9  c64Tmp         a shared scratch byte - the key c64Menu is looking up,
+;                         the send index in c64ShowMsgPtr and c64MenuEdit
+;   $11BA  c64DirCount    characters left in a c64MacroDirLine entry
+;   $11BB  c64SaveSA      holds SA across the open in c64DiskOpenRead
+;   $11BC  c64FnLen       length of the name in c64FnBuf
+;   $11BD  c64FnMax       the limit c64InputLine was called with
+;   $11BE  c64FnBuf       the filename buffer. c64OpenSeqWrite and
+;                         c64OpenPrgWrite append ",S,W" and ",P,W" at c64FnLen
+;   $11BF  c64FnBuf2      the second byte of that buffer, stored directly when
+;                         c64MenuEdit substitutes a one-character name
+;
+;   $11D7  c64MsgLen      the count byte of the record c64ShowMsgPtr is sending
+;   $11D8  c64RecFlag     a macro is being recorded
+;   $11D9  c64CapFlag     a capture is running
+;   $11DA  c64CapEnd      how far the capture buffer is filled
+;   $11DC  c64DosErr      set when the DOS error channel did not read 00
+;   $11DD  c64LastByte    the byte c64MenuDisplay sent last, so it can pause
+;                         after a $11
+;   $11DE  c64DelayCnt    c64DelaySecs' countdown, seconds times five
+;
+;   $11DF  c64XferCols    columns left in the row c64MenuXfer is reading back
+;   $11E0  c64XferReq     the row it asks the decoder for, $11 through $29
+;   $11EE  c64PlotCol     where c64CellToScreen puts the result
+;   $11EF  c64PlotRow
+;
+;   $11E1  c64CellChar    one cell, as the decoder hands it over: the character
+;   $11E2  c64CellAccent  the combining accent, $48 being the diaeresis
+;   $11E3  c64Cell3       stored by both readers, never read back
+;   $11E4  c64CellSet     bits 0-2 select the character set, bit 3 marks an accent
+;   $11E5  c64Cell5       stored by both readers, never read back
+;   $11E6  c64CellAttr    bit 2 reverses the character, bit 3 shows it at all
+;
+;   $11E7  c64MenuLine    which of the two menu lines c64Menu is showing
+;   $11E8  c64GermanFlag  German keyboard selected, so c64GermanKeys is searched
+;                         and c64GetKey swaps Y and Z
+;   $11E9  c64KeyOut1     what c64XlatKey made of the key, up to three CEPT bytes
+;   $11EA  c64KeyOut2
+;   $11EB  c64KeyOut3
+;   $11EC  c64PlayFlag    a macro is being played back, so c64GetKey reads the
+;                         file instead of the keyboard
+;   $11ED  c64LineShadow  the last value read from the decoder's line counter
+;                         btxReg011, which is how c64WaitDecoder sees it move
+;   $11F7  c64AlphaFlag   alpha mode, which puts c64AsciiKeys in front of
+;                         c64XlatKey's search chain
+;
+;   $11F0  c64TsInTag     the telesoftware parser is inside a <x ... > tag
+;   $11F1  c64TsPair      which half of a 6-bit pair is next
+;   $11F2  c64TsHi        the first half, held while the second arrives
+;   $11F3  c64TsLo        the second half
+;   $11F4  c64TsType      $00 for a C or E record, $FF for a G record. The two
+;                         are selected by the LDA #$00 / FCB $2C / LDA #$FF
+;                         skip at $2ABD
+;   $11F5  c64TsCount     bytes left in the current record
+;   $11F6  c64TsRun       bytes left in the run inside it
+;
+; The records are named after the German text they carry, so the index c64ShowMsg
+; is called with is readable at the call site: msgNoDrive rather than message 13.
+; msgBlank is the all-space record c64ClearMsg uses to wipe the status line, and
+; msgErrLine is the empty 4-byte one c64DiskShowError draws before streaming the
+; drive's own message into it.
+c64Tmp:
         FCB     $00
 
-L11BA:
+c64DirCount:
         FCB     $00
 
-L11BB:
+c64SaveSA:
         FCB     $00
 
-L11BC:
+c64FnLen:
         FCB     $00
 
-L11BD:
+c64FnMax:
         FCB     $00
 
-L11BE:
+c64FnBuf:
         FCB     $00
 
-L11BF:
+c64FnBuf2:
         FCB     $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
         FCB     $00,$00,$00,$00,$00,$00,$00,$00
 
-L11D7:
+c64MsgLen:
         FCB     $00
 
-L11D8:
+c64RecFlag:
         FCB     $00
 
-L11D9:
+c64CapFlag:
         FCB     $00
 
 ; c64CapEnd, runtime $11DA - how far the capture buffer is filled.
@@ -476,215 +542,215 @@ L11D9:
 c64CapEnd:
         DW      $0000
 
-L11DC:
+c64DosErr:
         FCB     $00
 
-L11DD:
+c64LastByte:
         FCB     $00
 
-L11DE:
+c64DelayCnt:
         FCB     $00
 
-L11DF:
+c64XferCols:
         FCB     $00
 
-L11E0:
+c64XferReq:
         FCB     $00
 
-L11E1:
+c64CellChar:
         FCB     $00
 
-L11E2:
+c64CellAccent:
         FCB     $00
 
-L11E3:
+c64Cell3:
         FCB     $00
 
-L11E4:
+c64CellSet:
         FCB     $00
 
-L11E5:
+c64Cell5:
         FCB     $00
 
-L11E6:
+c64CellAttr:
         FCB     $00
 
-L11E7:
+c64MenuLine:
         FCB     $00
 
-L11E8:
+c64GermanFlag:
         FCB     $00
 
-L11E9:
+c64KeyOut1:
         FCB     $00
 
-L11EA:
+c64KeyOut2:
         FCB     $00
 
-L11EB:
+c64KeyOut3:
         FCB     $00
 
-L11EC:
+c64PlayFlag:
         FCB     $00
 
-L11ED:
+c64LineShadow:
         FCB     $00
 
-L11EE:
+c64PlotCol:
         FCB     $00
 
-L11EF:
+c64PlotRow:
         FCB     $00
 
-L11F0:
+c64TsInTag:
         FCB     $00
 
-L11F1:
+c64TsPair:
         FCB     $00
 
-L11F2:
+c64TsHi:
         FCB     $00
 
-L11F3:
+c64TsLo:
         FCB     $00
 
-L11F4:
+c64TsType:
         FCB     $00
 
-L11F5:
+c64TsCount:
         FCB     $00
 
-L11F6:
+c64TsRun:
         FCB     $00
 
-L11F7:
+c64AlphaFlag:
         FCB     $00
 
-L11F8:
+msgLoadFile:
         FCB     $18,$00,$C0,$01,$98
         FCC     "von Diskette: File? "
 
-L1211:
+msgBlank:
         FCB     $2C,$00,$80,$07,$98
         FCC     "                                        "
 
-L123E:
+msgNoFile:
         FCB     $2C,$00,$C0,$01,$98
         FCC     "File nicht vorhanden - Taste druecken   "
 
-L126B:
+msgMenu1:
         FCB     $2C,$00,$C0,$01,$98
         FCC     "Load Capture Display Macro Xfer Screen  "
 
-L1298:
+msgMenu2:
         FCB     $2C,$00,$C0,$01,$98
         FCC     "ASCII Btx Keybd Telesoft Edit Pause Quit"
 
-L12C5:
+msgCaptureOn:
         FCB     $2C,$00,$C0,$01,$98
         FCC     "Capture-Modus ein - Ende: STOP-Taste    "
 
-L12F2:
+msgShowBuffer:
         FCB     $2C,$00,$C0,$01,$98
         FCC     "Capture-Puffer anzeigen                 "
 
-L131F:
+msgSaveFile:
         FCB     $18,$00,$C0,$01,$98
         FCC     "Auf Diskette: File? "
 
-L1338:
+msgBufferFull:
         FCB     $18,$00,$C0,$01,$98
         FCC     "Puffer voll - File? "
 
-L1351:
+msgErrLine:
         FCB     $04,$00,$C0,$01,$98
 
-L1356:
+msgRetry:
         FCB     $2C,$00,$C0,$01,$98,$09,$09,$09,$09,$09,$09,$09,$09,$09,$09,$09
         FCB     $09,$09,$09,$09,$09,$09,$09,$09,$09
         FCC     " - nochmal (J/N) ?  "
 
-L1383:
+msgMacroRun:
         FCB     $1E,$00,$C0,$01,$98
         FCC     "Macro ausfuehren: Kennung?"
 
-L13A2:
+msgMacroLabel:
         FCB     $0A,$00,$C0,$01,$98
         FCC     "Macro "
 
-L13AD:
+msgNoDrive:
         FCB     $2C,$00,$C0,$01,$98
         FCC     "Kein Disk-Laufwerk                      "
 
-L13DA:
+msgPrinterOrFile:
         FCB     $18,$00,$C0,$01,$98
         FCC     "Drucker oder File  "
         FCB     $00
 
-L13F3:
+msgNoPrinter:
         FCB     $16,$00,$C0,$01,$98
         FCC     "Kein Drucker     "
         FCB     $00
 
-L140A:
+msgKeyboard:
         FCB     $2C,$00,$C0,$01,$98
         FCC     "Keyboard: deutsch oder ASCII?           "
 
-L1437:
+msgMonitorOn:
         FCB     $2C,$00,$C0,$01,$98
         FCC     "C-64-Monitor zugeschaltet. Weiter: Taste"
 
-L1464:
+msgMonitorOff:
         FCB     $2C,$00,$C0,$01,$98
         FCC     "C-64-Monitor abgeschaltet. Weiter: Taste"
 
-L1491:
+msgPauseAsk:
         FCB     $2C,$00,$C0,$01,$98
         FCC     "Pause: wieviele Sekunden (1-9)?         "
 
-L14BE:
+msgPauseWait:
         FCB     $2C,$00,$C0,$01,$98
         FCC     "Pause: bitte warten...                  "
 
-L14EB:
+msgMacroNew:
         FCB     $1B,$00,$C0,$01,$98
         FCC     "Macro anlegen: Kennung?"
 
-L1507:
+msgMacroName:
         FCB     $13,$00,$C0,$01,$98,$09,$09,$09,$09,$09,$09,$09
         FCC     ": Name? "
 
-L151B:
+msgPressKey:
         FCB     $2C,$00,$C0,$01,$98,$09,$09,$09,$09,$09,$09,$09,$09,$09,$09,$09
         FCB     $09,$09,$09,$09,$09,$09,$09,$09,$09,$09,$09,$09,$09,$09,$09,$09
         FCC     "Weiter: Taste"
 
-L1548:
+msgMacroDone:
         FCB     $2C,$00,$C0,$01,$98
         FCC     "Macro abgeschlossen.                    "
 
-L1575:
+msgLoadingExtra:
         FCB     $2C,$00,$C0,$01,$98
         FCC     "Zusatzsoftware wird geladen             "
 
-L15A2:
+msgTelesoftFile:
         FCB     $18,$00,$C0,$01,$98
         FCC     "Telesoftware: File? "
 
-L15BB:
+msgTelesoftPage:
         FCB     $2C,$00,$C0,$01,$98
         FCC     "Telesoftware-Seite  aufrufen!           "
         FCC     " "
 
-L15E9:
+msgLoadingData:
         FCB     $2C,$00,$C0,$01,$98
         FCC     "Daten werden geladen                    "
 
-L1616:
+msgBadFormat:
         FCB     $2C,$00,$C0,$01,$98
         FCC     "Falsches Datenformat       Weiter: Taste"
 
-L1643:
+msgNoTelesoft:
         FCB     $2C,$00,$C0,$01,$98
         FCC     "Keine Telesoftw. im Macro! Weiter: Taste"
 
@@ -707,10 +773,10 @@ L1643:
 ; The earlier reading of these five bytes as a trailer was wrong - they lead the
 ; record, and the pointers here prove it.
 c64StrTable:
-        DW      L11F8,L1211,L123E,L126B,L1298,L12C5,L12F2,L131F
-        DW      L1338,L1351,L1356,L1383,L13A2,L13AD,L13DA,L13F3
-        DW      L140A,L1437,L1464,L1491,L14BE,L14EB,L1507,L151B
-        DW      L1548,L1575,L15A2,L15BB,L15E9,L1616,L1643
+        DW      msgLoadFile,msgBlank,msgNoFile,msgMenu1,msgMenu2,msgCaptureOn,msgShowBuffer,msgSaveFile
+        DW      msgBufferFull,msgErrLine,msgRetry,msgMacroRun,msgMacroLabel,msgNoDrive,msgPrinterOrFile,msgNoPrinter
+        DW      msgKeyboard,msgMonitorOn,msgMonitorOff,msgPauseAsk,msgPauseWait,msgMacroNew,msgMacroName,msgPressKey
+        DW      msgMacroDone,msgLoadingExtra,msgTelesoftFile,msgTelesoftPage,msgLoadingData,msgBadFormat,msgNoTelesoft
 
 c64ColdStart:
 ; vector 0 $1000 - cold start: IOINIT/RESTOR/PCINT/INITCZ/CLALL, clear zero page, hook CINV to the decoder IRQ, enable the decoder interrupt
@@ -781,12 +847,12 @@ L172D:
         LDA     c64BufStart+1
         STA     c64CapEnd+1
         LDA     #$00
-        STA     L11D9
-        STA     L11EC
+        STA     c64CapFlag
+        STA     c64PlayFlag
         LDA     #$00
-        STA     L11E8
-        STA     L11D8
-        STA     L11F7
+        STA     c64GermanFlag
+        STA     c64RecFlag
+        STA     c64AlphaFlag
 
 c64MainLoop:
 ; vector 2 $1006 - main loop: fetch a key, STOP ends a capture, F7 ($88) opens the menu, anything else goes to c64SendKey
@@ -795,9 +861,9 @@ c64MainLoop:
 
 L1751:
         SEI
-        LDA     L11E9
+        LDA     c64KeyOut1
         CLI
-        BIT     L11D9
+        BIT     c64CapFlag
         BPL     L175E
         JSR     vecCaptureRun
 
@@ -812,7 +878,7 @@ L175E:
 L176D:
         CMP     #$88
         BNE     L177C
-        BIT     L11D9
+        BIT     c64CapFlag
         BMI     L177C
         JSR     vecMenu
         JMP     L177F
@@ -837,20 +903,20 @@ L1789:
 L1790:
         JSR     vecXlatKey
         BCS     L17B5
-        LDA     L11F7
+        LDA     c64AlphaFlag
         BEQ     L179F
-        LDA     L11E9
+        LDA     c64KeyOut1
         BMI     L17B5
 
 L179F:
-        LDA     L11E9
+        LDA     c64KeyOut1
         JSR     vecSendByte
-        LDA     L11EA
+        LDA     c64KeyOut2
         BEQ     L17AD
         JSR     vecSendByte
 
 L17AD:
-        LDA     L11EB
+        LDA     c64KeyOut3
         BEQ     L17B5
         JSR     vecSendByte
 
@@ -860,12 +926,12 @@ L17B5:
 c64XlatKey:
 ; vector 5 $100F - PETSCII key -> CEPT, via c64AsciiKeys (2-byte records, alpha mode), then c64GermanKeys, then c64CtrlKeys (4-byte records). C=1 when the key has no mapping
         LDX     #$00
-        STX     L11E9
-        STX     L11EA
-        STX     L11EB
-        LDX     L11E8
+        STX     c64KeyOut1
+        STX     c64KeyOut2
+        STX     c64KeyOut3
+        LDX     c64GermanFlag
         BEQ     L180D
-        LDX     L11F7
+        LDX     c64AlphaFlag
         BEQ     L17EF
         LDX     #c64AsciiKeys&255
         STX     c64KeyPtr
@@ -888,7 +954,7 @@ L17E4:
         INY
         LDA     (c64KeyPtr),Y
         BEQ     L185B
-        STA     L11E9
+        STA     c64KeyOut1
         CLC
         RTS
 
@@ -962,13 +1028,13 @@ L184D:
         ORA     #$20
 
 L184F:
-        STA     L11E9
+        STA     c64KeyOut1
         CLC
         RTS
 
 L1854:
         AND     #$7F
-        STA     L11E9
+        STA     c64KeyOut1
         CLC
         RTS
 
@@ -979,13 +1045,13 @@ L185B:
 L185D:
         INY
         LDA     (c64KeyPtr),Y
-        STA     L11E9
+        STA     c64KeyOut1
         INY
         LDA     (c64KeyPtr),Y
-        STA     L11EA
+        STA     c64KeyOut2
         INY
         LDA     (c64KeyPtr),Y
-        STA     L11EB
+        STA     c64KeyOut3
         CLC
         RTS
 
@@ -1087,14 +1153,14 @@ c64HideMsg:
 
 c64CaptureEnd:
 ; vector 10 $101E - STOP during a capture: send $10 $6D, wait for the transfer to drain, record the end pointer and offer c64SaveBuffer
-        BIT     L11D9
+        BIT     c64CapFlag
         BPL     L192F
         LDA     #$10
         JSR     vecSendByte
         LDA     #$6D
         JSR     vecSendByte
         LDA     #$00
-        STA     L11D9
+        STA     c64CapFlag
 
 L190A:
         LDA     btxXferEn
@@ -1143,11 +1209,11 @@ L194D:
 c64Menu:
 ; vector 4 $100C - the <F7> menu: shows msg 3/4, reads a letter and dispatches through c64MenuKeys; any other key toggles the two menu lines
         LDA     #$00
-        STA     L11E7
+        STA     c64MenuLine
 
 L1953:
         LDA     #$03
-        LDX     L11E7
+        LDX     c64MenuLine
         BEQ     L195C
         LDA     #$04
 
@@ -1163,7 +1229,7 @@ L195F:
         JMP     vecHideMsg
 
 L196D:
-        STA     L11B9
+        STA     c64Tmp
         LDY     #$FD
 
 L1972:
@@ -1172,7 +1238,7 @@ L1972:
         INY
         LDA     c64MenuKeys,Y
         BEQ     L198C
-        CMP     L11B9
+        CMP     c64Tmp
         BNE     L1972
         LDA     c64MenuKeys+1,Y
         STA     c64Ptr
@@ -1181,9 +1247,9 @@ L1972:
         JMP     (c64Ptr)
 
 L198C:
-        LDA     L11E7
+        LDA     c64MenuLine
         EOR     #$FF
-        STA     L11E7
+        STA     c64MenuLine
         JMP     L1953
 
 ; Menu key dispatch: records of one ASCII key byte then a 16-bit handler
@@ -1234,7 +1300,7 @@ c64MenuAscii:
         LDA     #$67
         JSR     vecSendByte
         LDA     #$FF
-        STA     L11F7
+        STA     c64AlphaFlag
         RTS
 
 c64MenuBtx:
@@ -1244,7 +1310,7 @@ c64MenuBtx:
         LDA     #$66
         JSR     vecSendByte
         LDA     #$00
-        STA     L11F7
+        STA     c64AlphaFlag
         RTS
 
 c64MenuQuit:
@@ -1402,11 +1468,11 @@ L1AF4:
         RTS
 
 L1B05:
-        BIT     L11EC
+        BIT     c64PlayFlag
         BPL     L1AF4
         JSR     vecMacroCloseRead
         LDA     #$00
-        STA     L11EC
+        STA     c64PlayFlag
         LDA     #$10
         JSR     vecSendByte
         LDA     #$2E
@@ -1488,7 +1554,7 @@ L1B8E:
         JSR     vecSendByte
         LDA     #$00
         JSR     vecSendByte
-        BIT     L11D8
+        BIT     c64RecFlag
         BPL     L1BBD
         JSR     vecMacroRecClose
         LDA     #$10
@@ -1496,14 +1562,14 @@ L1B8E:
         LDA     #$6B
         JSR     vecSendByte
         LDA     #$00
-        STA     L11D8
+        STA     c64RecFlag
 
 L1BBD:
-        BIT     L11EC
+        BIT     c64PlayFlag
         BPL     L1BD7
         JSR     vecMacroCloseRead
         LDA     #$00
-        STA     L11EC
+        STA     c64PlayFlag
         LDA     #$10
         JSR     vecSendByte
         LDA     #$2E
@@ -1530,7 +1596,7 @@ L1BEA:
         TXA
         PHA
         LDA     #$FF
-        STA     L11EC
+        STA     c64PlayFlag
         LDA     #$10
         JSR     vecSendByte
         LDA     #$2C
@@ -1558,7 +1624,7 @@ c64MenuCapture:
         JSR     vecShowMsg
         LDA     #$FF
         STA     btxStatus
-        STA     L11D9
+        STA     c64CapFlag
         LDA     c64BufStart
         STA     c64BufWr
         LDA     c64BufStart+1
@@ -1583,7 +1649,7 @@ L1C55:
 
 L1C58:
         LDA     #$00
-        STA     L11D9
+        STA     c64CapFlag
         LDA     #$10
         JSR     vecSendByte
         LDA     #$6D
@@ -1626,7 +1692,7 @@ c64MenuDisplay:
         LDA     c64BufStart+1
         STA     c64BufWrHi
         LDA     #$00
-        STA     L11DD
+        STA     c64LastByte
 
 L1CB3:
         JSR     STOP
@@ -1647,7 +1713,7 @@ L1CC6:
         RTS
 
 L1CD4:
-        LDA     L11DD
+        LDA     c64LastByte
         CMP     #$11
         BNE     L1CE0
         LDA     #$05
@@ -1656,7 +1722,7 @@ L1CD4:
 L1CE0:
         LDY     #$00
         LDA     (c64BufWr),Y
-        STA     L11DD
+        STA     c64LastByte
         JSR     vecSendByte
         INC     c64BufWr
         BNE     L1CF0
@@ -1672,41 +1738,41 @@ c64MenuXfer:
         LDA     #$93
         JSR     BSOUT
         LDA     #$11
-        STA     L11E0
+        STA     c64XferReq
         LDA     #$FF
-        STA     L11EF
+        STA     c64PlotRow
 
 L1D07:
         LDA     #$10
         JSR     vecSendByte
-        LDA     L11E0
+        LDA     c64XferReq
         JSR     vecSendByte
-        INC     L11EF
+        INC     c64PlotRow
         LDA     #$FF
-        STA     L11EE
+        STA     c64PlotCol
         LDA     #$28
-        STA     L11DF
+        STA     c64XferCols
 
 L1D1F:
-        INC     L11EE
+        INC     c64PlotCol
         JSR     vecGetByteWait
         AND     #$7F
-        STA     L11E1
+        STA     c64CellChar
         JSR     vecGetByteWait
-        STA     L11E2
+        STA     c64CellAccent
         JSR     vecGetByteWait
-        STA     L11E3
+        STA     c64Cell3
         JSR     vecGetByteWait
-        STA     L11E4
+        STA     c64CellSet
         JSR     vecGetByteWait
-        STA     L11E5
+        STA     c64Cell5
         JSR     vecGetByteWait
-        STA     L11E6
+        STA     c64CellAttr
         JSR     vecCellToScreen
-        DEC     L11DF
+        DEC     c64XferCols
         BNE     L1D1F
-        INC     L11E0
-        LDA     L11E0
+        INC     c64XferReq
+        LDA     c64XferReq
         CMP     #$2A
         BNE     L1D07
         LDA     #$00
@@ -1749,7 +1815,7 @@ L1D95:
 
 L1D9A:
         LDA     #$11
-        STA     L11E0
+        STA     c64XferReq
 
 L1D9F:
         JSR     STOP
@@ -1759,25 +1825,25 @@ L1D9F:
 L1DA7:
         LDA     #$10
         JSR     vecSendByte
-        LDA     L11E0
+        LDA     c64XferReq
         JSR     vecSendByte
         LDA     #$28
-        STA     L11DF
+        STA     c64XferCols
 
 L1DB7:
         JSR     vecGetByteWait
         AND     #$7F
-        STA     L11E1
+        STA     c64CellChar
         JSR     vecGetByteWait
-        STA     L11E2
+        STA     c64CellAccent
         JSR     vecGetByteWait
-        STA     L11E3
+        STA     c64Cell3
         JSR     vecGetByteWait
-        STA     L11E4
+        STA     c64CellSet
         JSR     vecGetByteWait
-        STA     L11E5
+        STA     c64Cell5
         JSR     vecGetByteWait
-        STA     L11E6
+        STA     c64CellAttr
         LDA     FA
         CMP     #$04
         BNE     L1DE9
@@ -1788,12 +1854,12 @@ L1DE9:
         JSR     vecCellToFile
 
 L1DEC:
-        DEC     L11DF
+        DEC     c64XferCols
         BNE     L1DB7
         LDA     #$0D
         JSR     CIOUT
-        INC     L11E0
-        LDA     L11E0
+        INC     c64XferReq
+        LDA     c64XferReq
         CMP     #$29
         BNE     L1D9F
         LDA     #$00
@@ -1873,17 +1939,17 @@ L1E67:
         BMI     L1EDC
         LDA     btxFifo03
         AND     #$7F
-        STA     L11E1
+        STA     c64CellChar
         LDA     btxFifo04
-        STA     L11E2
+        STA     c64CellAccent
         LDA     btxFifo05
-        STA     L11E3
+        STA     c64Cell3
         LDA     btxFifo06
-        STA     L11E4
+        STA     c64CellSet
         LDA     btxFifo07
-        STA     L11E5
+        STA     c64Cell5
         LDA     btxFifo08
-        STA     L11E6
+        STA     c64CellAttr
         JSR     vecCellToChar
         CMP     #$60
         BCC     L1EA9
@@ -1895,7 +1961,7 @@ L1EA9:
 
 L1EAB:
         PHA
-        LDA     L11E6
+        LDA     c64CellAttr
         AND     #$04
         BEQ     L1EB9
         PLA
@@ -1907,7 +1973,7 @@ L1EB9:
 
 L1EBA:
         PHA
-        LDA     L11E6
+        LDA     c64CellAttr
         AND     #$08
         BNE     L1EC8
         PLA
@@ -1954,7 +2020,7 @@ L1EF4:
         CMP     #$44
         BNE     L1EF4
         LDA     #$FF
-        STA     L11E8
+        STA     c64GermanFlag
         LDA     #$10
         JSR     vecSendByte
         LDA     #$4E
@@ -1966,7 +2032,7 @@ L1F14:
 
 L1F18:
         LDA     #$00
-        STA     L11E8
+        STA     c64GermanFlag
         LDA     #$10
         JSR     vecSendByte
         LDA     #$6E
@@ -2003,13 +2069,13 @@ L1F3B:
 
 c64MenuEdit:
 ; vector 28 $1054 - menu 'E' (Edit): start recording a macro (msg $15, c64MacroRecStart) or finish the one in progress (msg $18 "Macro abgeschlossen", c64MacroRecClose)
-        BIT     L11EC
+        BIT     c64PlayFlag
         BPL     L1F5D
         JSR     vecHideMsg
         RTS
 
 L1F5D:
-        BIT     L11D8
+        BIT     c64RecFlag
         BPL     L1F89
         LDA     #$10
         JSR     vecSendByte
@@ -2021,7 +2087,7 @@ L1F5D:
         LDA     #$17
         JSR     vecShowMsg
         LDA     #$00
-        STA     L11D8
+        STA     c64RecFlag
 
 L1F7E:
         JSR     GETIN
@@ -2104,33 +2170,33 @@ L1FF8:
         JSR     vecInputLine
         BCC     L2023
         LDA     #$20
-        STA     L11BE
+        STA     c64FnBuf
         LDA     #$00
-        STA     L11BF
+        STA     c64FnBuf2
         LDA     #$02
-        STA     L11BC
+        STA     c64FnLen
 
 L2023:
         LDA     btxReg011
         CMP     btxReg011
         BNE     L2023
-        STA     L11ED
+        STA     c64LineShadow
         JSR     vecMacroRecOpen
         LDY     #$00
-        STY     L11B9
+        STY     c64Tmp
 
 L2036:
-        LDA     L11BE,Y
+        LDA     c64FnBuf,Y
         JSR     CIOUT
-        INC     L11B9
-        LDY     L11B9
-        CPY     L11BC
+        INC     c64Tmp
+        LDY     c64Tmp
+        CPY     c64FnLen
         BNE     L2036
         LDA     #$00
         JSR     CIOUT
         JSR     UNLSN
         LDA     #$FF
-        STA     L11D8
+        STA     c64RecFlag
         LDA     #$10
         JSR     vecSendByte
         LDA     #$4B
@@ -2139,9 +2205,9 @@ L2036:
 
 c64InputLine:
 ; vector 29 $1057 - read a line of at most A characters into the filename buffer, echoing through c64SendKey. DEL erases, RETURN accepts, STOP returns C=1
-        STA     L11BD
+        STA     c64FnMax
         LDY     #$00
-        STY     L11BC
+        STY     c64FnLen
 
 L2067:
         JSR     vecGetKey
@@ -2152,10 +2218,10 @@ L2067:
         BNE     L2086
 
 L2074:
-        LDY     L11BC
+        LDY     c64FnLen
         CPY     #$00
         BEQ     L2067
-        DEC     L11BC
+        DEC     c64FnLen
         LDA     #$08
         JSR     vecSendByte
         JMP     L2067
@@ -2167,10 +2233,10 @@ L2086:
         BNE     L209D
 
 L208E:
-        LDY     L11BC
+        LDY     c64FnLen
         BEQ     L2067
         LDA     #$00
-        STA     L11BE,Y
+        STA     c64FnBuf,Y
         JSR     vecSendByte
         CLC
         RTS
@@ -2197,22 +2263,22 @@ L20A8:
         JSR     vecXlatKey
         PLA
         BCS     L2067
-        LDY     L11BC
-        STA     L11BE,Y
+        LDY     c64FnLen
+        STA     c64FnBuf,Y
         TAX
-        LDA     L11E8
+        LDA     c64GermanFlag
         PHA
         LDA     #$00
-        STA     L11E8
+        STA     c64GermanFlag
         TXA
         JSR     vecSendKey
         PLA
-        STA     L11E8
-        INC     L11BC
-        LDY     L11BC
-        CPY     L11BD
+        STA     c64GermanFlag
+        INC     c64FnLen
+        LDY     c64FnLen
+        CPY     c64FnMax
         BNE     L20EA
-        DEC     L11BC
+        DEC     c64FnLen
         LDA     #$08
         JSR     vecSendByte
 
@@ -2246,17 +2312,17 @@ c64ShowMsgPtr:
         JSR     vecSendByte
         LDY     #$00
         LDA     (c64MsgPtr),Y
-        STA     L11D7
+        STA     c64MsgLen
         INY
-        STY     L11B9
+        STY     c64Tmp
 
 L2122:
-        LDY     L11B9
+        LDY     c64Tmp
         LDA     (c64MsgPtr),Y
         JSR     vecSendByte
-        LDY     L11B9
-        INC     L11B9
-        CPY     L11D7
+        LDY     c64Tmp
+        INC     c64Tmp
+        CPY     c64MsgLen
         BNE     L2122
         RTS
 
@@ -2328,19 +2394,19 @@ c64WaitDecoder:
 ; vector 41 $107B - spin until the decoder's line counter btxReg011 changes, servicing an active capture, so a macro waits for the page to arrive
         LDA     btxReg011
         STA     btxReg1FC
-        STA     L11ED
+        STA     c64LineShadow
 
 L219F:
         JSR     STOP
         BEQ     L21BF
-        BIT     L11D9
+        BIT     c64CapFlag
         BPL     L21AC
         JSR     vecCaptureRun
 
 L21AC:
         LDA     btxReg011
         STA     btxReg1FC
-        CMP     L11ED
+        CMP     c64LineShadow
         BNE     L21BF
         LDX     #$14
 
@@ -2354,12 +2420,12 @@ L21BF:
 
 c64DelaySecs:
 ; vector 42 $107E - delay A units (A*5 inner passes of ~40 ms); STOP aborts, and CTRL held at the end extends it
-        STA     L11DE
+        STA     c64DelayCnt
         ASL     A
         ASL     A
         CLC
-        ADC     L11DE
-        STA     L11DE
+        ADC     c64DelayCnt
+        STA     c64DelayCnt
 
 L21CC:
         LDY     #$C8
@@ -2374,7 +2440,7 @@ L21D0:
         BNE     L21CE
         JSR     STOP
         BEQ     L21F3
-        DEC     L11DE
+        DEC     c64DelayCnt
         BNE     L21CC
 
 L21E0:
@@ -2403,17 +2469,17 @@ L21FF:
         AND     #$3F
 
 L2201:
-        LDX     L11EE
-        LDY     L11EF
+        LDX     c64PlotCol
+        LDY     c64PlotRow
         JSR     vecPlotChar
         RTS
 
 c64CellOut:
 ; vectors 44 $1084 and 45 $1087 - the same routine under two entries: translate one cell to ASCII and CIOUT it. Maps the CEPT umlaut composition to the printer codes $BB-$DD
-        LDA     L11E1
+        LDA     c64CellChar
         CMP     #$7B
         BNE     L2220
-        LDA     L11E4
+        LDA     c64CellSet
         AND     #$07
         CMP     #$01
         BNE     L2220
@@ -2421,13 +2487,13 @@ c64CellOut:
         JMP     L2269
 
 L2220:
-        LDA     L11E4
+        LDA     c64CellSet
         AND     #$08
         BEQ     L2260
-        LDA     L11E2
+        LDA     c64CellAccent
         CMP     #$48
         BNE     L2260
-        LDA     L11E1
+        LDA     c64CellChar
         CMP     #$61
         BEQ     L224C
         CMP     #$41
@@ -2480,7 +2546,7 @@ c64CellToChar:
 ; vector 46 $108A - the core translator: six decoder bytes (code plus the four attribute bytes and the accent byte) in $11E1-$11E6 -> one character code
         PHP
         SEI
-        LDA     L11E4
+        LDA     c64CellSet
         AND     #$07
         BEQ     L22EC
         CMP     #$01
@@ -2495,7 +2561,7 @@ c64CellToChar:
         JMP     L230A
 
 L228B:
-        LDA     L11E1
+        LDA     c64CellChar
         CMP     #$20
         BEQ     L22EC
         CMP     #$50
@@ -2520,14 +2586,14 @@ L22AD:
         JMP     L230A
 
 L22B2:
-        LDA     L11E1
+        LDA     c64CellChar
         CMP     #$20
         BEQ     L22EC
         LDA     #$2A
         JMP     L230A
 
 L22BE:
-        LDA     L11E1
+        LDA     c64CellChar
         CMP     #$20
         BEQ     L22EC
         CMP     #$50
@@ -2540,7 +2606,7 @@ L22CE:
         JMP     L230A
 
 L22D3:
-        LDA     L11E1
+        LDA     c64CellChar
         CMP     #$20
         BEQ     L22EC
         CMP     #$40
@@ -2555,7 +2621,7 @@ L22E3:
         JMP     L230A
 
 L22EC:
-        LDA     L11E1
+        LDA     c64CellChar
         CMP     #$60
         BNE     L22F8
         LDA     #$20
@@ -2568,7 +2634,7 @@ L22F8:
         JMP     L230A
 
 L2301:
-        LDA     L11E1
+        LDA     c64CellChar
         CMP     #$41
         BCC     L230A
         EOR     #$20
@@ -2644,7 +2710,7 @@ L2364:
 
 c64GetKey:
 ; vector 53 $109F - fetch the next key: from the macro file during playback, otherwise GETIN. Applies the QWERTZ Y/Z swap and echoes to the macro file while recording. C=1 when nothing is pending
-        LDA     L11EC
+        LDA     c64PlayFlag
         BNE     L23BE
         JSR     GETIN
         CMP     #$00
@@ -2654,7 +2720,7 @@ c64GetKey:
         LDA     #$20
 
 L237F:
-        BIT     L11E8
+        BIT     c64GermanFlag
         BPL     L2396
         CMP     #$59
         BEQ     L2394
@@ -2669,7 +2735,7 @@ L2394:
         EOR     #$03
 
 L2396:
-        BIT     L11D8
+        BIT     c64RecFlag
         BPL     L23A8
         PHA
         JSR     vecMacroRecOpen
@@ -2721,7 +2787,7 @@ L23D7:
         JSR     vecSendByte
         JSR     vecHideMsg
         LDA     #$00
-        STA     L11EC
+        STA     c64PlayFlag
         LDA     #$10
         JSR     vecSendByte
         LDA     #$2E
@@ -2761,12 +2827,12 @@ L2404:
 L241E:
         LDA     c64ExtraFile,X
         BEQ     L2429
-        STA     L11BE,X
+        STA     c64FnBuf,X
         INX
         BNE     L241E
 
 L2429:
-        STX     L11BC
+        STX     c64FnLen
         JSR     vecDiskOpenRead
         BCS     L2460
         STA     c64Ptr
@@ -2943,14 +3009,14 @@ c64DiskShowError:
         LDA     #$09
         JSR     vecShowMsg
         LDA     #$00
-        STA     L11DC
+        STA     c64DosErr
         JSR     vecDiskGetByte
         BCS     L2648
         BVS     L2648
         CMP     #$30
         BEQ     L2609
         LDA     #$FF
-        STA     L11DC
+        STA     c64DosErr
 
 L2609:
         JSR     vecDiskGetByte
@@ -2959,8 +3025,8 @@ L2609:
         CMP     #$30
         BEQ     L261C
         LDA     #$FF
-        ORA     L11DC
-        STA     L11DC
+        ORA     c64DosErr
+        STA     c64DosErr
 
 L261C:
         JSR     vecDiskGetByte
@@ -2993,7 +3059,7 @@ L2641:
 
 L2648:
         JSR     UNTLK
-        BIT     L11DC
+        BIT     c64DosErr
         BPL     L2652
 
 L2650:
@@ -3019,14 +3085,14 @@ c64DiskCheckError:
         LDX     STATUS
         BNE     L26A5
         LDA     #$00
-        STA     L11DC
+        STA     c64DosErr
         JSR     vecDiskGetByte
         BCS     L269D
         BVS     L269D
         CMP     #$30
         BEQ     L2683
         LDA     #$FF
-        STA     L11DC
+        STA     c64DosErr
 
 L2683:
         JSR     vecDiskGetByte
@@ -3035,8 +3101,8 @@ L2683:
         CMP     #$30
         BEQ     L2696
         LDA     #$FF
-        ORA     L11DC
-        STA     L11DC
+        ORA     c64DosErr
+        STA     c64DosErr
 
 L2696:
         JSR     vecDiskGetByte
@@ -3045,7 +3111,7 @@ L2696:
 
 L269D:
         JSR     UNTLK
-        BIT     L11DC
+        BIT     c64DosErr
         BPL     L26A7
 
 L26A5:
@@ -3112,18 +3178,18 @@ L26FB:
         LDA     btxReg011
         CMP     btxReg011
         BNE     L26FB
-        STA     L11ED
+        STA     c64LineShadow
         JMP     L271E
 
 L2709:
         LDA     btxReg011
         CMP     btxReg011
         BNE     L2709
-        CMP     L11ED
+        CMP     c64LineShadow
         BEQ     L271E
         LDA     #$01
         JSR     CIOUT
-        INC     L11ED
+        INC     c64LineShadow
 
 L271E:
         RTS
@@ -3142,36 +3208,36 @@ c64MacroTalk:
 
 c64OpenPrgWrite:
 ; vector 60 $10B4 - append ",P,W" to the filename and OPEN it on device 8 channel 4, then share c64OpenSeqWrite's tail
-        LDY     L11BC
+        LDY     c64FnLen
         LDA     #$2C
-        STA     L11BE,Y
+        STA     c64FnBuf,Y
         INY
         LDA     #$50
-        STA     L11BE,Y
+        STA     c64FnBuf,Y
         INY
         LDA     #$2C
-        STA     L11BE,Y
+        STA     c64FnBuf,Y
         INY
         LDA     #$57
-        STA     L11BE,Y
+        STA     c64FnBuf,Y
         INY
         STY     FNLEN
         JMP     L276F
 
 c64OpenSeqWrite:
 ; vector 48 $1090 - append ",S,W" to the filename and OPEN it on device 8 channel 4
-        LDY     L11BC
+        LDY     c64FnLen
         LDA     #$2C
-        STA     L11BE,Y
+        STA     c64FnBuf,Y
         INY
         LDA     #$53
-        STA     L11BE,Y
+        STA     c64FnBuf,Y
         INY
         LDA     #$2C
-        STA     L11BE,Y
+        STA     c64FnBuf,Y
         INY
         LDA     #$57
-        STA     L11BE,Y
+        STA     c64FnBuf,Y
         INY
         STY     FNLEN
 
@@ -3182,9 +3248,9 @@ L276F:
         STA     FA
         LDA     #$64
         STA     SA
-        LDA     #L11BE&255
+        LDA     #c64FnBuf&255
         STA     FNADR
-        LDA     #L11BE>>8
+        LDA     #c64FnBuf>>8
         STA     FNADR+1
         LDA     #$00
         STA     STATUS
@@ -3236,7 +3302,7 @@ c64MacroOpenRead:
 
 c64MacroDir:
 ; vector 51 $1099 - send ceptMacroDir ("Makro-Verzeichnis") and list every macro '0'-'9' then 'A'-'Z' with c64MacroDirLine
-        BIT     L11EC
+        BIT     c64PlayFlag
         BMI     L2845
         LDA     #$10
         JSR     vecSendByte
@@ -3304,12 +3370,12 @@ c64MacroDirLine:
         LDA     #$20
         JSR     vecSendByte
         LDA     #$11
-        STA     L11BA
+        STA     c64DirCount
         JSR     vecMacroOpenRead
         BCS     L287B
         TXA
         JSR     vecSendKey
-        DEC     L11BA
+        DEC     c64DirCount
 
 L2867:
         JSR     vecDiskGetByte
@@ -3318,22 +3384,22 @@ L2867:
         CMP     #$00
         BEQ     L2896
         JSR     vecSendKey
-        DEC     L11BA
+        DEC     c64DirCount
         BNE     L2867
         RTS
 
 L287B:
         LDA     #$2D
         JSR     vecSendByte
-        DEC     L11BA
-        LDA     L11BA
+        DEC     c64DirCount
+        LDA     c64DirCount
         CMP     #$0B
         BNE     L287B
 
 L288A:
         LDA     #$20
         JSR     vecSendByte
-        DEC     L11BA
+        DEC     c64DirCount
         BNE     L288A
         CLC
         RTS
@@ -3341,7 +3407,7 @@ L288A:
 L2896:
         LDA     #$20
         JSR     vecSendByte
-        DEC     L11BA
+        DEC     c64DirCount
         BNE     L2896
         JSR     vecMacroCloseRead
         CLC
@@ -3360,11 +3426,11 @@ c64DiskOpenRead:
         STA     FA
         LDA     #$64
         STA     SA
-        LDA     #L11BE&255
+        LDA     #c64FnBuf&255
         STA     FNADR
-        LDA     #L11BE>>8
+        LDA     #c64FnBuf>>8
         STA     FNADR+1
-        LDA     L11BC
+        LDA     c64FnLen
         STA     FNLEN
 
 L28C3:
@@ -3373,12 +3439,12 @@ L28C3:
         JSR     vecOpenChannel
         BCS     L28EB
         LDA     SA
-        STA     L11BB
+        STA     c64SaveSA
         JSR     vecDiskCheckError
         BCS     L28EB
         LDA     FA
         JSR     TALK
-        LDA     L11BB
+        LDA     c64SaveSA
         STA     SA
         JSR     TKSA
         JSR     vecDiskGetByte
@@ -3488,8 +3554,8 @@ ceptMacroDir:
 
 c64MenuTelesoft:
 ; vector 57 $10AB - menu 'T' (Telesoft): msg $1A "Telesoftware: File?", open a PRG file and run the telesoftware download decoder
-        LDA     L11EC
-        ORA     L11D8
+        LDA     c64PlayFlag
+        ORA     c64RecFlag
         BEQ     L29B1
         LDA     #$1E
         JSR     vecShowMsg
@@ -3544,7 +3610,7 @@ L29FA:
 
 L29FF:
         LDA     #$00
-        STA     L11F0
+        STA     c64TsInTag
         JSR     vecTelesoftByte
         BCS     L29FF
         CMP     #$3C
@@ -3564,9 +3630,9 @@ L2A1D:
         CMP     #$40
         BNE     L29FA
         LDA     #$FF
-        STA     L11F0
+        STA     c64TsInTag
         LDA     #$00
-        STA     L11F1
+        STA     c64TsPair
         JSR     vecTelesoftByte
         BCS     L29FF
         CMP     #$43
@@ -3593,29 +3659,29 @@ L2A4A:
         BCS     L2ABA
         AND     #$0F
         BEQ     L2AB7
-        STA     L11F5
+        STA     c64TsCount
 
 L2A5B:
         JSR     vecTelesoftByte
         BCS     L2ABA
-        DEC     L11F5
+        DEC     c64TsCount
         BEQ     L2AB7
         CMP     #$22
         BEQ     L2A8C
         JSR     vecTelesoftByte
         BCS     L2ABA
-        DEC     L11F5
+        DEC     c64TsCount
         BEQ     L2AB7
         AND     #$0F
         BEQ     L2A5B
-        STA     L11F6
+        STA     c64TsRun
 
 L2A7A:
         JSR     vecTelesoftByte
         BCS     L29FF
-        DEC     L11F5
+        DEC     c64TsCount
         BEQ     L2AB7
-        DEC     L11F6
+        DEC     c64TsRun
         BEQ     L2A5B
         JMP     L2A7A
 
@@ -3654,17 +3720,17 @@ L2ABD:
 
 L2AC0:
         LDA     #$FF
-        STA     L11F4
+        STA     c64TsType
         JSR     vecTelesoftByte
         BCS     L2ABA
-        STA     L11F5
+        STA     c64TsCount
         CMP     #$00
         BEQ     L2ADB
 
 L2AD1:
         JSR     vecTelesoftByte
         BCS     L2ABA
-        DEC     L11F5
+        DEC     c64TsCount
         BNE     L2AD1
 
 L2ADB:
@@ -3674,7 +3740,7 @@ L2ADB:
         JMP     L2ADB
 
 L2AE6:
-        BIT     L11F4
+        BIT     c64TsType
         BMI     L2AEE
         JMP     L29FF
 
@@ -3760,30 +3826,30 @@ L2B64:
 L2B7F:
         CMP     #$1F
         BEQ     L2BBB
-        BIT     L11F0
+        BIT     c64TsInTag
         BPL     L2BB9
-        LDX     L11F1
+        LDX     c64TsPair
         BNE     L2B96
-        STA     L11F2
-        INC     L11F1
+        STA     c64TsHi
+        INC     c64TsPair
         JMP     L2B3A
 
 L2B96:
         AND     #$3F
-        STA     L11F3
-        LDA     L11F2
+        STA     c64TsLo
+        LDA     c64TsHi
         AND     #$3F
         ASL     A
         ASL     A
-        STA     L11F2
+        STA     c64TsHi
         AND     #$C0
-        ORA     L11F3
-        INC     L11F1
-        LDX     L11F1
+        ORA     c64TsLo
+        INC     c64TsPair
+        LDX     c64TsPair
         CPX     #$04
         BNE     L2BB9
         LDX     #$00
-        STX     L11F1
+        STX     c64TsPair
 
 L2BB9:
         CLC

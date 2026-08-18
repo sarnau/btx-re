@@ -107,8 +107,8 @@ def test_string_table_uses_labels_not_addresses():
     record in this same block."""
     src = (OUT / "c64_payload.asm").read_text()
     assert "c64StrTable:" in src
-    assert "DW      L11F8,L1211," in src
-    for label in ("L11F8", "L126B", "L1643"):
+    assert "DW      msgLoadFile,msgBlank," in src
+    for label in ("msgLoadFile", "msgMenu1", "msgNoTelesoft"):
         assert f"{label}:" in src, label
 
 
@@ -307,22 +307,28 @@ def test_string_records_start_at_their_header():
     """The first record begins at its 5-byte header, so a label five bytes in
     would split it - which is what the removed c64TextBlock did."""
     src = (OUT / "c64_payload.asm").read_text()
-    body = src.split("L11F8:", 1)[1][:200]
+    body = src.split("msgLoadFile:", 1)[1][:200]
     assert "FCB     $18,$00,$C0,$01,$98" in body
     assert 'FCC     "von Diskette: File? "' in body
     assert "c64TextBlock" not in src
 
 
 def test_in_block_data_references_use_labels():
-    """A STA/LDA into the block names a location in it, so it gets a label."""
+    """A STA/LDA into the block names a location in it, so no operand is left
+    as a bare in-block address and every name it does use resolves."""
     src = (OUT / "c64_payload.asm").read_text()
-    refs = re.findall(r"^\s+(?:LDA|STA|LDX|LDY|STX|STY|CMP|INC|DEC)\s+(L[0-9A-F]{4})$",
+    ops = r"(?:LDA|STA|LDX|LDY|STX|STY|CMP|CPX|CPY|INC|DEC|BIT|ORA|AND|EOR)"
+    bare = re.findall(rf"^\s+{ops}\s+\$1[0-9A-F]{{3}}(?:,[XY])?$", src, re.M)
+    assert not bare, bare[:5]
+    refs = re.findall(rf"^\s+{ops}\s+([A-Za-z_][A-Za-z0-9_]*)(?:\+\d+)?(?:,[XY])?$",
                       src, re.M)
     # A floor, not an exact count - the number moves whenever a data region is
     # retyped. The invariant that matters is the one below: every reference
     # resolves.
     assert len(refs) > 150, len(refs)
     defined = {m.group(1) for m in re.finditer(r"^([A-Za-z_][A-Za-z0-9_]*):", src, re.M)}
+    defined |= {m.group(1) for m in
+                re.finditer(r"^([A-Za-z_][A-Za-z0-9_]*)\s+EQU\s", src, re.M)}
     assert not (set(refs) - defined), sorted(set(refs) - defined)[:5]
 
 

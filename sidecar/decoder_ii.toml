@@ -170,6 +170,75 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xBC19" = "c64AsciiKeys"
 "0xB468" = "c64BufStart"
 "0xB582" = "c64CapEnd"
+"0xB561" = "c64Tmp"
+"0xB562" = "c64DirCount"
+"0xB563" = "c64SaveSA"
+"0xB564" = "c64FnLen"
+"0xB565" = "c64FnMax"
+"0xB566" = "c64FnBuf"
+"0xB567" = "c64FnBuf2"
+"0xB57F" = "c64MsgLen"
+"0xB580" = "c64RecFlag"
+"0xB581" = "c64CapFlag"
+"0xB584" = "c64DosErr"
+"0xB585" = "c64LastByte"
+"0xB586" = "c64DelayCnt"
+"0xB587" = "c64XferCols"
+"0xB588" = "c64XferReq"
+"0xB589" = "c64CellChar"
+"0xB58A" = "c64CellAccent"
+"0xB58B" = "c64Cell3"
+"0xB58C" = "c64CellSet"
+"0xB58D" = "c64Cell5"
+"0xB58E" = "c64CellAttr"
+"0xB58F" = "c64MenuLine"
+"0xB590" = "c64GermanFlag"
+"0xB591" = "c64KeyOut1"
+"0xB592" = "c64KeyOut2"
+"0xB593" = "c64KeyOut3"
+"0xB594" = "c64PlayFlag"
+"0xB595" = "c64LineShadow"
+"0xB596" = "c64PlotCol"
+"0xB597" = "c64PlotRow"
+"0xB598" = "c64TsInTag"
+"0xB599" = "c64TsPair"
+"0xB59A" = "c64TsHi"
+"0xB59B" = "c64TsLo"
+"0xB59C" = "c64TsType"
+"0xB59D" = "c64TsCount"
+"0xB59E" = "c64TsRun"
+"0xB59F" = "c64AlphaFlag"
+"0xB5A0" = "msgLoadFile"
+"0xB5B9" = "msgBlank"
+"0xB5E6" = "msgNoFile"
+"0xB613" = "msgMenu1"
+"0xB640" = "msgMenu2"
+"0xB66D" = "msgCaptureOn"
+"0xB69A" = "msgShowBuffer"
+"0xB6C7" = "msgSaveFile"
+"0xB6E0" = "msgBufferFull"
+"0xB6F9" = "msgErrLine"
+"0xB6FE" = "msgRetry"
+"0xB72B" = "msgMacroRun"
+"0xB74A" = "msgMacroLabel"
+"0xB755" = "msgNoDrive"
+"0xB782" = "msgPrinterOrFile"
+"0xB79B" = "msgNoPrinter"
+"0xB7B2" = "msgKeyboard"
+"0xB7DF" = "msgMonitorOn"
+"0xB80C" = "msgMonitorOff"
+"0xB839" = "msgPauseAsk"
+"0xB866" = "msgPauseWait"
+"0xB893" = "msgMacroNew"
+"0xB8AF" = "msgMacroName"
+"0xB8C3" = "msgPressKey"
+"0xB8F0" = "msgMacroDone"
+"0xB91D" = "msgLoadingExtra"
+"0xB94A" = "msgTelesoftFile"
+"0xB963" = "msgTelesoftPage"
+"0xB991" = "msgLoadingData"
+"0xB9BE" = "msgBadFormat"
+"0xB9EB" = "msgNoTelesoft"
 "0xB46A" = "c64BufEnd"
 "0xB46B" = "c64BufEndPage"
 "0xB46C" = "c64StartPagePtr"
@@ -537,6 +606,73 @@ c64BufStart up to it. Both halves are always written and compared as a pair.
 
 It sits inside the variable block, so the ROM image holds its initial value -
 $0000 - rather than a meaningful address."""
+"0xB561" = """
+The payload's variables, runtime $11B9-$11F7, followed by the 31 CEPT status
+records at $11F8-$166F and the c64StrTable that indexes them.
+
+The ROM image holds their initial values, all $00, which is why this area first
+reads as unprintable filler in front of the text.
+
+  $11B9  c64Tmp         a shared scratch byte - the key c64Menu is looking up,
+                        the send index in c64ShowMsgPtr and c64MenuEdit
+  $11BA  c64DirCount    characters left in a c64MacroDirLine entry
+  $11BB  c64SaveSA      holds SA across the open in c64DiskOpenRead
+  $11BC  c64FnLen       length of the name in c64FnBuf
+  $11BD  c64FnMax       the limit c64InputLine was called with
+  $11BE  c64FnBuf       the filename buffer. c64OpenSeqWrite and
+                        c64OpenPrgWrite append ",S,W" and ",P,W" at c64FnLen
+  $11BF  c64FnBuf2      the second byte of that buffer, stored directly when
+                        c64MenuEdit substitutes a one-character name
+
+  $11D7  c64MsgLen      the count byte of the record c64ShowMsgPtr is sending
+  $11D8  c64RecFlag     a macro is being recorded
+  $11D9  c64CapFlag     a capture is running
+  $11DA  c64CapEnd      how far the capture buffer is filled
+  $11DC  c64DosErr      set when the DOS error channel did not read 00
+  $11DD  c64LastByte    the byte c64MenuDisplay sent last, so it can pause
+                        after a $11
+  $11DE  c64DelayCnt    c64DelaySecs' countdown, seconds times five
+
+  $11DF  c64XferCols    columns left in the row c64MenuXfer is reading back
+  $11E0  c64XferReq     the row it asks the decoder for, $11 through $29
+  $11EE  c64PlotCol     where c64CellToScreen puts the result
+  $11EF  c64PlotRow
+
+  $11E1  c64CellChar    one cell, as the decoder hands it over: the character
+  $11E2  c64CellAccent  the combining accent, $48 being the diaeresis
+  $11E3  c64Cell3       stored by both readers, never read back
+  $11E4  c64CellSet     bits 0-2 select the character set, bit 3 marks an accent
+  $11E5  c64Cell5       stored by both readers, never read back
+  $11E6  c64CellAttr    bit 2 reverses the character, bit 3 shows it at all
+
+  $11E7  c64MenuLine    which of the two menu lines c64Menu is showing
+  $11E8  c64GermanFlag  German keyboard selected, so c64GermanKeys is searched
+                        and c64GetKey swaps Y and Z
+  $11E9  c64KeyOut1     what c64XlatKey made of the key, up to three CEPT bytes
+  $11EA  c64KeyOut2
+  $11EB  c64KeyOut3
+  $11EC  c64PlayFlag    a macro is being played back, so c64GetKey reads the
+                        file instead of the keyboard
+  $11ED  c64LineShadow  the last value read from the decoder's line counter
+                        btxReg011, which is how c64WaitDecoder sees it move
+  $11F7  c64AlphaFlag   alpha mode, which puts c64AsciiKeys in front of
+                        c64XlatKey's search chain
+
+  $11F0  c64TsInTag     the telesoftware parser is inside a <x ... > tag
+  $11F1  c64TsPair      which half of a 6-bit pair is next
+  $11F2  c64TsHi        the first half, held while the second arrives
+  $11F3  c64TsLo        the second half
+  $11F4  c64TsType      $00 for a C or E record, $FF for a G record. The two
+                        are selected by the LDA #$00 / FCB $2C / LDA #$FF
+                        skip at $2ABD
+  $11F5  c64TsCount     bytes left in the current record
+  $11F6  c64TsRun       bytes left in the run inside it
+
+The records are named after the German text they carry, so the index c64ShowMsg
+is called with is readable at the call site: msgNoDrive rather than message 13.
+msgBlank is the all-space record c64ClearMsg uses to wipe the status line, and
+msgErrLine is the empty 4-byte one c64DiskShowError draws before streaming the
+drive's own message into it."""
 "0xB468" = """
 Seven pointer slots, runtime $10C0-$10CD, read individually rather than indexed.
 
