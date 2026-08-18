@@ -37,13 +37,38 @@ softVecSwi    EQU     $FA
 rowAttr       EQU     $040A
 rowAccent     EQU     $040C
 rowRender     EQU     $040E
+colourIndex   EQU     $048D
 gSetSelector  EQU     $048F
+clutIndex     EQU     $0495
 accentPending EQU     $0496
+parallelMode  EQU     $0497
+gsetG0        EQU     $0499
+gsetG1        EQU     $049A
+gsetG2        EQU     $049B
+gsetG3        EQU     $049C
+gsetGL        EQU     $049D
+gsetGR        EQU     $049E
+gsetSS        EQU     $049F
+gsetGLDefault EQU     $04A2
+savedRow      EQU     $04A5
+savedCol      EQU     $04A6
+saved04A4     EQU     $04A7
+savedClut     EQU     $04A8
+savedParallel EQU     $04A9
+savedGL       EQU     $04AA
+savedGR       EQU     $04AB
+savedG0       EQU     $04AC
+savedG1       EQU     $04AD
+inStatusLine  EQU     $04AF
 attr0         EQU     $04B1
 attr1         EQU     $04B2
 attr2         EQU     $04B3
 attr3         EQU     $04B4
 charCode      EQU     $04B5
+attrSpanBit   EQU     $04B6
+attrByteIndex EQU     $04B7
+attrMask      EQU     $04B8
+attrValue     EQU     $04B9
 txRingHead    EQU     $04D0
 txRingTail    EQU     $04D1
 txCurBit      EQU     $04EA
@@ -2870,7 +2895,7 @@ LD376:
 LD37D:
         CMPA    #$A0
         BCC     LD3A2
-        TST     $0497
+        TST     parallelMode
         BMI     dispatchC1b
 
 dispatchC1a:
@@ -2900,7 +2925,7 @@ LD3A2:
 
 ctlEsc:
         JSR     LF081
-        TST     $04AF
+        TST     inStatusLine
         BPL     dispatchEsc
         JMP     LE9A2
 
@@ -2922,7 +2947,7 @@ LD3B8:
 
 LD3C5:
         JSR     LF081
-        TST     $04AF
+        TST     inStatusLine
         BPL     dispatchCsi
         JMP     LE9A2
 
@@ -3897,7 +3922,7 @@ ctlAPF:
         JMP     parseNextByte
 
 ctlAPD:
-        TST     $04AF                   ; C0 $0A APD - cursor down
+        TST     inStatusLine            ; C0 $0A APD - cursor down
         BPL     LDA5D
         JMP     parseNextByte
 
@@ -3918,7 +3943,7 @@ LDA73:
         JMP     parseNextByte
 
 ctlAPU:
-        TST     $04AF                   ; C0 $0B APU - cursor up
+        TST     inStatusLine            ; C0 $0B APU - cursor up
         BPL     LDA87
         JMP     parseNextByte
 
@@ -3939,7 +3964,7 @@ LDA9D:
         JMP     parseNextByte
 
 ctlCS:
-        TST     $04AF                   ; C0 $0C CS - clear screen
+        TST     inStatusLine            ; C0 $0C CS - clear screen
         BPL     LDAB1
         JMP     parseNextByte
 
@@ -3955,7 +3980,7 @@ LDAB1:
         JSR     setRowPointers
         LDAA    $1B25
         STAA    $1B23
-        CLR     $0495
+        CLR     clutIndex
         CLR     $1B24
         CLR     $1B25
         JMP     ctlAPH
@@ -3967,29 +3992,29 @@ ctlAPR:
         JMP     parseNextByte
 
 ctlSO:
-        TST     $04AF                   ; C0 $0E SO - shift out to G1
+        TST     inStatusLine            ; C0 $0E SO - shift out to G1
         BPL     LDAF0
         JMP     parseNextByte
 
 LDAF0:
         LDAA    #$01
-        STAA    $049D
-        STAA    $04A2
+        STAA    gsetGL
+        STAA    gsetGLDefault
         JMP     parseNextByte
 
 ctlSI:
-        TST     $04AF                   ; C0 $0F SI - shift in to G0
+        TST     inStatusLine            ; C0 $0F SI - shift in to G0
         BPL     LDB03
         JMP     parseNextByte
 
 LDB03:
         LDAA    #$00
-        STAA    $049D
-        STAA    $04A2
+        STAA    gsetGL
+        STAA    gsetGLDefault
         JMP     parseNextByte
 
 ctlCON:
-        TST     $04AF                   ; C0 $11 CON - cursor on
+        TST     inStatusLine            ; C0 $11 CON - cursor on
         BPL     LDB16
         JMP     parseNextByte
 
@@ -4005,7 +4030,7 @@ LDB16:
         JMP     parseNextByte
 
 ctlRPT:
-        TST     $04AF                   ; C0 $12 RPT - repeat last character
+        TST     inStatusLine            ; C0 $12 RPT - repeat last character
         BPL     LDB33
         JMP     parseNextByte
 
@@ -4020,7 +4045,7 @@ LDB41:
         LDAA    $0490
         BEQ     LDB58
         LDAA    $04A1
-        STAA    $049F
+        STAA    gsetSS
         LDAA    charCode
         JSR     LE781
         DEC     $0490
@@ -4030,7 +4055,7 @@ LDB58:
         JMP     parseNextByte
 
 ctlCOF:
-        TST     $04AF                   ; C0 $14 COF - cursor off
+        TST     inStatusLine            ; C0 $14 COF - cursor off
         BPL     LDB63
         JMP     parseNextByte
 
@@ -4091,23 +4116,23 @@ LDB94:
         JMP     parseNextByte
 
 ctlSS2:
-        TST     $04AF                   ; C0 $19 SS2 - single shift G2
+        TST     inStatusLine            ; C0 $19 SS2 - single shift G2
         BPL     LDBDA
         JMP     parseNextByte
 
 LDBDA:
         LDAA    #$02
-        STAA    $049F
+        STAA    gsetSS
         JMP     parseNextByte
 
 ctlSS3:
-        TST     $04AF                   ; C0 $1D SS3 - single shift G3
+        TST     inStatusLine            ; C0 $1D SS3 - single shift G3
         BPL     LDBEA
         JMP     parseNextByte
 
 LDBEA:
         LDAA    #$03
-        STAA    $049F
+        STAA    gsetSS
         JMP     parseNextByte
 
 ctlAPH:
@@ -4119,9 +4144,9 @@ ctlAPH:
         JMP     parseNextByte
 
 ctlUS:
-        TST     $04AF                   ; C0 $1F US - unit separator
+        TST     inStatusLine            ; C0 $1F US - unit separator
         BPL     LDC0C
-        JSR     LE744
+        JSR     leaveStatusLine
 
 LDC0C:
         JSR     LE98C
@@ -4150,7 +4175,7 @@ LDC2B:
         JMP     LDC6A
 
 LDC32:
-        STAA    $048D
+        STAA    colourIndex
         ANDA    #$F0
         CMPA    #$30
         BNE     LDC3E
@@ -4165,7 +4190,7 @@ LDC45:
         CLR     $1B20
         JSR     LECB5
         JSR     LEE3A
-        LDAA    $048D
+        LDAA    colourIndex
         ANDA    #$3F
         STAA    cursorRow
         DEC     cursorRow
@@ -4226,60 +4251,60 @@ c1aAlphaCyan:
 
 c1aAlphaWhite:
         LDAA    #$07                    ; C1 $87 AlphaWhite - alphanumeric foreground white (serial set)
-        JSR     LE9CE
-        LDAA    $04A2
-        STAA    $049D
+        JSR     applyColour
+        LDAA    gsetGLDefault
+        STAA    gsetGL
         JMP     LDDFB
 
 c1aFSH:
         LDX     #$1003                  ; C1 $88 FSH - flash on (serial set)
         LDAB    #$80
         LDAA    #$00
-        JSR     LE4FF
+        JSR     setAttrSpan
         LDX     #$1001
         LDAB    #$C0
         LDAA    #$80
-        JSR     LE4FF
+        JSR     setAttrSpan
         LDX     #$1003
         LDAB    #$30
         LDAA    #$10
-        JSR     LE4FF
+        JSR     setAttrSpan
         JMP     LDDFB
 
 c1aSTD:
         LDX     #$1003                  ; C1 $89 STD - steady (serial set)
         LDAB    #$80
         TBA
-        JSR     LE4FF
+        JSR     setAttrSpan
         LDX     #$1001
         LDAB    #$C0
         LDAA    #$80
-        JSR     LE4FF
+        JSR     setAttrSpan
         LDX     #$1003
         LDAB    #$30
         LDAA    #$10
-        JSR     LE4FF
+        JSR     setAttrSpan
         JMP     LDDFB
 
 c1aEBX:
         LDX     #$4000                  ; C1 $8A EBX - end box (serial set)
         LDAB    #$04
         LDAA    #$00
-        JSR     LE4FF
+        JSR     setAttrSpan
         JMP     LDDFB
 
 c1aSBX:
         LDX     #$4000                  ; C1 $8B SBX - start box (serial set)
         LDAB    #$04
         LDAA    #$04
-        JSR     LE4FF
+        JSR     setAttrSpan
         JMP     LDDFB
 
 c1aNSZ:
         LDX     #$0400                  ; C1 $8C NSZ - normal size (serial set)
         LDAB    #$03
         LDAA    #$00
-        JSR     LE4FF
+        JSR     setAttrSpan
         JMP     LDDFB
 
 c1aDBH:
@@ -4289,14 +4314,14 @@ c1aDBH:
         LDX     #$0400
         LDAB    #$03
         LDAA    #$01
-        JSR     LE4FF
+        JSR     setAttrSpan
         JMP     LDD2A
 
 c1aDBW:
         LDX     #$0400                  ; C1 $8E DBW - double width (serial set)
         LDAB    #$03
         LDAA    #$02
-        JSR     LE4FF
+        JSR     setAttrSpan
         JMP     LDDFB
 
 c1aDBS:
@@ -4306,7 +4331,7 @@ c1aDBS:
         LDX     #$0400
         LDAB    #$03
         LDAA    #$03
-        JSR     LE4FF
+        JSR     setAttrSpan
 
 LDD2A:
         LDAA    cursorRow
@@ -4350,39 +4375,39 @@ c1aMosaicCyan:
 
 c1aMosaicWhite:
         LDAA    #$07                    ; C1 $97 MosaicWhite - mosaic foreground white (serial set)
-        STAA    $048D
-        TST     $04AF
+        STAA    colourIndex
+        TST     inStatusLine
         BPL     LDD63
         JMP     parseNextByte
 
 LDD63:
-        LDAA    $048D
-        JSR     LE9CE
-        LDAA    $049D
-        STAA    $04A2
+        LDAA    colourIndex
+        JSR     applyColour
+        LDAA    gsetGL
+        STAA    gsetGLDefault
         LDAA    #$FF
-        STAA    $049D
+        STAA    gsetGL
         JMP     LDDFB
 
 c1aCDY:
         LDX     #$2003                  ; C1 $98 CDY - conceal display (serial set)
         LDAB    #$08
         LDAA    #$00
-        JSR     LE4FF
+        JSR     setAttrSpan
         JMP     LDDFB
 
 c1aSPL:
         LDX     #$0800                  ; C1 $99 SPL - stop lining (serial set)
         LDAB    #$08
         LDAA    #$00
-        JSR     LE4FF
+        JSR     setAttrSpan
         JMP     LDDFB
 
 c1aSTL:
         LDX     #$0800                  ; C1 $9A STL - start lining (serial set)
         LDAB    #$08
         LDAA    #$08
-        JSR     LE4FF
+        JSR     setAttrSpan
         JMP     LDDFB
 
 c1aCSI:
@@ -4407,7 +4432,7 @@ c1aNBD:
         ANDA    #$03
         LDX     #$0203
         LDAB    #$03
-        JSR     LE4FF
+        JSR     setAttrSpan
         LDAA    $048C
         RORA
         RORA
@@ -4416,16 +4441,16 @@ c1aNBD:
         ANDA    #$E0
         LDAB    #$E0
         LDX     #$0202
-        JSR     LE4FF
+        JSR     setAttrSpan
         JMP     LDDFB
 
 c1aHMS:
-        TST     $04AF                   ; C1 $9E HMS - hold mosaic (serial set)
+        TST     inStatusLine            ; C1 $9E HMS - hold mosaic (serial set)
         BPL     LDDE0
         JMP     parseNextByte
 
 LDDE0:
-        LDAA    $049D
+        LDAA    gsetGL
         BPL     LDDEB
         LDAA    charCode
         STAA    $0498
@@ -4434,7 +4459,7 @@ LDDEB:
         JMP     LDDFB
 
 c1aRMS:
-        TST     $04AF                   ; C1 $9F RMS - release mosaic (serial set)
+        TST     inStatusLine            ; C1 $9F RMS - release mosaic (serial set)
         BPL     LDDF6
         JMP     parseNextByte
 
@@ -4476,7 +4501,7 @@ c1bAlphaCyan:
 
 c1bAlphaWhite:
         LDAA    #$07                    ; C1 $87 AlphaWhite - alphanumeric foreground white (parallel set)
-        JSR     LE9CE
+        JSR     applyColour
         JMP     parseNextByte
 
 c1bFSH:
@@ -4627,29 +4652,29 @@ c1bRMS:
 
 escLS1R:
         LDAA    #$01                    ; ESC $7E - locking shift G1 right
-        STAA    $049E
+        STAA    gsetGR
         JMP     parseNextByte
 
 escLS2R:
         LDAA    #$02                    ; ESC $7D - locking shift G2 right
-        STAA    $049E
+        STAA    gsetGR
         JMP     parseNextByte
 
 escLS3R:
         LDAA    #$03                    ; ESC $7C - locking shift G3 right
-        STAA    $049E
+        STAA    gsetGR
         JMP     parseNextByte
 
 escLS2:
         LDAA    #$02                    ; ESC $6E - locking shift G2
-        STAA    $049D
-        STAA    $04A2
+        STAA    gsetGL
+        STAA    gsetGLDefault
         JMP     parseNextByte
 
 escLS3:
         LDAA    #$03                    ; ESC $6F - locking shift G3
-        STAA    $049D
-        STAA    $04A2
+        STAA    gsetGL
+        STAA    gsetGLDefault
         JMP     parseNextByte
 
 escDesignateG0:
@@ -4657,7 +4682,7 @@ escDesignateG0:
         CMPA    #$20
         BNE     LDF53
         LDAA    #$05
-        STAA    $0499
+        STAA    gsetG0
         JSR     LE98C
         JMP     parseNextByte
 
@@ -4667,7 +4692,7 @@ LDF53:
         DECA
 
 LDF58:
-        STAA    $0499
+        STAA    gsetG0
         JMP     parseNextByte
 
 escDesignateG1:
@@ -4675,7 +4700,7 @@ escDesignateG1:
         CMPA    #$20
         BNE     LDF70
         LDAA    #$05
-        STAA    $049A
+        STAA    gsetG1
         JSR     LE98C
         JMP     parseNextByte
 
@@ -4685,7 +4710,7 @@ LDF70:
         DECA
 
 LDF75:
-        STAA    $049A
+        STAA    gsetG1
         JMP     parseNextByte
 
 escDesignateG2:
@@ -4693,7 +4718,7 @@ escDesignateG2:
         CMPA    #$20
         BNE     LDF8D
         LDAA    #$05
-        STAA    $049B
+        STAA    gsetG2
         JSR     LE98C
         JMP     parseNextByte
 
@@ -4703,7 +4728,7 @@ LDF8D:
         DECA
 
 LDF92:
-        STAA    $049B
+        STAA    gsetG2
         JMP     parseNextByte
 
 escDesignateG3:
@@ -4711,7 +4736,7 @@ escDesignateG3:
         CMPA    #$20
         BNE     LDFAA
         LDAA    #$05
-        STAA    $049C
+        STAA    gsetG3
         JSR     LE98C
         JMP     parseNextByte
 
@@ -4721,15 +4746,15 @@ LDFAA:
         DECA
 
 LDFAF:
-        STAA    $049C
+        STAA    gsetG3
         JMP     parseNextByte
 
 escSelectC1Set:
         JSR     LE98C                   ; ESC $22 - ESC 2/2 - writes $0497, choosing ctrlTableC1a or C1b
         ANDA    #$01
         BEQ     LDFC7
-        LDAA    $04A2
-        STAA    $049D
+        LDAA    gsetGLDefault
+        STAA    gsetGL
         LDAA    #$FF
         JMP     LDFC9
 
@@ -4737,7 +4762,7 @@ LDFC7:
         LDAA    #$00
 
 LDFC9:
-        STAA    $0497
+        STAA    parallelMode
         JMP     parseNextByte
 
 LDFCF:
@@ -4754,7 +4779,7 @@ LDFD5:
 
 LDFD8:
         LDAA    #$03
-        STAA    $0495
+        STAA    clutIndex
         JMP     parseNextByte
 
 LDFE0:
@@ -4795,15 +4820,15 @@ LDFF8:
 
 LDFFB:
         LDAB    #$09
-        STAB    $048D
+        STAB    colourIndex
         CMPA    #$3B
         BEQ     LE025
         ANDA    #$0F
-        ASL     $048D
-        ADDA    $048D
-        ASL     $048D
-        ASL     $048D
-        ADDA    $048D
+        ASL     colourIndex
+        ADDA    colourIndex
+        ASL     colourIndex
+        ASL     colourIndex
+        ADDA    colourIndex
         STAA    scrollTop
         DEC     scrollTop
         JSR     LE98C
@@ -4818,7 +4843,7 @@ LE025:
 LE029:
         JSR     LE98C
         ANDA    #$0F
-        STAA    $048D
+        STAA    colourIndex
         STAA    scrollBottom
         DEC     scrollBottom
         JSR     LE98C
@@ -4827,11 +4852,11 @@ LE029:
         CMPA    #$56
         BEQ     LE067
         ANDA    #$0F
-        ASL     $048D
-        ADDA    $048D
-        ASL     $048D
-        ASL     $048D
-        ADDA    $048D
+        ASL     colourIndex
+        ADDA    colourIndex
+        ASL     colourIndex
+        ASL     colourIndex
+        ADDA    colourIndex
         STAA    scrollBottom
         DEC     scrollBottom
         JSR     LE98C
@@ -4936,7 +4961,7 @@ LE108:
         JMP     LE4F4
 
 LE122:
-        TST     $0497
+        TST     parallelMode
         BPL     LE143
         LDAA    #$01
         STAA    $04B0
@@ -4957,7 +4982,7 @@ LE143:
         LDAA    $00,X
         ORAA    #$10
         STAA    $00,X
-        CLR     $048D
+        CLR     colourIndex
         CLR     $048E
         LDAA    cursorCol
         STAA    $0490
@@ -4970,7 +4995,7 @@ LE15C:
         ABX
         LDAA    $01,X
         ANDA    #$7F
-        ORAA    $048D
+        ORAA    colourIndex
         STAA    $01,X
         LDAA    $03,X
         ANDA    #$6F
@@ -4978,9 +5003,9 @@ LE15C:
         STAA    $03,X
 
 LE177:
-        LDAA    $048D
+        LDAA    colourIndex
         ADDA    #$80
-        STAA    $048D
+        STAA    colourIndex
         BCC     LE189
         LDAA    $048E
         EORA    #$10
@@ -4988,7 +5013,7 @@ LE177:
 
 LE189:
         LDAA    $048E
-        ORAA    $048D
+        ORAA    colourIndex
         CMPA    #$90
         BEQ     LE177
         LDAA    $00,X
@@ -5014,7 +5039,7 @@ LE1B3:
         JMP     LE4F4
 
 LE1BB:
-        TST     $0497
+        TST     parallelMode
         BPL     LE1DC
         LDAA    #$FF
         STAA    $04B0
@@ -5035,7 +5060,7 @@ LE1DC:
         LDAA    $00,X
         ORAA    #$10
         STAA    $00,X
-        CLR     $048D
+        CLR     colourIndex
         CLR     $048E
         LDAA    cursorCol
         STAA    $0490
@@ -5048,7 +5073,7 @@ LE1F5:
         ABX
         LDAA    $01,X
         ANDA    #$7F
-        ORAA    $048D
+        ORAA    colourIndex
         STAA    $01,X
         LDAA    $03,X
         ANDA    #$6F
@@ -5056,9 +5081,9 @@ LE1F5:
         STAA    $03,X
 
 LE210:
-        LDAA    $048D
+        LDAA    colourIndex
         SUBA    #$80
-        STAA    $048D
+        STAA    colourIndex
         BCC     LE222
         LDAA    $048E
         EORA    #$10
@@ -5066,7 +5091,7 @@ LE210:
 
 LE222:
         LDAA    $048E
-        ORAA    $048D
+        ORAA    colourIndex
         CMPA    #$90
         BEQ     LE210
         LDAA    $00,X
@@ -5296,7 +5321,7 @@ LE371:
 
 LE378:
         JSR     LE98C
-        STAA    $048D
+        STAA    colourIndex
         CMPA    #$5E
         BEQ     LE38F
         ANDA    #$F8
@@ -5312,7 +5337,7 @@ LE38F:
         JMP     LE49F
 
 LE392:
-        LDAA    $048D
+        LDAA    colourIndex
         CMPA    #$5A
         BEQ     LE3C4
         CMPA    #$59
@@ -5473,21 +5498,21 @@ LE47D:
         JMP     parseNextByte
 
 LE483:
-        LDAA    $048D
+        LDAA    colourIndex
         ANDA    #$07
-        STAA    $048D
-        LDAA    $0495
+        STAA    colourIndex
+        LDAA    clutIndex
         ASLA
         ASLA
         ASLA
-        ORAA    $048D
+        ORAA    colourIndex
         LDAB    #$1F
         LDX     #$0002
         JSR     LEDF7
         JMP     parseNextByte
 
 LE49F:
-        LDAA    $048D
+        LDAA    colourIndex
         CMPA    #$5E
         BNE     LE4AB
         LDAA    #$88
@@ -5495,12 +5520,12 @@ LE49F:
 
 LE4AB:
         ANDA    #$07
-        STAA    $048D
-        LDAA    $0495
+        STAA    colourIndex
+        LDAA    clutIndex
         ASLA
         ASLA
         ASLA
-        ORAA    $048D
+        ORAA    colourIndex
         ORAA    #$80
 
 LE4BB:
@@ -5519,12 +5544,12 @@ LE4C7:
 
 LE4D3:
         ANDA    #$07
-        STAA    $048D
-        LDAA    $0495
+        STAA    colourIndex
+        LDAA    clutIndex
         ASLA
         ASLA
         ASLA
-        ORAA    $048D
+        ORAA    colourIndex
         ORAA    #$80
 
 LE4E3:
@@ -5539,19 +5564,33 @@ LE4E9:
         JMP     parseNextByte
 
 LE4F4:
-        TST     $0497
+        TST     parallelMode
         BMI     LE4FC
         JMP     LDDFB
 
 LE4FC:
         JMP     parseNextByte
 
-LE4FF:
-        STAA    $04B9
-        STAB    $04B8
+; Apply one attribute across the span that starts at the cursor.
+;
+;     A -> attrValue      the bits to set
+;     B -> attrMask       which bits they replace ($048E keeps the complement)
+;     X -> attrSpanBit    high byte: the render-plane bit marking this span
+;          attrByteIndex  low byte: which of the cell's four attribute bytes
+;
+; The span is found by walking planeRender from the cursor until attrSpanBit
+; stops being set, and the write address is cursorCol * 4 + attrByteIndex - one
+; more independent statement that a planeAttr cell is four bytes wide.
+;
+; Two callers pass X values that are not addresses even though they look like
+; one: c1aEBX and c1aSBX load $4000, which is attrSpanBit $40 and byte 0. They
+; are listed in literal_immediates for that reason.
+setAttrSpan:
+        STAA    attrValue
+        STAB    attrMask
         COMB
         STAB    $048E
-        STX     $04B6
+        STX     attrSpanBit
         LDX     rowAttr
         LDAA    $00,X
         BPL     LE514
@@ -5562,7 +5601,7 @@ LE514:
         LDAB    cursorCol
         ABX
         LDAA    $00,X
-        ORAA    $04B6
+        ORAA    attrSpanBit
         STAA    $00,X
         CLR     gSetSelector
 
@@ -5573,7 +5612,7 @@ LE525:
         BEQ     LE535
         INX
         LDAA    $00,X
-        ANDA    $04B6
+        ANDA    attrSpanBit
         BEQ     LE525
 
 LE535:
@@ -5592,7 +5631,7 @@ LE53F:
         LDAB    cursorCol
         ASLB
         ASLB
-        ADDB    $04B7
+        ADDB    attrByteIndex
         LDX     rowAttr
         ABX
         LDAB    gSetSelector
@@ -5600,7 +5639,7 @@ LE53F:
 LE558:
         LDAA    $00,X
         ANDA    $048E
-        ORAA    $04B9
+        ORAA    attrValue
         STAA    $00,X
         INX
         INX
@@ -5608,32 +5647,32 @@ LE558:
         INX
         DECB
         BNE     LE558
-        LDAA    $04B9
-        LDAB    $04B8
-        LDX     $04B6
+        LDAA    attrValue
+        LDAB    attrMask
+        LDX     attrSpanBit
         RTS
 
 LE573:
-        TST     $0497
+        TST     parallelMode
         BMI     LE57B
-        JMP     LE4FF
+        JMP     setAttrSpan
 
 LE57B:
-        STAA    $04B9
+        STAA    attrValue
         COMB
-        STAB    $04B8
-        STX     $04B6
+        STAB    attrMask
+        STX     attrSpanBit
         LDX     #attr0
-        LDAB    $04B7
+        LDAB    attrByteIndex
         ABX
         LDAA    $00,X
-        ANDA    $04B8
-        ORAA    $04B9
+        ANDA    attrMask
+        ORAA    attrValue
         STAA    $00,X
-        LDX     $04B6
-        LDAB    $04B8
+        LDX     attrSpanBit
+        LDAB    attrMask
         COMB
-        LDAA    $04B9
+        LDAA    attrValue
         RTS
 
 LE5A1:
@@ -5659,7 +5698,7 @@ LE5A1:
         LDAA    #$88
         JSR     LEDF7
         LDAA    #$2B
-        STAA    $048D
+        STAA    colourIndex
         LDAB    #$13
 
 LE5D7:
@@ -5667,8 +5706,8 @@ LE5D7:
         ABX
         LDAA    $00,X
         ORAA    #$80
-        EORA    $048D
-        DEC     $048D
+        EORA    colourIndex
+        DEC     colourIndex
         LDX     #$57C0
         ABX
         STAA    $00,X
@@ -5688,14 +5727,14 @@ LE5FA:
         LDAA    #$17
         STAA    cursorRowMax
         JSR     LE98C
-        STAA    $048D
+        STAA    colourIndex
         ANDA    #$F0
         CMPA    #$20
         BNE     LE616
         JMP     LE634
 
 LE616:
-        LDAA    $048D
+        LDAA    colourIndex
         CMPA    #$42
         BNE     LE62A
         LDAA    #$13
@@ -5723,17 +5762,17 @@ LE637:
 LE642:
         CMPA    #$40
         BNE     LE649
-        JMP     LE6C6
+        JMP     enterStatusLine
 
 LE649:
         LSRA
         BCS     LE653
         LDAA    #$FF
-        STAA    $0497
+        STAA    parallelMode
         BRA     LE656
 
 LE653:
-        CLR     $0497
+        CLR     parallelMode
 
 LE656:
         CMPB    #$41
@@ -5747,17 +5786,17 @@ LE656:
         JMP     LE9A2
 
 LE669:
-        CLR     $0499
-        CLR     $049D
-        CLR     $04A2
+        CLR     gsetG0
+        CLR     gsetGL
+        CLR     gsetGLDefault
         CLR     $1B20
         LDAB    #$01
-        STAB    $049B
+        STAB    gsetG2
         INCB
-        STAB    $049A
-        STAB    $049E
+        STAB    gsetG1
+        STAB    gsetGR
         INCB
-        STAB    $049C
+        STAB    gsetG3
         LDAA    #$17
         STAA    cursorRowMax
         LDAA    #$FF
@@ -5775,58 +5814,58 @@ LE69A:
         JMP     ctlCS
 
 LE6A5:
-        CLR     $0499
-        CLR     $049D
-        CLR     $04A2
+        CLR     gsetG0
+        CLR     gsetGL
+        CLR     gsetGLDefault
         LDAB    #$01
-        STAB    $049B
+        STAB    gsetG2
         INCB
-        STAB    $049A
-        STAB    $049E
+        STAB    gsetG1
+        STAB    gsetGR
         INCB
-        STAB    $049C
+        STAB    gsetG3
         LDAA    #$FF
         STAA    $1B23
         JMP     parseNextByte
 
-LE6C6:
+enterStatusLine:
         LDAA    #$FF
-        STAA    $04AF
+        STAA    inStatusLine
         LDAA    cursorCol
-        STAA    $04A6
+        STAA    savedCol
         LDAA    cursorRow
-        STAA    $04A5
+        STAA    savedRow
         LDAA    $04A4
-        STAA    $04A7
-        LDAA    $0495
-        STAA    $04A8
-        LDAA    $0497
-        STAA    $04A9
-        LDAA    $0499
-        STAA    $04AC
-        LDAA    $049A
-        STAA    $04AD
-        LDAA    $049D
-        STAA    $04AA
-        LDAA    $049E
-        STAA    $04AB
+        STAA    saved04A4
+        LDAA    clutIndex
+        STAA    savedClut
+        LDAA    parallelMode
+        STAA    savedParallel
+        LDAA    gsetG0
+        STAA    savedG0
+        LDAA    gsetG1
+        STAA    savedG1
+        LDAA    gsetGL
+        STAA    savedGL
+        LDAA    gsetGR
+        STAA    savedGR
         CLR     cursorCol
         CLR     $04A4
-        CLR     $0495
-        CLR     $0497
+        CLR     clutIndex
+        CLR     parallelMode
         JSR     LE98C
         ANDA    #$1F
         STAA    cursorRow
         DEC     cursorRow
         JSR     setRowPointers
         JSR     LEE3A
-        CLR     $0499
+        CLR     gsetG0
         LDAA    #$01
-        STAA    $049A
-        CLR     $049D
-        CLR     $04A2
+        STAA    gsetG1
+        CLR     gsetGL
+        CLR     gsetGLDefault
         LDAA    #$01
-        STAA    $049E
+        STAA    gsetGR
         LDX     #$0000
         LDAB    #$80
         LDAA    #$00
@@ -5834,35 +5873,35 @@ LE6C6:
         JMP     parseNextByte
 
 LE73E:
-        JSR     LE744
+        JSR     leaveStatusLine
         JMP     parseNextByte
 
-LE744:
-        CLR     $04AF
-        LDAA    $04A6
+leaveStatusLine:
+        CLR     inStatusLine
+        LDAA    savedCol
         STAA    cursorCol
-        LDAA    $04A5
+        LDAA    savedRow
         STAA    cursorRow
         JSR     setRowPointers
-        LDAA    $04A7
+        LDAA    saved04A4
         STAA    $04A4
-        LDAA    $04A8
-        STAA    $0495
-        LDAA    $04A9
-        STAA    $0497
-        LDAA    $04AA
-        STAA    $049D
-        LDAA    $04AB
-        STAA    $049E
-        LDAA    $04AC
-        STAA    $0499
-        LDAA    $04AD
-        STAA    $049A
+        LDAA    savedClut
+        STAA    clutIndex
+        LDAA    savedParallel
+        STAA    parallelMode
+        LDAA    savedGL
+        STAA    gsetGL
+        LDAA    savedGR
+        STAA    gsetGR
+        LDAA    savedG0
+        STAA    gsetG0
+        LDAA    savedG1
+        STAA    gsetG1
         RTS
 
 LE781:
         STAA    charCode
-        LDAA    $0497
+        LDAA    parallelMode
         BEQ     LE7CB
         LDAA    attr0
         ANDA    #$01
@@ -5910,7 +5949,7 @@ LE7CB:
         JMP     LE94E
 
 LE7DE:
-        TST     $0497
+        TST     parallelMode
         BMI     LE7E6
         JMP     LE8C7
 
@@ -6063,19 +6102,19 @@ LE8C7:
         ORAA    $00,X
         STAA    $00,X
         CLR     accentPending
-        LDAB    $049F
+        LDAB    gsetSS
         STAB    $04A0
         BMI     LE8FA
-        LDX     #$0499
+        LDX     #gsetG0
         ABX
         LDAA    $00,X
         STAA    gSetSelector
         LDAA    #$FF
-        STAA    $049F
+        STAA    gsetSS
         JMP     LE91D
 
 LE8FA:
-        TST     $049D
+        TST     gsetGL
         BPL     LE907
         LDAA    #$04
         STAA    gSetSelector
@@ -6084,14 +6123,14 @@ LE8FA:
 LE907:
         TST     charCode
         BMI     LE911
-        LDAB    $049D
+        LDAB    gsetGL
         BRA     LE914
 
 LE911:
-        LDAB    $049E
+        LDAB    gsetGR
 
 LE914:
-        LDX     #$0499
+        LDX     #gsetG0
         ABX
         LDAA    $00,X
         STAA    gSetSelector
@@ -6207,41 +6246,41 @@ setRowPointers:
         STX     rowRender
         RTS
 
-LE9CE:
-        STAA    $048D
-        TST     $0497
+applyColour:
+        STAA    colourIndex
+        TST     parallelMode
         BMI     LE9E7
-        LDAA    $0495
+        LDAA    clutIndex
         ASLA
         ASLA
         ASLA
-        ORAA    $048D
+        ORAA    colourIndex
         LDX     #$0102
         LDAB    #$1F
-        JMP     LE4FF
+        JMP     setAttrSpan
 
 LE9E7:
-        LDAA    $0495
+        LDAA    clutIndex
         ASLA
         ASLA
         ASLA
-        ORAA    $048D
-        STAA    $048D
+        ORAA    colourIndex
+        STAA    colourIndex
         LDAA    attr2
         ANDA    #$E0
-        ORAA    $048D
+        ORAA    colourIndex
         STAA    attr2
         RTS
 
 LE9FF:
-        STAA    $048D
-        TST     $0497
+        STAA    colourIndex
+        TST     parallelMode
         BMI     LEA22
-        LDAA    $0495
+        LDAA    clutIndex
         LDX     #$0203
         LDAB    #$03
-        JSR     LE4FF
-        LDAA    $048D
+        JSR     setAttrSpan
+        LDAA    colourIndex
         ASLA
         ASLA
         ASLA
@@ -6249,23 +6288,23 @@ LE9FF:
         ASLA
         LDX     #$0202
         LDAB    #$E0
-        JMP     LE4FF
+        JMP     setAttrSpan
 
 LEA22:
         LDAA    attr3
         ANDA    #$FC
-        ORAA    $0495
+        ORAA    clutIndex
         STAA    attr3
-        LDAA    $048D
+        LDAA    colourIndex
         ASLA
         ASLA
         ASLA
         ASLA
         ASLA
-        STAA    $048D
+        STAA    colourIndex
         LDAA    attr2
         ANDA    #$1F
-        ORAA    $048D
+        ORAA    colourIndex
         STAA    attr2
         RTS
 
@@ -6665,8 +6704,8 @@ LECCB:
         CLR     $1B25
         CLR     $1B24
         CLR     $0616
-        CLR     $04AF
-        CLR     $0497
+        CLR     inStatusLine
+        CLR     parallelMode
         LDAA    #$FF
         STAA    $0493
         LDAA    #$07
@@ -6689,17 +6728,17 @@ LECCB:
         CLR     $04D2
         CLR     $04D3
         CLR     $04D7
-        CLR     $0499
-        CLR     $049D
-        CLR     $04A2
+        CLR     gsetG0
+        CLR     gsetGL
+        CLR     gsetGLDefault
         CLR     $1B20
         LDAB    #$01
-        STAB    $049B
+        STAB    gsetG2
         INCB
-        STAB    $049A
-        STAB    $049E
+        STAB    gsetG1
+        STAB    gsetGR
         INCB
-        STAB    $049C
+        STAB    gsetG3
         LDAA    #$17
         STAA    cursorRowMax
         LDAA    #$FF
@@ -6708,11 +6747,11 @@ LECCB:
         CLR     cursorRow
         CLR     cursorCol
         JSR     setRowPointers
-        CLR     $0495
+        CLR     clutIndex
         LDAA    #$FF
         STAA    scrollTop
         STAA    scrollBottom
-        STAA    $049F
+        STAA    gsetSS
         STAA    $04A3
         LDAA    #$09
         STAA    $0498
@@ -6732,8 +6771,8 @@ LECCB:
         RTS
 
 LED9D:
-        CLR     $04AF
-        CLR     $0497
+        CLR     inStatusLine
+        CLR     parallelMode
         LDAA    #$30
         STAA    $04CD
         CLR     $04D8
@@ -6742,47 +6781,47 @@ LED9D:
         CLR     $04D2
         CLR     $04D3
         CLR     $04D7
-        CLR     $0499
-        CLR     $049D
-        CLR     $04A2
+        CLR     gsetG0
+        CLR     gsetGL
+        CLR     gsetGLDefault
         LDAB    #$01
-        STAB    $049B
+        STAB    gsetG2
         INCB
-        STAB    $049A
-        STAB    $049E
+        STAB    gsetG1
+        STAB    gsetGR
         INCB
-        STAB    $049C
+        STAB    gsetG3
         LDAA    #$17
         STAA    cursorRowMax
         LDAA    #$FF
         STAA    $04A4
         CLR     accentPending
-        CLR     $0495
+        CLR     clutIndex
         LDAA    #$FF
         STAA    scrollTop
         STAA    scrollBottom
-        STAA    $049F
+        STAA    gsetSS
         STAA    $04A3
         LDAA    #$09
         STAA    $0498
         RTS
 
 LEDF7:
-        STAA    $04B9
-        STAB    $04B8
-        STX     $04B6
-        LDAA    $04B8
+        STAA    attrValue
+        STAB    attrMask
+        STX     attrSpanBit
+        LDAA    attrMask
         COMA
         STAA    $048E
         LDX     rowAttr
-        LDAB    $04B7
+        LDAB    attrByteIndex
         ABX
         LDAB    #$28
 
 LEE10:
         LDAA    $00,X
         ANDA    $048E
-        ORAA    $04B9
+        ORAA    attrValue
         STAA    $00,X
         INX
         INX
@@ -6800,16 +6839,16 @@ LEE26:
         INX
         DECB
         BNE     LEE26
-        LDAA    $04B9
-        LDAB    $04B8
-        LDX     $04B6
+        LDAA    attrValue
+        LDAB    attrMask
+        LDX     attrSpanBit
         RTS
 
 LEE3A:
-        TST     $049D
+        TST     gsetGL
         BPL     LEE45
-        LDAA    $04A2
-        STAA    $049D
+        LDAA    gsetGLDefault
+        STAA    gsetGL
 
 LEE45:
         LDAA    #$09

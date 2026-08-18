@@ -446,6 +446,10 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xE34E" = "csiDigit9"
 "0xE35B" = "csiFinalB"
 "0xE367" = "escDefine"
+"0xE4FF" = "setAttrSpan"
+"0xE6C6" = "enterStatusLine"
+"0xE744" = "leaveStatusLine"
+"0xE9CE" = "applyColour"
 "0xE9A5" = "setRowPointers"
 "0xEE4B" = "clearPlanes"
 "0xFC45" = "lineAddrAccent"
@@ -561,6 +565,21 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xFFF0" = "vectors"
 
 [block_comments]
+"0xE4FF" = """
+Apply one attribute across the span that starts at the cursor.
+
+    A -> attrValue      the bits to set
+    B -> attrMask       which bits they replace ($048E keeps the complement)
+    X -> attrSpanBit    high byte: the render-plane bit marking this span
+         attrByteIndex  low byte: which of the cell's four attribute bytes
+
+The span is found by walking planeRender from the cursor until attrSpanBit
+stops being set, and the write address is cursorCol * 4 + attrByteIndex - one
+more independent statement that a planeAttr cell is four bytes wide.
+
+Two callers pass X values that are not addresses even though they look like
+one: c1aEBX and c1aSBX load $4000, which is attrSpanBit $40 and byte 0. They
+are listed in literal_immediates for that reason."""
 "0xEE4B" = """
 Clear all four display planes to their power-on state.
 
@@ -1646,6 +1665,31 @@ vectors before entering the main firmware."""
 
 # MC6801 internal register file. Names from the MC6801 Reference Manual.
 [symbols]
+"0x04B6" = "attrSpanBit"
+"0x04B7" = "attrByteIndex"
+"0x04B8" = "attrMask"
+"0x04B9" = "attrValue"
+"0x048D" = "colourIndex"
+"0x0495" = "clutIndex"
+"0x0497" = "parallelMode"
+"0x0499" = "gsetG0"
+"0x049A" = "gsetG1"
+"0x049B" = "gsetG2"
+"0x049C" = "gsetG3"
+"0x049D" = "gsetGL"
+"0x049E" = "gsetGR"
+"0x049F" = "gsetSS"
+"0x04A2" = "gsetGLDefault"
+"0x04A5" = "savedRow"
+"0x04A6" = "savedCol"
+"0x04A7" = "saved04A4"
+"0x04A8" = "savedClut"
+"0x04A9" = "savedParallel"
+"0x04AA" = "savedGL"
+"0x04AB" = "savedGR"
+"0x04AC" = "savedG0"
+"0x04AD" = "savedG1"
+"0x04AF" = "inStatusLine"
 "0x4000" = "planeRender"
 "0x4400" = "planeAttr"
 "0x5400" = "planeChar"
