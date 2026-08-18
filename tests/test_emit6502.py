@@ -383,3 +383,27 @@ def test_no_label_sits_inside_a_multi_byte_entry():
     src = (OUT / "c64_payload.asm").read_text()
     for interior in ("L10C1:", "L10C5:", "L10C7:", "L1998:", "L1999:"):
         assert interior not in src, interior
+
+
+def test_no_operand_uses_a_bare_in_block_address():
+    """Absolute, indexed and indirect operands all name something."""
+    src = (OUT / "c64_payload.asm").read_text()
+    assert not re.findall(r"^\s+[A-Z]{3}\s+\$1[0-9A-F]{3}(?:,[XY])?$", src, re.M)
+    assert not re.findall(r"^\s+[A-Z]{3}\s+\(\$[0-9A-F]{2}\)", src, re.M)
+    assert not re.findall(r"^\s+[A-Z]{3}\s+\(\$[0-9A-F]{2},X\)", src, re.M)
+
+
+def test_indirect_operands_name_their_pointer():
+    """LDA ($BB),Y reads through a zero-page pointer, so the operand names the
+    pointer rather than showing its address."""
+    src = (OUT / "c64_payload.asm").read_text()
+    assert "(FAC2EXP),Y" in src
+    assert "(INBIT),Y" in src
+
+
+def test_every_word_entry_can_carry_its_own_label():
+    """Treating every byte after a region start as interior denied labels to
+    the second and later entries of a table."""
+    src = (OUT / "c64_payload.asm").read_text()
+    for label in ("L10C6:", "L10C8:", "L10CA:", "L10CC:"):
+        assert label in src, label

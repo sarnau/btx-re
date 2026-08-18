@@ -330,7 +330,19 @@ L10C3:
         FCB     $80
 
 L10C4:
-        DW      ceptStartPage,L10CE,L114A,ceptMacroDir,c64StrTable
+        DW      ceptStartPage
+
+L10C6:
+        DW      L10CE
+
+L10C8:
+        DW      L114A
+
+L10CA:
+        DW      ceptMacroDir
+
+L10CC:
+        DW      c64StrTable
 
 L10CE:
         FCB     $0D,$0D,$00,$00,$8D,$0D,$0A,$00,$91,$0B,$00,$00,$11,$0A,$00,$00
@@ -686,7 +698,7 @@ c64ScreenOut1:
 
 L171B:
         LDY     #$00
-        LDA     ($61),Y
+        LDA     (FAC1EXP),Y
         BEQ     L172D
         JSR     L1012
         INC     FAC1EXP
@@ -796,10 +808,10 @@ c64Vec05:
 
 L17D5:
         TAX
-        LDA     ($69),Y
+        LDA     (FAC2EXP),Y
         BEQ     L17EE
         TXA
-        CMP     ($69),Y
+        CMP     (FAC2EXP),Y
         BEQ     L17E4
         INY
         INY
@@ -807,7 +819,7 @@ L17D5:
 
 L17E4:
         INY
-        LDA     ($69),Y
+        LDA     (FAC2EXP),Y
         BEQ     L185B
         STA     L11E9
         CLC
@@ -817,18 +829,18 @@ L17EE:
         TXA
 
 L17EF:
-        LDX     L10C4+4
+        LDX     L10C8
         STX     FAC2EXP
-        LDX     $10C9
+        LDX     L10C8+1
         STX     FAC2MAN1
         LDY     #$00
 
 L17FB:
         TAX
-        LDA     ($69),Y
+        LDA     (FAC2EXP),Y
         BEQ     L180C
         TXA
-        CMP     ($69),Y
+        CMP     (FAC2EXP),Y
         BEQ     L185D
         INY
         INY
@@ -840,18 +852,18 @@ L180C:
         TXA
 
 L180D:
-        LDX     L10C4+2
+        LDX     L10C6
         STX     FAC2EXP
-        LDX     L10C4+3
+        LDX     L10C6+1
         STX     FAC2MAN1
         LDY     #$00
 
 L1819:
         TAX
-        LDA     ($69),Y
+        LDA     (FAC2EXP),Y
         BEQ     L182A
         TXA
-        CMP     ($69),Y
+        CMP     (FAC2EXP),Y
         BEQ     L185D
         INY
         INY
@@ -899,13 +911,13 @@ L185B:
 
 L185D:
         INY
-        LDA     ($69),Y
+        LDA     (FAC2EXP),Y
         STA     L11E9
         INY
-        LDA     ($69),Y
+        LDA     (FAC2EXP),Y
         STA     L11EA
         INY
-        LDA     ($69),Y
+        LDA     (FAC2EXP),Y
         STA     L11EB
         CLC
         RTS
@@ -1177,7 +1189,7 @@ c64Vec14:
 
 L1A03:
         LDY     #$00
-        LDA     ($61),Y
+        LDA     (FAC1EXP),Y
         BEQ     L1A15
         JSR     L1012
         INC     FAC1EXP
@@ -1480,7 +1492,7 @@ c64Vec21:
         JSR     L1018
         BCS     L1C94
         LDY     #$00
-        STA     ($65),Y
+        STA     (FAC1MAN4),Y
         INC     FAC1MAN4
         BNE     L1C55
         INC     FAC1SGN
@@ -1565,7 +1577,7 @@ L1CD4:
 
 L1CE0:
         LDY     #$00
-        LDA     ($65),Y
+        LDA     (FAC1MAN4),Y
         STA     L11DD
         JSR     L1012
         INC     FAC1MAN4
@@ -2133,14 +2145,14 @@ c64Vec31:
 ; vector 31 at runtime $20ED - jump-table entry 31
         ASL     A
         TAY
-        LDA     $10CC
+        LDA     L10CC
         STA     FAC1MAN2
-        LDA     $10CD
+        LDA     L10CC+1
         STA     FAC1MAN3
-        LDA     ($63),Y
+        LDA     (FAC1MAN2),Y
         TAX
         INY
-        LDA     ($63),Y
+        LDA     (FAC1MAN2),Y
         STX     FAC1MAN2
         STA     FAC1MAN3
 
@@ -2155,14 +2167,14 @@ c64Vec30:
         LDA     #$5A
         JSR     L1012
         LDY     #$00
-        LDA     ($63),Y
+        LDA     (FAC1MAN2),Y
         STA     L11D7
         INY
         STY     L11B9
 
 L2122:
         LDY     L11B9
-        LDA     ($63),Y
+        LDA     (FAC1MAN2),Y
         JSR     L1012
         LDY     L11B9
         INC     L11B9
@@ -2197,7 +2209,7 @@ L214D:
 
 L2160:
         LDY     #$00
-        LDA     ($65),Y
+        LDA     (FAC1MAN4),Y
         JSR     IEC_CIOUT
         INC     FAC1MAN4
         BNE     L216D
@@ -2681,7 +2693,7 @@ L2443:
         BVS     L2457
         BCS     L2460
         LDY     #$00
-        STA     ($61),Y
+        STA     (FAC1EXP),Y
         INC     FAC1EXP
         BNE     L2454
         INC     FAC1MAN1
@@ -2719,7 +2731,7 @@ c64ShowSplash:
 
 L247A:
         LDY     #$00
-        LDA     ($A7),Y
+        LDA     (INBIT),Y
         BEQ     L248B
         JSR     CHROUT
         INC     INBIT
@@ -2801,7 +2813,7 @@ c64Vec55:
         PLA
         TAY
         PLA
-        STA     ($A7),Y
+        STA     (INBIT),Y
         PLP
         RTS
 
@@ -3140,14 +3152,14 @@ c64Vec51:
         JSR     L1012
         LDA     #$4C
         JSR     L1012
-        LDA     $10CA
+        LDA     L10CA
         STA     FAC1EXP
-        LDA     $10CB
+        LDA     L10CA+1
         STA     FAC1MAN1
 
 L27EF:
         LDY     #$00
-        LDA     ($61),Y
+        LDA     (FAC1EXP),Y
         BEQ     L2801
         JSR     L1012
         INC     FAC1EXP
@@ -3603,7 +3615,7 @@ c64Vec58:
         JSR     L1018
         BCS     L2B3A
         LDY     #$00
-        STA     ($65),Y
+        STA     (FAC1MAN4),Y
         INC     FAC1MAN4
         BNE     c64Vec58
         INC     FAC1SGN
@@ -3643,7 +3655,7 @@ L2B55:
 
 L2B64:
         LDY     #$00
-        LDA     ($6D),Y
+        LDA     (FAC2MAN4),Y
         INC     FAC2MAN4
         BNE     L2B7F
         INC     FAC2SGN

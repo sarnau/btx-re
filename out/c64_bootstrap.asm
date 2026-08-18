@@ -102,7 +102,7 @@ c64ColdStart:
 L8036:
         JSR     L804D
         BCS     L8045
-        STA     ($61),Y
+        STA     (FAC1EXP),Y
         INY
         BNE     L8036
         INC     FAC1MAN1

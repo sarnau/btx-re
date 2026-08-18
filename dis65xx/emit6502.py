@@ -46,6 +46,26 @@ def _petscii_char(b: int) -> str | None:
     return None
 
 
+def _entry_interiors(sidecar: Sidecar, block: C64Block) -> set[int]:
+    """Addresses inside a table entry but not at its start.
+
+    An entry's first byte can carry a label; the rest cannot, because a label
+    there would collapse onto the following entry. Treating every byte after
+    the region start as interior was too broad - it denied labels to entries
+    two, three and four of a table as well.
+    """
+    out: set[int] = set()
+    for region in sidecar.regions:
+        if not (block.start <= region.start < block.end):
+            continue
+        step = 2 if region.kind in _WORD_KINDS else 3 if region.kind == "byte_word" else 0
+        if not step:
+            continue
+        for entry in range(region.start, min(region.end, block.end), step):
+            out |= {a - block.offset for a in range(entry + 1, min(entry + step, region.end))}
+    return out
+
+
 def _interior_name(v: int, labels: dict[int, str], span: int = 4) -> str | None:
     """`label+n` for an address inside a multi-byte entry.
 
@@ -71,14 +91,16 @@ def _operand(insn, labels: dict[int, str], symbols: dict[int, str] | None = None
     symbols = symbols or {}
     if m is Mode.ZP:
         return symbols.get(v) or f"${v:02X}"
+    # These all name a zero-page location - a pointer for the indirect forms -
+    # so they take a symbol just as a plain zero-page operand does.
     if m is Mode.ZPX:
-        return f"${v:02X},X"
+        return f"{symbols.get(v) or f'${v:02X}'},X"
     if m is Mode.ZPY:
-        return f"${v:02X},Y"
+        return f"{symbols.get(v) or f'${v:02X}'},Y"
     if m is Mode.IZX:
-        return f"(${v:02X},X)"
+        return f"({symbols.get(v) or f'${v:02X}'},X)"
     if m is Mode.IZY:
-        return f"(${v:02X}),Y"
+        return f"({symbols.get(v) or f'${v:02X}'}),Y"
     if m is Mode.IND:
         # The operand names the location holding the address, not the target,
         # so a data symbol describes it better than a code label.
@@ -185,12 +207,7 @@ def collect_labels(data: bytes, base: int, block: C64Block,
         # tables a byte at a time - LDA table+1,Y for a record's address, or
         # the high half of a pointer - and a label there would collapse onto
         # the next entry, silently changing the operand. Those stay numeric.
-        interior = set()
-        for region in sidecar.regions:
-            if region.kind in _WORD_KINDS or region.kind == "byte_word":
-                interior |= set(range(region.start - block.offset + 1,
-                                      region.end - block.offset))
-        targets -= interior
+        targets -= _entry_interiors(sidecar, block)
 
         found = dict(named)
         found.update({a: f"L{a:04X}" for a in targets
@@ -377,12 +394,7 @@ def emit_block(data: bytes, base: int, block: C64Block, sidecar: Sidecar) -> str
             lines.append(f"{'':{_INDENT}}{'FCB':{_MNEM_WIDTH}}"
                          + ",".join(f"${b:02X}" for b in chunk))
 
-    interiors: set[int] = set()
-    for region in sidecar.regions:
-        if region.kind in _WORD_KINDS or region.kind == "byte_word":
-            if block.start <= region.start < block.end:
-                interiors |= set(range(region.start - block.offset + 1,
-                                       region.end - block.offset))
+    interiors = _entry_interiors(sidecar, block)
 
     decoded = [insn for _rt, insn, _b in _decode_block(data, base, block, labels, sidecar)]
     ptr_loads = _pointer_loads(decoded, labels, set(sidecar.c64_pointers))
@@ -443,6 +455,12 @@ def emit_block(data: bytes, base: int, block: C64Block, sidecar: Sidecar) -> str
                 flush()
                 lo = rt + block.offset
                 count = min(8, (min(region.end, block.end) - lo) // 2)
+                # stop the group where the next label begins, or it would be
+                # swallowed and collapse onto this line's address
+                for k in range(1, count):
+                    if (lo + 2 * k) - block.offset in labels:
+                        count = k
+                        break
                 if count:
                     vals = [int.from_bytes(data[lo - base + 2 * i:lo - base + 2 * i + 2],
                                            "little") for i in range(count)]
