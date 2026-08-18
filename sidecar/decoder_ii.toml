@@ -141,6 +141,10 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 
 
 [labels]
+"0xFC45" = "lineAddr5800"
+"0xFC77" = "lineAddr5400"
+"0xFCA9" = "lineAddr4400"
+"0xFCDB" = "lineAddr4000"
 "0xF14C" = "txBitTick"
 "0xF61F" = "sciRxHandler"
 "0x04EE" = "txRing"
@@ -184,6 +188,26 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xFFF0" = "vectors"
 
 [block_comments]
+"0xFCDB" = """
+Screen line-address tables: four tables of 25 big-endian pointers, one entry
+per display row, $FC45-$FD0C.
+
+  lineAddr4000  $FCDB  base $4000  stride  40   $4000-$43C7  1 byte per cell
+  lineAddr4400  $FCA9  base $4400  stride 160   $4400-$539F  4 bytes per cell
+  lineAddr5400  $FC77  base $5400  stride  40   $5400-$57C7  1 byte per cell
+  lineAddr5800  $FC45  base $5800  stride  40   $5800-$5BC7  1 byte per cell
+
+25 rows of 40 columns - the CEPT 24-row page plus a status line. Each is read
+with ASLB / LDX #table / ABX / LDD 0,X into the $0406 scratch pointer, from
+eight call sites around $EA44 and $EB28, which are the scroll routines the
+bounded cursor moves at $EC8D/$ECA1 fall through to.
+
+Three planes carry one byte per character cell and the fourth carries four,
+so the wide one is per-cell attributes or DRCS and the others hold codes and
+per-cell state; which plane is which is not yet established.
+
+Together they place the display memory at $4000-$5BC7, filling the gap
+between external RAM and the $6000 C64 interface."""
 "0xF14C" = """
 75-baud transmit: a software UART clocked by the timer output compare.
 
@@ -260,6 +284,8 @@ Hardware memory map, as established from the addresses the firmware touches.
   $0400-$07FF  external RAM, ~1 KB of variables; the stack grows down from
                $0400 (LDS #$0400 at reset), so $0000-$03FF is stack space
   $1B00-$1B2D  RAM holding display/cursor state (see $1B1E), not a peripheral
+  $4000-$5BC7  display memory, four planes addressed via the line tables at
+               $FCDB/$FCA9/$FC77/$FC45 (see the comment there)
   $6009-$6011  C64 dual-port control and status
   $6080-$608F  16-byte shared FIFO to the C64
   $61F9-$61FD  write-only control registers
@@ -570,3 +596,24 @@ start = 0xBA00
 end = 0xD109
 kind = "code6502"
 
+
+# Screen line-address tables. See the block comment at $FCDB.
+[[regions]]
+start = 0xFC45
+end = 0xFC77
+kind = "ptr_table"
+
+[[regions]]
+start = 0xFC77
+end = 0xFCA9
+kind = "ptr_table"
+
+[[regions]]
+start = 0xFCA9
+end = 0xFCDB
+kind = "ptr_table"
+
+[[regions]]
+start = 0xFCDB
+end = 0xFD0D
+kind = "ptr_table"

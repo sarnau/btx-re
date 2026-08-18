@@ -7342,20 +7342,51 @@ sciRxHandler:
 
 seqIgnored:
         JMP     $E9A2
-        FCB     $58,$00,$58,$28,$58,$50,$58,$78,$58,$A0,$58,$C8,$58,$F0,$59,$18
-        FCB     $59,$40,$59,$68,$59,$90,$59,$B8,$59,$E0,$5A,$08,$5A,$30,$5A,$58
-        FCB     $5A,$80,$5A,$A8,$5A,$D0,$5A,$F8,$5B,$20,$5B,$48,$5B,$70,$5B,$98
-        FCB     $5B,$C0,$54,$00,$54,$28,$54,$50,$54,$78,$54,$A0,$54,$C8,$54,$F0
-        FCB     $55,$18,$55,$40,$55,$68,$55,$90,$55,$B8,$55,$E0,$56,$08,$56,$30
-        FCB     $56,$58,$56,$80,$56,$A8,$56,$D0,$56,$F8,$57,$20,$57,$48,$57,$70
-        FCB     $57,$98,$57,$C0,$44,$00,$44,$A0,$45,$40,$45,$E0,$46,$80,$47,$20
-        FCB     $47,$C0,$48,$60,$49,$00,$49,$A0,$4A,$40,$4A,$E0,$4B,$80,$4C,$20
-        FCB     $4C,$C0,$4D,$60,$4E,$00,$4E,$A0,$4F,$40,$4F,$E0,$50,$80,$51,$20
-        FCB     $51,$C0,$52,$60,$53,$00,$40,$00,$40,$28,$40,$50,$40,$78,$40,$A0
-        FCB     $40,$C8,$40,$F0,$41,$18,$41,$40,$41,$68,$41,$90,$41,$B8,$41,$E0
-        FCB     $42,$08,$42,$30,$42,$58,$42,$80,$42,$A8,$42,$D0,$42,$F8,$43,$20
-        FCB     $43,$48,$43,$70,$43,$98,$43,$C0,$5A,$70,$76,$7F,$6F,$7E,$76,$76
-        FCB     $52,$4C,$56,$46,$5C,$51,$49,$41,$49,$47,$5E,$0A,$FF,$FF,$FF,$FF
+
+lineAddr5800:
+        FDB     $5800,$5828,$5850,$5878,$58A0,$58C8,$58F0,$5918
+        FDB     $5940,$5968,$5990,$59B8,$59E0,$5A08,$5A30,$5A58
+        FDB     $5A80,$5AA8,$5AD0,$5AF8,$5B20,$5B48,$5B70,$5B98
+        FDB     $5BC0
+
+lineAddr5400:
+        FDB     $5400,$5428,$5450,$5478,$54A0,$54C8,$54F0,$5518
+        FDB     $5540,$5568,$5590,$55B8,$55E0,$5608,$5630,$5658
+        FDB     $5680,$56A8,$56D0,$56F8,$5720,$5748,$5770,$5798
+        FDB     $57C0
+
+lineAddr4400:
+        FDB     $4400,$44A0,$4540,$45E0,$4680,$4720,$47C0,$4860
+        FDB     $4900,$49A0,$4A40,$4AE0,$4B80,$4C20,$4CC0,$4D60
+        FDB     $4E00,$4EA0,$4F40,$4FE0,$5080,$5120,$51C0,$5260
+        FDB     $5300
+
+; Screen line-address tables: four tables of 25 big-endian pointers, one entry
+; per display row, $FC45-$FD0C.
+;
+;   lineAddr4000  $FCDB  base $4000  stride  40   $4000-$43C7  1 byte per cell
+;   lineAddr4400  $FCA9  base $4400  stride 160   $4400-$539F  4 bytes per cell
+;   lineAddr5400  $FC77  base $5400  stride  40   $5400-$57C7  1 byte per cell
+;   lineAddr5800  $FC45  base $5800  stride  40   $5800-$5BC7  1 byte per cell
+;
+; 25 rows of 40 columns - the CEPT 24-row page plus a status line. Each is read
+; with ASLB / LDX #table / ABX / LDD 0,X into the $0406 scratch pointer, from
+; eight call sites around $EA44 and $EB28, which are the scroll routines the
+; bounded cursor moves at $EC8D/$ECA1 fall through to.
+;
+; Three planes carry one byte per character cell and the fourth carries four,
+; so the wide one is per-cell attributes or DRCS and the others hold codes and
+; per-cell state; which plane is which is not yet established.
+;
+; Together they place the display memory at $4000-$5BC7, filling the gap
+; between external RAM and the $6000 C64 interface.
+lineAddr4000:
+        FDB     $4000,$4028,$4050,$4078,$40A0,$40C8,$40F0,$4118
+        FDB     $4140,$4168,$4190,$41B8,$41E0,$4208,$4230,$4258
+        FDB     $4280,$42A8,$42D0,$42F8,$4320,$4348,$4370,$4398
+        FDB     $43C0
+        FCB     $5A,$70,$76,$7F,$6F,$7E,$76,$76,$52,$4C,$56,$46,$5C,$51,$49,$41
+        FCB     $49,$47,$5E,$0A,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF
         FCB     $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF
         FCB     $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF
         FCB     $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF
@@ -7400,7 +7431,7 @@ seqIgnored:
         FCB     $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF
         FCB     $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF
         FCB     $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF
-        FCB     $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF
+        FCB     $FF,$FF,$FF
 
 vectors:
         FDB     $F129,$F12E,$F133,$F138,$F13D,$F142,$F147,$B200
