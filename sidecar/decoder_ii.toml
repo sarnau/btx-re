@@ -1732,7 +1732,30 @@ vectors before entering the main firmware."""
 #                   attribute row, added to rowAttr
 #   attrFillHi      the bits going into attribute byte 3 while $E143 and $E1DC
 #                   walk a row, toggling $10 each time colourIndex wraps
+# $0490 has three, the same way:
+#
+#   repeatCount     ctlRPT reads a 6-bit count and repeats the last character
+#                   that many times, counting it down
+#   eraseStartCol   ctlCAN keeps cursorCol here while it erases to the end of
+#                   the line, then puts it back
+#   fillCol         the column the row fills at $E143 and $E1DC are on, stepped
+#                   to 40
 [site_symbols]
+"0xDB38" = "repeatCount"
+"0xDB41" = "repeatCount"
+"0xDB52" = "repeatCount"
+"0xDB73" = "eraseStartCol"
+"0xDBC9" = "eraseStartCol"
+"0xE159" = "fillCol"
+"0xE15C" = "fillCol"
+"0xE199" = "fillCol"
+"0xE19C" = "fillCol"
+"0xE19F" = "fillCol"
+"0xE1F2" = "fillCol"
+"0xE1F5" = "fillCol"
+"0xE232" = "fillCol"
+"0xE235" = "fillCol"
+"0xE238" = "fillCol"
 "0xE506" = "attrMaskInv"
 "0xE55A" = "attrMaskInv"
 "0xEE04" = "attrMaskInv"

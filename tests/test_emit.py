@@ -153,6 +153,20 @@ def test_site_symbols_name_each_use_of_a_shared_byte():
     assert "ASLB\n        STAB    attrCellOffset" in src
 
 
+def test_repeat_and_fill_share_a_byte_under_different_names():
+    """$0490 is ctlRPT's countdown, ctlCAN's saved column and the row fill's
+    index. Three roles, three names, one address."""
+    src = (OUT / "btx_decoder_ii.asm").read_text()
+    for name in ("repeatCount", "eraseStartCol", "fillCol"):
+        assert re.search(rf"^{name}\s+EQU\s+\$0490$", src, re.M), name
+    bare = [ln for ln in src.splitlines()
+            if "$0490" in ln and not ln.lstrip().startswith(";")
+            and "EQU" not in ln]
+    assert not bare, bare
+    assert "DEC     repeatCount" in src
+    assert "INC     fillCol" in src
+
+
 def test_site_symbols_reject_an_address_that_is_not_an_instruction():
     """A wrong site address must announce itself rather than silently doing
     nothing - the same failure mode a mid-instruction label has."""

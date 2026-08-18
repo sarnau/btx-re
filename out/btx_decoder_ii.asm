@@ -59,6 +59,9 @@ attrCellOffset EQU     $048E
 attrFillHi     EQU     $048E
 attrMaskInv    EQU     $048E
 gSetSelector   EQU     $048F
+eraseStartCol  EQU     $0490
+fillCol        EQU     $0490
+repeatCount    EQU     $0490
 clutIndex      EQU     $0495
 accentPending  EQU     $0496
 parallelMode   EQU     $0497
@@ -4115,18 +4118,18 @@ ctlRPT:
 LDB33:
         JSR     LE98C
         ANDA    #$3F
-        STAA    $0490
+        STAA    repeatCount
         LDAA    $04A0
         STAA    $04A1
 
 LDB41:
-        LDAA    $0490
+        LDAA    repeatCount
         BEQ     LDB58
         LDAA    $04A1
         STAA    gsetSS
         LDAA    charCode
         JSR     LE781
-        DEC     $0490
+        DEC     repeatCount
         JMP     LDB41
 
 LDB58:
@@ -4148,7 +4151,7 @@ ctlCAN:
         LDAA    $00,X
         BMI     LDB66
         LDAB    cursorCol
-        STAB    $0490
+        STAB    eraseStartCol
         ASLB
         ASLB
         LDX     rowAttr
@@ -4189,7 +4192,7 @@ LDB94:
         LDAA    cursorCol
         CMPA    #$28
         BCS     LDB94
-        LDAA    $0490
+        LDAA    eraseStartCol
         STAA    cursorCol
         JMP     parseNextByte
 
@@ -5063,10 +5066,10 @@ LE143:
         CLR     colourIndex
         CLR     attrFillHi
         LDAA    cursorCol
-        STAA    $0490
+        STAA    fillCol
 
 LE15C:
-        LDAB    $0490
+        LDAB    fillCol
         ASLB
         ASLB
         LDX     rowAttr
@@ -5097,11 +5100,11 @@ LE189:
         LDAA    $00,X
         ANDA    #$02
         BEQ     LE19C
-        INC     $0490
+        INC     fillCol
 
 LE19C:
-        INC     $0490
-        LDAB    $0490
+        INC     fillCol
+        LDAB    fillCol
         CMPB    #$28
         BCC     LE1B3
         LDX     rowRender
@@ -5141,10 +5144,10 @@ LE1DC:
         CLR     colourIndex
         CLR     attrFillHi
         LDAA    cursorCol
-        STAA    $0490
+        STAA    fillCol
 
 LE1F5:
-        LDAB    $0490
+        LDAB    fillCol
         ASLB
         ASLB
         LDX     rowAttr
@@ -5175,11 +5178,11 @@ LE222:
         LDAA    $00,X
         ANDA    #$02
         BEQ     LE235
-        INC     $0490
+        INC     fillCol
 
 LE235:
-        INC     $0490
-        LDAB    $0490
+        INC     fillCol
+        LDAB    fillCol
         CMPB    #$28
         BCC     LE24C
         LDX     rowRender
