@@ -46,7 +46,7 @@ def test_payload_binary_is_a_real_prg():
     src = (OUT / "c64_payload.asm").read_text()
     assert "c64LoadAddr:" in src
     # the load address is a 16-bit word, and it names where the payload runs
-    assert "DW      c64Payload" in src
+    assert "DW      vecColdStart" in src
     assert "ORG     $0FFE" in src
 
 
@@ -342,7 +342,7 @@ def test_menu_key_table_uses_byte_word_records():
     src = (OUT / "c64_payload.asm").read_text()
     body = src.split("c64MenuKeys:", 1)[1].split("\n\n", 1)[0]
     assert "FCB     $4C" in body and "; 'L'" in body
-    assert "DW      L102D" in body
+    assert "DW      vecMenuLoad" in body
     assert body.rstrip().endswith("FCB     $00")
     assert len(re.findall(r"^\s+DW\s", body, re.M)) == 13
 
@@ -373,7 +373,7 @@ def test_pointer_table_resolves_to_its_targets():
     """$10C0 onward holds 16-bit pointers; three of them name CEPT pages or the
     string table, which is what identifies the table."""
     src = (OUT / "c64_payload.asm").read_text()
-    body = src.split("c64PtrTable:", 1)[1][:400]
+    body = src.split("c64BufStart:", 1)[1][:400]
     assert "DW      ceptStartPage" in body
     assert "ceptMacroDir" in body and "c64StrTable" in body
 
@@ -406,7 +406,9 @@ def test_every_word_entry_can_carry_its_own_label():
     """Treating every byte after a region start as interior denied labels to
     the second and later entries of a table."""
     src = (OUT / "c64_payload.asm").read_text()
-    for label in ("L10C6:", "L10C8:", "L10CA:", "L10CC:"):
+    names = ("c64CtrlKeysPtr:", "c64GermanKeysPtr:",
+             "c64MacroDirPtr:", "c64StrTablePtr:")
+    for label in names:
         assert label in src, label
 
 
@@ -426,13 +428,13 @@ def test_pointer_setups_work_for_every_register():
     """The pointer can be built with LDX/STX or LDY/STY as well as LDA/STA -
     matching only the accumulator form missed the key table entirely."""
     src = (OUT / "c64_payload.asm").read_text()
-    assert "LDX     #c64KeyTable&255" in src
-    assert "LDX     #c64KeyTable>>8" in src
+    assert "LDX     #c64AsciiKeys&255" in src
+    assert "LDX     #c64AsciiKeys>>8" in src
 
 
 def test_key_table_is_data_not_code():
     src = (OUT / "c64_payload.asm").read_text()
-    body = src.split("c64KeyTable:", 1)[1].split("c64SendByte:", 1)[0]
+    body = src.split("c64AsciiKeys:", 1)[1].split("c64SendByte:", 1)[0]
     assert not re.search(r"^\s+(LDA|STA|JSR|JMP|RTI|TSX)\s", body, re.M)
     assert 'FCC     "#@;{:|@}+~][["' in body
 

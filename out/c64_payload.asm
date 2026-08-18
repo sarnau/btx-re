@@ -92,14 +92,20 @@ KERNAL_RESET EQU     $FFFC
 
 
 c64LoadAddr:
-        DW      c64Payload
+        DW      vecColdStart
 
 ; C64 payload: a 61-entry JMP dispatch table at runtime $1000-$10B6, then code at
 ; $174C-$2943 with data below it. The table is the module's whole API surface, and
 ; the C64 side of the module is entirely built out of it - nothing calls a routine
 ; except through its slot.
 ;
-; Vectors 44 and 45 share a target ($220B), so 60 distinct addresses carry labels.
+; Each slot is labelled vec<Name> and its body c64<Name>, so a call site reads
+; JSR vecSendByte and the routine it lands in is c64SendByte. Vectors 44 and 45
+; share one body (c64CellOut at $220B) under two slots, vecCellToFile and
+; vecCellToPrinter; c64MenuXfer picks between them on FA == 4.
+;
+; vecColdStart doubles as the payload's load address - it is what c64LoadAddr
+; points at, so the .prg header and vector 0 are the same $1000.
 ;
 ; The menu at vector 4 is what unlocks the rest. It reads one letter and looks it
 ; up in c64MenuKeys. The two menu lines it displays are messages 3 and 4 of
@@ -152,220 +158,242 @@ c64LoadAddr:
 ;   - The c64StrTable records are length-prefixed: a count byte, four parameter
 ;     bytes ($00 $C0/$80 $01/$07 $98) and then the text. c64ShowMsgPtr sends
 ;     exactly count bytes, which is what fixes the framing.
-c64Payload:
+vecColdStart:
         JMP     c64ColdStart
+
+vecStartSession:
         JMP     c64StartSession
+
+vecMainLoop:
         JMP     c64MainLoop
 
-L1009:
+vecSendKey:
         JMP     c64SendKey
 
-L100C:
+vecMenu:
         JMP     c64Menu
 
-L100F:
+vecXlatKey:
         JMP     c64XlatKey
 
-L1012:
+vecSendByte:
         JMP     c64SendByte
 
-L1015:
+vecGetByteWait:
         JMP     c64GetByteWait
 
-L1018:
+vecGetByte:
         JMP     c64GetByte
 
-L101B:
+vecHideMsg:
         JMP     c64HideMsg
 
-L101E:
+vecCaptureEnd:
         JMP     c64CaptureEnd
 
-L1021:
+vecCtrlThrottle:
         JMP     c64CtrlThrottle
 
-L1024:
+vecMenuAscii:
         JMP     c64MenuAscii
 
-L1027:
+vecMenuBtx:
         JMP     c64MenuBtx
 
-L102A:
+vecMenuQuit:
         JMP     c64MenuQuit
 
-L102D:
+vecMenuLoad:
         JMP     c64MenuLoad
 
-L1030:
+vecDiskOpenRead:
         JMP     c64DiskOpenRead
 
-L1033:
+vecDiskGetByte:
         JMP     c64DiskGetByte
 
-L1036:
+vecDiskCloseRead:
         JMP     c64DiskCloseRead
 
-L1039:
+vecMenuMacro:
         JMP     c64MenuMacro
 
-L103C:
+vecMenuCapture:
         JMP     c64MenuCapture
 
-L103F:
+vecCaptureRun:
         JMP     c64CaptureRun
 
-L1042:
+vecMenuDisplay:
         JMP     c64MenuDisplay
 
-L1045:
+vecMenuXfer:
         JMP     c64MenuXfer
 
-L1048:
+vecMenuScreen:
         JMP     c64MenuScreen
 
-L104B:
+vecIrqPlotCell:
         JMP     c64IrqPlotCell
 
-L104E:
+vecMenuKeybd:
         JMP     c64MenuKeybd
 
-L1051:
+vecMenuPause:
         JMP     c64MenuPause
 
-L1054:
+vecMenuEdit:
         JMP     c64MenuEdit
 
-L1057:
+vecInputLine:
         JMP     c64InputLine
+
+vecShowMsgPtr:
         JMP     c64ShowMsgPtr
 
-L105D:
+vecShowMsg:
         JMP     c64ShowMsg
 
-L1060:
+vecSaveBuffer:
         JMP     c64SaveBuffer
 
-L1063:
+vecCloseWrite:
         JMP     c64CloseWrite
 
-L1066:
+vecMacroRecOpen:
         JMP     c64MacroRecOpen
 
-L1069:
+vecMacroTalk:
         JMP     c64MacroTalk
 
-L106C:
+vecMacroRecClose:
         JMP     c64MacroRecClose
 
-L106F:
+vecMacroCloseRead:
         JMP     c64MacroCloseRead
 
-L1072:
+vecDiskShowError:
         JMP     c64DiskShowError
 
-L1075:
+vecDiskCheckError:
         JMP     c64DiskCheckError
 
-L1078:
+vecClearMsg:
         JMP     c64ClearMsg
 
-L107B:
+vecWaitDecoder:
         JMP     c64WaitDecoder
 
-L107E:
+vecDelaySecs:
         JMP     c64DelaySecs
 
-L1081:
+vecCellToScreen:
         JMP     c64CellToScreen
 
-L1084:
+vecCellToFile:
         JMP     c64CellOut
 
-L1087:
+vecCellToPrinter:
         JMP     c64CellOut
 
-L108A:
+vecCellToChar:
         JMP     c64CellToChar
 
-L108D:
+vecMacroRecStart:
         JMP     c64MacroRecStart
 
-L1090:
+vecOpenSeqWrite:
         JMP     c64OpenSeqWrite
 
-L1093:
+vecOpenPrinter:
         JMP     c64OpenPrinter
 
-L1096:
+vecMacroOpenRead:
         JMP     c64MacroOpenRead
 
-L1099:
+vecMacroDir:
         JMP     c64MacroDir
 
-L109C:
+vecMacroDirLine:
         JMP     c64MacroDirLine
 
-L109F:
+vecGetKey:
         JMP     c64GetKey
 
-L10A2:
+vecShowSplash:
         JMP     c64ShowSplash
 
-L10A5:
+vecPlotChar:
         JMP     c64PlotChar
 
-L10A8:
+vecSetCursor:
         JMP     c64SetCursor
 
-L10AB:
+vecMenuTelesoft:
         JMP     c64MenuTelesoft
 
-L10AE:
+vecTelesoftByte:
         JMP     c64TelesoftByte
 
-L10B1:
+vecOpenChannel:
         JMP     c64OpenChannel
 
-L10B4:
+vecOpenPrgWrite:
         JMP     c64OpenPrgWrite
         FCB     $00,$00,$00,$00,$00,$00,$00,$00,$00
 
-; 16-bit pointers, runtime $10C0-$10CD.
+; Seven pointer slots, runtime $10C0-$10CD, read individually rather than indexed.
 ;
-;   $10C0  ceptStartPage    the startup page
-;   $10C2  $8000            the cartridge window - left as bytes, since it names
-;                           hardware rather than a location in this program
-;   $10C4  ceptStartPage    again
-;   $10C6  $10CE            the two bytes immediately after this table
-;   $10C8  $114A            in the variable block
-;   $10CA  ceptMacroDir     the "Makro-Verzeichnis" page
-;   $10CC  c64StrTable      the string table
+;   $10C0  c64BufStart       ceptStartPage - the base of the capture buffer
+;   $10C2  c64BufEnd         $8000, the cartridge window: the buffer runs up to
+;                            the decoder I/O and no further. Left as two bytes,
+;                            since only the page at c64BufEndPage is ever tested
+;   $10C4  c64StartPagePtr   ceptStartPage again, the page c64StartSession sends
+;   $10C6  c64CtrlKeysPtr    c64CtrlKeys, the two bytes right after this block
+;   $10C8  c64GermanKeysPtr  c64GermanKeys
+;   $10CA  c64MacroDirPtr    ceptMacroDir, the "Makro-Verzeichnis" page
+;   $10CC  c64StrTablePtr    c64StrTable, the status-message table
 ;
-; Three of the seven point at CEPT pages or the string table, which is what
-; identifies this as a table of data pointers rather than loose bytes.
-c64PtrTable:
+; The first two slots pair up: the capture buffer starts where ceptStartPage sits,
+; so the startup page is the first thing a capture overwrites.
+;
+; The three key tables form c64XlatKey's search chain, tried in this order:
+;
+;   c64AsciiKeys   2-byte records, only while alpha mode is on. The ASCII
+;                  bracket set - # @ ; : @ + [ ] map to @ { | } ~ [ \ ]
+;   c64GermanKeys  4-byte records, only while the German keyboard is selected.
+;                  @ [ \ ] : ; and their shifts become the umlauts, via the CEPT
+;                  diaeresis composition $19 $48 followed by the base letter
+;   c64CtrlKeys    4-byte records, always searched last. Cursor keys, DEL, HOME,
+;                  CLR, the eight colour keys and F1-F8
+;
+; A record is one PETSCII key followed by the CEPT bytes it expands to, up to
+; three of them, and a $00 in the first CEPT byte means the key is swallowed.
+c64BufStart:
         DW      ceptStartPage
+
+c64BufEnd:
         FCB     $00
 
-L10C3:
+c64BufEndPage:
         FCB     $80
 
-L10C4:
+c64StartPagePtr:
         DW      ceptStartPage
 
-L10C6:
-        DW      L10CE
+c64CtrlKeysPtr:
+        DW      c64CtrlKeys
 
-L10C8:
-        DW      L114A
+c64GermanKeysPtr:
+        DW      c64GermanKeys
 
-L10CA:
+c64MacroDirPtr:
         DW      ceptMacroDir
 
-L10CC:
+c64StrTablePtr:
         DW      c64StrTable
 
-L10CE:
+c64CtrlKeys:
         FCB     $0D,$0D,$00,$00,$8D,$0D,$0A,$00,$91,$0B,$00,$00,$11,$0A,$00,$00
         FCB     $1D,$09,$00,$00,$14,$08,$00,$00,$9D,$08,$00,$00,$13,$1E,$00,$00
         FCB     $93,$0C,$00,$00,$85,$13,$00,$00,$86,$1C,$00,$00,$87,$1A,$00,$00
@@ -375,7 +403,7 @@ L10CE:
         FCB     $5F,$11,$00,$00,$06,$14,$00,$00,$AE,$13,$00,$00,$AB,$11,$00,$00
         FCB     $24,$A4,$00,$00,$5C,$A3,$00,$00,$00,$00,$00,$00
 
-L114A:
+c64GermanKeys:
         FCB     $23,$19,$27,$00,$27,$2F,$00,$00,$2B,$19,$7B,$00,$DB,$3F,$00,$00
         FCB     $2D,$19,$42,$20,$DD,$19,$41,$20,$5C,$5B,$00,$00,$A9,$19,$2D,$00
         FCB     $40,$19,$48,$75,$BA,$19
@@ -719,14 +747,14 @@ L16B9:
 
 c64StartSession:
 ; vector 1 $1003 - show the splash, send ceptStartPage to the decoder, reset the capture-buffer pointers and mode flags
-        JSR     L10A2
+        JSR     vecShowSplash
         LDA     btxReg012
         BNE     L172D
         LDA     #$FF
         STA     btxReg012
-        LDA     L10C4
+        LDA     c64StartPagePtr
         STA     FACEXP
-        LDA     L10C4+1
+        LDA     c64StartPagePtr+1
         STA     FACHO
         LDA     #$FF
         STA     btxReg00F
@@ -735,7 +763,7 @@ L171B:
         LDY     #$00
         LDA     (FACEXP),Y
         BEQ     L172D
-        JSR     L1012
+        JSR     vecSendByte
         INC     FACEXP
         BNE     L172A
         INC     FACHO
@@ -744,9 +772,9 @@ L172A:
         JMP     L171B
 
 L172D:
-        LDA     c64PtrTable
+        LDA     c64BufStart
         STA     L11DA
-        LDA     c64PtrTable+1
+        LDA     c64BufStart+1
         STA     L11DB
         LDA     #$00
         STA     L11D9
@@ -767,14 +795,14 @@ L1751:
         CLI
         BIT     L11D9
         BPL     L175E
-        JSR     L103F
+        JSR     vecCaptureRun
 
 L175E:
-        JSR     L109F
+        JSR     vecGetKey
         BCS     L1751
         CMP     #$03
         BNE     L176D
-        JSR     L101E
+        JSR     vecCaptureEnd
         JMP     L177F
 
 L176D:
@@ -782,11 +810,11 @@ L176D:
         BNE     L177C
         BIT     L11D9
         BMI     L177C
-        JSR     L100C
+        JSR     vecMenu
         JMP     L177F
 
 L177C:
-        JSR     L1009
+        JSR     vecSendKey
 
 L177F:
         JMP     L1751
@@ -795,15 +823,15 @@ c64SendKey:
 ; vector 3 $1009 - translate one key with c64XlatKey and send the resulting 1-3 CEPT bytes to the decoder
         CMP     #$8B
         BNE     L1789
-        JSR     L101E
+        JSR     vecCaptureEnd
 
 L1789:
         CMP     #$8C
         BNE     L1790
-        JSR     L101E
+        JSR     vecCaptureEnd
 
 L1790:
-        JSR     L100F
+        JSR     vecXlatKey
         BCS     L17B5
         LDA     L11F7
         BEQ     L179F
@@ -812,21 +840,21 @@ L1790:
 
 L179F:
         LDA     L11E9
-        JSR     L1012
+        JSR     vecSendByte
         LDA     L11EA
         BEQ     L17AD
-        JSR     L1012
+        JSR     vecSendByte
 
 L17AD:
         LDA     L11EB
         BEQ     L17B5
-        JSR     L1012
+        JSR     vecSendByte
 
 L17B5:
         RTS
 
 c64XlatKey:
-; vector 5 $100F - PETSCII key -> CEPT, via c64KeyTable (2-byte, alpha mode), $10C8 or $10C6 (4-byte). C=1 when the key has no mapping
+; vector 5 $100F - PETSCII key -> CEPT, via c64AsciiKeys (2-byte records, alpha mode), then c64GermanKeys, then c64CtrlKeys (4-byte records). C=1 when the key has no mapping
         LDX     #$00
         STX     L11E9
         STX     L11EA
@@ -835,9 +863,9 @@ c64XlatKey:
         BEQ     L180D
         LDX     L11F7
         BEQ     L17EF
-        LDX     #c64KeyTable&255
+        LDX     #c64AsciiKeys&255
         STX     ARGEXP
-        LDX     #c64KeyTable>>8
+        LDX     #c64AsciiKeys>>8
         STX     ARGHO
         LDY     #$00
 
@@ -864,9 +892,9 @@ L17EE:
         TXA
 
 L17EF:
-        LDX     L10C8
+        LDX     c64GermanKeysPtr
         STX     ARGEXP
-        LDX     L10C8+1
+        LDX     c64GermanKeysPtr+1
         STX     ARGHO
         LDY     #$00
 
@@ -887,9 +915,9 @@ L180C:
         TXA
 
 L180D:
-        LDX     L10C6
+        LDX     c64CtrlKeysPtr
         STX     ARGEXP
-        LDX     L10C6+1
+        LDX     c64CtrlKeysPtr+1
         STX     ARGHO
         LDY     #$00
 
@@ -979,7 +1007,7 @@ L185D:
 ; so it is a two-byte-per-entry lookup terminated by $00. Which byte is the
 ; input and which the output is not established, and the pairing across the
 ; whole table has not been decoded.
-c64KeyTable:
+c64AsciiKeys:
         FCC     "#@;{:|@}+~][["
         FCB     $5C,$BA,$5D,$2D,$00,$DD,$00,$5E,$00,$DE,$00,$5C,$00,$A9,$00,$00
         FCB     $00
@@ -1007,12 +1035,12 @@ L18A5:
         LDY     btxReg00D
         STA     btxReg040,Y
         STX     btxReg00D
-        JSR     L1021
+        JSR     vecCtrlThrottle
         RTS
 
 c64GetByteWait:
 ; vector 7 $1015 - c64GetByte in a loop: block until the decoder delivers a byte
-        JSR     L1018
+        JSR     vecGetByte
         BCS     c64GetByteWait
         RTS
 
@@ -1044,13 +1072,13 @@ L18DC:
 c64HideMsg:
 ; vector 9 $101B - send $10 $7A $10 $55: close the status-line overlay and put the BTX page back
         LDA     #$10
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$7A
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$10
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$55
-        JSR     L1012
+        JSR     vecSendByte
         RTS
 
 c64CaptureEnd:
@@ -1058,9 +1086,9 @@ c64CaptureEnd:
         BIT     L11D9
         BPL     L192F
         LDA     #$10
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$6D
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$00
         STA     L11D9
 
@@ -1069,16 +1097,16 @@ L190A:
         BNE     L190A
         LDA     btxXferEn
         BNE     L190A
-        JSR     L103F
-        JSR     L1078
+        JSR     vecCaptureRun
+        JSR     vecClearMsg
         LDA     FACLO
         STA     L11DA
         LDA     FACSGN
         STA     L11DB
         LDA     #$07
-        JSR     L105D
-        JSR     L1060
-        JSR     L101B
+        JSR     vecShowMsg
+        JSR     vecSaveBuffer
+        JSR     vecHideMsg
 
 L192F:
         RTS
@@ -1120,15 +1148,15 @@ L1953:
         LDA     #$04
 
 L195C:
-        JSR     L105D
+        JSR     vecShowMsg
 
 L195F:
-        JSR     L109F
+        JSR     vecGetKey
         AND     #$7F
         BEQ     L195F
         CMP     #$03
         BNE     L196D
-        JMP     L101B
+        JMP     vecHideMsg
 
 L196D:
         STA     L11B9
@@ -1168,39 +1196,39 @@ L198C:
 ; a keypress into a command.
 c64MenuKeys:
         FCB     $4C                    ; 'L'
-        DW      L102D
+        DW      vecMenuLoad
         FCB     $43                    ; 'C'
-        DW      L103C
+        DW      vecMenuCapture
         FCB     $44                    ; 'D'
-        DW      L1042
+        DW      vecMenuDisplay
         FCB     $4D                    ; 'M'
-        DW      L1039
+        DW      vecMenuMacro
         FCB     $58                    ; 'X'
-        DW      L1045
+        DW      vecMenuXfer
         FCB     $41                    ; 'A'
-        DW      L1024
+        DW      vecMenuAscii
         FCB     $42                    ; 'B'
-        DW      L1027
+        DW      vecMenuBtx
         FCB     $53                    ; 'S'
-        DW      L1048
+        DW      vecMenuScreen
         FCB     $4B                    ; 'K'
-        DW      L104E
+        DW      vecMenuKeybd
         FCB     $50                    ; 'P'
-        DW      L1051
+        DW      vecMenuPause
         FCB     $45                    ; 'E'
-        DW      L1054
+        DW      vecMenuEdit
         FCB     $51                    ; 'Q'
-        DW      L102A
+        DW      vecMenuQuit
         FCB     $54                    ; 'T'
-        DW      L10AB
+        DW      vecMenuTelesoft
         FCB     $00
 
 c64MenuAscii:
-; vector 12 $1024 - menu 'A' (ASCII): send $10 $67 and set the alpha-mode flag, which switches c64XlatKey to c64KeyTable
+; vector 12 $1024 - menu 'A' (ASCII): send $10 $67 and set the alpha-mode flag, which adds c64AsciiKeys to the front of c64XlatKey's search chain
         LDA     #$10
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$67
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$FF
         STA     L11F7
         RTS
@@ -1208,26 +1236,26 @@ c64MenuAscii:
 c64MenuBtx:
 ; vector 13 $1027 - menu 'B' (Btx): send $10 $66 and clear the alpha-mode flag
         LDA     #$10
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$66
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$00
         STA     L11F7
         RTS
 
 c64MenuQuit:
 ; vector 14 $102A - menu 'Q' (Quit): send ceptMonitorMsg ("C-64 - Betrieb ... Monitor an den Rechner umstecken"), close the drive command channel and JMP (KERNAL_RESET)
-        JSR     L101B
+        JSR     vecHideMsg
         LDA     #$00
         STA     btxFifo00
         LDA     #$10
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$4C
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$10
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$66
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$41
         STA     FACEXP
         LDA     #$1A
@@ -1237,7 +1265,7 @@ L1A03:
         LDY     #$00
         LDA     (FACEXP),Y
         BEQ     L1A15
-        JSR     L1012
+        JSR     vecSendByte
         INC     FACEXP
         BNE     L1A03
         INC     FACHO
@@ -1245,13 +1273,13 @@ L1A03:
 
 L1A15:
         LDA     #$02
-        JSR     L107E
+        JSR     vecDelaySecs
         LDA     #$10
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$51
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$02
-        JSR     L107E
+        JSR     vecDelaySecs
         JSR     UNLSN
         LDA     #$08
         JSR     LISTN
@@ -1308,78 +1336,78 @@ ceptMonitorMsg:
 
 c64MenuLoad:
 ; vector 15 $102D - menu 'L' (Load): msg 0 "von Diskette: File?", then stream the file to the decoder through c64DiskOpenRead/GetByte/CloseRead
-        JSR     L1078
+        JSR     vecClearMsg
         LDA     #$00
-        JSR     L105D
+        JSR     vecShowMsg
         LDA     #$13
-        JSR     L1057
+        JSR     vecInputLine
         BCC     L1AAE
-        JSR     L101B
+        JSR     vecHideMsg
         RTS
 
 L1AAE:
-        JSR     L1030
+        JSR     vecDiskOpenRead
         BCC     L1AC1
         LDA     #$02
-        JSR     L105D
+        JSR     vecShowMsg
 
 L1AB8:
-        JSR     L109F
+        JSR     vecGetKey
         BCS     L1AB8
-        JSR     L101B
+        JSR     vecHideMsg
         RTS
 
 L1AC1:
         TXA
         PHA
         LDA     #$10
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$4C
-        JSR     L1012
+        JSR     vecSendByte
         PLA
         CMP     #$10
         BEQ     L1AD5
-        JSR     L1012
+        JSR     vecSendByte
 
 L1AD5:
-        JSR     L1033
+        JSR     vecDiskGetByte
         BCS     L1B05
         CMP     #$10
         BEQ     L1AF0
         PHA
-        JSR     L1012
+        JSR     vecSendByte
         PLA
         CMP     #$11
         BNE     L1AF0
         BIT     STATUS
         BVS     L1AF0
         LDA     #$05
-        JSR     L107E
+        JSR     vecDelaySecs
 
 L1AF0:
         BIT     STATUS
         BVC     L1AD5
 
 L1AF4:
-        JSR     L1036
-        JSR     L101B
+        JSR     vecDiskCloseRead
+        JSR     vecHideMsg
         LDA     #$10
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$6C
-        JSR     L1012
+        JSR     vecSendByte
         RTS
 
 L1B05:
         BIT     L11EC
         BPL     L1AF4
-        JSR     L106F
+        JSR     vecMacroCloseRead
         LDA     #$00
         STA     L11EC
         LDA     #$10
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$2E
-        JSR     L1012
-        JSR     L101B
+        JSR     vecSendByte
+        JSR     vecHideMsg
         JMP     L1AF4
 
 c64MenuMacro:
@@ -1397,30 +1425,30 @@ c64MenuMacro:
 
 L1B38:
         LDA     #$0D
-        JSR     L105D
+        JSR     vecShowMsg
         LDA     #$17
-        JSR     L105D
+        JSR     vecShowMsg
 
 L1B42:
-        JSR     L109F
+        JSR     vecGetKey
         BCS     L1B42
-        JSR     L101B
+        JSR     vecHideMsg
         RTS
 
 L1B4B:
         JSR     UNLSN
-        JSR     L1075
-        JSR     L1078
+        JSR     vecDiskCheckError
+        JSR     vecClearMsg
         LDA     #$0B
-        JSR     L105D
+        JSR     vecShowMsg
 
 L1B59:
-        JSR     L109F
+        JSR     vecGetKey
         CMP     #$03
         BNE     L1B69
         LDA     #$00
-        JSR     L1012
-        JSR     L101B
+        JSR     vecSendByte
+        JSR     vecHideMsg
         RTS
 
 L1B69:
@@ -1431,9 +1459,9 @@ L1B69:
 
 L1B71:
         LDA     #$00
-        JSR     L1012
-        JSR     L1099
-        JMP     L1039
+        JSR     vecSendByte
+        JSR     vecMacroDir
+        JMP     vecMenuMacro
 
 L1B7C:
         CMP     #$30
@@ -1449,47 +1477,47 @@ L1B7C:
 L1B8E:
         STA     c64MacroId
         LDA     #$08
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$20
-        JSR     L1012
+        JSR     vecSendByte
         LDA     c64MacroId
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$00
-        JSR     L1012
+        JSR     vecSendByte
         BIT     L11D8
         BPL     L1BBD
-        JSR     L106C
+        JSR     vecMacroRecClose
         LDA     #$10
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$6B
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$00
         STA     L11D8
 
 L1BBD:
         BIT     L11EC
         BPL     L1BD7
-        JSR     L106F
+        JSR     vecMacroCloseRead
         LDA     #$00
         STA     L11EC
         LDA     #$10
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$2E
-        JSR     L1012
-        JSR     L101B
+        JSR     vecSendByte
+        JSR     vecHideMsg
 
 L1BD7:
-        JSR     L1096
+        JSR     vecMacroOpenRead
         BCC     L1BEA
         LDA     #$02
-        JSR     L105D
+        JSR     vecShowMsg
 
 L1BE1:
-        JSR     L109F
+        JSR     vecGetKey
         BCS     L1BE1
 
 L1BE6:
-        JSR     L101B
+        JSR     vecHideMsg
         RTS
 
 L1BEA:
@@ -1500,42 +1528,42 @@ L1BEA:
         LDA     #$FF
         STA     L11EC
         LDA     #$10
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$2C
-        JSR     L1012
-        JSR     L1078
+        JSR     vecSendByte
+        JSR     vecClearMsg
         LDA     #$0C
-        JSR     L105D
+        JSR     vecShowMsg
         LDA     c64MacroId
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$20
-        JSR     L1012
+        JSR     vecSendByte
         PLA
-        JSR     L1009
+        JSR     vecSendKey
         JSR     UNTLK
         RTS
 
 c64MenuCapture:
-; vector 20 $103C - menu 'C' (Capture): send $10 $4D, msg 5 "Capture-Modus ein - Ende: STOP-Taste", arm the capture flag and point the write pointer at c64PtrTable
-        JSR     L101B
+; vector 20 $103C - menu 'C' (Capture): send $10 $4D, msg 5 "Capture-Modus ein - Ende: STOP-Taste", arm the capture flag and point the write pointer at c64BufStart
+        JSR     vecHideMsg
         LDA     #$10
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$4D
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$05
-        JSR     L105D
+        JSR     vecShowMsg
         LDA     #$FF
         STA     btxStatus
         STA     L11D9
-        LDA     c64PtrTable
+        LDA     c64BufStart
         STA     FACLO
-        LDA     c64PtrTable+1
+        LDA     c64BufStart+1
         STA     FACSGN
         RTS
 
 c64CaptureRun:
 ; vector 21 $103F - the capture engine: drain c64GetByte into the buffer until page $80 is reached, then msg 8 "Puffer voll - File?" and c64SaveBuffer
-        JSR     L1018
+        JSR     vecGetByte
         BCS     L1C94
         LDY     #$00
         STA     (FACLO),Y
@@ -1543,7 +1571,7 @@ c64CaptureRun:
         BNE     L1C55
         INC     FACSGN
         LDA     FACSGN
-        CMP     L10C3
+        CMP     c64BufEndPage
         BEQ     L1C58
 
 L1C55:
@@ -1553,17 +1581,17 @@ L1C58:
         LDA     #$00
         STA     L11D9
         LDA     #$10
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$6D
-        JSR     L1012
-        JSR     L1078
+        JSR     vecSendByte
+        JSR     vecClearMsg
         LDA     #$08
-        JSR     L105D
+        JSR     vecShowMsg
         LDA     FACLO
         STA     L11DA
         LDA     FACSGN
         STA     L11DB
-        JSR     L1060
+        JSR     vecSaveBuffer
 
 L1C7C:
         LDA     btxXferEn
@@ -1576,7 +1604,7 @@ L1C86:
         CMP     btxFifoWr
         BNE     L1C86
         STA     btxFifoRd
-        JSR     L101B
+        JSR     vecHideMsg
 
 L1C94:
         RTS
@@ -1584,14 +1612,14 @@ L1C94:
 c64MenuDisplay:
 ; vector 22 $1042 - menu 'D' (Display): msg 6 "Capture-Puffer anzeigen", replay the captured bytes to the decoder, STOP aborts
         LDA     #$10
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$4C
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$06
-        JSR     L105D
-        LDA     c64PtrTable
+        JSR     vecShowMsg
+        LDA     c64BufStart
         STA     FACLO
-        LDA     c64PtrTable+1
+        LDA     c64BufStart+1
         STA     FACSGN
         LDA     #$00
         STA     L11DD
@@ -1607,11 +1635,11 @@ L1CB3:
         BNE     L1CD4
 
 L1CC6:
-        JSR     L101B
+        JSR     vecHideMsg
         LDA     #$10
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$6C
-        JSR     L1012
+        JSR     vecSendByte
         RTS
 
 L1CD4:
@@ -1619,13 +1647,13 @@ L1CD4:
         CMP     #$11
         BNE     L1CE0
         LDA     #$05
-        JSR     L107E
+        JSR     vecDelaySecs
 
 L1CE0:
         LDY     #$00
         LDA     (FACLO),Y
         STA     L11DD
-        JSR     L1012
+        JSR     vecSendByte
         INC     FACLO
         BNE     L1CF0
         INC     FACSGN
@@ -1646,9 +1674,9 @@ c64MenuXfer:
 
 L1D07:
         LDA     #$10
-        JSR     L1012
+        JSR     vecSendByte
         LDA     L11E0
-        JSR     L1012
+        JSR     vecSendByte
         INC     L11EF
         LDA     #$FF
         STA     L11EE
@@ -1657,20 +1685,20 @@ L1D07:
 
 L1D1F:
         INC     L11EE
-        JSR     L1015
+        JSR     vecGetByteWait
         AND     #$7F
         STA     L11E1
-        JSR     L1015
+        JSR     vecGetByteWait
         STA     L11E2
-        JSR     L1015
+        JSR     vecGetByteWait
         STA     L11E3
-        JSR     L1015
+        JSR     vecGetByteWait
         STA     L11E4
-        JSR     L1015
+        JSR     vecGetByteWait
         STA     L11E5
-        JSR     L1015
+        JSR     vecGetByteWait
         STA     L11E6
-        JSR     L1081
+        JSR     vecCellToScreen
         DEC     L11DF
         BNE     L1D1F
         INC     L11E0
@@ -1681,17 +1709,17 @@ L1D1F:
         STA     btxStatus
 
 L1D5F:
-        JSR     L1078
+        JSR     vecClearMsg
         LDA     #$0E
-        JSR     L105D
+        JSR     vecShowMsg
 
 L1D67:
-        JSR     L109F
+        JSR     vecGetKey
         BCS     L1D67
         AND     #$7F
         CMP     #$03
         BNE     L1D75
-        JMP     L101B
+        JMP     vecHideMsg
 
 L1D75:
         CMP     #$44
@@ -1699,20 +1727,20 @@ L1D75:
         CMP     #$46
         BNE     L1D67
         LDA     #$07
-        JSR     L105D
+        JSR     vecShowMsg
         LDA     #$13
-        JSR     L1057
+        JSR     vecInputLine
         BCC     L1D8D
-        JSR     L101B
+        JSR     vecHideMsg
         RTS
 
 L1D8D:
-        JSR     L1090
+        JSR     vecOpenSeqWrite
         BCS     L1E0D
         JMP     L1D9A
 
 L1D95:
-        JSR     L1093
+        JSR     vecOpenPrinter
         BCS     L1E08
 
 L1D9A:
@@ -1726,34 +1754,34 @@ L1D9F:
 
 L1DA7:
         LDA     #$10
-        JSR     L1012
+        JSR     vecSendByte
         LDA     L11E0
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$28
         STA     L11DF
 
 L1DB7:
-        JSR     L1015
+        JSR     vecGetByteWait
         AND     #$7F
         STA     L11E1
-        JSR     L1015
+        JSR     vecGetByteWait
         STA     L11E2
-        JSR     L1015
+        JSR     vecGetByteWait
         STA     L11E3
-        JSR     L1015
+        JSR     vecGetByteWait
         STA     L11E4
-        JSR     L1015
+        JSR     vecGetByteWait
         STA     L11E5
-        JSR     L1015
+        JSR     vecGetByteWait
         STA     L11E6
         LDA     FA
         CMP     #$04
         BNE     L1DE9
-        JSR     L1087
+        JSR     vecCellToPrinter
         JMP     L1DEC
 
 L1DE9:
-        JSR     L1084
+        JSR     vecCellToFile
 
 L1DEC:
         DEC     L11DF
@@ -1770,14 +1798,14 @@ L1DEC:
 
 L1E08:
         LDA     #$0F
-        JSR     L105D
+        JSR     vecShowMsg
 
 L1E0D:
         LDA     #$0A
-        JSR     L105D
+        JSR     vecShowMsg
 
 L1E12:
-        JSR     L109F
+        JSR     vecGetKey
         BCS     L1E12
         AND     #$7F
         CMP     #$4A
@@ -1785,7 +1813,7 @@ L1E12:
         JMP     L1D5F
 
 L1E20:
-        JSR     L101B
+        JSR     vecHideMsg
         RTS
 
 L1E24:
@@ -1796,7 +1824,7 @@ L1E24:
         ORA     #$E0
         JSR     SECND
         JSR     UNLSN
-        JSR     L101B
+        JSR     vecHideMsg
         RTS
 
 c64MenuScreen:
@@ -1808,9 +1836,9 @@ c64MenuScreen:
         STA     btxFifo00
         BEQ     L1E57
         LDA     #$10
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$78
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$11
         JMP     L1E59
 
@@ -1818,12 +1846,12 @@ L1E57:
         LDA     #$12
 
 L1E59:
-        JSR     L105D
+        JSR     vecShowMsg
 
 L1E5C:
-        JSR     L109F
+        JSR     vecGetKey
         BCS     L1E5C
-        JSR     L101B
+        JSR     vecHideMsg
         RTS
 
 c64IrqPlotCell:
@@ -1852,7 +1880,7 @@ L1E67:
         STA     L11E5
         LDA     btxFifo08
         STA     L11E6
-        JSR     L108A
+        JSR     vecCellToChar
         CMP     #$60
         BCC     L1EA9
         AND     #$5F
@@ -1888,7 +1916,7 @@ L1EC8:
 L1EC9:
         LDX     btxFifo0A
         LDY     btxFifo09
-        JSR     L10A5
+        JSR     vecPlotChar
         LDA     #$00
         STA     btxFifo0B
 
@@ -1900,7 +1928,7 @@ L1ED7:
 L1EDC:
         LDX     btxFifo01
         LDY     btxFifo02
-        JSR     L10A8
+        JSR     vecSetCursor
         LDA     btxReg1F9
         LDA     #$00
         STA     btxFifo0B
@@ -1910,10 +1938,10 @@ L1EDC:
 c64MenuKeybd:
 ; vector 26 $104E - menu 'K' (Keybd): msg $10 "Keyboard: deutsch oder ASCII?"; 'D' sends $10 $4E and sets the German flag, 'A' sends $10 $6E and clears it
         LDA     #$10
-        JSR     L105D
+        JSR     vecShowMsg
 
 L1EF4:
-        JSR     L109F
+        JSR     vecGetKey
         CMP     #$03
         BEQ     L1F14
         AND     #$7F
@@ -1924,34 +1952,34 @@ L1EF4:
         LDA     #$FF
         STA     L11E8
         LDA     #$10
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$4E
-        JSR     L1012
+        JSR     vecSendByte
 
 L1F14:
-        JSR     L101B
+        JSR     vecHideMsg
         RTS
 
 L1F18:
         LDA     #$00
         STA     L11E8
         LDA     #$10
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$6E
-        JSR     L1012
-        JSR     L101B
+        JSR     vecSendByte
+        JSR     vecHideMsg
         RTS
 
 c64MenuPause:
 ; vector 27 $1051 - menu 'P' (Pause): msg $13 asks for 1-9 seconds, msg $14 "bitte warten...", then c64DelaySecs
         LDA     #$13
-        JSR     L105D
+        JSR     vecShowMsg
 
 L1F30:
-        JSR     L109F
+        JSR     vecGetKey
         CMP     #$03
         BNE     L1F3B
-        JSR     L101B
+        JSR     vecHideMsg
         RTS
 
 L1F3B:
@@ -1963,31 +1991,31 @@ L1F3B:
         SBC     #$30
         PHA
         LDA     #$14
-        JSR     L105D
+        JSR     vecShowMsg
         PLA
-        JSR     L107E
-        JSR     L101B
+        JSR     vecDelaySecs
+        JSR     vecHideMsg
         RTS
 
 c64MenuEdit:
 ; vector 28 $1054 - menu 'E' (Edit): start recording a macro (msg $15, c64MacroRecStart) or finish the one in progress (msg $18 "Macro abgeschlossen", c64MacroRecClose)
         BIT     L11EC
         BPL     L1F5D
-        JSR     L101B
+        JSR     vecHideMsg
         RTS
 
 L1F5D:
         BIT     L11D8
         BPL     L1F89
         LDA     #$10
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$6B
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$18
-        JSR     L105D
-        JSR     L106C
+        JSR     vecShowMsg
+        JSR     vecMacroRecClose
         LDA     #$17
-        JSR     L105D
+        JSR     vecShowMsg
         LDA     #$00
         STA     L11D8
 
@@ -1995,21 +2023,21 @@ L1F7E:
         JSR     GETIN
         CMP     #$00
         BEQ     L1F7E
-        JSR     L101B
+        JSR     vecHideMsg
         RTS
 
 L1F89:
-        JSR     L1078
+        JSR     vecClearMsg
         LDA     #$15
-        JSR     L105D
+        JSR     vecShowMsg
 
 L1F91:
         JSR     GETIN
         CMP     #$03
         BNE     L1FA1
         LDA     #$00
-        JSR     L1012
-        JSR     L101B
+        JSR     vecSendByte
+        JSR     vecHideMsg
         RTS
 
 L1FA1:
@@ -2020,9 +2048,9 @@ L1FA1:
 
 L1FA9:
         LDA     #$00
-        JSR     L1012
-        JSR     L1099
-        JMP     L1054
+        JSR     vecSendByte
+        JSR     vecMacroDir
+        JMP     vecMenuEdit
 
 L1FB4:
         CMP     #$30
@@ -2038,38 +2066,38 @@ L1FB4:
 L1FC6:
         STA     c64MacroId
         LDA     #$08
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$20
-        JSR     L1012
+        JSR     vecSendByte
         LDA     c64MacroId
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$00
-        JSR     L1012
-        JSR     L108D
+        JSR     vecSendByte
+        JSR     vecMacroRecStart
         BCC     L1FF8
         LDA     #$00
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$17
-        JSR     L105D
+        JSR     vecShowMsg
 
 L1FED:
         JSR     GETIN
         CMP     #$00
         BEQ     L1FED
-        JSR     L101B
+        JSR     vecHideMsg
         RTS
 
 L1FF8:
         LDA     #$0C
-        JSR     L105D
+        JSR     vecShowMsg
         LDA     c64MacroId
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$00
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$16
-        JSR     L105D
+        JSR     vecShowMsg
         LDA     #$0D
-        JSR     L1057
+        JSR     vecInputLine
         BCC     L2023
         LDA     #$20
         STA     L11BE
@@ -2083,7 +2111,7 @@ L2023:
         CMP     btxReg011
         BNE     L2023
         STA     L11ED
-        JSR     L1066
+        JSR     vecMacroRecOpen
         LDY     #$00
         STY     L11B9
 
@@ -2100,9 +2128,9 @@ L2036:
         LDA     #$FF
         STA     L11D8
         LDA     #$10
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$4B
-        JSR     L1012
+        JSR     vecSendByte
         RTS
 
 c64InputLine:
@@ -2112,7 +2140,7 @@ c64InputLine:
         STY     L11BC
 
 L2067:
-        JSR     L109F
+        JSR     vecGetKey
         BCS     L2067
         CMP     #$9D
         BEQ     L2074
@@ -2125,7 +2153,7 @@ L2074:
         BEQ     L2067
         DEC     L11BC
         LDA     #$08
-        JSR     L1012
+        JSR     vecSendByte
         JMP     L2067
 
 L2086:
@@ -2139,7 +2167,7 @@ L208E:
         BEQ     L2067
         LDA     #$00
         STA     L11BE,Y
-        JSR     L1012
+        JSR     vecSendByte
         CLC
         RTS
 
@@ -2147,7 +2175,7 @@ L209D:
         CMP     #$03
         BNE     L20A8
         LDA     #$00
-        JSR     L1012
+        JSR     vecSendByte
         SEC
         RTS
 
@@ -2162,7 +2190,7 @@ L20A8:
         CMP     #$2D
         BEQ     L2067
         PHA
-        JSR     L100F
+        JSR     vecXlatKey
         PLA
         BCS     L2067
         LDY     L11BC
@@ -2173,7 +2201,7 @@ L20A8:
         LDA     #$00
         STA     L11E8
         TXA
-        JSR     L1009
+        JSR     vecSendKey
         PLA
         STA     L11E8
         INC     L11BC
@@ -2182,7 +2210,7 @@ L20A8:
         BNE     L20EA
         DEC     L11BC
         LDA     #$08
-        JSR     L1012
+        JSR     vecSendByte
 
 L20EA:
         JMP     L2067
@@ -2191,9 +2219,9 @@ c64ShowMsg:
 ; vector 31 $105D - look message A up in c64StrTable and fall through into c64ShowMsgPtr
         ASL     A
         TAY
-        LDA     L10CC
+        LDA     c64StrTablePtr
         STA     FACMOH
-        LDA     L10CC+1
+        LDA     c64StrTablePtr+1
         STA     FACMO
         LDA     (FACMOH),Y
         TAX
@@ -2205,13 +2233,13 @@ c64ShowMsg:
 c64ShowMsgPtr:
 ; vector 30 $105A - send $10 $75 $10 $5A then the length-prefixed CEPT record at (FACMOH): draw the status-line overlay
         LDA     #$10
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$75
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$10
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$5A
-        JSR     L1012
+        JSR     vecSendByte
         LDY     #$00
         LDA     (FACMOH),Y
         STA     L11D7
@@ -2221,7 +2249,7 @@ c64ShowMsgPtr:
 L2122:
         LDY     L11B9
         LDA     (FACMOH),Y
-        JSR     L1012
+        JSR     vecSendByte
         LDY     L11B9
         INC     L11B9
         CPY     L11D7
@@ -2231,16 +2259,16 @@ L2122:
 c64SaveBuffer:
 ; vector 32 $1060 - msg 7 "Auf Diskette: File?", open a SEQ file and CIOUT the capture buffer to it; msg $0A offers a retry ("nochmal (J/N)?")
         LDA     #$13
-        JSR     L1057
+        JSR     vecInputLine
         BCC     L213E
         RTS
 
 L213E:
-        JSR     L1090
+        JSR     vecOpenSeqWrite
         BCS     L2174
-        LDA     c64PtrTable
+        LDA     c64BufStart
         STA     FACLO
-        LDA     c64PtrTable+1
+        LDA     c64BufStart+1
         STA     FACSGN
 
 L214D:
@@ -2265,23 +2293,23 @@ L216D:
         JMP     L214D
 
 L2170:
-        JSR     L1063
+        JSR     vecCloseWrite
         RTS
 
 L2174:
         LDA     #$0A
-        JSR     L105D
+        JSR     vecShowMsg
 
 L2179:
-        JSR     L109F
+        JSR     vecGetKey
         BCS     L2179
         AND     #$7F
         CMP     #$4A
         BNE     L218F
-        JSR     L1078
+        JSR     vecClearMsg
         LDA     #$07
-        JSR     L105D
-        JMP     L1060
+        JSR     vecShowMsg
+        JMP     vecSaveBuffer
 
 L218F:
         RTS
@@ -2289,7 +2317,7 @@ L218F:
 c64ClearMsg:
 ; vector 40 $1078 - show msg 1, the all-blank 40-column record: blank the status line without closing the overlay
         LDA     #$01
-        JSR     L105D
+        JSR     vecShowMsg
         RTS
 
 c64WaitDecoder:
@@ -2303,7 +2331,7 @@ L219F:
         BEQ     L21BF
         BIT     L11D9
         BPL     L21AC
-        JSR     L103F
+        JSR     vecCaptureRun
 
 L21AC:
         LDA     btxReg011
@@ -2361,7 +2389,7 @@ L21F3:
 
 c64CellToScreen:
 ; vector 43 $1081 - translate the six cell bytes with c64CellToChar and plot the result at column $11EE / row $11EF
-        JSR     L108A
+        JSR     vecCellToChar
         CMP     #$60
         BCC     L21FF
         AND     #$5F
@@ -2373,7 +2401,7 @@ L21FF:
 L2201:
         LDX     L11EE
         LDY     L11EF
-        JSR     L10A5
+        JSR     vecPlotChar
         RTS
 
 c64CellOut:
@@ -2435,7 +2463,7 @@ L225B:
         JMP     L2269
 
 L2260:
-        JSR     L108A
+        JSR     vecCellToChar
         CMP     #$DD
         BNE     L2269
         LDA     #$21
@@ -2579,9 +2607,9 @@ c64OpenPrinter:
 
 L234C:
         JSR     UNLSN
-        JSR     L1078
+        JSR     vecClearMsg
         LDA     #$0F
-        JSR     L105D
+        JSR     vecShowMsg
         SEC
         RTS
 
@@ -2598,11 +2626,11 @@ L234C:
 L2359:
         BIT     btxReg1F8
         BMI     L2364
-        JSR     L104B
+        JSR     vecIrqPlotCell
         JMP     KEY
 
 L2364:
-        JSR     L104B
+        JSR     vecIrqPlotCell
         PLA
         TAY
         PLA
@@ -2640,7 +2668,7 @@ L2396:
         BIT     L11D8
         BPL     L23A8
         PHA
-        JSR     L1066
+        JSR     vecMacroRecOpen
         PLA
         PHA
         JSR     CIOUT
@@ -2674,8 +2702,8 @@ L23BE:
         JMP     L23D7
 
 L23C8:
-        JSR     L1069
-        JSR     L1033
+        JSR     vecMacroTalk
+        JSR     vecDiskGetByte
         PHP
         PHA
         JSR     UNTLK
@@ -2686,16 +2714,16 @@ L23C8:
 L23D7:
         PHA
         LDA     #$00
-        JSR     L1012
-        JSR     L101B
+        JSR     vecSendByte
+        JSR     vecHideMsg
         LDA     #$00
         STA     L11EC
         LDA     #$10
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$2E
-        JSR     L1012
-        JSR     L101B
-        JSR     L106F
+        JSR     vecSendByte
+        JSR     vecHideMsg
+        JSR     vecMacroCloseRead
         PLA
         CLC
         RTS
@@ -2704,7 +2732,7 @@ L23F8:
         TXA
         CMP     #$01
         BNE     L2402
-        JSR     L107B
+        JSR     vecWaitDecoder
         SEC
         RTS
 
@@ -2723,7 +2751,7 @@ L2404:
         PLP
         BNE     L2463
         LDA     #$02
-        JSR     L107E
+        JSR     vecDelaySecs
         LDX     #$00
 
 L241E:
@@ -2735,19 +2763,19 @@ L241E:
 
 L2429:
         STX     L11BC
-        JSR     L1030
+        JSR     vecDiskOpenRead
         BCS     L2460
         STA     FACEXP
         STA     FACLO
-        JSR     L1033
+        JSR     vecDiskGetByte
         BVS     L2460
         STA     FACHO
         STA     FACSGN
         LDA     #$19
-        JSR     L105D
+        JSR     vecShowMsg
 
 L2443:
-        JSR     L1033
+        JSR     vecDiskGetByte
         BVS     L2457
         BCS     L2460
         LDY     #$00
@@ -2760,12 +2788,12 @@ L2454:
         JMP     L2443
 
 L2457:
-        JSR     L1036
-        JSR     L101B
+        JSR     vecDiskCloseRead
+        JSR     vecHideMsg
         JMP     (FACLO)
 
 L2460:
-        JSR     L1036
+        JSR     vecDiskCloseRead
 
 L2463:
         RTS
@@ -2907,12 +2935,12 @@ c64DiskShowError:
         LDA     #$6F
         STA     SA
         JSR     TKSA
-        JSR     L1078
+        JSR     vecClearMsg
         LDA     #$09
-        JSR     L105D
+        JSR     vecShowMsg
         LDA     #$00
         STA     L11DC
-        JSR     L1033
+        JSR     vecDiskGetByte
         BCS     L2648
         BVS     L2648
         CMP     #$30
@@ -2921,7 +2949,7 @@ c64DiskShowError:
         STA     L11DC
 
 L2609:
-        JSR     L1033
+        JSR     vecDiskGetByte
         BCS     L2648
         BVS     L2648
         CMP     #$30
@@ -2931,12 +2959,12 @@ L2609:
         STA     L11DC
 
 L261C:
-        JSR     L1033
+        JSR     vecDiskGetByte
         BCS     L2648
         BVS     L2648
 
 L2623:
-        JSR     L1033
+        JSR     vecDiskGetByte
         BCS     L2648
         BVS     L2648
         CMP     #$2C
@@ -2947,15 +2975,15 @@ L2623:
         LSR     A
         BCS     L2623
         TXA
-        JSR     L1012
+        JSR     vecSendByte
         JMP     L2623
 
 L263C:
         LDA     #$00
-        JSR     L1012
+        JSR     vecSendByte
 
 L2641:
-        JSR     L1033
+        JSR     vecDiskGetByte
         BCS     L2648
         BVC     L2641
 
@@ -2988,7 +3016,7 @@ c64DiskCheckError:
         BNE     L26A5
         LDA     #$00
         STA     L11DC
-        JSR     L1033
+        JSR     vecDiskGetByte
         BCS     L269D
         BVS     L269D
         CMP     #$30
@@ -2997,7 +3025,7 @@ c64DiskCheckError:
         STA     L11DC
 
 L2683:
-        JSR     L1033
+        JSR     vecDiskGetByte
         BCS     L269D
         BVS     L269D
         CMP     #$30
@@ -3007,7 +3035,7 @@ L2683:
         STA     L11DC
 
 L2696:
-        JSR     L1033
+        JSR     vecDiskGetByte
         BCS     L269D
         BVC     L2696
 
@@ -3040,15 +3068,15 @@ c64MacroRecStart:
         STA     FNADR+1
         LDA     #$00
         STA     STATUS
-        JSR     L10B1
+        JSR     vecOpenChannel
         BCC     L26D1
         LDA     #$0D
-        JSR     L105D
+        JSR     vecShowMsg
         SEC
         RTS
 
 L26D1:
-        JSR     L1072
+        JSR     vecDiskShowError
         BCS     L26D7
         RTS
 
@@ -3156,9 +3184,9 @@ L276F:
         STA     FNADR+1
         LDA     #$00
         STA     STATUS
-        JSR     L10B1
+        JSR     vecOpenChannel
         BCS     L27AD
-        JSR     L1072
+        JSR     vecDiskShowError
         BCC     L2795
         SEC
         RTS
@@ -3178,9 +3206,9 @@ L2795:
         RTS
 
 L27AD:
-        JSR     L1078
+        JSR     vecClearMsg
         LDA     #$0D
-        JSR     L105D
+        JSR     vecShowMsg
         SEC
         RTS
 
@@ -3207,19 +3235,19 @@ c64MacroDir:
         BIT     L11EC
         BMI     L2845
         LDA     #$10
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$4C
-        JSR     L1012
-        LDA     L10CA
+        JSR     vecSendByte
+        LDA     c64MacroDirPtr
         STA     FACEXP
-        LDA     L10CA+1
+        LDA     c64MacroDirPtr+1
         STA     FACHO
 
 L27EF:
         LDY     #$00
         LDA     (FACEXP),Y
         BEQ     L2801
-        JSR     L1012
+        JSR     vecSendByte
         INC     FACEXP
         BNE     L27EF
         INC     FACHO
@@ -3230,7 +3258,7 @@ L2801:
         STA     c64MacroId
 
 L2806:
-        JSR     L109C
+        JSR     vecMacroDirLine
         BCS     L2833
         JSR     STOP
         BEQ     L2833
@@ -3242,7 +3270,7 @@ L2806:
         STA     c64MacroId
 
 L281F:
-        JSR     L109C
+        JSR     vecMacroDirLine
         BCS     L2833
         JSR     STOP
         BEQ     L2833
@@ -3254,11 +3282,11 @@ L281F:
 L2833:
         JSR     STOP
         BEQ     L2833
-        JSR     L1075
+        JSR     vecDiskCheckError
         LDA     #$10
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$6C
-        JSR     L1012
+        JSR     vecSendByte
 
 L2845:
         RTS
@@ -3266,33 +3294,33 @@ L2845:
 c64MacroDirLine:
 ; vector 52 $109C - one directory line: "<id>: " followed by the first 17 characters of that macro file, padded with spaces, or dashes when it does not exist
         LDA     c64MacroId
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$3A
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$20
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$11
         STA     L11BA
-        JSR     L1096
+        JSR     vecMacroOpenRead
         BCS     L287B
         TXA
-        JSR     L1009
+        JSR     vecSendKey
         DEC     L11BA
 
 L2867:
-        JSR     L1033
+        JSR     vecDiskGetByte
         BCS     L28A5
         BVS     L2896
         CMP     #$00
         BEQ     L2896
-        JSR     L1009
+        JSR     vecSendKey
         DEC     L11BA
         BNE     L2867
         RTS
 
 L287B:
         LDA     #$2D
-        JSR     L1012
+        JSR     vecSendByte
         DEC     L11BA
         LDA     L11BA
         CMP     #$0B
@@ -3300,7 +3328,7 @@ L287B:
 
 L288A:
         LDA     #$20
-        JSR     L1012
+        JSR     vecSendByte
         DEC     L11BA
         BNE     L288A
         CLC
@@ -3308,10 +3336,10 @@ L288A:
 
 L2896:
         LDA     #$20
-        JSR     L1012
+        JSR     vecSendByte
         DEC     L11BA
         BNE     L2896
-        JSR     L106F
+        JSR     vecMacroCloseRead
         CLC
         RTS
 
@@ -3338,18 +3366,18 @@ c64DiskOpenRead:
 L28C3:
         JSR     UNTLK
         JSR     UNLSN
-        JSR     L10B1
+        JSR     vecOpenChannel
         BCS     L28EB
         LDA     SA
         STA     L11BB
-        JSR     L1075
+        JSR     vecDiskCheckError
         BCS     L28EB
         LDA     FA
         JSR     TALK
         LDA     L11BB
         STA     SA
         JSR     TKSA
-        JSR     L1033
+        JSR     vecDiskGetByte
         TAX
         CLC
         RTS
@@ -3396,7 +3424,7 @@ c64CloseWrite:
 
 c64MacroRecClose:
 ; vector 36 $106C - terminate the macro record file with a $00 and CLOSE device 8 channel 5
-        JSR     L1066
+        JSR     vecMacroRecOpen
         LDA     #$00
         JSR     CIOUT
         JSR     UNLSN
@@ -3460,60 +3488,60 @@ c64MenuTelesoft:
         ORA     L11D8
         BEQ     L29B1
         LDA     #$1E
-        JSR     L105D
+        JSR     vecShowMsg
 
 L29A8:
-        JSR     L109F
+        JSR     vecGetKey
         BCS     L29A8
-        JSR     L101B
+        JSR     vecHideMsg
         RTS
 
 L29B1:
-        JSR     L1078
+        JSR     vecClearMsg
         LDA     #$1A
-        JSR     L105D
+        JSR     vecShowMsg
         LDA     #$13
-        JSR     L1057
+        JSR     vecInputLine
         BCC     L29C4
-        JSR     L101B
+        JSR     vecHideMsg
         RTS
 
 L29C4:
-        JSR     L10B4
+        JSR     vecOpenPrgWrite
         BCC     L29D7
         LDA     #$17
-        JSR     L105D
+        JSR     vecShowMsg
 
 L29CE:
-        JSR     L109F
+        JSR     vecGetKey
         BCS     L29CE
-        JSR     L101B
+        JSR     vecHideMsg
         RTS
 
 L29D7:
         LDA     #$1B
-        JSR     L105D
+        JSR     vecShowMsg
         LDA     #$10
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$4D
-        JSR     L1012
-        LDA     c64PtrTable
+        JSR     vecSendByte
+        LDA     c64BufStart
         STA     FACLO
         STA     ARGLO
         STA     L11DA
-        LDA     c64PtrTable+1
+        LDA     c64BufStart+1
         STA     FACSGN
         STA     ARGSGN
         STA     L11DB
 
 L29FA:
-        JSR     L10AE
+        JSR     vecTelesoftByte
         BCC     L29FA
 
 L29FF:
         LDA     #$00
         STA     L11F0
-        JSR     L10AE
+        JSR     vecTelesoftByte
         BCS     L29FF
         CMP     #$3C
         BEQ     L2A11
@@ -3521,7 +3549,7 @@ L29FF:
         BNE     L29FA
 
 L2A11:
-        JSR     L10AE
+        JSR     vecTelesoftByte
         BCS     L29FF
         CMP     #$27
         BNE     L2A1D
@@ -3535,7 +3563,7 @@ L2A1D:
         STA     L11F0
         LDA     #$00
         STA     L11F1
-        JSR     L10AE
+        JSR     vecTelesoftByte
         BCS     L29FF
         CMP     #$43
         BNE     L2A39
@@ -3555,22 +3583,22 @@ L2A47:
         JMP     L29FA
 
 L2A4A:
-        JSR     L10AE
+        JSR     vecTelesoftByte
         BCS     L2ABA
-        JSR     L10AE
+        JSR     vecTelesoftByte
         BCS     L2ABA
         AND     #$0F
         BEQ     L2AB7
         STA     L11F5
 
 L2A5B:
-        JSR     L10AE
+        JSR     vecTelesoftByte
         BCS     L2ABA
         DEC     L11F5
         BEQ     L2AB7
         CMP     #$22
         BEQ     L2A8C
-        JSR     L10AE
+        JSR     vecTelesoftByte
         BCS     L2ABA
         DEC     L11F5
         BEQ     L2AB7
@@ -3579,7 +3607,7 @@ L2A5B:
         STA     L11F6
 
 L2A7A:
-        JSR     L10AE
+        JSR     vecTelesoftByte
         BCS     L29FF
         DEC     L11F5
         BEQ     L2AB7
@@ -3588,25 +3616,25 @@ L2A7A:
         JMP     L2A7A
 
 L2A8C:
-        JSR     L10AE
+        JSR     vecTelesoftByte
         BCS     L2ABA
-        JSR     L10AE
+        JSR     vecTelesoftByte
         CMP     #$42
         BNE     L2AA0
         LDA     #$1C
-        JSR     L105D
+        JSR     vecShowMsg
         JMP     L2AB7
 
 L2AA0:
         LDA     #$10
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$6D
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$1D
-        JSR     L105D
+        JSR     vecShowMsg
 
 L2AAF:
-        JSR     L109F
+        JSR     vecGetKey
         BCS     L2AAF
         JMP     L2AEE
 
@@ -3623,20 +3651,20 @@ L2ABD:
 L2AC0:
         LDA     #$FF
         STA     L11F4
-        JSR     L10AE
+        JSR     vecTelesoftByte
         BCS     L2ABA
         STA     L11F5
         CMP     #$00
         BEQ     L2ADB
 
 L2AD1:
-        JSR     L10AE
+        JSR     vecTelesoftByte
         BCS     L2ABA
         DEC     L11F5
         BNE     L2AD1
 
 L2ADB:
-        JSR     L10AE
+        JSR     vecTelesoftByte
         BCS     L2AE6
         JSR     CIOUT
         JMP     L2ADB
@@ -3648,12 +3676,12 @@ L2AE6:
 
 L2AEE:
         LDA     #$10
-        JSR     L1012
+        JSR     vecSendByte
         LDA     #$6D
-        JSR     L1012
-        JSR     L1078
-        JSR     L1063
-        JSR     L101B
+        JSR     vecSendByte
+        JSR     vecClearMsg
+        JSR     vecCloseWrite
+        JSR     vecHideMsg
 
 L2B01:
         LDA     btxXferEn
@@ -3670,7 +3698,7 @@ L2B0B:
 
 c64TelesoftByte:
 ; vector 58 $10AE - the telesoftware reader: fill the ring buffer from the decoder and hand out one decoded byte, tracking the '<'/'>' framing and the 6-bit pair encoding
-        JSR     L1018
+        JSR     vecGetByte
         BCS     L2B3A
         LDY     #$00
         STA     (FACLO),Y
@@ -3678,11 +3706,11 @@ c64TelesoftByte:
         BNE     c64TelesoftByte
         INC     FACSGN
         LDA     FACSGN
-        CMP     L10C3
+        CMP     c64BufEndPage
         BNE     c64TelesoftByte
-        LDA     c64PtrTable
+        LDA     c64BufStart
         STA     FACLO
-        LDA     c64PtrTable+1
+        LDA     c64BufStart+1
         STA     FACSGN
         JMP     c64TelesoftByte
 
@@ -3690,11 +3718,11 @@ L2B3A:
         LDA     btxReg090
         CMP     #$50
         BEQ     L2B50
-        JSR     L109F
+        JSR     vecGetKey
         BCS     L2B55
         CMP     #$03
         BEQ     L2B50
-        JSR     L1009
+        JSR     vecSendKey
         JMP     L2B55
 
 L2B50:
@@ -3718,11 +3746,11 @@ L2B64:
         BNE     L2B7F
         INC     ARGSGN
         LDX     ARGSGN
-        CPX     L10C3
+        CPX     c64BufEndPage
         BNE     L2B7F
-        LDX     c64PtrTable
+        LDX     c64BufStart
         STX     ARGLO
-        LDX     c64PtrTable+1
+        LDX     c64BufStart+1
         STX     ARGSGN
 
 L2B7F:

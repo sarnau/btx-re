@@ -167,8 +167,17 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 
 
 [labels]
-"0xBC19" = "c64KeyTable"
-"0xB468" = "c64PtrTable"
+"0xBC19" = "c64AsciiKeys"
+"0xB468" = "c64BufStart"
+"0xB46A" = "c64BufEnd"
+"0xB46B" = "c64BufEndPage"
+"0xB46C" = "c64StartPagePtr"
+"0xB46E" = "c64CtrlKeysPtr"
+"0xB470" = "c64GermanKeysPtr"
+"0xB472" = "c64MacroDirPtr"
+"0xB474" = "c64StrTablePtr"
+"0xB476" = "c64CtrlKeys"
+"0xB4F2" = "c64GermanKeys"
 "0xBD3F" = "c64MenuKeys"
 "0xBDE9" = "ceptMonitorMsg"
 "0xCD17" = "ceptMacroDir"
@@ -361,7 +370,67 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xB32D" = "c64CartHeader"
 "0xB340" = "c64ColdStart"
 "0xB3A6" = "c64LoadAddr"
-"0xB3A8" = "c64Payload"
+"0xB3A8" = "vecColdStart"
+"0xB3AB" = "vecStartSession"
+"0xB3AE" = "vecMainLoop"
+"0xB3B1" = "vecSendKey"
+"0xB3B4" = "vecMenu"
+"0xB3B7" = "vecXlatKey"
+"0xB3BA" = "vecSendByte"
+"0xB3BD" = "vecGetByteWait"
+"0xB3C0" = "vecGetByte"
+"0xB3C3" = "vecHideMsg"
+"0xB3C6" = "vecCaptureEnd"
+"0xB3C9" = "vecCtrlThrottle"
+"0xB3CC" = "vecMenuAscii"
+"0xB3CF" = "vecMenuBtx"
+"0xB3D2" = "vecMenuQuit"
+"0xB3D5" = "vecMenuLoad"
+"0xB3D8" = "vecDiskOpenRead"
+"0xB3DB" = "vecDiskGetByte"
+"0xB3DE" = "vecDiskCloseRead"
+"0xB3E1" = "vecMenuMacro"
+"0xB3E4" = "vecMenuCapture"
+"0xB3E7" = "vecCaptureRun"
+"0xB3EA" = "vecMenuDisplay"
+"0xB3ED" = "vecMenuXfer"
+"0xB3F0" = "vecMenuScreen"
+"0xB3F3" = "vecIrqPlotCell"
+"0xB3F6" = "vecMenuKeybd"
+"0xB3F9" = "vecMenuPause"
+"0xB3FC" = "vecMenuEdit"
+"0xB3FF" = "vecInputLine"
+"0xB402" = "vecShowMsgPtr"
+"0xB405" = "vecShowMsg"
+"0xB408" = "vecSaveBuffer"
+"0xB40B" = "vecCloseWrite"
+"0xB40E" = "vecMacroRecOpen"
+"0xB411" = "vecMacroTalk"
+"0xB414" = "vecMacroRecClose"
+"0xB417" = "vecMacroCloseRead"
+"0xB41A" = "vecDiskShowError"
+"0xB41D" = "vecDiskCheckError"
+"0xB420" = "vecClearMsg"
+"0xB423" = "vecWaitDecoder"
+"0xB426" = "vecDelaySecs"
+"0xB429" = "vecCellToScreen"
+"0xB42C" = "vecCellToFile"
+"0xB42F" = "vecCellToPrinter"
+"0xB432" = "vecCellToChar"
+"0xB435" = "vecMacroRecStart"
+"0xB438" = "vecOpenSeqWrite"
+"0xB43B" = "vecOpenPrinter"
+"0xB43E" = "vecMacroOpenRead"
+"0xB441" = "vecMacroDir"
+"0xB444" = "vecMacroDirLine"
+"0xB447" = "vecGetKey"
+"0xB44A" = "vecShowSplash"
+"0xB44D" = "vecPlotChar"
+"0xB450" = "vecSetCursor"
+"0xB453" = "vecMenuTelesoft"
+"0xB456" = "vecTelesoftByte"
+"0xB459" = "vecOpenChannel"
+"0xB45C" = "vecOpenPrgWrite"
 "0xB552" = "c64MacroFile"
 "0xB55C" = "c64MacroId"
 "0xD419" = "fmtKeys"
@@ -418,7 +487,7 @@ this block is a filename, not the strings."""
 Data between the jump table and the string records.
 
 The nine $00 bytes at runtime $10B7 are padding, not data: the jump table ends
-there and $10B7 + 9 is $10C0, where c64PtrTable begins, so they align the
+there and $10B7 + 9 is $10C0, where c64BufStart begins, so they align the
 pointer table to a 16-byte boundary. Nothing references them.
 
 What follows is 4-byte records such as 89 10 52 00 / 8B 10 41 00 / 8A 10 54 00,
@@ -458,19 +527,34 @@ either passes the interrupt on to the KERNAL or consumes it. btxReg1F8 is one
 of the registers whose function is otherwise unestablished; that the handler
 tests it first says it carries a request or status bit."""
 "0xB468" = """
-16-bit pointers, runtime $10C0-$10CD.
+Seven pointer slots, runtime $10C0-$10CD, read individually rather than indexed.
 
-  $10C0  ceptStartPage    the startup page
-  $10C2  $8000            the cartridge window - left as bytes, since it names
-                          hardware rather than a location in this program
-  $10C4  ceptStartPage    again
-  $10C6  $10CE            the two bytes immediately after this table
-  $10C8  $114A            in the variable block
-  $10CA  ceptMacroDir     the "Makro-Verzeichnis" page
-  $10CC  c64StrTable      the string table
+  $10C0  c64BufStart       ceptStartPage - the base of the capture buffer
+  $10C2  c64BufEnd         $8000, the cartridge window: the buffer runs up to
+                           the decoder I/O and no further. Left as two bytes,
+                           since only the page at c64BufEndPage is ever tested
+  $10C4  c64StartPagePtr   ceptStartPage again, the page c64StartSession sends
+  $10C6  c64CtrlKeysPtr    c64CtrlKeys, the two bytes right after this block
+  $10C8  c64GermanKeysPtr  c64GermanKeys
+  $10CA  c64MacroDirPtr    ceptMacroDir, the "Makro-Verzeichnis" page
+  $10CC  c64StrTablePtr    c64StrTable, the status-message table
 
-Three of the seven point at CEPT pages or the string table, which is what
-identifies this as a table of data pointers rather than loose bytes."""
+The first two slots pair up: the capture buffer starts where ceptStartPage sits,
+so the startup page is the first thing a capture overwrites.
+
+The three key tables form c64XlatKey's search chain, tried in this order:
+
+  c64AsciiKeys   2-byte records, only while alpha mode is on. The ASCII
+                 bracket set - # @ ; : @ + [ ] map to @ { | } ~ [ \\ ]
+  c64GermanKeys  4-byte records, only while the German keyboard is selected.
+                 @ [ \\ ] : ; and their shifts become the umlauts, via the CEPT
+                 diaeresis composition $19 $48 followed by the base letter
+  c64CtrlKeys    4-byte records, always searched last. Cursor keys, DEL, HOME,
+                 CLR, the eight colour keys and F1-F8
+
+A record is one PETSCII key followed by the CEPT bytes it expands to, up to
+three of them, and a $00 in the first CEPT byte means the key is swallowed."""
+
 "0xBD3F" = """
 Menu key dispatch: records of one ASCII key byte then a 16-bit handler
 address, terminated by $00.
@@ -594,7 +678,13 @@ $174C-$2943 with data below it. The table is the module's whole API surface, and
 the C64 side of the module is entirely built out of it - nothing calls a routine
 except through its slot.
 
-Vectors 44 and 45 share a target ($220B), so 60 distinct addresses carry labels.
+Each slot is labelled vec<Name> and its body c64<Name>, so a call site reads
+JSR vecSendByte and the routine it lands in is c64SendByte. Vectors 44 and 45
+share one body (c64CellOut at $220B) under two slots, vecCellToFile and
+vecCellToPrinter; c64MenuXfer picks between them on FA == 4.
+
+vecColdStart doubles as the payload's load address - it is what c64LoadAddr
+points at, so the .prg header and vector 0 are the same $1000.
 
 The menu at vector 4 is what unlocks the rest. It reads one letter and looks it
 up in c64MenuKeys. The two menu lines it displays are messages 3 and 4 of
@@ -879,7 +969,7 @@ is why a 6801 trace never reaches it.
 $B32D-$B33F  c64CartHeader C64 autostart cartridge header
 $B340-$B3A5  c64ColdStart  cartridge cold-start, runs at C64 $8000
 $B3A6-$B3A7  c64LoadAddr   $00 $10 - little-endian load address $1000
-$B3A8-$D108  c64Payload    7521 bytes, loaded to C64 $1000-$2D60
+$B3A8-$D108  vecColdStart  7521 bytes, loaded to C64 $1000-$2D60
 
 ROM $B32D maps to C64 $8000, proved by the cartridge header itself:
 
@@ -1072,7 +1162,7 @@ vectors before entering the main firmware."""
 "0xBAA7" = "vector 1 $1003 - show the splash, send ceptStartPage to the decoder, reset the capture-buffer pointers and mode flags"
 "0xBAF4" = "vector 2 $1006 - main loop: fetch a key, STOP ends a capture, F7 ($88) opens the menu, anything else goes to c64SendKey"
 "0xBB2A" = "vector 3 $1009 - translate one key with c64XlatKey and send the resulting 1-3 CEPT bytes to the decoder"
-"0xBB5E" = "vector 5 $100F - PETSCII key -> CEPT, via c64KeyTable (2-byte, alpha mode), $10C8 or $10C6 (4-byte). C=1 when the key has no mapping"
+"0xBB5E" = "vector 5 $100F - PETSCII key -> CEPT, via c64AsciiKeys (2-byte records, alpha mode), then c64GermanKeys, then c64CtrlKeys (4-byte records). C=1 when the key has no mapping"
 "0xBC37" = "vector 6 $1012 - push A into the 64-byte C64->decoder ring at btxReg040, spinning while it is full, then run c64CtrlThrottle"
 "0xBC64" = "vector 7 $1015 - c64GetByte in a loop: block until the decoder delivers a byte"
 "0xBC6A" = "vector 8 $1018 - pull one byte from the 32-byte decoder->C64 ring at btxReg020. C=1 when empty. Read pointers twice to ride out metastability"
@@ -1080,12 +1170,12 @@ vectors before entering the main firmware."""
 "0xBC9E" = "vector 10 $101E - STOP during a capture: send $10 $6D, wait for the transfer to drain, record the end pointer and offer c64SaveBuffer"
 "0xBCD8" = "vector 11 $1021 - poll keyboard row 7 for CTRL ($DC01 = $FB) and burn ~2000 cycles while it is held: the classic hold-to-slow-output"
 "0xBCF6" = "vector 4 $100C - the <F7> menu: shows msg 3/4, reads a letter and dispatches through c64MenuKeys; any other key toggles the two menu lines"
-"0xBD67" = "vector 12 $1024 - menu 'A' (ASCII): send $10 $67 and set the alpha-mode flag, which switches c64XlatKey to c64KeyTable"
+"0xBD67" = "vector 12 $1024 - menu 'A' (ASCII): send $10 $67 and set the alpha-mode flag, which adds c64AsciiKeys to the front of c64XlatKey's search chain"
 "0xBD77" = "vector 13 $1027 - menu 'B' (Btx): send $10 $66 and clear the alpha-mode flag"
 "0xBD87" = "vector 14 $102A - menu 'Q' (Quit): send ceptMonitorMsg (\"C-64 - Betrieb ... Monitor an den Rechner umstecken\"), close the drive command channel and JMP (KERNAL_RESET)"
 "0xBE43" = "vector 15 $102D - menu 'L' (Load): msg 0 \"von Diskette: File?\", then stream the file to the decoder through c64DiskOpenRead/GetByte/CloseRead"
 "0xBECA" = "vector 19 $1039 - menu 'M' (Macro): msg $0B, read a macro id ('0'-'9','A'-'Z') or '?' for c64MacroDir, then send $08 $20 <id> $00 to the decoder and play the macro back"
-"0xBFC2" = "vector 20 $103C - menu 'C' (Capture): send $10 $4D, msg 5 \"Capture-Modus ein - Ende: STOP-Taste\", arm the capture flag and point the write pointer at c64PtrTable"
+"0xBFC2" = "vector 20 $103C - menu 'C' (Capture): send $10 $4D, msg 5 \"Capture-Modus ein - Ende: STOP-Taste\", arm the capture flag and point the write pointer at c64BufStart"
 "0xBFE7" = "vector 21 $103F - the capture engine: drain c64GetByte into the buffer until page $80 is reached, then msg 8 \"Puffer voll - File?\" and c64SaveBuffer"
 "0xC03D" = "vector 22 $1042 - menu 'D' (Display): msg 6 \"Capture-Puffer anzeigen\", replay the captured bytes to the decoder, STOP aborts"
 "0xC09B" = "vector 23 $1045 - menu 'X' (Xfer): read all 40x25 cells back from the decoder six bytes at a time and hardcopy them; msg $0E asks Drucker ('D') or File ('F')"

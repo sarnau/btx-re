@@ -32,7 +32,7 @@ PCINT       EQU     $FF5B
 ; $B32D-$B33F  c64CartHeader C64 autostart cartridge header
 ; $B340-$B3A5  c64ColdStart  cartridge cold-start, runs at C64 $8000
 ; $B3A6-$B3A7  c64LoadAddr   $00 $10 - little-endian load address $1000
-; $B3A8-$D108  c64Payload    7521 bytes, loaded to C64 $1000-$2D60
+; $B3A8-$D108  vecColdStart  7521 bytes, loaded to C64 $1000-$2D60
 ;
 ; ROM $B32D maps to C64 $8000, proved by the cartridge header itself:
 ;
