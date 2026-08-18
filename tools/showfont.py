@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """Render the ROM character generators as ASCII art.
 
-    python3 tools/showfont.py wide   0x41 0x49
-    python3 tools/showfont.py narrow 0x20 0x30
+    python3 tools/showfont.py g0      0x41 0x49
+    python3 tools/showfont.py mosaic  0x21 0x29
+    python3 tools/showfont.py narrow  0x20 0x30
 
-The wide font stores each row little-endian (first byte = right half), which is
-why a naive big-endian read splits every glyph in two.
+The $8000 area holds four 96-glyph sets. Their rows are stored little-endian
+(first byte = right half), which is why a naive big-endian read splits every
+glyph across two characters. Ink sits in columns 4-15 (the 12-pixel CEPT cell);
+the top bits are flags, not pixels.
 """
 
 from __future__ import annotations
@@ -20,8 +23,11 @@ ROWS = 10
 
 FONTS = {
     # name: (address, bytes per row, glyph count, row byte order swapped)
-    "wide": (0x8000, 2, 384, True),
-    "narrow": (0x9E00, 1, 104, False),
+    "g0": (0x8000, 2, 96, True),        # Latin alphanumerics
+    "accents": (0x8780, 2, 96, True),   # non-spacing diacriticals (CEPT G2)
+    "mosaic": (0x8F00, 2, 96, True),    # 2x3 block mosaics (CEPT G1)
+    "set3": (0x9680, 2, 96, True),      # line drawing / diagonals
+    "narrow": (0x9E00, 1, 104, False),  # 8px font
 }
 
 

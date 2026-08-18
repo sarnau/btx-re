@@ -26,7 +26,10 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 
 
 [labels]
-"0x8000" = "fontWide"
+"0x8000" = "fontG0"
+"0x8780" = "fontAccents"
+"0x8F00" = "fontMosaic"
+"0x9680" = "fontSet3"
 "0x9E00" = "fontNarrow"
 "0xB200" = "reset"
 "0xF129" = "stubSci"
@@ -40,18 +43,29 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 
 [block_comments]
 "0x8000" = """
-Wide character generator: 384 glyphs, 20 bytes each, $8000-$9DFF.
+Character generator: four 96-glyph sets of 20 bytes each, $8000-$9DFF.
 
-10 rows per glyph, 2 bytes per row. Rows are stored LITTLE-ENDIAN: the first
-byte of a row is its RIGHT half, the second its LEFT half. Reading them in the
-6801's usual big-endian order splits every glyph into two halves of different
-characters, which is what makes this font look like garbage at first.
+Each glyph is 10 rows of 2 bytes. Rows are stored LITTLE-ENDIAN: the first byte
+of a row is its RIGHT half, the second its LEFT half. Reading them in the
+6801's usual big-endian order splits every glyph across two characters, which
+is what makes this data look like garbage at first.
 
-Glyph ink spans roughly 12 of the 16 columns, matching the CEPT 12x10
-character matrix. Glyph 0 is chr$20 (space); 384 glyphs = four 96-character
-sets, consistent with CEPT G0/G1/G2/G3.
+Ink occupies columns 4-15 of the swapped 16-bit word - the 12-pixel CEPT cell.
+The top four bits (columns 0-3) are not ink: bit 15 is set on every row of
+every glyph in the mosaic set at $8F00 and clear throughout the G0 set, so it
+carries a flag whose meaning is not yet established.
 
-Verified by rendering: A-H and the chr$21-$2F punctuation all read correctly."""
+  $8000  fontG0       96 glyphs  Latin alphanumerics and punctuation
+  $8780  fontAccents  96 glyphs  non-spacing diacriticals and symbols (CEPT G2)
+  $8F00  fontMosaic   96 glyphs  2x3 block mosaics (CEPT G1)
+  $9680  fontSet3     96 glyphs  line-drawing/diagonals; $21-$3F are a repeated
+                                 placeholder glyph rather than distinct shapes
+
+Set 0 verified by rendering A-O and chr$21-$2F. Set 2 verified by the mosaic
+bit progression: chr$21 lights the top-left block, $22 top-right, $23 both,
+$24 middle-left - one bit per block, exactly as CEPT G1 specifies.
+
+Render any of them with:  python3 tools/showfont.py <set> <first> <last>"""
 "0x9E00" = """
 Narrow character generator: 104 glyphs, 10 bytes each, $9E00-$A20F.
 
@@ -116,6 +130,21 @@ kind = "words"
 # Character generators. See the block comments above for the exact geometry.
 [[regions]]
 start = 0x8000
+end = 0x8780
+kind = "chargen"
+
+[[regions]]
+start = 0x8780
+end = 0x8F00
+kind = "chargen"
+
+[[regions]]
+start = 0x8F00
+end = 0x9680
+kind = "chargen"
+
+[[regions]]
+start = 0x9680
 end = 0x9E00
 kind = "chargen"
 

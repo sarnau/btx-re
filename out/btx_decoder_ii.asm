@@ -38,19 +38,30 @@ softVecSwi  EQU     $FA
         ORG     $8000
 
 
-; Wide character generator: 384 glyphs, 20 bytes each, $8000-$9DFF.
+; Character generator: four 96-glyph sets of 20 bytes each, $8000-$9DFF.
 ;
-; 10 rows per glyph, 2 bytes per row. Rows are stored LITTLE-ENDIAN: the first
-; byte of a row is its RIGHT half, the second its LEFT half. Reading them in the
-; 6801's usual big-endian order splits every glyph into two halves of different
-; characters, which is what makes this font look like garbage at first.
+; Each glyph is 10 rows of 2 bytes. Rows are stored LITTLE-ENDIAN: the first byte
+; of a row is its RIGHT half, the second its LEFT half. Reading them in the
+; 6801's usual big-endian order splits every glyph across two characters, which
+; is what makes this data look like garbage at first.
 ;
-; Glyph ink spans roughly 12 of the 16 columns, matching the CEPT 12x10
-; character matrix. Glyph 0 is chr$20 (space); 384 glyphs = four 96-character
-; sets, consistent with CEPT G0/G1/G2/G3.
+; Ink occupies columns 4-15 of the swapped 16-bit word - the 12-pixel CEPT cell.
+; The top four bits (columns 0-3) are not ink: bit 15 is set on every row of
+; every glyph in the mosaic set at $8F00 and clear throughout the G0 set, so it
+; carries a flag whose meaning is not yet established.
 ;
-; Verified by rendering: A-H and the chr$21-$2F punctuation all read correctly.
-fontWide:
+;   $8000  fontG0       96 glyphs  Latin alphanumerics and punctuation
+;   $8780  fontAccents  96 glyphs  non-spacing diacriticals and symbols (CEPT G2)
+;   $8F00  fontMosaic   96 glyphs  2x3 block mosaics (CEPT G1)
+;   $9680  fontSet3     96 glyphs  line-drawing/diagonals; $21-$3F are a repeated
+;                                  placeholder glyph rather than distinct shapes
+;
+; Set 0 verified by rendering A-O and chr$21-$2F. Set 2 verified by the mosaic
+; bit progression: chr$21 lights the top-left block, $22 top-right, $23 both,
+; $24 middle-left - one bit per block, exactly as CEPT G1 specifies.
+;
+; Render any of them with:  python3 tools/showfont.py <set> <first> <last>
+fontG0:
         FCB     $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
         FCB     $00,$00,$00,$00,$00,$00,$C0,$00,$C0,$00,$C0,$00,$C0,$00,$C0,$00
         FCB     $00,$00,$C0,$00,$00,$00,$00,$00,$00,$00,$70,$07,$30,$03,$60,$06
@@ -171,6 +182,8 @@ fontWide:
         FCB     $60,$00,$60,$00,$C0,$03,$00,$00,$FC,$0F,$00,$00,$00,$00,$00,$00
         FCB     $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$FE,$07
         FCB     $FE,$07,$FE,$07,$FE,$07,$FE,$07,$FE,$07,$FE,$07,$FE,$07,$00,$00
+
+fontAccents:
         FCB     $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
         FCB     $00,$00,$00,$00,$00,$00,$C0,$00,$00,$00,$C0,$00,$C0,$00,$C0,$00
         FCB     $C0,$00,$C0,$00,$00,$00,$00,$00,$00,$00,$60,$00,$60,$00,$FC,$03
@@ -291,6 +304,8 @@ fontWide:
         FCB     $C0,$00,$30,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$F0,$0C
         FCB     $0C,$0F,$0C,$0C,$CC,$0C,$30,$0C,$00,$00,$00,$00,$00,$00,$FE,$07
         FCB     $FE,$07,$FE,$07,$FE,$07,$FE,$07,$FE,$07,$FE,$07,$FE,$07,$00,$00
+
+fontMosaic:
         FCB     $00,$80,$00,$80,$00,$80,$00,$80,$00,$80,$00,$80,$00,$80,$00,$80
         FCB     $00,$80,$00,$80,$C0,$8F,$C0,$8F,$C0,$8F,$00,$80,$00,$80,$00,$80
         FCB     $00,$80,$00,$80,$00,$80,$00,$80,$3F,$80,$3F,$80,$3F,$80,$00,$80
@@ -411,6 +426,8 @@ fontWide:
         FCB     $FF,$8F,$FF,$8F,$FF,$8F,$FF,$8F,$3F,$80,$3F,$80,$3F,$80,$FF,$8F
         FCB     $FF,$8F,$FF,$8F,$FF,$8F,$FF,$8F,$FF,$8F,$FF,$8F,$00,$80,$FE,$87
         FCB     $FE,$87,$FE,$87,$FE,$87,$FE,$87,$FE,$87,$FE,$87,$FE,$87,$00,$80
+
+fontSet3:
         FCB     $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
         FCB     $00,$00,$00,$00,$FF,$0F,$3F,$0F,$FF,$0F,$3F,$0F,$3F,$0F,$7F,$0E
         FCB     $FF,$0C,$E7,$0C,$0F,$0E,$FF,$0F,$FF,$0F,$3F,$0F,$FF,$0F,$3F,$0F
