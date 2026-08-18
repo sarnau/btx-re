@@ -440,10 +440,10 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xE34E" = "csiDigit9"
 "0xE35B" = "csiFinalB"
 "0xE367" = "escDefine"
-"0xFC45" = "lineAddr5800"
-"0xFC77" = "lineAddr5400"
-"0xFCA9" = "lineAddr4400"
-"0xFCDB" = "lineAddr4000"
+"0xFC45" = "lineAddrAccent"
+"0xFC77" = "lineAddrChar"
+"0xFCA9" = "lineAddrAttr"
+"0xFCDB" = "lineAddrRender"
 "0xF14C" = "txBitTick"
 "0xF61F" = "sciRxHandler"
 "0xB2E2" = "sendPayloadToC64"
@@ -553,6 +553,20 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xFFF0" = "vectors"
 
 [block_comments]
+"0xFC45" = """
+Row start addresses for the four display planes, 25 entries each. $E9A5 reloads
+all four whenever the cursor row changes, which is what keeps the planes in
+step.
+
+  $FC45  lineAddrAccent  planeAccent  stride 40
+  $FC77  lineAddrChar    planeChar    stride 40
+  $FCA9  lineAddrAttr    planeAttr    stride 160
+  $FCDB  lineAddrRender  planeRender  stride 40
+
+The strides are the clearest statement of the plane layout in the whole image:
+three planes hold one byte per cell over 40 columns, and planeAttr holds four,
+which is why its rows are 160 apart. The last entry of each table is row 24 -
+the status line under the 24-row CEPT page."""
 "0xB552" = """
 CBM DOS filename template, 15 bytes at runtime $11AA:
 
@@ -1599,6 +1613,10 @@ vectors before entering the main firmware."""
 
 # MC6801 internal register file. Names from the MC6801 Reference Manual.
 [symbols]
+"0x4000" = "planeRender"
+"0x4400" = "planeAttr"
+"0x5400" = "planeChar"
+"0x5800" = "planeAccent"
 "0x0617" = "asciiCol"
 "0x0618" = "asciiRow"
 "0x0000" = "P1DDR"

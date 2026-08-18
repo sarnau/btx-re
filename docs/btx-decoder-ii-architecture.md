@@ -391,14 +391,17 @@ row, no byte-order surprise.
 Four planes, addressed through line tables at `$FC45`–`$FD0C` — 25 rows of 40
 columns, the CEPT page plus a status line:
 
-| Plane | Per cell | Role |
-|---|---|---|
-| `$4000` | 1 byte | render byte derived from attribute bits at `$E860` |
-| `$4400` | 4 bytes | attributes, written only by the C1 handlers |
-| `$5400` | 1 byte | **character codes** |
-| `$5800` | 1 byte | combining-accent overlay |
+| Plane | Base | Per cell | Row stride | Role |
+|---|---|---|---|---|
+| `planeRender` | `$4000` | 1 byte | 40 | render byte derived from attribute bits at `$E860` |
+| `planeAttr` | `$4400` | 4 bytes | 160 | attributes, written only by the C1 handlers |
+| `planeChar` | `$5400` | 1 byte | 40 | **character codes** |
+| `planeAccent` | `$5800` | 1 byte | 40 | combining-accent overlay |
 
-`$E9A5` reloads all four row pointers whenever the cursor row changes.
+`$E9A5` reloads all four row pointers whenever the cursor row changes, from the
+four tables at `$FC45`–`$FD0C`. Those strides are the clearest statement of the
+layout anywhere in the image: three planes are one byte per cell across 40
+columns, and `planeAttr` is four, which is exactly why its rows sit 160 apart.
 
 What separates attributes from content is decisive: `$04B1`–`$04B4` are never
 assigned a raw byte — only ever bit-manipulated by the C1 handlers — whereas

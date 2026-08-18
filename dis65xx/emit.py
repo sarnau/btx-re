@@ -113,14 +113,36 @@ def _equ_lines(sidecar: Sidecar) -> list[str]:
     return lines
 
 
-def _fdb_line(words: list[int], names: dict[int, str] | None = None) -> str:
+# How far into a named data region a word may point and still print as an
+# offset from it. The largest real case is the attribute plane's last row, at
+# base+3840.
+_MAX_OFFSET = 0x1000
+
+
+def _word_name(word: int, names: dict[int, str], symbols: dict[int, str]) -> str:
+    """The name of what a word points at, as NAME or NAME+offset."""
+    if word in names:
+        return names[word]
+    # A row of a display plane is the plane's base plus a multiple of the row
+    # stride, so it reads as an offset from the plane. Only data symbols
+    # qualify: a code label plus an offset would be naming a point inside an
+    # instruction, which is never what a table entry means.
+    base = max((a for a in symbols if a <= word and word - a < _MAX_OFFSET),
+               default=None)
+    if base is not None:
+        return f"{symbols[base]}+{word - base}"
+    return f"${word:04X}"
+
+
+def _fdb_line(words: list[int], names: dict[int, str] | None = None,
+              symbols: dict[int, str] | None = None) -> str:
     """A word that is the address of something named prints the name.
 
     Every entry of a ptr_table is a handler address, and the hardware vectors
     are addresses too, so showing them as hex hides the one thing the table is
     for - which handler each slot reaches."""
-    names = names or {}
-    values = ",".join(names.get(w) or f"${w:04X}" for w in words)
+    names, symbols = names or {}, symbols or {}
+    values = ",".join(_word_name(w, names, symbols) for w in words)
     return f"{'':{_INDENT}}{'FDB':{_MNEM_WIDTH}}{values}"
 
 
@@ -245,7 +267,7 @@ def emit(data: bytes, result: TraceResult, sidecar: Sidecar) -> str:
                     int.from_bytes(data[addr - base + 2 * i: addr - base + 2 * i + 2], "big")
                     for i in range(count)
                 ]
-                lines.append(_fdb_line(words, names))
+                lines.append(_fdb_line(words, names, sidecar.symbols))
                 addr += 2 * count
                 continue
 

@@ -58,6 +58,10 @@ scrollBottom  EQU     $1B1D
 cursorRow     EQU     $1B1E
 cursorCol     EQU     $1B1F
 rowChar       EQU     $1B21
+planeRender   EQU     $4000
+planeAttr     EQU     $4400
+planeChar     EQU     $5400
+planeAccent   EQU     $5800
 c64FifoWr     EQU     $6009
 c64FifoRd     EQU     $600A
 c64XferEn     EQU     $600B
@@ -8789,23 +8793,36 @@ LFC2F:
 seqIgnored:
         JMP     LE9A2
 
-lineAddr5800:
-        FDB     $5800,$5828,$5850,$5878,$58A0,$58C8,$58F0,$5918
-        FDB     $5940,$5968,$5990,$59B8,$59E0,$5A08,$5A30,$5A58
-        FDB     $5A80,$5AA8,$5AD0,$5AF8,$5B20,$5B48,$5B70,$5B98
-        FDB     $5BC0
+; Row start addresses for the four display planes, 25 entries each. $E9A5 reloads
+; all four whenever the cursor row changes, which is what keeps the planes in
+; step.
+;
+;   $FC45  lineAddrAccent  planeAccent  stride 40
+;   $FC77  lineAddrChar    planeChar    stride 40
+;   $FCA9  lineAddrAttr    planeAttr    stride 160
+;   $FCDB  lineAddrRender  planeRender  stride 40
+;
+; The strides are the clearest statement of the plane layout in the whole image:
+; three planes hold one byte per cell over 40 columns, and planeAttr holds four,
+; which is why its rows are 160 apart. The last entry of each table is row 24 -
+; the status line under the 24-row CEPT page.
+lineAddrAccent:
+        FDB     planeAccent,planeAccent+40,planeAccent+80,planeAccent+120,planeAccent+160,planeAccent+200,planeAccent+240,planeAccent+280
+        FDB     planeAccent+320,planeAccent+360,planeAccent+400,planeAccent+440,planeAccent+480,planeAccent+520,planeAccent+560,planeAccent+600
+        FDB     planeAccent+640,planeAccent+680,planeAccent+720,planeAccent+760,planeAccent+800,planeAccent+840,planeAccent+880,planeAccent+920
+        FDB     planeAccent+960
 
-lineAddr5400:
-        FDB     $5400,$5428,$5450,$5478,$54A0,$54C8,$54F0,$5518
-        FDB     $5540,$5568,$5590,$55B8,$55E0,$5608,$5630,$5658
-        FDB     $5680,$56A8,$56D0,$56F8,$5720,$5748,$5770,$5798
-        FDB     $57C0
+lineAddrChar:
+        FDB     planeChar,planeChar+40,planeChar+80,planeChar+120,planeChar+160,planeChar+200,planeChar+240,planeChar+280
+        FDB     planeChar+320,planeChar+360,planeChar+400,planeChar+440,planeChar+480,planeChar+520,planeChar+560,planeChar+600
+        FDB     planeChar+640,planeChar+680,planeChar+720,planeChar+760,planeChar+800,planeChar+840,planeChar+880,planeChar+920
+        FDB     planeChar+960
 
-lineAddr4400:
-        FDB     $4400,$44A0,$4540,$45E0,$4680,$4720,$47C0,$4860
-        FDB     $4900,$49A0,$4A40,$4AE0,$4B80,$4C20,$4CC0,$4D60
-        FDB     $4E00,$4EA0,$4F40,$4FE0,$5080,$5120,$51C0,$5260
-        FDB     $5300
+lineAddrAttr:
+        FDB     planeAttr,planeAttr+160,planeAttr+320,planeAttr+480,planeAttr+640,planeAttr+800,planeAttr+960,planeAttr+1120
+        FDB     planeAttr+1280,planeAttr+1440,planeAttr+1600,planeAttr+1760,planeAttr+1920,planeAttr+2080,planeAttr+2240,planeAttr+2400
+        FDB     planeAttr+2560,planeAttr+2720,planeAttr+2880,planeAttr+3040,planeAttr+3200,planeAttr+3360,planeAttr+3520,planeAttr+3680
+        FDB     planeAttr+3840
 
 ; Screen line-address tables: four tables of 25 big-endian pointers, one entry
 ; per display row, $FC45-$FD0C. 25 rows of 40 columns - the CEPT 24-row page
@@ -8860,11 +8877,11 @@ lineAddr4400:
 ; the write at $E972 and the setup at $E9C1 - so the video hardware consumes it,
 ; compositing the mark from $5800 over the glyph from $5400 with the attribute
 ; bit as the enable.
-lineAddr4000:
-        FDB     $4000,$4028,$4050,$4078,$40A0,$40C8,$40F0,$4118
-        FDB     $4140,$4168,$4190,$41B8,$41E0,$4208,$4230,$4258
-        FDB     $4280,$42A8,$42D0,$42F8,$4320,$4348,$4370,$4398
-        FDB     $43C0
+lineAddrRender:
+        FDB     planeRender,planeRender+40,planeRender+80,planeRender+120,planeRender+160,planeRender+200,planeRender+240,planeRender+280
+        FDB     planeRender+320,planeRender+360,planeRender+400,planeRender+440,planeRender+480,planeRender+520,planeRender+560,planeRender+600
+        FDB     planeRender+640,planeRender+680,planeRender+720,planeRender+760,planeRender+800,planeRender+840,planeRender+880,planeRender+920
+        FDB     planeRender+960
         FCB     $5A,$70,$76,$7F,$6F,$7E,$76,$76,$52,$4C,$56,$46,$5C,$51,$49,$41
         FCB     $49,$47,$5E,$0A
 

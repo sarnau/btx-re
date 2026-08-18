@@ -80,10 +80,14 @@ def test_dispatch_tables_name_their_handlers():
     assert "FDB     parseNextByte,ctrlIgnored,ctrlIgnored" in src
     assert "FDB     stubSci,stubTof,stubOcf,stubIcf,stubIrq1,stubSwi," in src
     assert "FDB     asciiBS,asciiHT,asciiLF,asciiVT,asciiFF,asciiCR," in src
-    # a handler reached only through the table is not a branch target, so it
-    # gets its label from the table itself
-    assert re.search(r"^\s+FDB\s.*\$[0-9A-F]{4}", src, re.M) is not None, \
-        "the screen line tables hold display RAM, which stays hex"
+    # the screen line tables hold display RAM, so their entries resolve to a
+    # plane and an offset rather than to code
+    assert "FDB     planeAttr,planeAttr+160,planeAttr+320" in src
+    # only data symbols take an offset - a code label plus one would be naming
+    # a point inside an instruction
+    offsets = set(re.findall(r"\b([A-Za-z_][A-Za-z0-9_]*)\+\d+", src))
+    assert offsets <= {"planeRender", "planeAttr", "planeChar", "planeAccent"}, \
+        sorted(offsets)
 
 
 def test_string_regions_render_as_text():
