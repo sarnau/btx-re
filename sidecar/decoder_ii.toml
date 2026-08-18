@@ -19,6 +19,25 @@ entry_points = [
     0xF1D8,  # called from $F148
     0xF61F,  # SCI receive handler, installed into softVecSci at $B287
     0xFC25,  # alternate SCI handler, installed into softVecSci at $F9A0
+    0xF954,  # handler installed by LDD #$F954 at $F5EA and $F85E
+
+    # Orphans: real code with no reachable caller. Listed so the disassembly
+    # renders them as instructions rather than FCB. See the $E3EF comment.
+    0xE3EF,
+    0xF457,
+    0xFAE4,
+    0xFB00,
+
+    # Targets of the ASCII terminal-mode C0 table at $F9FA.
+    0xFA3A,
+    0xFA85,
+    0xFAB9,
+    0xFAC7,
+    0xFACB,
+    0xFACC,
+    0xFAE1,
+    0xFAF6,
+    0xFB03,
 
     # Targets resolved from the $D3xx control-code jump tables.
     0xD355,
@@ -141,6 +160,13 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 
 
 [labels]
+"0xE3EF" = "orphanE3EF"
+"0xF457" = "orphanF457"
+"0xFAE4" = "orphanFAE4"
+"0xFB00" = "orphanFB00"
+"0xF9FA" = "asciiCtrlTable"
+"0xFBA9" = "asciiDispatchC0"
+"0xF954" = "timerHandlerAlt"
 "0xAEF0" = "fontBaseTable"
 "0xAEFC" = "bitDoubleTable"
 "0xEF67" = "strModeNames"
@@ -295,6 +321,42 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xFFF0" = "vectors"
 
 [block_comments]
+"0xE3EF" = """
+Unreachable code. This is one of four orphan fragments, 43 bytes in total:
+
+  $E3EF-$E402  20 bytes  LDX #$0001 / LDAB #$C0 / JSR $EDF7 / ... / JMP $E47D
+  $F457-$F458   2 bytes  SEC / RTS
+  $FAE4-$FAF5  18 bytes  bump $0617, wrap at $50, else JMP $FA3A
+  $FB00-$FB02   3 bytes  JMP $FA3A
+
+Each disassembles cleanly and ends properly, so they are real routines, not
+misparsed data. They are simply dead:
+
+  - none of the four addresses occurs anywhere in the image as a 16-bit value,
+    so nothing calls or jumps to them and no table holds them;
+  - no relative branch targets them;
+  - each is preceded by an instruction that ends flow ($E3EC JMP, $F456 RTS,
+    $FAE1 JMP, $FAFF RTS), so they cannot be reached by falling through.
+
+Every computed jump in the firmware dispatches through one of the six tables
+now enumerated, and none of them contains these addresses. Leftovers from an
+edit, most likely - $FAE4 and $FB00 sit among the ASCII terminal-mode handlers
+and duplicate logic that appears nearby.
+
+They are listed as entry points only so the listing shows instructions instead
+of FCB; they are not live code."""
+"0xF9FA" = """
+ASCII terminal-mode C0 dispatch: 32 big-endian entries, $F9FA-$FA39.
+
+asciiDispatchC0 ($FBA9) pulls the byte, masks bit 7, and dispatches anything
+$00-$1F through this table:
+
+    PULA / ANDA #$7F / CMPA #$1F / BHI printable
+    TAB / ASLB / LDX #asciiCtrlTable / ABX / LDX 0,X / JSR 0,X
+
+This is a second, much smaller control-code interpreter, separate from the CEPT
+one at $D36A - it serves the ASCII Terminal-Mode listed in strModeNames. Nine
+distinct handlers cover the 32 slots."""
 "0xAEF0" = """
 Font bases, then a bit-doubling table.
 
@@ -1015,3 +1077,9 @@ kind = "bytes"
 start = 0xFC30
 end = 0xFC42
 kind = "bytes"
+
+# ASCII terminal-mode C0 table. See the block comment at $F9FA.
+[[regions]]
+start = 0xF9FA
+end = 0xFA3A
+kind = "ptr_table"

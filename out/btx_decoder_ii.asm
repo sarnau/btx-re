@@ -7581,8 +7581,39 @@ escDefine:
         LDAB    #$80
         TBA
         JMP     $E47D
-        FCB     $CE,$00,$01,$C6,$C0,$86,$00,$BD,$ED,$F7,$CE,$00,$03,$C6,$B0,$86
-        FCB     $00,$7E,$E4,$7D
+
+; Unreachable code. This is one of four orphan fragments, 43 bytes in total:
+;
+;   $E3EF-$E402  20 bytes  LDX #$0001 / LDAB #$C0 / JSR $EDF7 / ... / JMP $E47D
+;   $F457-$F458   2 bytes  SEC / RTS
+;   $FAE4-$FAF5  18 bytes  bump $0617, wrap at $50, else JMP $FA3A
+;   $FB00-$FB02   3 bytes  JMP $FA3A
+;
+; Each disassembles cleanly and ends properly, so they are real routines, not
+; misparsed data. They are simply dead:
+;
+;   - none of the four addresses occurs anywhere in the image as a 16-bit value,
+;     so nothing calls or jumps to them and no table holds them;
+;   - no relative branch targets them;
+;   - each is preceded by an instruction that ends flow ($E3EC JMP, $F456 RTS,
+;     $FAE1 JMP, $FAFF RTS), so they cannot be reached by falling through.
+;
+; Every computed jump in the firmware dispatches through one of the six tables
+; now enumerated, and none of them contains these addresses. Leftovers from an
+; edit, most likely - $FAE4 and $FB00 sit among the ASCII terminal-mode handlers
+; and duplicate logic that appears nearby.
+;
+; They are listed as entry points only so the listing shows instructions instead
+; of FCB; they are not live code.
+orphanE3EF:
+        LDX     #$0001
+        LDAB    #$C0
+        LDAA    #$00
+        JSR     $EDF7
+        LDX     #$0003
+        LDAB    #$B0
+        LDAA    #$00
+        JMP     $E47D
         LDX     #$0003
         LDAB    #$A0
         LDAA    #$20
@@ -9376,7 +9407,10 @@ txBitTick:
         RTS
         SEC
         RTS
-        FCB     $0D,$39
+
+orphanF457:
+        SEC
+        RTS
         SEC
         RTS
         LDX     $04CB
@@ -9942,9 +9976,22 @@ sciRxHandler:
         JSR     $A210
         JSR     $F5CF
         RTS
-        FCB     $FC,$04,$E3,$C3,$FF,$FF,$FD,$04,$E3,$FC,$04,$E5,$C3,$FF,$FF,$FD
-        FCB     $04,$E5,$FC,$04,$E7,$C3,$FF,$FF,$FD,$04,$E7,$96,$08,$DC,$0B,$C3
-        FCB     $03,$E8,$DD,$0B,$3B
+
+timerHandlerAlt:
+        LDD     $04E3
+        ADDD    #$FFFF
+        STD     $04E3
+        LDD     $04E5
+        ADDD    #$FFFF
+        STD     $04E5
+        LDD     $04E7
+        ADDD    #$FFFF
+        STD     $04E7
+        LDAA    TCSR
+        LDD     OCRH
+        ADDD    #$03E8
+        STD     OCRH
+        RTI
         PSHA
         PSHB
         PSHX
@@ -10002,10 +10049,23 @@ sciRxHandler:
         JSR     $FC01
         JSR     $FB9A
         BRA     $F9F2
-        FCB     $FA,$CB,$FA,$CB,$FA,$CB,$FA,$CB,$FA,$CB,$FA,$CB,$FA,$CB,$FA,$CB
-        FCB     $FA,$B9,$FA,$CC,$FA,$3A,$FA,$E1,$FA,$85,$FA,$C7,$FA,$CB,$FA,$CB
-        FCB     $FA,$CB,$FA,$CB,$FA,$F6,$FA,$CB,$FB,$03,$FA,$CB,$FA,$CB,$FA,$CB
-        FCB     $FA,$CB,$FA,$CB,$FA,$CB,$FA,$CB,$FA,$CB,$FA,$CB,$FA,$CB,$FA,$CB
+
+; ASCII terminal-mode C0 dispatch: 32 big-endian entries, $F9FA-$FA39.
+;
+; asciiDispatchC0 ($FBA9) pulls the byte, masks bit 7, and dispatches anything
+; $00-$1F through this table:
+;
+;     PULA / ANDA #$7F / CMPA #$1F / BHI printable
+;     TAB / ASLB / LDX #asciiCtrlTable / ABX / LDX 0,X / JSR 0,X
+;
+; This is a second, much smaller control-code interpreter, separate from the CEPT
+; one at $D36A - it serves the ASCII Terminal-Mode listed in strModeNames. Nine
+; distinct handlers cover the 32 slots.
+asciiCtrlTable:
+        FDB     $FACB,$FACB,$FACB,$FACB,$FACB,$FACB,$FACB,$FACB
+        FDB     $FAB9,$FACC,$FA3A,$FAE1,$FA85,$FAC7,$FACB,$FACB
+        FDB     $FACB,$FACB,$FAF6,$FACB,$FB03,$FACB,$FACB,$FACB
+        FDB     $FACB,$FACB,$FACB,$FACB,$FACB,$FACB,$FACB,$FACB
         LDAA    $0618
         CMPA    #$17
         BCC     $FA46
@@ -10042,18 +10102,73 @@ sciRxHandler:
         CMPA    #$40
         BCS     $FA48
         RTS
-        FCB     $4F,$B7,$06,$17,$B7,$06,$18,$86,$18,$97,$06,$CE,$5C,$00,$CC,$12
-        FCB     $00,$ED,$02,$ED,$06,$ED,$0A,$ED,$0E,$CC,$00,$D0,$ED,$00,$ED,$04
-        FCB     $ED,$08,$ED,$0C,$C6,$10,$3A,$8C,$5F,$C0,$26,$E2,$96,$06,$4C,$81
-        FCB     $40,$26,$D6,$39,$7D,$06,$17,$26,$01,$39,$7A,$06,$17,$86,$20,$7E
-        FCB     $FB,$0D
+        CLRA
+        STAA    $0617
+        STAA    $0618
+        LDAA    #$18
+        STAA    PORT3
+        LDX     #$5C00
+        LDD     #$1200
+        STD     $02,X
+        STD     $06,X
+        STD     $0A,X
+        STD     $0E,X
+        LDD     #$00D0
+        STD     $00,X
+        STD     $04,X
+        STD     $08,X
+        STD     $0C,X
+        LDAB    #$10
+        ABX
+        CPX     #$5FC0
+        BNE     $FA93
+        LDAA    PORT3
+        INCA
+        CMPA    #$40
+        BNE     $FA8E
+        RTS
+        TST     $0617
+        BNE     $FABF
+        RTS
+        DEC     $0617
+        LDAA    #$20
+        JMP     $FB0D
         CLR     $0617
         RTS
-        FCB     $39,$B6,$06,$17,$8B,$08,$84,$F8,$81,$50,$25,$06,$7F,$06,$17,$7E
-        FCB     $FA,$3A,$B7,$06,$17,$39,$7E,$FA,$3A,$B6,$06,$17,$4C,$81,$50,$25
-        FCB     $06,$7F,$06,$17,$7E,$FA,$3A,$B7,$06,$17,$39,$B6,$06,$17,$4A,$2B
-        FCB     $03,$B7,$06,$17,$39,$7E,$FA,$3A,$B6,$06,$18,$4A,$2B,$03,$B7,$06
-        FCB     $18,$39
+        RTS
+        LDAA    $0617
+        ADDA    #$08
+        ANDA    #$F8
+        CMPA    #$50
+        BCS     $FADD
+        CLR     $0617
+        JMP     $FA3A
+        STAA    $0617
+        RTS
+        JMP     $FA3A
+
+orphanFAE4:
+        LDAA    $0617
+        INCA
+        CMPA    #$50
+        BCS     $FAF2
+        CLR     $0617
+        JMP     $FA3A
+        STAA    $0617
+        RTS
+        LDAA    $0617
+        DECA
+        BMI     $FAFF
+        STAA    $0617
+        RTS
+
+orphanFB00:
+        JMP     $FA3A
+        LDAA    $0618
+        DECA
+        BMI     $FB0C
+        STAA    $0618
+        RTS
         TST     $0627
         BEQ     $FB23
         LDX     #$FC30
@@ -10126,6 +10241,8 @@ sciRxHandler:
         LDX     $0621
         LDD     $0623
         STD     $00,X
+
+asciiDispatchC0:
         PULA
         ANDA    #$7F
         CMPA    #$1F
