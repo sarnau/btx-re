@@ -1179,6 +1179,15 @@ $2BBD  ceptStartPage
 it, so the capture buffer begins where the startup page ends the image.
 
 100% of the image is accounted for: 13663 bytes of code, 19105 of typed data.
+
+The build reports 12 computed jumps as unresolved, which is a limit of the
+static tracer rather than a gap. It cannot follow `JMP 0,X`, and all twelve are
+that instruction: five CEPT table dispatchers, the six soft-vector stubs, and
+`asciiPutChar`. Every one indexes a table the sidecar has typed, and every
+entry of those tables already resolves to a named handler — so the targets are
+known, just not by the tracer. A test asserts that each of the twelve is
+preceded by a load of one of those tables or of a soft vector.
+
 43 bytes in four fragments are unreachable dead code — no reference anywhere in
 the image, no branch target, and each preceded by an instruction that ends
 flow. Each is a recognisable twin of something that *is* reachable:
