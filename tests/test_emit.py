@@ -243,3 +243,17 @@ def test_no_subroutine_is_left_unnamed():
         src = (OUT / f).read_text()
         anon = set(re.findall(r"^\s+JSR\s+(L[0-9A-F]{4})\s*$", src, re.M))
         assert not anon, (f, sorted(anon))
+
+
+def test_every_computed_jump_lands_in_a_typed_table():
+    """The tracer cannot follow JMP 0,X, so it reports these as unresolved.
+    That is a limit of the tracer, not an open question: each one indexes a
+    table the sidecar has typed, or a soft vector."""
+    src = (OUT / "btx_decoder_ii.asm").read_text()
+    lines = [l for l in src.splitlines() if not l.lstrip().startswith(";")]
+    for i, l in enumerate(lines):
+        if not re.match(r"^\s+(JMP|JSR)\s+\$00,X\s*$", l):
+            continue
+        ctx = " ".join(x.strip() for x in lines[max(0, i - 5):i])
+        assert re.search(r"LDX\s+#(ctrlTable|escTable|csiTable|asciiCtrlTable)"
+                         r"|LDX\s+>softVec", ctx), ctx

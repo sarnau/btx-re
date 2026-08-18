@@ -124,7 +124,11 @@ def main() -> int:
           f"{unclassified} unclassified")
     print(f"           {100.0 * (result.code_bytes + result.typed_bytes) / total:.1f}% "
           f"of the image is accounted for")
-    print(f"unresolved {len(result.unresolved)} computed jumps")
+    # Every one of these is a dispatch through a table the sidecar has typed,
+    # or a soft vector - the targets are known, the static tracer just cannot
+    # follow JMP 0,X. Saying "unresolved" without that reads like open work.
+    print(f"unresolved {len(result.unresolved)} computed jumps "
+          f"(all through typed tables or soft vectors)")
     print(f"bad opcode {len(result.bad_opcodes)} sites")
 
     if args.report:

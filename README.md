@@ -20,12 +20,15 @@ Bildschirmtext Decoder II ROM (`c64_btx_decoder_ii.bin`, MC6801, 32 KB at
 |---|---|
 | `entry_points` | Code entry addresses. Add the target of every computed jump you resolve. |
 | `labels` | Address → symbol name. Used for branch targets and extended operands. |
-| `line_comments` | Address → trailing `;` comment on that instruction. |
+| `line_comments` | Address → a note. Prints under the label on a labelled address, trailing otherwise. |
 | `block_comments` | Address → multi-line banner above that address. |
 | `symbols` | Address → name for hardware registers and RAM locations. |
-| `regions` | Typed data ranges: `bytes`, `words`, `string`, `ptr_table`, `chargen`, `code6502`. |
+| `regions` | Typed data ranges: `bytes`, `words`, `words_raw`, `string`, `ptr_table`, `chargen`, `code6502`, `petscii`, `byte_word`. `words` resolves names, `ptr_table` also allows offsets, `words_raw` is values and resolves nothing. |
 | `c64_blocks` | 6502 blocks: ROM range plus the address each runs at on the C64. |
 | `c64_symbols` | Names for the BTX register window as the C64 sees it. |
+| `c64_pointers` | Zero-page pairs the payload loads as a 16-bit address. |
+| `site_symbols` | Instruction address → operand name, for a location the firmware reuses. `$048E` is a mask, an index and a fill value in three routines, so the name is attached to the site. |
+| `literal_immediates` | Instructions whose 16-bit immediate is a constant that collides with a named address — `LDX #$4000` is a parameter pair, not `planeRender`. |
 
 `entry_points` must appear **above** the `[meta]` header. TOML assigns bare keys
 written after a table header to that table, so putting it below silently makes it
@@ -70,7 +73,7 @@ uppercase at `$C1-$DA` and lowercase at `$41-$5A`, so the emitter brackets such
 a region with `CHARSET` and writes the text as ordinary letters - which is how
 `C2 49 4C 44 ...` becomes `"Bildschirmtext"` rather than a hex dump.
 
-Hardware the C64 sees is symbolic too: `btxFifoWr`, `btxFifoRd`, `btxXferEn`
+Hardware the C64 sees is symbolic too: `btxRxWr`, `btxRxRd`, `btxXferEn`
 and friends are declared under `c64_symbols` in the sidecar and pair with the
 6801-side names at `$6000`.
 
@@ -113,6 +116,9 @@ Ghidra would produce plausible-looking but wrong disassembly.
     dis65xx/asm.py       listing text -> bytes (the round-trip verifier)
     dis65xx/sidecar.py   analysis metadata loading
     tools/report.py      unresolved jumps and coverage gaps
+    tools/checkdoc.py    docs against the generated sources
+    tools/showfont.py    render a character set
+    tools/diffrom.py     compare the two ROM revisions
     build.py             regenerate, assemble, compare, report
 
 `conftest.py` at the repository root is load-bearing: its presence is what puts

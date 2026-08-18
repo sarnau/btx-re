@@ -25,7 +25,11 @@ import sys
 import tomllib
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-DOC = ROOT / "docs" / "btx-decoder-ii-architecture.md"
+ARCH = ROOT / "docs" / "btx-decoder-ii-architecture.md"
+# Every prose file that cites names from the listings. The README drifted for
+# nine turns citing btxFifoWr and btxFifoRd after they were renamed, which is
+# exactly what this catches.
+DOCS = [ARCH, ROOT / "README.md", ROOT / "docs" / "cv30113-revision-diff.md"]
 SOURCES = ["btx_decoder_ii.asm", "c64_payload.asm", "c64_bootstrap.asm"]
 
 def _mnemonics() -> set[str]:
@@ -42,6 +46,22 @@ def _mnemonics() -> set[str]:
     return names
 
 
+def _vocabulary() -> set[str]:
+    """Names the prose may use that are not listing labels.
+
+    Taken from the definitions - the sidecar's own top-level keys, the region
+    kinds the loader accepts - so a schema key that is misspelled in the prose
+    is still caught, while a real one never has to be listed here."""
+    sys.path.insert(0, str(ROOT))
+    from dis65xx.sidecar import REGION_KINDS
+    sidecar = tomllib.load(open(ROOT / "sidecar" / "decoder_ii.toml", "rb"))
+    return set(sidecar) | set(REGION_KINDS) | {
+        # assembler directives and the package name
+        "CPU", "ORG", "EQU", "END", "FCB", "FCC", "FDB", "DW", "BINCLUDE",
+        "CHARSET", "dis65xx", "dis6801",
+    }
+
+
 # prose words that look like identifiers but are not
 ALLOWED = {
     "CAN", "HIBASE", "MEMSTR", "TE", "R", "T", "W", "w", "d", "h", "i", "l",
@@ -50,17 +70,19 @@ ALLOWED = {
 
 
 def main() -> int:
-    doc = DOC.read_text()
+    arch = ARCH.read_text()
     src = "".join((ROOT / "out" / f).read_text() for f in SOURCES)
     defined = set(re.findall(r"^([A-Za-z_][A-Za-z0-9_]*)(?::| +EQU)", src, re.M))
     findings: list[str] = []
 
-    allowed = ALLOWED | _mnemonics()
-    cited = set(re.findall(r"`([a-zA-Z_][a-zA-Z0-9_]*)`", doc)) - allowed
-    for name in sorted(cited - defined):
-        findings.append(f"undefined identifier: {name}")
+    allowed = ALLOWED | _mnemonics() | _vocabulary()
+    for path in DOCS:
+        text = path.read_text()
+        cited = set(re.findall(r"`([a-zA-Z_][a-zA-Z0-9_]*)`", text)) - allowed
+        for name in sorted(cited - defined):
+            findings.append(f"{path.name}: undefined identifier: {name}")
 
-    body = doc.split("## 8. ROM map", 1)[1].split("The payload's own layout", 1)[0]
+    body = arch.split("## 8. ROM map", 1)[1].split("The payload's own layout", 1)[0]
     rows = []
     for m in re.finditer(r"^\$([0-9A-F]{4})(?:-\$([0-9A-F]{4}))?\s+(.+)$", body, re.M):
         lo = int(m.group(1), 16)

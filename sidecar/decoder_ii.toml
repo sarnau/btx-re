@@ -1528,29 +1528,30 @@ Two findings for anyone continuing:
     exactly count bytes, which is what fixes the framing."""
 
 "0xE3EF" = """
-Unreachable code. This is one of four orphan fragments, 43 bytes in total:
+Unreachable code. Four fragments, 43 bytes in total, and each one is a
+recognisable twin of something that IS reachable - which is what they are,
+rather than a mystery:
 
-  $E3EF-$E402  20 bytes  LDX #$0001 / LDAB #$C0 / JSR $EDF7 / ... / JMP $E47D
-  $F457-$F458   2 bytes  SEC / RTS
-  $FAE4-$FAF5  18 bytes  bump $0617, wrap at $50, else JMP $FA3A
-  $FB00-$FB02   3 bytes  JMP $FA3A
+  $E3EF-$E402  20 bytes  the whole-row twin of the $41 attribute handler at
+                         $E0BB. Same mask pair - $C0 on attribute byte 1, $B0
+                         on byte 3 - but through setAttrRow with span bit 0
+                         instead of applyAttr with $10, and it joins the same
+                         tail at $E47D
+  $F457-$F458   2 bytes  SEC / RTS, byte for byte what noSecondSource is, and
+                         it sits immediately in front of it
+  $FAE4-$FAF5  18 bytes  ASCII cursor-right: asciiCol up one, wrapping at 80
+                         into asciiCR and asciiLF. There is no cursor-right in
+                         asciiCtrlTable, so this is the handler the table lost
+  $FB00-$FB02   3 bytes  JMP asciiLF, byte for byte what asciiVT is, three
+                         bytes in front of asciiCurUp
 
-Each disassembles cleanly and ends properly, so they are real routines, not
-misparsed data. They are simply dead:
+Each disassembles cleanly and ends properly, so they are real routines rather
+than misparsed data. Nothing in the image references any of them: no branch
+target, no table entry, and each is preceded by an instruction that ends flow.
 
-  - none of the four addresses occurs anywhere in the image as a 16-bit value,
-    so nothing calls or jumps to them and no table holds them;
-  - no relative branch targets them;
-  - each is preceded by an instruction that ends flow ($E3EC JMP, $F456 RTS,
-    $FAE1 JMP, $FAFF RTS), so they cannot be reached by falling through.
-
-Every computed jump in the firmware dispatches through one of the six tables
-now enumerated, and none of them contains these addresses. Leftovers from an
-edit, most likely - $FAE4 and $FB00 sit among the ASCII terminal-mode handlers
-and duplicate logic that appears nearby.
-
-They are listed as entry points only so the listing shows instructions instead
-of FCB; they are not live code."""
+Two are exact duplicates of their live neighbour and two are near-misses, so
+the pattern is editing rather than deliberate spares - a routine copied,
+changed, and the original left behind when the reference moved."""
 "0xF9FA" = """
 ASCII terminal-mode C0 dispatch: 32 big-endian entries, $F9FA-$FA39.
 

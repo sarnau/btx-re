@@ -9,8 +9,8 @@ Companion material: `sidecar/decoder_ii.toml` holds the annotations,
 and `out/c64_payload.asm` the C64-side 6502 sources, and
 `docs/cv30113-revision-diff.md` the comparison against the other ROM revision.
 
-This document is checked against those sources by `tools/checkdoc.py`, which
-the test suite runs. Every name it cites must be one the listings define, and
+This document, the README and the revision diff are checked against those
+sources by `tools/checkdoc.py`, which the test suite runs. Every name it cites must be one the listings define, and
 the ROM map below must partition `$8000`–`$FFFF` with no gap, no overlap, and
 each row's stated size matching the range it spans. Prose goes stale quietly
 when a rename lands underneath it, and a map that lists landmarks reads like
@@ -1181,8 +1181,18 @@ it, so the capture buffer begins where the startup page ends the image.
 100% of the image is accounted for: 13663 bytes of code, 19105 of typed data.
 43 bytes in four fragments are unreachable dead code — no reference anywhere in
 the image, no branch target, and each preceded by an instruction that ends
-flow. One of them is identifiable: `$FAE4` is the ASCII mode's missing
-cursor-right handler.
+flow. Each is a recognisable twin of something that *is* reachable:
+
+| | | |
+|---|---|---|
+| `$E3EF` | 20 bytes | the whole-row twin of the `$41` attribute handler at `$E0BB` — same masks, but `setAttrRow` with span bit 0 rather than `applyAttr` with `$10` |
+| `$F457` | 2 bytes | `SEC / RTS`, byte for byte what `noSecondSource` is, immediately in front of it |
+| `$FAE4` | 18 bytes | ASCII cursor-right, the handler `asciiCtrlTable` has no slot for |
+| `$FB00` | 3 bytes | `JMP asciiLF`, byte for byte what `asciiVT` is, three bytes in front of `asciiCurUp` |
+
+Two are exact duplicates of their live neighbour and two are near-misses, so
+the pattern is editing rather than deliberate spares — a routine copied,
+changed, and the original left behind when the reference moved.
 
 ---
 
