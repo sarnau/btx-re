@@ -506,10 +506,10 @@ a high-bit code ($DD, $DE, $A9), which look like the PETSCII characters those
 positions map to.
 
 Read as a layout translation table on that basis, and the code confirms the
-shape: $17D2 points ARGEXP/ARGHO here and then walks it with
+shape: $17D2 points c64KeyPtr here and then walks it with
 
-    LDA (ARGEXP),Y / BEQ done      $00 ends the table
-    TXA / CMP (ARGEXP),Y / BEQ hit
+    LDA (c64KeyPtr),Y / BEQ done      $00 ends the table
+    TXA / CMP (c64KeyPtr),Y / BEQ hit
     INY / INY                       two bytes per entry
 
 so it is a two-byte-per-entry lookup terminated by $00. Which byte is the
@@ -599,14 +599,35 @@ That the C64 side speaks CEPT to the decoder is what makes ctlRPT and the
 mosaic set visible from both directions - the firmware decodes exactly what
 this data encodes."""
 "0x0061" = """
-Low memory is named with the C64 ROM's own names.
+The five zero-page pointers, runtime $61-$6E.
 
-The payload does no floating-point arithmetic, so FACEXP..ARGSGN are being
-reused as scratch rather than used for their documented purpose; the names
-still identify the locations, which is what makes the listing comparable with
-a C64 memory map.
+The payload does no floating-point arithmetic, so the C64 ROM names for these
+locations - FACEXP..ARGSGN, BASIC's two floating-point accumulators - say
+nothing about what the payload keeps there. They are five 16-bit pointers, each
+used for one job throughout:
 
-The KERNAL file variables are used as intended: FNLEN, LA, SA, FA and the
+  $61  c64Ptr      a general indirect. Walks the $00-terminated CEPT streams
+                   that go out to the decoder - the startup page,
+                   ceptMonitorMsg, ceptMacroDir - and holds the handler address
+                   that c64Menu reaches with JMP (c64Ptr)
+  $63  c64MsgPtr   the status message. c64ShowMsg puts a c64StrTable entry here
+                   and c64ShowMsgPtr sends the record it points at
+  $65  c64BufWr    the capture buffer write cursor, run against c64BufEndPage
+  $69  c64KeyPtr   the key table c64XlatKey is currently searching, pointed in
+                   turn at c64AsciiKeys, c64GermanKeys and c64CtrlKeys
+  $6D  c64BufRd    the capture buffer read cursor. Only c64TelesoftByte uses it,
+                   which is the one place that reads and writes the buffer at
+                   once, making it a ring
+
+The high bytes carry their own names rather than reading as +1, because the
+symbol table is per address and because the code touches them on their own -
+INC c64BufWrHi / CMP c64BufEndPage is how the buffer end is detected.
+
+$6C, BASIC's ARGMO, is never touched. It used to appear in the EQU list because
+the emitter matched immediates against the symbol table, so LDA #$6C pulled the
+name in; immediates are values, not addresses, and no longer do.
+
+The KERNAL file variables above are used as intended: FNLEN, LA, SA, FA and the
 FNADR pointer are set up before OPEN, LOAD and CLOSE, and the payload drives
 the IEC bus through the routines behind them.
 
@@ -1186,7 +1207,7 @@ vectors before entering the main firmware."""
 "0xC2FC" = "vector 28 $1054 - menu 'E' (Edit): start recording a macro (msg $15, c64MacroRecStart) or finish the one in progress (msg $18 \"Macro abgeschlossen\", c64MacroRecClose)"
 "0xC407" = "vector 29 $1057 - read a line of at most A characters into the filename buffer, echoing through c64SendKey. DEL erases, RETURN accepts, STOP returns C=1"
 "0xC495" = "vector 31 $105D - look message A up in c64StrTable and fall through into c64ShowMsgPtr"
-"0xC4AB" = "vector 30 $105A - send $10 $75 $10 $5A then the length-prefixed CEPT record at (FACMOH): draw the status-line overlay"
+"0xC4AB" = "vector 30 $105A - send $10 $75 $10 $5A then the length-prefixed CEPT record at (c64MsgPtr): draw the status-line overlay"
 "0xC4DE" = "vector 32 $1060 - msg 7 \"Auf Diskette: File?\", open a SEQ file and CIOUT the capture buffer to it; msg $0A offers a retry (\"nochmal (J/N)?\")"
 "0xC538" = "vector 40 $1078 - show msg 1, the all-blank 40-column record: blank the status line without closing the overlay"
 "0xC53E" = "vector 41 $107B - spin until the decoder's line counter btxReg011 changes, servicing an active capture, so a macro waits for the page to arrive"
@@ -1691,17 +1712,16 @@ org = 0x0FFE
 # $6000; see the block comment at $B2E2 for the pairing. $8000/$8001 are RAM
 # under the cartridge ROM, used to stash the load address.
 [c64_symbols]
-"0x0061" = "FACEXP"
-"0x0062" = "FACHO"
-"0x0063" = "FACMOH"
-"0x0064" = "FACMO"
-"0x0065" = "FACLO"
-"0x0066" = "FACSGN"
-"0x0069" = "ARGEXP"
-"0x006A" = "ARGHO"
-"0x006C" = "ARGMO"
-"0x006D" = "ARGLO"
-"0x006E" = "ARGSGN"
+"0x0061" = "c64Ptr"
+"0x0062" = "c64PtrHi"
+"0x0063" = "c64MsgPtr"
+"0x0064" = "c64MsgPtrHi"
+"0x0065" = "c64BufWr"
+"0x0066" = "c64BufWrHi"
+"0x0069" = "c64KeyPtr"
+"0x006A" = "c64KeyPtrHi"
+"0x006D" = "c64BufRd"
+"0x006E" = "c64BufRdHi"
 "0x0090" = "STATUS"
 "0x009A" = "DFLTO"
 "0x00A0" = "TIME_"

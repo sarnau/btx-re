@@ -270,7 +270,7 @@ def test_low_high_byte_expressions_assemble():
 def test_low_memory_uses_c64_rom_names():
     """Named after the C64 ROM so the listing lines up with a memory map."""
     src = (OUT / "c64_payload.asm").read_text()
-    for name, addr in (("FACEXP", 0x61), ("STATUS", 0x90), ("FNLEN", 0xB7),
+    for name, addr in (("STATUS", 0x90), ("FNLEN", 0xB7),
                        ("SA", 0xB9), ("FA", 0xBA), ("FNADR", 0xBB),
                        ("CINV", 0x0314), ("BUF", 0x0200)):
         assert re.search(rf"^{name}\s+EQU\s+\${addr:04X}$", src, re.M), name
@@ -398,7 +398,7 @@ def test_indirect_operands_name_their_pointer():
     """LDA ($BB),Y reads through a zero-page pointer, so the operand names the
     pointer rather than showing its address."""
     src = (OUT / "c64_payload.asm").read_text()
-    assert "(ARGEXP),Y" in src
+    assert "(c64KeyPtr),Y" in src
     assert "(INBIT),Y" in src
 
 
@@ -476,11 +476,14 @@ def test_fd90_is_named_relative_to_the_routine_it_enters():
     assert "KERNAL_FD90" not in src
 
 
-def test_time_is_renamed_around_an_asl_builtin():
-    """asl reserves TIME, so the source's name for $A0 carries a trailing
-    underscore - my assembler accepted TIME, asl refused it."""
+def test_immediates_do_not_pull_in_zero_page_symbols():
+    """An immediate is a value, not an address, so LDA #$6C must not put $6C's
+    symbol in the EQU list. Two names reached the listing this way and neither
+    location is ever addressed: BASIC's ARGMO at $6C, and $A0, which had to be
+    spelled TIME_ because asl reserves TIME."""
     src = (OUT / "c64_payload.asm").read_text()
-    assert re.search(r"^TIME_\s+EQU\s+\$00A0$", src, re.M)
+    assert "LDA     #$6C" in src and "EQU     $006C" not in src
+    assert "TIME" not in src
 
 
 def test_macro_filename_template():

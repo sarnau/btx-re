@@ -339,6 +339,10 @@ def emit_block(data: bytes, base: int, block: C64Block, sidecar: Sidecar) -> str
             continue
         if insn.mnemonic in _JUMPS and insn.mode is not Mode.IND:
             continue
+        # An immediate is a value, not an address. LDA #$6C is a CEPT byte and
+        # must not drag $006C's symbol into the EQU list.
+        if insn.mode is Mode.IMM:
+            continue
         name = sidecar.c64_symbols.get(insn.operand)
         if name:
             touched[insn.operand] = name

@@ -5,8 +5,8 @@
         CPU     6502
 
 ; Decoder hardware and RAM, as the C64 sees it.
-FACEXP    EQU     $0061
-FACHO     EQU     $0062
+c64Ptr    EQU     $0061
+c64PtrHi  EQU     $0062
 btxLoadLo EQU     $8000
 btxLoadHi EQU     $8001
 btxFifoWr EQU     $8009
@@ -93,19 +93,19 @@ c64ColdStart:
         JSR     PCINT
         JSR     L804D
         STA     btxLoadLo
-        STA     FACEXP
+        STA     c64Ptr
         JSR     L804D
         STA     btxLoadHi
-        STA     FACHO
+        STA     c64PtrHi
         LDY     #$00
 
 L8036:
         JSR     L804D
         BCS     L8045
-        STA     (FACEXP),Y
+        STA     (c64Ptr),Y
         INY
         BNE     L8036
-        INC     FACHO
+        INC     c64PtrHi
         JMP     L8036
 
 ; Handing control to the payload.

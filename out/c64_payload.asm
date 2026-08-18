@@ -5,20 +5,18 @@
         CPU     6502
 
 ; Decoder hardware and RAM, as the C64 sees it.
-FACEXP      EQU     $0061
-FACHO       EQU     $0062
-FACMOH      EQU     $0063
-FACMO       EQU     $0064
-FACLO       EQU     $0065
-FACSGN      EQU     $0066
-ARGEXP      EQU     $0069
-ARGHO       EQU     $006A
-ARGMO       EQU     $006C
-ARGLO       EQU     $006D
-ARGSGN      EQU     $006E
+c64Ptr      EQU     $0061
+c64PtrHi    EQU     $0062
+c64MsgPtr   EQU     $0063
+c64MsgPtrHi EQU     $0064
+c64BufWr    EQU     $0065
+c64BufWrHi  EQU     $0066
+c64KeyPtr   EQU     $0069
+c64KeyPtrHi EQU     $006A
+c64BufRd    EQU     $006D
+c64BufRdHi  EQU     $006E
 STATUS      EQU     $0090
 DFLTO       EQU     $009A
-TIME_       EQU     $00A0
 INBIT       EQU     $00A7
 BITCI       EQU     $00A8
 FNLEN       EQU     $00B7
@@ -753,20 +751,20 @@ c64StartSession:
         LDA     #$FF
         STA     btxReg012
         LDA     c64StartPagePtr
-        STA     FACEXP
+        STA     c64Ptr
         LDA     c64StartPagePtr+1
-        STA     FACHO
+        STA     c64PtrHi
         LDA     #$FF
         STA     btxReg00F
 
 L171B:
         LDY     #$00
-        LDA     (FACEXP),Y
+        LDA     (c64Ptr),Y
         BEQ     L172D
         JSR     vecSendByte
-        INC     FACEXP
+        INC     c64Ptr
         BNE     L172A
-        INC     FACHO
+        INC     c64PtrHi
 
 L172A:
         JMP     L171B
@@ -864,17 +862,17 @@ c64XlatKey:
         LDX     L11F7
         BEQ     L17EF
         LDX     #c64AsciiKeys&255
-        STX     ARGEXP
+        STX     c64KeyPtr
         LDX     #c64AsciiKeys>>8
-        STX     ARGHO
+        STX     c64KeyPtrHi
         LDY     #$00
 
 L17D5:
         TAX
-        LDA     (ARGEXP),Y
+        LDA     (c64KeyPtr),Y
         BEQ     L17EE
         TXA
-        CMP     (ARGEXP),Y
+        CMP     (c64KeyPtr),Y
         BEQ     L17E4
         INY
         INY
@@ -882,7 +880,7 @@ L17D5:
 
 L17E4:
         INY
-        LDA     (ARGEXP),Y
+        LDA     (c64KeyPtr),Y
         BEQ     L185B
         STA     L11E9
         CLC
@@ -893,17 +891,17 @@ L17EE:
 
 L17EF:
         LDX     c64GermanKeysPtr
-        STX     ARGEXP
+        STX     c64KeyPtr
         LDX     c64GermanKeysPtr+1
-        STX     ARGHO
+        STX     c64KeyPtrHi
         LDY     #$00
 
 L17FB:
         TAX
-        LDA     (ARGEXP),Y
+        LDA     (c64KeyPtr),Y
         BEQ     L180C
         TXA
-        CMP     (ARGEXP),Y
+        CMP     (c64KeyPtr),Y
         BEQ     L185D
         INY
         INY
@@ -916,17 +914,17 @@ L180C:
 
 L180D:
         LDX     c64CtrlKeysPtr
-        STX     ARGEXP
+        STX     c64KeyPtr
         LDX     c64CtrlKeysPtr+1
-        STX     ARGHO
+        STX     c64KeyPtrHi
         LDY     #$00
 
 L1819:
         TAX
-        LDA     (ARGEXP),Y
+        LDA     (c64KeyPtr),Y
         BEQ     L182A
         TXA
-        CMP     (ARGEXP),Y
+        CMP     (c64KeyPtr),Y
         BEQ     L185D
         INY
         INY
@@ -974,13 +972,13 @@ L185B:
 
 L185D:
         INY
-        LDA     (ARGEXP),Y
+        LDA     (c64KeyPtr),Y
         STA     L11E9
         INY
-        LDA     (ARGEXP),Y
+        LDA     (c64KeyPtr),Y
         STA     L11EA
         INY
-        LDA     (ARGEXP),Y
+        LDA     (c64KeyPtr),Y
         STA     L11EB
         CLC
         RTS
@@ -998,10 +996,10 @@ L185D:
 ; positions map to.
 ;
 ; Read as a layout translation table on that basis, and the code confirms the
-; shape: $17D2 points ARGEXP/ARGHO here and then walks it with
+; shape: $17D2 points c64KeyPtr here and then walks it with
 ;
-;     LDA (ARGEXP),Y / BEQ done      $00 ends the table
-;     TXA / CMP (ARGEXP),Y / BEQ hit
+;     LDA (c64KeyPtr),Y / BEQ done      $00 ends the table
+;     TXA / CMP (c64KeyPtr),Y / BEQ hit
 ;     INY / INY                       two bytes per entry
 ;
 ; so it is a two-byte-per-entry lookup terminated by $00. Which byte is the
@@ -1099,9 +1097,9 @@ L190A:
         BNE     L190A
         JSR     vecCaptureRun
         JSR     vecClearMsg
-        LDA     FACLO
+        LDA     c64BufWr
         STA     L11DA
-        LDA     FACSGN
+        LDA     c64BufWrHi
         STA     L11DB
         LDA     #$07
         JSR     vecShowMsg
@@ -1171,10 +1169,10 @@ L1972:
         CMP     L11B9
         BNE     L1972
         LDA     c64MenuKeys+1,Y
-        STA     FACEXP
+        STA     c64Ptr
         LDA     c64MenuKeys+2,Y
-        STA     FACHO
-        JMP     (FACEXP)
+        STA     c64PtrHi
+        JMP     (c64Ptr)
 
 L198C:
         LDA     L11E7
@@ -1257,18 +1255,18 @@ c64MenuQuit:
         LDA     #$66
         JSR     vecSendByte
         LDA     #$41
-        STA     FACEXP
+        STA     c64Ptr
         LDA     #$1A
-        STA     FACHO
+        STA     c64PtrHi
 
 L1A03:
         LDY     #$00
-        LDA     (FACEXP),Y
+        LDA     (c64Ptr),Y
         BEQ     L1A15
         JSR     vecSendByte
-        INC     FACEXP
+        INC     c64Ptr
         BNE     L1A03
-        INC     FACHO
+        INC     c64PtrHi
         JMP     L1A03
 
 L1A15:
@@ -1556,9 +1554,9 @@ c64MenuCapture:
         STA     btxStatus
         STA     L11D9
         LDA     c64BufStart
-        STA     FACLO
+        STA     c64BufWr
         LDA     c64BufStart+1
-        STA     FACSGN
+        STA     c64BufWrHi
         RTS
 
 c64CaptureRun:
@@ -1566,11 +1564,11 @@ c64CaptureRun:
         JSR     vecGetByte
         BCS     L1C94
         LDY     #$00
-        STA     (FACLO),Y
-        INC     FACLO
+        STA     (c64BufWr),Y
+        INC     c64BufWr
         BNE     L1C55
-        INC     FACSGN
-        LDA     FACSGN
+        INC     c64BufWrHi
+        LDA     c64BufWrHi
         CMP     c64BufEndPage
         BEQ     L1C58
 
@@ -1587,9 +1585,9 @@ L1C58:
         JSR     vecClearMsg
         LDA     #$08
         JSR     vecShowMsg
-        LDA     FACLO
+        LDA     c64BufWr
         STA     L11DA
-        LDA     FACSGN
+        LDA     c64BufWrHi
         STA     L11DB
         JSR     vecSaveBuffer
 
@@ -1618,19 +1616,19 @@ c64MenuDisplay:
         LDA     #$06
         JSR     vecShowMsg
         LDA     c64BufStart
-        STA     FACLO
+        STA     c64BufWr
         LDA     c64BufStart+1
-        STA     FACSGN
+        STA     c64BufWrHi
         LDA     #$00
         STA     L11DD
 
 L1CB3:
         JSR     STOP
         BEQ     L1CC6
-        LDA     FACLO
+        LDA     c64BufWr
         CMP     L11DA
         BNE     L1CD4
-        LDA     FACSGN
+        LDA     c64BufWrHi
         CMP     L11DB
         BNE     L1CD4
 
@@ -1651,12 +1649,12 @@ L1CD4:
 
 L1CE0:
         LDY     #$00
-        LDA     (FACLO),Y
+        LDA     (c64BufWr),Y
         STA     L11DD
         JSR     vecSendByte
-        INC     FACLO
+        INC     c64BufWr
         BNE     L1CF0
-        INC     FACSGN
+        INC     c64BufWrHi
 
 L1CF0:
         JMP     L1CB3
@@ -2220,18 +2218,18 @@ c64ShowMsg:
         ASL     A
         TAY
         LDA     c64StrTablePtr
-        STA     FACMOH
+        STA     c64MsgPtr
         LDA     c64StrTablePtr+1
-        STA     FACMO
-        LDA     (FACMOH),Y
+        STA     c64MsgPtrHi
+        LDA     (c64MsgPtr),Y
         TAX
         INY
-        LDA     (FACMOH),Y
-        STX     FACMOH
-        STA     FACMO
+        LDA     (c64MsgPtr),Y
+        STX     c64MsgPtr
+        STA     c64MsgPtrHi
 
 c64ShowMsgPtr:
-; vector 30 $105A - send $10 $75 $10 $5A then the length-prefixed CEPT record at (FACMOH): draw the status-line overlay
+; vector 30 $105A - send $10 $75 $10 $5A then the length-prefixed CEPT record at (c64MsgPtr): draw the status-line overlay
         LDA     #$10
         JSR     vecSendByte
         LDA     #$75
@@ -2241,14 +2239,14 @@ c64ShowMsgPtr:
         LDA     #$5A
         JSR     vecSendByte
         LDY     #$00
-        LDA     (FACMOH),Y
+        LDA     (c64MsgPtr),Y
         STA     L11D7
         INY
         STY     L11B9
 
 L2122:
         LDY     L11B9
-        LDA     (FACMOH),Y
+        LDA     (c64MsgPtr),Y
         JSR     vecSendByte
         LDY     L11B9
         INC     L11B9
@@ -2267,27 +2265,27 @@ L213E:
         JSR     vecOpenSeqWrite
         BCS     L2174
         LDA     c64BufStart
-        STA     FACLO
+        STA     c64BufWr
         LDA     c64BufStart+1
-        STA     FACSGN
+        STA     c64BufWrHi
 
 L214D:
         JSR     STOP
         BEQ     L2170
-        LDA     FACLO
+        LDA     c64BufWr
         CMP     L11DA
         BNE     L2160
-        LDA     FACSGN
+        LDA     c64BufWrHi
         CMP     L11DB
         BEQ     L2170
 
 L2160:
         LDY     #$00
-        LDA     (FACLO),Y
+        LDA     (c64BufWr),Y
         JSR     CIOUT
-        INC     FACLO
+        INC     c64BufWr
         BNE     L216D
-        INC     FACSGN
+        INC     c64BufWrHi
 
 L216D:
         JMP     L214D
@@ -2765,12 +2763,12 @@ L2429:
         STX     L11BC
         JSR     vecDiskOpenRead
         BCS     L2460
-        STA     FACEXP
-        STA     FACLO
+        STA     c64Ptr
+        STA     c64BufWr
         JSR     vecDiskGetByte
         BVS     L2460
-        STA     FACHO
-        STA     FACSGN
+        STA     c64PtrHi
+        STA     c64BufWrHi
         LDA     #$19
         JSR     vecShowMsg
 
@@ -2779,10 +2777,10 @@ L2443:
         BVS     L2457
         BCS     L2460
         LDY     #$00
-        STA     (FACEXP),Y
-        INC     FACEXP
+        STA     (c64Ptr),Y
+        INC     c64Ptr
         BNE     L2454
-        INC     FACHO
+        INC     c64PtrHi
 
 L2454:
         JMP     L2443
@@ -2790,7 +2788,7 @@ L2454:
 L2457:
         JSR     vecDiskCloseRead
         JSR     vecHideMsg
-        JMP     (FACLO)
+        JMP     (c64BufWr)
 
 L2460:
         JSR     vecDiskCloseRead
@@ -3239,18 +3237,18 @@ c64MacroDir:
         LDA     #$4C
         JSR     vecSendByte
         LDA     c64MacroDirPtr
-        STA     FACEXP
+        STA     c64Ptr
         LDA     c64MacroDirPtr+1
-        STA     FACHO
+        STA     c64PtrHi
 
 L27EF:
         LDY     #$00
-        LDA     (FACEXP),Y
+        LDA     (c64Ptr),Y
         BEQ     L2801
         JSR     vecSendByte
-        INC     FACEXP
+        INC     c64Ptr
         BNE     L27EF
-        INC     FACHO
+        INC     c64PtrHi
         JMP     L27EF
 
 L2801:
@@ -3526,12 +3524,12 @@ L29D7:
         LDA     #$4D
         JSR     vecSendByte
         LDA     c64BufStart
-        STA     FACLO
-        STA     ARGLO
+        STA     c64BufWr
+        STA     c64BufRd
         STA     L11DA
         LDA     c64BufStart+1
-        STA     FACSGN
-        STA     ARGSGN
+        STA     c64BufWrHi
+        STA     c64BufRdHi
         STA     L11DB
 
 L29FA:
@@ -3701,17 +3699,17 @@ c64TelesoftByte:
         JSR     vecGetByte
         BCS     L2B3A
         LDY     #$00
-        STA     (FACLO),Y
-        INC     FACLO
+        STA     (c64BufWr),Y
+        INC     c64BufWr
         BNE     c64TelesoftByte
-        INC     FACSGN
-        LDA     FACSGN
+        INC     c64BufWrHi
+        LDA     c64BufWrHi
         CMP     c64BufEndPage
         BNE     c64TelesoftByte
         LDA     c64BufStart
-        STA     FACLO
+        STA     c64BufWr
         LDA     c64BufStart+1
-        STA     FACSGN
+        STA     c64BufWrHi
         JMP     c64TelesoftByte
 
 L2B3A:
@@ -3731,27 +3729,27 @@ L2B50:
         JMP     L2AEE
 
 L2B55:
-        LDA     FACLO
-        CMP     ARGLO
+        LDA     c64BufWr
+        CMP     c64BufRd
         BNE     L2B64
-        LDA     FACSGN
-        CMP     ARGSGN
+        LDA     c64BufWrHi
+        CMP     c64BufRdHi
         BNE     L2B64
         JMP     c64TelesoftByte
 
 L2B64:
         LDY     #$00
-        LDA     (ARGLO),Y
-        INC     ARGLO
+        LDA     (c64BufRd),Y
+        INC     c64BufRd
         BNE     L2B7F
-        INC     ARGSGN
-        LDX     ARGSGN
+        INC     c64BufRdHi
+        LDX     c64BufRdHi
         CPX     c64BufEndPage
         BNE     L2B7F
         LDX     c64BufStart
-        STX     ARGLO
+        STX     c64BufRd
         LDX     c64BufStart+1
-        STX     ARGSGN
+        STX     c64BufRdHi
 
 L2B7F:
         CMP     #$1F
