@@ -2842,6 +2842,40 @@ L2402:
         CLC
         RTS
 
+; c64LoadExtra, and the format of BTX-EXTRA.MAS.
+;
+; Keyboard row 7 is scanned for CTRL at the end of the cold start - $DC01 = $FB,
+; double-read the way everything here is - and if it is not held the routine
+; returns at once. Held, it waits two seconds, opens "BTX-EXTRA.MAS" on device 8
+; and reads it.
+;
+; The file is an ordinary CBM .prg and nothing more:
+;
+;     byte 0   load address, low
+;     byte 1   load address, high
+;     2..EOI   the data, stored from that address upward
+;
+; There is no length, no checksum and no header beyond those two bytes; the copy
+; loop runs until vecDiskGetByte reports EOI. The filename carries no ,P,R
+; suffix, so CBM DOS opens it as PRG by default and the two address bytes arrive
+; as ordinary data on channel 4.
+;
+; What makes it more than a load is the last instruction:
+;
+;     JSR vecDiskCloseRead
+;     JSR vecHideMsg
+;     JMP (c64BufWr)
+;
+; c64BufWr and c64BufWrHi were given the load address alongside c64Ptr and
+; c64PtrHi, and only c64Ptr is advanced by the copy - so the pair still holds
+; where the file began, and the file is EXECUTED at its own load address. It is
+; the same trick c64CartStart uses to reach the payload, with c64Ptr for the
+; copy and an untouched second copy for the jump.
+;
+; So BTX-EXTRA.MAS is a self-contained program, free to choose where it lands,
+; and this is the whole extension mechanism: hold CTRL at power-on. Nothing on
+; screen mentions it. Status message 25, "Zusatzsoftware wird geladen", is shown
+; while it loads.
 c64LoadExtra:
 ; hold CTRL at power-on to load BTX-EXTRA.MAS from disk - keyboard row 7, $DC01 = $FB. Released, it returns at once
         LDA     #$7F

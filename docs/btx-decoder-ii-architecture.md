@@ -169,9 +169,31 @@ c64CopyLoop:
 
 One more thing happens before the terminal starts. `c64LoadExtra` scans
 keyboard row 7 for CTRL, and if it is held at power-on it loads
-`c64ExtraFile` — "BTX-EXTRA.MAS" — from disk before going on. That is what the
-`c64ExtraFile` string and status message 25, *"Zusatzsoftware wird geladen"*,
-are for: extra software, on a key nothing on screen mentions.
+`c64ExtraFile` — "BTX-EXTRA.MAS" — from device 8.
+
+The file is an ordinary CBM `.prg` and nothing more: two bytes of load address,
+low first, then data stored from that address upward until EOI. No length, no
+checksum, no header beyond those two bytes. The filename carries no `,P,R`
+suffix, so CBM DOS opens it as PRG by default and the address bytes arrive as
+ordinary data.
+
+What makes it more than a load is the last instruction:
+
+```
+        JSR     vecDiskCloseRead
+        JSR     vecHideMsg
+        JMP     (c64BufWr)
+```
+
+`c64BufWr` was given the load address alongside `c64Ptr`, and only `c64Ptr` is
+advanced by the copy — so the pair still holds where the file began, and the
+file is **executed at its own load address**. That is the same idiom
+`c64CartStart` uses to reach the payload: one copy of the address for the loop,
+an untouched one for the jump.
+
+So the extension mechanism is a self-contained program, free to choose where it
+lands, on a key nothing on screen mentions. Status message 25,
+*"Zusatzsoftware wird geladen"*, is shown while it loads.
 
 `SIZE+8` is an entry eight bytes into the KERNAL's memory sizing, at the tail
 that sets `MEMSTR` to `$0800` and `HIBASE` to `$0400`. It skips the
