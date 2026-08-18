@@ -1,8 +1,13 @@
+import pathlib
+import re
+
 from dis65xx.emit import emit, format_operand
 from dis65xx.decode import decode
 from dis65xx.opcodes import Mode
 from dis65xx.sidecar import Sidecar
 from dis65xx.trace import trace
+
+OUT = pathlib.Path(__file__).resolve().parent.parent / "out"
 
 
 def _sidecar(**kw) -> Sidecar:
@@ -66,3 +71,25 @@ def test_unreached_bytes_are_grouped_sixteen_per_line():
     text = emit(data, result, _sidecar())
     fcb_lines = [ln for ln in text.splitlines() if "FCB" in ln]
     assert len(fcb_lines) == 3  # 16 + 16 + 8
+
+
+def test_dispatch_tables_name_their_handlers():
+    """Every slot of a ptr_table is a handler address. Showing them as hex hid
+    the one thing the table is for."""
+    src = (OUT / "btx_decoder_ii.asm").read_text()
+    assert "FDB     parseNextByte,ctrlIgnored,ctrlIgnored" in src
+    assert "FDB     stubSci,stubTof,stubOcf,stubIcf,stubIrq1,stubSwi," in src
+    assert "FDB     asciiBS,asciiHT,asciiLF,asciiVT,asciiFF,asciiCR," in src
+    # a handler reached only through the table is not a branch target, so it
+    # gets its label from the table itself
+    assert re.search(r"^\s+FDB\s.*\$[0-9A-F]{4}", src, re.M) is not None, \
+        "the screen line tables hold display RAM, which stays hex"
+
+
+def test_string_regions_render_as_text():
+    """These are ASCII, and 20-byte padded records - so one record per line."""
+    src = (OUT / "btx_decoder_ii.asm").read_text()
+    assert 'FCC     "CEPT Bildschirmtext "' in src
+    assert 'FCC     "ASCII Terminal-Mode "' in src
+    assert 'FCC     "Decodersoftware V3.3"' in src
+    assert "FCB     $43,$45,$50,$54" not in src, "still emitting the text as bytes"

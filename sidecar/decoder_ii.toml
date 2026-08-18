@@ -320,6 +320,16 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xF457" = "orphanF457"
 "0xFAE4" = "orphanFAE4"
 "0xFB00" = "orphanFB00"
+"0xD3A5" = "ctlEsc"
+"0xFAB9" = "asciiBS"
+"0xFACC" = "asciiHT"
+"0xFA3A" = "asciiLF"
+"0xFAE1" = "asciiVT"
+"0xFA85" = "asciiFF"
+"0xFAC7" = "asciiCR"
+"0xFACB" = "asciiIgnored"
+"0xFAF6" = "asciiCurLeft"
+"0xFB03" = "asciiCurUp"
 "0xF9FA" = "asciiCtrlTable"
 "0xFBA9" = "asciiDispatchC0"
 "0xF954" = "timerHandlerAlt"
@@ -1589,6 +1599,8 @@ vectors before entering the main firmware."""
 
 # MC6801 internal register file. Names from the MC6801 Reference Manual.
 [symbols]
+"0x0617" = "asciiCol"
+"0x0618" = "asciiRow"
 "0x0000" = "P1DDR"
 "0x0001" = "P2DDR"
 "0x0002" = "PORT1"
@@ -1914,11 +1926,13 @@ kind = "bytes"
 start = 0xEF67
 end = 0xEFCB
 kind = "string"
+width = 20
 
 [[regions]]
 start = 0xEFF5
 end = 0xF081
 kind = "string"
+width = 20
 
 [[regions]]
 start = 0xFD0D

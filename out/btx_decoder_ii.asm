@@ -50,6 +50,8 @@ txCurBit      EQU     $04EA
 txShift       EQU     $04EB
 txBitsLeft    EQU     $04EC
 txRing        EQU     $04EE
+asciiCol      EQU     $0617
+asciiRow      EQU     $0618
 cursorRowMax  EQU     $1B00
 scrollTop     EQU     $1B1C
 scrollBottom  EQU     $1B1D
@@ -679,6 +681,8 @@ fontNarrow:
 
 LA210:
         LDAA    $1B23
+
+LA213:
         STAA    $07DF
         CLR     $1B23
         LDAA    $1B25
@@ -2742,50 +2746,50 @@ LB31D:
 
 
 ctrlTableC0:
-        FDB     $D355,$DA40,$DA40,$DA40,$DA40,$DA40,$DA40,$DA40
-        FDB     $DA43,$DA4C,$DA55,$DA7F,$DAA9,$DADC,$DAE8,$DAFB
-        FDB     $DA40,$DB0E,$DB2B,$DA40,$DB5B,$DA40,$DA40,$DA40
-        FDB     $DB69,$DBD2,$DA40,$D3A5,$DA40,$DBE2,$DBF2,$DC04
+        FDB     parseNextByte,ctrlIgnored,ctrlIgnored,ctrlIgnored,ctrlIgnored,ctrlIgnored,ctrlIgnored,ctrlIgnored
+        FDB     ctlAPB,ctlAPF,ctlAPD,ctlAPU,ctlCS,ctlAPR,ctlSO,ctlSI
+        FDB     ctrlIgnored,ctlCON,ctlRPT,ctrlIgnored,ctlCOF,ctrlIgnored,ctrlIgnored,ctrlIgnored
+        FDB     ctlCAN,ctlSS2,ctrlIgnored,ctlEsc,ctrlIgnored,ctlSS3,ctlAPH,ctlUS
 
 ctrlTableC1a:
-        FDB     $DC6D,$DC70,$DC73,$DC76,$DC79,$DC7C,$DC7F,$DC82
-        FDB     $DC90,$DCB1,$DCD1,$DCDE,$DCEB,$DCF8,$DD0C,$DD19
-        FDB     $DD41,$DD44,$DD47,$DD4A,$DD4D,$DD50,$DD53,$DD56
-        FDB     $DD77,$DD84,$DD91,$DD9E,$DDA1,$DDA9,$DDD8,$DDEE
+        FDB     c1aAlphaBlack,c1aAlphaRed,c1aAlphaGreen,c1aAlphaYellow,c1aAlphaBlue,c1aAlphaMagenta,c1aAlphaCyan,c1aAlphaWhite
+        FDB     c1aFSH,c1aSTD,c1aEBX,c1aSBX,c1aNSZ,c1aDBH,c1aDBW,c1aDBS
+        FDB     c1aMosaicBlack,c1aMosaicRed,c1aMosaicGreen,c1aMosaicYellow,c1aMosaicBlue,c1aMosaicMagenta,c1aMosaicCyan,c1aMosaicWhite
+        FDB     c1aCDY,c1aSPL,c1aSTL,c1aCSI,c1aBBD,c1aNBD,c1aHMS,c1aRMS
 
 ctrlTableC1b:
-        FDB     $DE01,$DE04,$DE07,$DE0A,$DE0D,$DE10,$DE13,$DE16
-        FDB     $DE1E,$DE3A,$DE56,$DE61,$DE6C,$DE77,$DE84,$DE91
-        FDB     $DE9C,$DE9F,$DEA2,$DEA5,$DEA8,$DEAB,$DEAE,$DEB1
-        FDB     $DEB9,$DEC4,$DECF,$DEDA,$DEDD,$DEE8,$DEF3,$DF08
+        FDB     c1bAlphaBlack,c1bAlphaRed,c1bAlphaGreen,c1bAlphaYellow,c1bAlphaBlue,c1bAlphaMagenta,c1bAlphaCyan,c1bAlphaWhite
+        FDB     c1bFSH,c1bSTD,c1bEBX,c1bSBX,c1bNSZ,c1bDBH,c1bDBW,c1bDBS
+        FDB     c1bMosaicBlack,c1bMosaicRed,c1bMosaicGreen,c1bMosaicYellow,c1bMosaicBlue,c1bMosaicMagenta,c1bMosaicCyan,c1bMosaicWhite
+        FDB     c1bCDY,c1bSPL,c1bSTL,c1bCSI,c1bBBD,c1bNBD,c1bHMS,c1bRMS
 
 escTable:
-        FDB     $FC42,$FC42,$DFB5,$E367,$FC42,$FC42,$FC42,$FC42
-        FDB     $DF41,$DF5E,$DF7B,$DF98,$FC42,$FC42,$FC42,$FC42
-        FDB     $FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42
-        FDB     $FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42
-        FDB     $FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42
-        FDB     $FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42
-        FDB     $FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42
-        FDB     $FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42
-        FDB     $FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42
-        FDB     $FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$DF2B,$DF36
-        FDB     $FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42
-        FDB     $FC42,$FC42,$FC42,$FC42,$DF23,$DF1B,$DF13,$FC42
+        FDB     seqIgnored,seqIgnored,escSelectC1Set,escDefine,seqIgnored,seqIgnored,seqIgnored,seqIgnored
+        FDB     escDesignateG0,escDesignateG1,escDesignateG2,escDesignateG3,seqIgnored,seqIgnored,seqIgnored,seqIgnored
+        FDB     seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored
+        FDB     seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored
+        FDB     seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored
+        FDB     seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored
+        FDB     seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored
+        FDB     seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored
+        FDB     seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored
+        FDB     seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,escLS2,escLS3
+        FDB     seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored
+        FDB     seqIgnored,seqIgnored,seqIgnored,seqIgnored,escLS3R,escLS2R,escLS1R,seqIgnored
 
 csiTable:
-        FDB     $FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42
-        FDB     $FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42
-        FDB     $E254,$E276,$E2A6,$E2D6,$E2F8,$E30C,$E320,$E334
-        FDB     $E341,$E34E,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42
-        FDB     $FC42,$FC42,$E35B,$FC42,$FC42,$FC42,$FC42,$FC42
-        FDB     $FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42
-        FDB     $FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42
-        FDB     $FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42
-        FDB     $FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42
-        FDB     $FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42
-        FDB     $FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42
-        FDB     $FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42,$FC42
+        FDB     seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored
+        FDB     seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored
+        FDB     csiDigit0,csiDigit1,csiDigit2,csiDigit3,csiDigit4,csiDigit5,csiDigit6,csiDigit7
+        FDB     csiDigit8,csiDigit9,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored
+        FDB     seqIgnored,seqIgnored,csiFinalB,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored
+        FDB     seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored
+        FDB     seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored
+        FDB     seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored
+        FDB     seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored
+        FDB     seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored
+        FDB     seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored
+        FDB     seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored,seqIgnored
 
 LD349:
         LDS     #$0400
@@ -2802,7 +2806,7 @@ parseNextByte:
 LD358:
         CMPA    #$1B
         BNE     LD35F
-        JMP     LD3A5
+        JMP     ctlEsc
 
 LD35F:
         CMPA    #$9B
@@ -2890,7 +2894,7 @@ dispatchC1b:
 LD3A2:
         JMP     LE986
 
-LD3A5:
+ctlEsc:
         JSR     LF081
         TST     $04AF
         BPL     dispatchEsc
@@ -3846,6 +3850,8 @@ LDA03:
         LSRB
         LDX     #$0020
         ABX
+
+LDA13:
         STAA    $00,X
         DECB
         BPL     LDA03
@@ -6371,6 +6377,8 @@ LEB0E:
 LEB10:
         LDAA    #$00
         STAA    $00,X
+
+LEB14:
         INX
         LDAA    #$80
         STAA    $00,X
@@ -6976,13 +6984,11 @@ LEF51:
 ; The decoder therefore speaks more than CEPT - PRESTEL is the British videotex
 ; variant and ANTIOPE the French one.
 strModeNames:
-        FCB     $43,$45,$50,$54,$20,$42,$69,$6C,$64,$73,$63,$68,$69,$72,$6D,$74
-        FCB     $65,$78,$74,$20,$50,$52,$45,$53,$54,$45,$4C,$20,$56,$69,$64,$65
-        FCB     $6F,$74,$65,$78,$20,$20,$20,$20,$41,$53,$43,$49,$49,$20,$54,$65
-        FCB     $72,$6D,$69,$6E,$61,$6C,$2D,$4D,$6F,$64,$65,$20,$41,$4E,$54,$49
-        FCB     $4F,$50,$45,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20
-        FCB     $48,$45,$58,$2D,$54,$61,$73,$74,$61,$74,$75,$72,$65,$69,$6E,$67
-        FCB     $61,$62,$65,$20
+        FCC     "CEPT Bildschirmtext "
+        FCC     "PRESTEL Videotex    "
+        FCC     "ASCII Terminal-Mode "
+        FCC     "ANTIOPE             "
+        FCC     "HEX-Tastatureingabe "
 
 LEFCB:
         JSR     LF0F8
@@ -7019,15 +7025,13 @@ LEFDF:
 ; this image is V3.3 and CV30113 is V3.1, so this is the newer build. See
 ; docs/cv30113-revision-diff.md.
 strStatusMsgs:
-        FCB     $41,$6E,$77,$61,$68,$6C,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20
-        FCB     $20,$20,$20,$20,$42,$69,$74,$74,$65,$20,$77,$61,$72,$74,$65,$6E
-        FCB     $2E,$2E,$2E,$20,$20,$20,$20,$20,$56,$65,$72,$62,$69,$6E,$64,$75
-        FCB     $6E,$67,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$6E,$69,$63,$68
-        FCB     $74,$20,$76,$65,$72,$62,$75,$6E,$64,$65,$6E,$20,$20,$20,$20,$20
-        FCB     $41,$62,$62,$72,$75,$63,$68,$20,$20,$20,$20,$20,$20,$20,$20,$20
-        FCB     $20,$20,$20,$20,$44,$65,$63,$6F,$64,$65,$72,$73,$6F,$66,$74,$77
-        FCB     $61,$72,$65,$20,$56,$33,$2E,$33,$42,$65,$6C,$65,$67,$74,$20,$20
-        FCB     $20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20
+        FCC     "Anwahl              "
+        FCC     "Bitte warten...     "
+        FCC     "Verbindung          "
+        FCC     "nicht verbunden     "
+        FCC     "Abbruch             "
+        FCC     "Decodersoftware V3.3"
+        FCC     "Belegt              "
 
 LF081:
         JSR     LF1D8
@@ -8442,7 +8446,7 @@ LF9D9:
         CPX     #$5FC0
         BCS     LF9D9
         LDD     #$0000
-        STD     $0617
+        STD     asciiCol
         LDAA    #$0C
         JSR     LFBAA
 
@@ -8463,17 +8467,17 @@ LF9F2:
 ; one at $D36A - it serves the ASCII Terminal-Mode listed in strModeNames. Nine
 ; distinct handlers cover the 32 slots.
 asciiCtrlTable:
-        FDB     $FACB,$FACB,$FACB,$FACB,$FACB,$FACB,$FACB,$FACB
-        FDB     $FAB9,$FACC,$FA3A,$FAE1,$FA85,$FAC7,$FACB,$FACB
-        FDB     $FACB,$FACB,$FAF6,$FACB,$FB03,$FACB,$FACB,$FACB
-        FDB     $FACB,$FACB,$FACB,$FACB,$FACB,$FACB,$FACB,$FACB
+        FDB     asciiIgnored,asciiIgnored,asciiIgnored,asciiIgnored,asciiIgnored,asciiIgnored,asciiIgnored,asciiIgnored
+        FDB     asciiBS,asciiHT,asciiLF,asciiVT,asciiFF,asciiCR,asciiIgnored,asciiIgnored
+        FDB     asciiIgnored,asciiIgnored,asciiCurLeft,asciiIgnored,asciiCurUp,asciiIgnored,asciiIgnored,asciiIgnored
+        FDB     asciiIgnored,asciiIgnored,asciiIgnored,asciiIgnored,asciiIgnored,asciiIgnored,asciiIgnored,asciiIgnored
 
-LFA3A:
-        LDAA    $0618
+asciiLF:
+        LDAA    asciiRow
         CMPA    #$17
         BCC     LFA46
         INCA
-        STAA    $0618
+        STAA    asciiRow
         RTS
 
 LFA46:
@@ -8513,9 +8517,11 @@ LFA66:
         CMPA    #$40
         BCS     LFA48
         RTS
+
+asciiFF:
         CLRA
-        STAA    $0617
-        STAA    $0618
+        STAA    asciiCol
+        STAA    asciiRow
         LDAA    #$18
 
 LFA8E:
@@ -8542,57 +8548,69 @@ LFA93:
         CMPA    #$40
         BNE     LFA8E
         RTS
-        TST     $0617
+
+asciiBS:
+        TST     asciiCol
         BNE     LFABF
         RTS
 
 LFABF:
-        DEC     $0617
+        DEC     asciiCol
         LDAA    #$20
         JMP     LFB0D
 
-LFAC7:
-        CLR     $0617
+asciiCR:
+        CLR     asciiCol
         RTS
+
+asciiIgnored:
         RTS
-        LDAA    $0617
+
+asciiHT:
+        LDAA    asciiCol
         ADDA    #$08
         ANDA    #$F8
         CMPA    #$50
         BCS     LFADD
-        CLR     $0617
-        JMP     LFA3A
+        CLR     asciiCol
+        JMP     asciiLF
 
 LFADD:
-        STAA    $0617
+        STAA    asciiCol
         RTS
-        JMP     LFA3A
+
+asciiVT:
+        JMP     asciiLF
 
 orphanFAE4:
-        LDAA    $0617
+        LDAA    asciiCol
         INCA
         CMPA    #$50
         BCS     LFAF2
-        CLR     $0617
-        JMP     LFA3A
+        CLR     asciiCol
+        JMP     asciiLF
 
 LFAF2:
-        STAA    $0617
+        STAA    asciiCol
         RTS
-        LDAA    $0617
+
+asciiCurLeft:
+        LDAA    asciiCol
         DECA
         BMI     LFAFF
-        STAA    $0617
+        STAA    asciiCol
 
 LFAFF:
         RTS
 
 orphanFB00:
-        JMP     LFA3A
-        LDAA    $0618
+        JMP     asciiLF
+
+asciiCurUp:
+        LDAA    asciiRow
         DECA
         BMI     LFB0C
-        STAA    $0618
+        STAA    asciiRow
 
 LFB0C:
         RTS
@@ -8620,18 +8638,18 @@ LFB23:
         MUL
         ADDD    #$9E00
         STD     $061C
-        LDAA    $0617
+        LDAA    asciiCol
         LSRA
         ADDA    #$18
         STAA    >PORT3
-        LDAB    $0618
+        LDAB    asciiRow
         LDAA    #$28
         MUL
         ADDD    #$5C00
         STD     $061A
         LDAA    #$0A
         STAA    $0619
-        LDAB    $0617
+        LDAB    asciiCol
         ANDB    #$01
         BEQ     LFB6E
 
@@ -8700,28 +8718,28 @@ LFBAA:
 
 LFBBC:
         JSR     LFB0D
-        INC     $0617
-        LDAA    $0617
+        INC     asciiCol
+        LDAA    asciiCol
         CMPA    #$50
         BCS     LFBCF
-        JSR     LFAC7
-        JSR     LFA3A
+        JSR     asciiCR
+        JSR     asciiLF
 
 LFBCF:
-        LDAA    $0618
+        LDAA    asciiRow
         LDAB    #$28
         MUL
         ADDD    #$5C24
         STD     $0621
         LDX     $0621
-        LDAA    $0617
+        LDAA    asciiCol
         LSRA
         ADDA    #$18
         STAA    >PORT3
         STAA    $0620
         LDD     $00,X
         STD     $0623
-        LDAA    $0617
+        LDAA    asciiCol
         BITA    #$01
         BEQ     LFBFB
         LDD     #$3FD0
@@ -8900,6 +8918,6 @@ romPadding:
         FCB     $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF
 
 vectors:
-        FDB     $F129,$F12E,$F133,$F138,$F13D,$F142,$F147,$B200
+        FDB     stubSci,stubTof,stubOcf,stubIcf,stubIrq1,stubSwi,nullHandler,reset
 
         END

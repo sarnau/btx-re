@@ -39,6 +39,20 @@ def collect_targets(data: bytes, result: TraceResult, sidecar: Sidecar) -> dict[
         elif insn.mnemonic in _JUMPS and insn.mode in (Mode.EXT, Mode.DIR):
             targets.add(insn.operand)
 
+    # Every slot of a dispatch table is a handler address, and a handler
+    # reached only through the table is not a branch target anywhere - so
+    # without this the table prints hex for exactly the entries that have no
+    # other way of being named. The traced-as-code test is what keeps the
+    # screen line tables out: those hold display RAM addresses, not code.
+    for region in sidecar.regions:
+        if region.kind != "ptr_table":
+            continue
+        for a in range(region.start, region.end - 1, 2):
+            if not (base <= a < end - 1):
+                continue
+            word = int.from_bytes(data[a - base:a - base + 2], "big")
+            if word in result.insns:
+                targets.add(word)
 
     return {a: f"L{a:04X}" for a in targets
             if base <= a < end and a not in sidecar.labels}
@@ -99,9 +113,24 @@ def _equ_lines(sidecar: Sidecar) -> list[str]:
     return lines
 
 
-def _fdb_line(words: list[int]) -> str:
-    values = ",".join(f"${w:04X}" for w in words)
+def _fdb_line(words: list[int], names: dict[int, str] | None = None) -> str:
+    """A word that is the address of something named prints the name.
+
+    Every entry of a ptr_table is a handler address, and the hardware vectors
+    are addresses too, so showing them as hex hides the one thing the table is
+    for - which handler each slot reaches."""
+    names = names or {}
+    values = ",".join(names.get(w) or f"${w:04X}" for w in words)
     return f"{'':{_INDENT}}{'FDB':{_MNEM_WIDTH}}{values}"
+
+
+def _printable(b: int) -> bool:
+    """Safe inside an FCC run.
+
+    '"' would close the string and '\\' starts an escape in asl, so a run
+    containing either falls back to FCB rather than relying on two assemblers
+    agreeing about quoting."""
+    return 0x20 <= b < 0x7F and b not in (0x22, 0x5C)
 
 
 def emit(data: bytes, result: TraceResult, sidecar: Sidecar) -> str:
@@ -112,6 +141,7 @@ def emit(data: bytes, result: TraceResult, sidecar: Sidecar) -> str:
     # iterate until the label set stops growing.
     auto = collect_targets(data, result, sidecar)
     sidecar = dataclasses.replace(sidecar, labels={**auto, **sidecar.labels})
+    names = {**sidecar.symbols, **sidecar.labels}
 
 
     base = result.base
@@ -133,12 +163,42 @@ def emit(data: bytes, result: TraceResult, sidecar: Sidecar) -> str:
     addr = base
     end = base + len(data)
     pending: list[int] = []  # unclassified bytes waiting to be flushed as FCB
+    in_string = False        # the pending run sits in a string region
+    text_width = BYTES_PER_FCB
 
     def flush() -> None:
+        if in_string:
+            _flush_text()
+            return
         while pending:
             chunk = bytes(pending[:BYTES_PER_FCB])
             del pending[:BYTES_PER_FCB]
             lines.append(_fcb_line(chunk))
+
+    def _flush_text() -> None:
+        """Show text as text, dropping to FCB for the bytes that are not.
+
+        A short printable run inside binary reads worse as a one-word string
+        than as the bytes it sits among, so runs under four characters stay
+        FCB."""
+        while pending:
+            run = 0
+            while run < len(pending) and _printable(pending[run]):
+                run += 1
+            if run >= 4:
+                text = bytes(pending[:run]).decode("ascii")
+                del pending[:run]
+                for i in range(0, len(text), text_width):
+                    piece = text[i:i + text_width]
+                    lines.append(f"{'':{_INDENT}}{'FCC':{_MNEM_WIDTH}}\"{piece}\"")
+                continue
+            take = max(run, 1)
+            while take < len(pending) and not _printable(pending[take]):
+                take += 1
+            chunk = bytes(pending[:take])
+            del pending[:take]
+            for i in range(0, len(chunk), BYTES_PER_FCB):
+                lines.append(_fcb_line(chunk[i:i + BYTES_PER_FCB]))
 
     while addr < end:
         c64 = sidecar.c64_block_at(addr)
@@ -185,7 +245,7 @@ def emit(data: bytes, result: TraceResult, sidecar: Sidecar) -> str:
                     int.from_bytes(data[addr - base + 2 * i: addr - base + 2 * i + 2], "big")
                     for i in range(count)
                 ]
-                lines.append(_fdb_line(words))
+                lines.append(_fdb_line(words, names))
                 addr += 2 * count
                 continue
 
@@ -207,6 +267,11 @@ def emit(data: bytes, result: TraceResult, sidecar: Sidecar) -> str:
             addr = insn.end
             continue
 
+        text_here = region is not None and region.kind == "string"
+        width_here = (region.width or BYTES_PER_FCB) if text_here else BYTES_PER_FCB
+        if text_here != in_string or width_here != text_width:
+            flush()
+            in_string, text_width = text_here, width_here
         pending.append(data[addr - base])
         addr += 1
         # Break the FCB run at any address that carries its own annotation.

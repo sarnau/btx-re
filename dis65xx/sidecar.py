@@ -40,6 +40,10 @@ class Region:
     start: int
     end: int      # exclusive
     kind: str
+    # Fixed record width, for a string region holding padded records. Breaking
+    # the FCC lines on it puts one record per line, which is what makes the
+    # padding legible as padding.
+    width: int | None = None
 
 
 @dataclasses.dataclass
@@ -92,7 +96,8 @@ def load_sidecar(path: str | pathlib.Path) -> Sidecar:
             raise ValueError(f"unknown region kind {r['kind']!r} at ${r['start']:04X}")
         if r["end"] <= r["start"]:
             raise ValueError(f"empty region at ${r['start']:04X}")
-        regions.append(Region(start=r["start"], end=r["end"], kind=r["kind"]))
+        regions.append(Region(start=r["start"], end=r["end"], kind=r["kind"],
+                              width=r.get("width")))
 
     regions.sort(key=lambda r: r.start)
     for a, b in zip(regions, regions[1:]):
