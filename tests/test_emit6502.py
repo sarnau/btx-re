@@ -230,3 +230,12 @@ def test_charset_round_trips_through_our_assembler():
            '        FCC "Bildschirmtext"\n        CHARSET\n        FCC "AB"\n        END\n')
     _, out = assemble(src)
     assert out == bytes.fromhex("C2494C4453434849524D5445585441 42".replace(" ", ""))
+
+
+def test_extra_filename_is_a_string_not_code():
+    """"BTX-EXTRA.MAS" sits straight after an RTS, so a linear sweep runs into
+    it and disassembles the characters as instructions."""
+    src = (OUT / "c64_payload.asm").read_text()
+    body = src.split("c64ExtraFile:", 1)[1][:200]
+    assert 'FCC     "BTX-EXTRA.MAS"' in body
+    assert "FCB     $00" in body

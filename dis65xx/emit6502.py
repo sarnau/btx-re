@@ -359,6 +359,10 @@ def emit_block(data: bytes, base: int, block: C64Block, sidecar: Sidecar) -> str
         body = (f"{'':{_INDENT}}{insn.mnemonic:{_MNEM_WIDTH}}"
                 f"{_operand(insn, all_names, used_symbols)}").rstrip()
         comment = sidecar.line_comments.get(rt + block.offset)
+        # A label already printed this note above; repeating it on the first
+        # instruction just doubles it.
+        if comment and rt in labels:
+            comment = None
         lines.append(f"{body:<40}; {comment}" if comment else body)
     if in_petscii:
         flush()

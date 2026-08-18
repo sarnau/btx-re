@@ -160,6 +160,7 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 
 
 [labels]
+"0xC80C" = "c64ExtraFile"
 "0xC84C" = "c64SplashText"
 "0xB331" = "c64CartSignature"
 "0xBA18" = "c64StrTable"
@@ -204,7 +205,7 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xC615" = "c64Vec46"
 "0xC6B4" = "c64Vec49"
 "0xC715" = "c64Vec53"
-"0xC81A" = "c64ScreenOut2"
+"0xC81A" = "c64ShowSplash"
 "0xC94D" = "c64Vec55"
 "0xC965" = "c64Vec56"
 "0xC97E" = "c64Vec38"
@@ -387,6 +388,13 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xFFF0" = "vectors"
 
 [block_comments]
+"0xC80C" = """
+Filename of the extra software: "BTX-EXTRA.MAS", null-terminated.
+
+Loaded from disk when the user picks Telesoft, which is what the status
+message "Zusatzsoftware wird geladen" refers to. It sits immediately after an
+RTS, so a linear sweep runs straight into it and disassembles the characters
+as instructions."""
 "0xC84C" = """
 Startup screen text, PETSCII, ROM $C84C-$C94C (runtime $24A4-$25A4).
 
@@ -457,7 +465,7 @@ evidenced names rather than structural ones:
 
   c64ScreenInit  vector 0   CLALL and $D016/$D021/$D800
   c64ScreenOut1  vector 1   CHROUT with $D021/$D800/$D900
-  c64ScreenOut2  vector 54  the same pattern
+  c64ShowSplash  vector 54  prints c64SplashText, then sets the colours
 
 The rest keep structural names because tracing them transitively is not
 discriminating: almost every entry reaches a shared input loop, so GETIN and
@@ -932,7 +940,7 @@ vectors before entering the main firmware."""
 "0xC615" = "vector 46 at runtime $226D - jump-table entry 46"
 "0xC6B4" = "vector 49 at runtime $230C - jump-table entry 49"
 "0xC715" = "vector 53 at runtime $236D - jump-table entry 53"
-"0xC81A" = "vector 54 at runtime $2472 - CHROUT with $D021/$D800/$D900"
+"0xC81A" = "vector 54 - print c64SplashText, then set background and colour RAM"
 "0xC94D" = "vector 55 at runtime $25A5 - jump-table entry 55"
 "0xC965" = "vector 56 at runtime $25BD - jump-table entry 56"
 "0xC97E" = "vector 38 at runtime $25D6 - jump-table entry 38"
@@ -1251,6 +1259,16 @@ kind = "ptr_table"
 
 [[regions]]
 start = 0xBA56
+end = 0xC80C
+kind = "code6502"
+
+[[regions]]
+start = 0xC80C
+end = 0xC81A
+kind = "string"
+
+[[regions]]
+start = 0xC81A
 end = 0xC84C
 kind = "code6502"
 
