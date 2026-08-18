@@ -746,11 +746,12 @@ That the C64 side speaks CEPT to the decoder is what makes ctlRPT and the
 mosaic set visible from both directions - the firmware decodes exactly what
 this data encodes."""
 "0x0061" = """
-The five zero-page pointers, runtime $61-$6E.
+The zero-page pointers, runtime $61-$6E and $A7.
 
 The payload does no floating-point arithmetic, so the C64 ROM names for these
-locations - FACEXP..ARGSGN, BASIC's two floating-point accumulators - say
-nothing about what the payload keeps there. They are five 16-bit pointers, each
+locations say nothing about what the payload keeps there: $61-$6E are BASIC's
+two floating-point accumulators, FACEXP..ARGSGN, and $A7/$A8 are the KERNAL's
+RS-232 receiver variables INBIT and BITCI. They are six 16-bit pointers, each
 used for one job throughout:
 
   $61  c64Ptr      a general indirect. Walks the $00-terminated CEPT streams
@@ -765,6 +766,10 @@ used for one job throughout:
   $6D  c64BufRd    the capture buffer read cursor. Only c64TelesoftByte uses it,
                    which is the one place that reads and writes the buffer at
                    once, making it a ring
+  $A7  c64ScrPtr   the screen line c64PlotChar is writing into, built from
+                   LDTB2 and LDTB1 exactly as the KERNAL's own setpnt builds
+                   PNT. c64ShowSplash borrows the pair to walk c64SplashText,
+                   which is the same kind of borrowing as $61
 
 The high bytes carry their own names rather than reading as +1, because the
 symbol table is per address and because the code touches them on their own -
@@ -1920,8 +1925,8 @@ org = 0x0FFE
 "0x0090" = "STATUS"
 "0x009A" = "DFLTO"
 "0x00A0" = "TIME_"
-"0x00A7" = "INBIT"
-"0x00A8" = "BITCI"
+"0x00A7" = "c64ScrPtr"
+"0x00A8" = "c64ScrPtrHi"
 "0x00B7" = "FNLEN"
 "0x00B8" = "LA"
 "0x00B9" = "SA"

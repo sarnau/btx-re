@@ -17,8 +17,8 @@ c64BufRd    EQU     $006D
 c64BufRdHi  EQU     $006E
 STATUS      EQU     $0090
 DFLTO       EQU     $009A
-INBIT       EQU     $00A7
-BITCI       EQU     $00A8
+c64ScrPtr   EQU     $00A7
+c64ScrPtrHi EQU     $00A8
 FNLEN       EQU     $00B7
 LA          EQU     $00B8
 SA          EQU     $00B9
@@ -2890,18 +2890,18 @@ c64ExtraFile:
 c64ShowSplash:
 ; vector 54 $10A2 - print c64SplashText on the C64 screen, then set the background and fill colour RAM
         LDA     #c64SplashText&255
-        STA     INBIT
+        STA     c64ScrPtr
         LDA     #c64SplashText>>8
-        STA     BITCI
+        STA     c64ScrPtrHi
 
 L247A:
         LDY     #$00
-        LDA     (INBIT),Y
+        LDA     (c64ScrPtr),Y
         BEQ     L248B
         JSR     BSOUT
-        INC     INBIT
+        INC     c64ScrPtr
         BNE     L247A
-        INC     BITCI
+        INC     c64ScrPtrHi
         BNE     L247A
 
 L248B:
@@ -2971,14 +2971,14 @@ c64PlotChar:
         TXA
         PHA
         LDA     LDTB2,Y
-        STA     INBIT
+        STA     c64ScrPtr
         LDA     >LDTB1,Y
         AND     #$0F
-        STA     BITCI
+        STA     c64ScrPtrHi
         PLA
         TAY
         PLA
-        STA     (INBIT),Y
+        STA     (c64ScrPtr),Y
         PLP
         RTS
 

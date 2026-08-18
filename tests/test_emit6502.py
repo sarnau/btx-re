@@ -252,11 +252,12 @@ def test_pointer_pairs_name_their_target():
     # the low/high halves must pair with the right zero-page bytes
     lines = [ln.strip() for ln in src.splitlines()]
     i = lines.index("LDA     #c64SplashText&255")
-    # $A7/$A8 carry the ROM's names, INBIT/BITCI, even though the payload is
-    # reusing them as a pointer rather than for serial input.
-    assert lines[i + 1] == "STA     INBIT"
+    # $A7/$A8 are the KERNAL's RS-232 variables INBIT and BITCI, but the
+    # payload only ever uses them as a 16-bit pointer, so they are named for
+    # that instead.
+    assert lines[i + 1] == "STA     c64ScrPtr"
     assert lines[i + 2] == "LDA     #c64SplashText>>8"
-    assert lines[i + 3] == "STA     BITCI"
+    assert lines[i + 3] == "STA     c64ScrPtrHi"
 
 
 def test_low_high_byte_expressions_assemble():
@@ -405,7 +406,7 @@ def test_indirect_operands_name_their_pointer():
     pointer rather than showing its address."""
     src = (OUT / "c64_payload.asm").read_text()
     assert "(c64KeyPtr),Y" in src
-    assert "(INBIT),Y" in src
+    assert "(c64ScrPtr),Y" in src
 
 
 def test_every_word_entry_can_carry_its_own_label():
