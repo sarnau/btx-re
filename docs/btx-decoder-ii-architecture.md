@@ -822,6 +822,27 @@ The renderer decides which store to use from `drcsCell`, set when the current
 G-set code is 5 — the ESC 2/8 2/0 designation. A DRCS cell is also **12 rows
 rather than 10**, which is what `blitRows` carries into the blit loop.
 
+### The three display modes
+
+`$A351` onward is where a cell can be simplified before it is drawn. All three
+modes act on the copy in `curAttr0`–`curAttr3`, never on the planes, so a page
+is not damaged by being looked at in a reduced form.
+
+| Mode | Set by | Effect |
+|---|---|---|
+| `modePlain` | host `T`, the C64's F4 | strips the page back to defaults — `curAttr2` to `$07`, `curAttr3` to `$99`, `curSet` to its low nibble |
+| `modeMono` | host `W`/`w` | forces `fgColour` 7 and `bgColour` 0 instead of unpacking them from the attributes |
+| `modeReveal` | host `R`, the C64's F2 | forces bit 3 of `curAttr3` on |
+
+`modeReveal` is the one worth spelling out. Bit 3 of `curAttr3` is what makes a
+character visible: with it clear, `$A479` copies `bgColour` over `fgColour` and
+the cell is painted in its own background. So the bit is **conceal**, and
+`modeReveal` overrides it — the teletext function of that name, on the key it
+traditionally sits on.
+
+`$99`, the value `modePlain` writes to `curAttr3`, is the same one `clearPlanes`
+writes at power-on, so "plain" is literally "as if nothing had set anything".
+
 ### Alternative letter shapes
 
 `$A618` runs when `curSet` bit 3 is set — the accent bit — and it swaps the
@@ -1033,9 +1054,6 @@ entire C64 payload is byte-for-byte identical. See
   identified — `modemCrc` at `$F818` is a reflected CRC-16 with polynomial
   `$8005` — but the meaning of individual DBT-03 command bytes in `modemCmd`
   and `modemReply` is read off their values, not from a specification.
-- **`$1B24`–`$1B26`.** Three display options toggled by host commands `R`, `T`
-  and `W`, snapshotted for the redraw as `redrawT` and `redrawW`. Named after
-  the letters that set them, since what they switch is not established.
 - **`$61FC`/`$61FD` and `$81FC`/`$81FD`.** Strobes in the interrupt-enable
   path, named `c64IrqArmA`/`c64IrqArmB` and `btxIrqArmA`/`btxIrqArmB`. What
   they gate is not established — only that the data written is ignored, since

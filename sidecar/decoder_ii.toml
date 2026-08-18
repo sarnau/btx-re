@@ -598,6 +598,28 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xFFF0" = "vectors"
 
 [block_comments]
+"0xA351" = """
+The three display modes, and what each one does to a cell.
+
+All three are toggled by host commands and snapshotted for the redraw, and all
+three act here on the copy of the cell in curAttr0..curAttr3 rather than on the
+planes - so a page is never damaged by being looked at in a reduced form.
+
+modePlain, host 'T' and the C64's F4, strips the page back to defaults:
+
+    curAttr0  keeps bits 0,1,4,5 if bit 4 was set, otherwise zero
+    curSet    low nibble only, so the separated-mosaic and accent bits go
+    curAttr2  $07
+    curAttr3  $99, the same value clearPlanes writes at power-on
+
+modeMono, host 'W' and 'w', forces fgColour to 7 and bgColour to 0 instead of
+unpacking them out of curAttr2 and curAttr3. White on black, no colour.
+
+modeReveal, host 'R' and the C64's F2, forces bit 3 of curAttr3 on. That bit
+is what makes a character visible at all - with it clear, $A479 copies
+bgColour over fgColour and the cell is painted in its own background. So the
+bit is conceal, and modeReveal overrides it: the teletext function of that
+name, on the key it traditionally sits on."""
 "0xB2B4" = """
 How the C64 comes to see a cartridge at $8000.
 
@@ -1796,7 +1818,7 @@ vectors before entering the main firmware."""
 "0xFAE1" = "ASCII $0B VT - the same as LF"
 "0xFAF6" = "ASCII $12 - asciiCol back one, floored at 0"
 "0xFB03" = "ASCII $14 - asciiRow up one, floored at 0"
-"0xA210" = "redraw the whole page: latch redrawReq into redrawKind, snapshot modeT and modeW, then walk the planes cell by cell"
+"0xA210" = "redraw the whole page: latch redrawReq into redrawKind, snapshot modePlain and modeMono, then walk the planes cell by cell"
 "0xA7E7" = "glyphPtr for a redefined character: (glyphCode & $7F - $20) * 48 + drcsStore - 1"
 "0xD355" = "the parser's main loop - fetch a byte and dispatch it: $1B to ctlEsc, $9B to the CSI path, C0 and C1 through their tables"
 "0xD386" = "C1 $80-$9F, serial attribute set: (A & $1F) * 2 indexes ctrlTableC1a"
@@ -2224,17 +2246,17 @@ vectors before entering the main firmware."""
 "0x07D8" = "glyphPtrSave"
 "0x07DA" = "glyphFlags"
 "0x07DC" = "glyphPass"
-"0x07DD" = "redrawT"
-"0x07DE" = "redrawW"
+"0x07DD" = "redrawPlain"
+"0x07DE" = "redrawMono"
 "0x07DF" = "redrawKind"
 "0x07E1" = "accentCode"
 "0x07E3" = "tallCell"
 "0x0800" = "drcsStore"
 "0x1B02" = "rowFlags"
 "0x1B20" = "cursorVisible"
-"0x1B24" = "modeR"
-"0x1B25" = "modeT"
-"0x1B26" = "modeW"
+"0x1B24" = "modeReveal"
+"0x1B25" = "modePlain"
+"0x1B26" = "modeMono"
 "0x1B27" = "modePrestel"
 "0x1B28" = "modeAscii"
 "0x1B29" = "modeAntiope"

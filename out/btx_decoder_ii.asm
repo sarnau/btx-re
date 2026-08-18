@@ -204,8 +204,8 @@ colourBits     EQU     $07D6
 glyphPtrSave   EQU     $07D8
 glyphFlags     EQU     $07DA
 glyphPass      EQU     $07DC
-redrawT        EQU     $07DD
-redrawW        EQU     $07DE
+redrawPlain    EQU     $07DD
+redrawMono     EQU     $07DE
 redrawKind     EQU     $07DF
 glyphCode      EQU     $07E0
 accentCode     EQU     $07E1
@@ -222,9 +222,9 @@ cursorCol      EQU     $1B1F
 cursorVisible  EQU     $1B20
 rowChar        EQU     $1B21
 redrawReq      EQU     $1B23
-modeR          EQU     $1B24
-modeT          EQU     $1B25
-modeW          EQU     $1B26
+modeReveal     EQU     $1B24
+modePlain      EQU     $1B25
+modeMono       EQU     $1B26
 modePrestel    EQU     $1B27
 modeAscii      EQU     $1B28
 modeAntiope    EQU     $1B29
@@ -891,16 +891,16 @@ fontNarrow:
         FCB     $22,$22,$1C,$00,$00,$00,$22,$00,$22,$22,$22,$22,$1C,$00,$00,$00
 
 redrawScreen:
-; redraw the whole page: latch redrawReq into redrawKind, snapshot modeT and modeW, then walk the planes cell by cell
+; redraw the whole page: latch redrawReq into redrawKind, snapshot modePlain and modeMono, then walk the planes cell by cell
         LDAA    redrawReq
 
 LA213:
         STAA    redrawKind
         CLR     redrawReq
-        LDAA    modeT
-        STAA    redrawT
-        LDAA    modeW
-        STAA    redrawW
+        LDAA    modePlain
+        STAA    redrawPlain
+        LDAA    modeMono
+        STAA    redrawMono
         LDAA    #$0A
         STAA    glyphRows
         LDAA    #$FF
@@ -939,8 +939,8 @@ LA23E:
 ; byte 3 carries something per line that survives a clear, and rowFlags is read
 ; through S with PUL, one byte per screen row.
 LA250:
-        LDAA    redrawT
-        ORAA    redrawW
+        LDAA    redrawPlain
+        ORAA    redrawMono
         BEQ     LA26F
         LDAA    #$17
         STAA    >PORT3
@@ -1113,8 +1113,29 @@ LA32A:
         STAA    $00,X
         JMP     LA71D
 
+; The three display modes, and what each one does to a cell.
+;
+; All three are toggled by host commands and snapshotted for the redraw, and all
+; three act here on the copy of the cell in curAttr0..curAttr3 rather than on the
+; planes - so a page is never damaged by being looked at in a reduced form.
+;
+; modePlain, host 'T' and the C64's F4, strips the page back to defaults:
+;
+;     curAttr0  keeps bits 0,1,4,5 if bit 4 was set, otherwise zero
+;     curSet    low nibble only, so the separated-mosaic and accent bits go
+;     curAttr2  $07
+;     curAttr3  $99, the same value clearPlanes writes at power-on
+;
+; modeMono, host 'W' and 'w', forces fgColour to 7 and bgColour to 0 instead of
+; unpacking them out of curAttr2 and curAttr3. White on black, no colour.
+;
+; modeReveal, host 'R' and the C64's F2, forces bit 3 of curAttr3 on. That bit
+; is what makes a character visible at all - with it clear, $A479 copies
+; bgColour over fgColour and the cell is painted in its own background. So the
+; bit is conceal, and modeReveal overrides it: the teletext function of that
+; name, on the key it traditionally sits on.
 LA351:
-        TST     redrawT
+        TST     redrawPlain
         BEQ     LA377
         LDAA    >curAttr0
         BITA    #$10
@@ -1211,7 +1232,7 @@ LA3FF:
         STAB    >curSet
 
 LA402:
-        TST     redrawW
+        TST     redrawMono
         BEQ     LA413
         LDAA    #$07
         STAA    fgColour
@@ -1266,7 +1287,7 @@ LA446:
         STAA    >curAttr3
 
 LA46A:
-        TST     modeR
+        TST     modeReveal
         BEQ     LA479
         LDAA    >curAttr3
         ORAA    #$08
@@ -1892,7 +1913,7 @@ LA894:
 
 LA8C5:
         LDAA    >curAttr3
-        TST     modeR
+        TST     modeReveal
         BEQ     LA8CF
         ORAA    #$08
 
@@ -4390,11 +4411,11 @@ LDAB1:
         STAA    cursorRow
         CLR     cursorCol
         JSR     setRowPointers
-        LDAA    modeT
+        LDAA    modePlain
         STAA    redrawReq
         CLR     clutIndex
-        CLR     modeR
-        CLR     modeT
+        CLR     modeReveal
+        CLR     modePlain
         JMP     ctlAPH
 
 ctlAPR:
@@ -7208,13 +7229,13 @@ LECB5:
 LECCB:
         CLR     hostFeedMode
         CLR     escPending
-        CLR     modeW
+        CLR     modeMono
         CLR     pendingByte
         CLR     abortFlag
         CLR     promptLeft
         CLR     redrawReq
-        CLR     modeT
-        CLR     modeR
+        CLR     modePlain
+        CLR     modeReveal
         CLR     spare0616
         CLR     inStatusLine
         CLR     parallelMode
@@ -8083,9 +8104,9 @@ LF2ED:
         CLR     escPending
         CMPA    #$52
         BNE     LF304
-        LDAA    modeR
+        LDAA    modeReveal
         EORA    #$01
-        STAA    modeR
+        STAA    modeReveal
         LDAA    #$FF
         STAA    redrawReq
         JMP     LF409
@@ -8093,9 +8114,9 @@ LF2ED:
 LF304:
         CMPA    #$54
         BNE     LF318
-        LDAA    modeT
+        LDAA    modePlain
         EORA    #$FF
-        STAA    modeT
+        STAA    modePlain
         LDAA    #$FF
         STAA    redrawReq
         JMP     LF409
@@ -8104,14 +8125,14 @@ LF318:
         CMPA    #$57
         BNE     LF327
         LDAA    #$FF
-        STAA    modeW
+        STAA    modeMono
         STAA    redrawReq
         JMP     LF409
 
 LF327:
         CMPA    #$77
         BNE     LF336
-        CLR     modeW
+        CLR     modeMono
         LDAA    #$FF
         STAA    redrawReq
         JMP     LF409
