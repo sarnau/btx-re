@@ -336,5 +336,8 @@ entire C64 payload is byte-for-byte identical. See
 - **The `$D419` no-match path.** Reachable, but harmless: two of its three
   outputs are read only for bit 7 and the third is clamped. Documented in the
   sidecar rather than treated as a bug.
-- **The C64 payload's internals.** It disassembles as 6502 but its routines are
-  unnamed; only the loader and jump-table structure are understood.
+- **The C64 payload's internals.** Its 61-entry jump table is labelled and its
+  variable/text split is established, but only three routines carry evidenced
+  names; the other 57 are structural. Tracing entries transitively is not
+  discriminating - nearly all reach a shared input loop - so naming them means
+  reading each one, a task the size of the 6801 side.

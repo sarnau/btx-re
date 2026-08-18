@@ -160,6 +160,68 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 
 
 [labels]
+"0xB4B0" = "c64VarBlock"
+"0xB5A5" = "c64TextBlock"
+"0xBA56" = "c64ScreenInit"
+"0xBAA7" = "c64ScreenOut1"
+"0xBAF4" = "c64Vec02"
+"0xBB2A" = "c64Vec03"
+"0xBB5E" = "c64Vec05"
+"0xBC37" = "c64Vec06"
+"0xBC64" = "c64Vec07"
+"0xBC6A" = "c64Vec08"
+"0xBC89" = "c64Vec09"
+"0xBC9E" = "c64Vec10"
+"0xBCD8" = "c64Vec11"
+"0xBCF6" = "c64Vec04"
+"0xBD67" = "c64Vec12"
+"0xBD77" = "c64Vec13"
+"0xBD87" = "c64Vec14"
+"0xBE43" = "c64Vec15"
+"0xBECA" = "c64Vec19"
+"0xBFC2" = "c64Vec20"
+"0xBFE7" = "c64Vec21"
+"0xC03D" = "c64Vec22"
+"0xC09B" = "c64Vec23"
+"0xC1E1" = "c64Vec24"
+"0xC20D" = "c64Vec25"
+"0xC297" = "c64Vec26"
+"0xC2D3" = "c64Vec27"
+"0xC2FC" = "c64Vec28"
+"0xC407" = "c64Vec29"
+"0xC495" = "c64Vec31"
+"0xC4AB" = "c64Vec30"
+"0xC4DE" = "c64Vec32"
+"0xC538" = "c64Vec40"
+"0xC53E" = "c64Vec41"
+"0xC568" = "c64Vec42"
+"0xC59C" = "c64Vec43"
+"0xC5B3" = "c64Vec44"
+"0xC615" = "c64Vec46"
+"0xC6B4" = "c64Vec49"
+"0xC715" = "c64Vec53"
+"0xC81A" = "c64ScreenOut2"
+"0xC94D" = "c64Vec55"
+"0xC965" = "c64Vec56"
+"0xC97E" = "c64Vec38"
+"0xC9FC" = "c64Vec39"
+"0xCA51" = "c64Vec47"
+"0xCA81" = "c64Vec34"
+"0xCAC7" = "c64Vec35"
+"0xCADA" = "c64Vec60"
+"0xCAFA" = "c64Vec48"
+"0xCB5F" = "c64Vec50"
+"0xCB7E" = "c64Vec51"
+"0xCBEE" = "c64Vec52"
+"0xCC52" = "c64Vec16"
+"0xCC95" = "c64Vec17"
+"0xCCB5" = "c64Vec33"
+"0xCCC6" = "c64Vec36"
+"0xCCDF" = "c64Vec37"
+"0xCCEB" = "c64Vec18"
+"0xCCFA" = "c64Vec59"
+"0xCD43" = "c64Vec57"
+"0xCEBF" = "c64Vec58"
 "0xE3EF" = "orphanE3EF"
 "0xF457" = "orphanF457"
 "0xFAE4" = "orphanFAE4"
@@ -321,6 +383,34 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xFFF0" = "vectors"
 
 [block_comments]
+"0xB3A8" = """
+C64 payload: a 61-entry JMP dispatch table at runtime $1000-$10B6, then code at
+$174C-$2943 with data below it. The table is the module's whole API surface and
+the natural place to start reading.
+
+Entries are labelled c64Vec00..c64Vec60 at their ROM addresses. Vectors 44 and
+45 share a target ($220B), so 60 distinct addresses carry labels. Three have
+evidenced names rather than structural ones:
+
+  c64ScreenInit  vector 0   CLALL and $D016/$D021/$D800
+  c64ScreenOut1  vector 1   CHROUT with $D021/$D800/$D900
+  c64ScreenOut2  vector 54  the same pattern
+
+The rest keep structural names because tracing them transitively is not
+discriminating: almost every entry reaches a shared input loop, so GETIN and
+STOP appear nearly everywhere and say nothing about the individual routine.
+Naming them means reading them one at a time - a task the size of the 6801
+side, not a sweep.
+
+Two findings for anyone continuing:
+
+  - $11D7-$11FC is a VARIABLE block, not text. Code stores into $11D8-$11F7,
+    which is what separates it from the German strings beginning at $11FD
+    ("von Diskette: File? "). The ROM image holds their initial values, which
+    is why that area first reads as unprintable filler in front of the text.
+  - Text records are 40 columns followed by a 5-byte trailer
+    ($2C $00 $C0 $01 $98). Nothing addresses them directly, so they are reached
+    by index; the only LDA #$2D in the payload is at runtime $287B."""
 "0xE3EF" = """
 Unreachable code. This is one of four orphan fragments, 43 bytes in total:
 
@@ -740,6 +830,66 @@ Sets up the stack, configures ports 1 and 2, and installs the interrupt soft
 vectors before entering the main firmware."""
 
 [line_comments]
+"0xBA56" = "vector 0 at runtime $16AE - CLALL and $D016/$D021/$D800 - screen and colour RAM setup"
+"0xBAA7" = "vector 1 at runtime $16FF - CHROUT with $D021/$D800/$D900"
+"0xBAF4" = "vector 2 at runtime $174C - jump-table entry 2"
+"0xBB2A" = "vector 3 at runtime $1782 - jump-table entry 3"
+"0xBB5E" = "vector 5 at runtime $17B6 - jump-table entry 5"
+"0xBC37" = "vector 6 at runtime $188F - jump-table entry 6"
+"0xBC64" = "vector 7 at runtime $18BC - jump-table entry 7"
+"0xBC6A" = "vector 8 at runtime $18C2 - jump-table entry 8"
+"0xBC89" = "vector 9 at runtime $18E1 - jump-table entry 9"
+"0xBC9E" = "vector 10 at runtime $18F6 - jump-table entry 10"
+"0xBCD8" = "vector 11 at runtime $1930 - jump-table entry 11"
+"0xBCF6" = "vector 4 at runtime $194E - jump-table entry 4"
+"0xBD67" = "vector 12 at runtime $19BF - jump-table entry 12"
+"0xBD77" = "vector 13 at runtime $19CF - jump-table entry 13"
+"0xBD87" = "vector 14 at runtime $19DF - jump-table entry 14"
+"0xBE43" = "vector 15 at runtime $1A9B - jump-table entry 15"
+"0xBECA" = "vector 19 at runtime $1B22 - jump-table entry 19"
+"0xBFC2" = "vector 20 at runtime $1C1A - jump-table entry 20"
+"0xBFE7" = "vector 21 at runtime $1C3F - jump-table entry 21"
+"0xC03D" = "vector 22 at runtime $1C95 - jump-table entry 22"
+"0xC09B" = "vector 23 at runtime $1CF3 - jump-table entry 23"
+"0xC1E1" = "vector 24 at runtime $1E39 - jump-table entry 24"
+"0xC20D" = "vector 25 at runtime $1E65 - jump-table entry 25"
+"0xC297" = "vector 26 at runtime $1EEF - jump-table entry 26"
+"0xC2D3" = "vector 27 at runtime $1F2B - jump-table entry 27"
+"0xC2FC" = "vector 28 at runtime $1F54 - jump-table entry 28"
+"0xC407" = "vector 29 at runtime $205F - jump-table entry 29"
+"0xC495" = "vector 31 at runtime $20ED - jump-table entry 31"
+"0xC4AB" = "vector 30 at runtime $2103 - jump-table entry 30"
+"0xC4DE" = "vector 32 at runtime $2136 - jump-table entry 32"
+"0xC538" = "vector 40 at runtime $2190 - jump-table entry 40"
+"0xC53E" = "vector 41 at runtime $2196 - jump-table entry 41"
+"0xC568" = "vector 42 at runtime $21C0 - jump-table entry 42"
+"0xC59C" = "vector 43 at runtime $21F4 - jump-table entry 43"
+"0xC5B3" = "vector 44 at runtime $220B - jump-table entry 44"
+"0xC615" = "vector 46 at runtime $226D - jump-table entry 46"
+"0xC6B4" = "vector 49 at runtime $230C - jump-table entry 49"
+"0xC715" = "vector 53 at runtime $236D - jump-table entry 53"
+"0xC81A" = "vector 54 at runtime $2472 - CHROUT with $D021/$D800/$D900"
+"0xC94D" = "vector 55 at runtime $25A5 - jump-table entry 55"
+"0xC965" = "vector 56 at runtime $25BD - jump-table entry 56"
+"0xC97E" = "vector 38 at runtime $25D6 - jump-table entry 38"
+"0xC9FC" = "vector 39 at runtime $2654 - jump-table entry 39"
+"0xCA51" = "vector 47 at runtime $26A9 - jump-table entry 47"
+"0xCA81" = "vector 34 at runtime $26D9 - jump-table entry 34"
+"0xCAC7" = "vector 35 at runtime $271F - jump-table entry 35"
+"0xCADA" = "vector 60 at runtime $2732 - jump-table entry 60"
+"0xCAFA" = "vector 48 at runtime $2752 - jump-table entry 48"
+"0xCB5F" = "vector 50 at runtime $27B7 - jump-table entry 50"
+"0xCB7E" = "vector 51 at runtime $27D6 - jump-table entry 51"
+"0xCBEE" = "vector 52 at runtime $2846 - jump-table entry 52"
+"0xCC52" = "vector 16 at runtime $28AA - jump-table entry 16"
+"0xCC95" = "vector 17 at runtime $28ED - jump-table entry 17"
+"0xCCB5" = "vector 33 at runtime $290D - jump-table entry 33"
+"0xCCC6" = "vector 36 at runtime $291E - jump-table entry 36"
+"0xCCDF" = "vector 37 at runtime $2937 - jump-table entry 37"
+"0xCCEB" = "vector 18 at runtime $2943 - jump-table entry 18"
+"0xCCFA" = "vector 59 at runtime $2952 - jump-table entry 59"
+"0xCD43" = "vector 57 at runtime $299B - jump-table entry 57"
+"0xCEBF" = "vector 58 at runtime $2B17 - jump-table entry 58"
 "0xDA43" = "C0 $08 APB - cursor back"
 "0xDA4C" = "C0 $09 APF - cursor forward"
 "0xDA55" = "C0 $0A APD - cursor down"

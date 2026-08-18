@@ -2536,6 +2536,33 @@ c64ColdStart:
 c64LoadAddr:
         FCB     $00,$10
 
+; C64 payload: a 61-entry JMP dispatch table at runtime $1000-$10B6, then code at
+; $174C-$2943 with data below it. The table is the module's whole API surface and
+; the natural place to start reading.
+;
+; Entries are labelled c64Vec00..c64Vec60 at their ROM addresses. Vectors 44 and
+; 45 share a target ($220B), so 60 distinct addresses carry labels. Three have
+; evidenced names rather than structural ones:
+;
+;   c64ScreenInit  vector 0   CLALL and $D016/$D021/$D800
+;   c64ScreenOut1  vector 1   CHROUT with $D021/$D800/$D900
+;   c64ScreenOut2  vector 54  the same pattern
+;
+; The rest keep structural names because tracing them transitively is not
+; discriminating: almost every entry reaches a shared input loop, so GETIN and
+; STOP appear nearly everywhere and say nothing about the individual routine.
+; Naming them means reading them one at a time - a task the size of the 6801
+; side, not a sweep.
+;
+; Two findings for anyone continuing:
+;
+;   - $11D7-$11FC is a VARIABLE block, not text. Code stores into $11D8-$11F7,
+;     which is what separates it from the German strings beginning at $11FD
+;     ("von Diskette: File? "). The ROM image holds their initial values, which
+;     is why that area first reads as unprintable filler in front of the text.
+;   - Text records are 40 columns followed by a 5-byte trailer
+;     ($2C $00 $C0 $01 $98). Nothing addresses them directly, so they are reached
+;     by index; the only LDA #$2D in the payload is at runtime $287B.
 c64Payload:
 
         CPU     6502
@@ -2767,76 +2794,79 @@ c64Strings:
         FCB     $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
         FCB     $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
         FCB     $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$18,$00
-        FCB     $C0,$01,$98,$76,$6F,$6E,$20,$44,$69,$73,$6B,$65,$74,$74,$65,$3A
-        FCB     $20,$46,$69,$6C,$65,$3F,$20,$2C,$00,$80,$07,$98,$20,$20,$20,$20
+        FCB     $C0,$01,$98
+
+c64TextBlock:
+        FCB     $76,$6F,$6E,$20,$44,$69,$73,$6B,$65,$74,$74,$65,$3A,$20,$46,$69
+        FCB     $6C,$65,$3F,$20,$2C,$00,$80,$07,$98,$20,$20,$20,$20,$20,$20,$20
         FCB     $20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20
         FCB     $20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20
-        FCB     $20,$20,$20,$20,$2C,$00,$C0,$01,$98,$46,$69,$6C,$65,$20,$6E,$69
-        FCB     $63,$68,$74,$20,$76,$6F,$72,$68,$61,$6E,$64,$65,$6E,$20,$2D,$20
-        FCB     $54,$61,$73,$74,$65,$20,$64,$72,$75,$65,$63,$6B,$65,$6E,$20,$20
-        FCB     $20,$2C,$00,$C0,$01,$98,$4C,$6F,$61,$64,$20,$43,$61,$70,$74,$75
-        FCB     $72,$65,$20,$44,$69,$73,$70,$6C,$61,$79,$20,$4D,$61,$63,$72,$6F
-        FCB     $20,$58,$66,$65,$72,$20,$53,$63,$72,$65,$65,$6E,$20,$20,$2C,$00
-        FCB     $C0,$01,$98,$41,$53,$43,$49,$49,$20,$42,$74,$78,$20,$4B,$65,$79
-        FCB     $62,$64,$20,$54,$65,$6C,$65,$73,$6F,$66,$74,$20,$45,$64,$69,$74
-        FCB     $20,$50,$61,$75,$73,$65,$20,$51,$75,$69,$74,$2C,$00,$C0,$01,$98
-        FCB     $43,$61,$70,$74,$75,$72,$65,$2D,$4D,$6F,$64,$75,$73,$20,$65,$69
-        FCB     $6E,$20,$2D,$20,$45,$6E,$64,$65,$3A,$20,$53,$54,$4F,$50,$2D,$54
-        FCB     $61,$73,$74,$65,$20,$20,$20,$20,$2C,$00,$C0,$01,$98,$43,$61,$70
-        FCB     $74,$75,$72,$65,$2D,$50,$75,$66,$66,$65,$72,$20,$61,$6E,$7A,$65
-        FCB     $69,$67,$65,$6E,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20
-        FCB     $20,$20,$20,$20,$20,$18,$00,$C0,$01,$98,$41,$75,$66,$20,$44,$69
-        FCB     $73,$6B,$65,$74,$74,$65,$3A,$20,$46,$69,$6C,$65,$3F,$20,$18,$00
-        FCB     $C0,$01,$98,$50,$75,$66,$66,$65,$72,$20,$76,$6F,$6C,$6C,$20,$2D
-        FCB     $20,$46,$69,$6C,$65,$3F,$20,$04,$00,$C0,$01,$98,$2C,$00,$C0,$01
-        FCB     $98,$09,$09,$09,$09,$09,$09,$09,$09,$09,$09,$09,$09,$09,$09,$09
-        FCB     $09,$09,$09,$09,$09,$20,$2D,$20,$6E,$6F,$63,$68,$6D,$61,$6C,$20
-        FCB     $28,$4A,$2F,$4E,$29,$20,$3F,$20,$20,$1E,$00,$C0,$01,$98,$4D,$61
-        FCB     $63,$72,$6F,$20,$61,$75,$73,$66,$75,$65,$68,$72,$65,$6E,$3A,$20
-        FCB     $4B,$65,$6E,$6E,$75,$6E,$67,$3F,$0A,$00,$C0,$01,$98,$4D,$61,$63
-        FCB     $72,$6F,$20,$2C,$00,$C0,$01,$98,$4B,$65,$69,$6E,$20,$44,$69,$73
-        FCB     $6B,$2D,$4C,$61,$75,$66,$77,$65,$72,$6B,$20,$20,$20,$20,$20,$20
-        FCB     $20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20
-        FCB     $18,$00,$C0,$01,$98,$44,$72,$75,$63,$6B,$65,$72,$20,$6F,$64,$65
-        FCB     $72,$20,$46,$69,$6C,$65,$20,$20,$00,$16,$00,$C0,$01,$98,$4B,$65
-        FCB     $69,$6E,$20,$44,$72,$75,$63,$6B,$65,$72,$20,$20,$20,$20,$20,$00
-        FCB     $2C,$00,$C0,$01,$98,$4B,$65,$79,$62,$6F,$61,$72,$64,$3A,$20,$64
-        FCB     $65,$75,$74,$73,$63,$68,$20,$6F,$64,$65,$72,$20,$41,$53,$43,$49
-        FCB     $49,$3F,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$2C,$00,$C0
-        FCB     $01,$98,$43,$2D,$36,$34,$2D,$4D,$6F,$6E,$69,$74,$6F,$72,$20,$7A
-        FCB     $75,$67,$65,$73,$63,$68,$61,$6C,$74,$65,$74,$2E,$20,$57,$65,$69
-        FCB     $74,$65,$72,$3A,$20,$54,$61,$73,$74,$65,$2C,$00,$C0,$01,$98,$43
-        FCB     $2D,$36,$34,$2D,$4D,$6F,$6E,$69,$74,$6F,$72,$20,$61,$62,$67,$65
-        FCB     $73,$63,$68,$61,$6C,$74,$65,$74,$2E,$20,$57,$65,$69,$74,$65,$72
-        FCB     $3A,$20,$54,$61,$73,$74,$65,$2C,$00,$C0,$01,$98,$50,$61,$75,$73
-        FCB     $65,$3A,$20,$77,$69,$65,$76,$69,$65,$6C,$65,$20,$53,$65,$6B,$75
-        FCB     $6E,$64,$65,$6E,$20,$28,$31,$2D,$39,$29,$3F,$20,$20,$20,$20,$20
-        FCB     $20,$20,$20,$20,$2C,$00,$C0,$01,$98,$50,$61,$75,$73,$65,$3A,$20
-        FCB     $62,$69,$74,$74,$65,$20,$77,$61,$72,$74,$65,$6E,$2E,$2E,$2E,$20
-        FCB     $20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20
-        FCB     $20,$1B,$00,$C0,$01,$98,$4D,$61,$63,$72,$6F,$20,$61,$6E,$6C,$65
-        FCB     $67,$65,$6E,$3A,$20,$4B,$65,$6E,$6E,$75,$6E,$67,$3F,$13,$00,$C0
-        FCB     $01,$98,$09,$09,$09,$09,$09,$09,$09,$3A,$20,$4E,$61,$6D,$65,$3F
-        FCB     $20,$2C,$00,$C0,$01,$98,$09,$09,$09,$09,$09,$09,$09,$09,$09,$09
+        FCB     $20,$2C,$00,$C0,$01,$98,$46,$69,$6C,$65,$20,$6E,$69,$63,$68,$74
+        FCB     $20,$76,$6F,$72,$68,$61,$6E,$64,$65,$6E,$20,$2D,$20,$54,$61,$73
+        FCB     $74,$65,$20,$64,$72,$75,$65,$63,$6B,$65,$6E,$20,$20,$20,$2C,$00
+        FCB     $C0,$01,$98,$4C,$6F,$61,$64,$20,$43,$61,$70,$74,$75,$72,$65,$20
+        FCB     $44,$69,$73,$70,$6C,$61,$79,$20,$4D,$61,$63,$72,$6F,$20,$58,$66
+        FCB     $65,$72,$20,$53,$63,$72,$65,$65,$6E,$20,$20,$2C,$00,$C0,$01,$98
+        FCB     $41,$53,$43,$49,$49,$20,$42,$74,$78,$20,$4B,$65,$79,$62,$64,$20
+        FCB     $54,$65,$6C,$65,$73,$6F,$66,$74,$20,$45,$64,$69,$74,$20,$50,$61
+        FCB     $75,$73,$65,$20,$51,$75,$69,$74,$2C,$00,$C0,$01,$98,$43,$61,$70
+        FCB     $74,$75,$72,$65,$2D,$4D,$6F,$64,$75,$73,$20,$65,$69,$6E,$20,$2D
+        FCB     $20,$45,$6E,$64,$65,$3A,$20,$53,$54,$4F,$50,$2D,$54,$61,$73,$74
+        FCB     $65,$20,$20,$20,$20,$2C,$00,$C0,$01,$98,$43,$61,$70,$74,$75,$72
+        FCB     $65,$2D,$50,$75,$66,$66,$65,$72,$20,$61,$6E,$7A,$65,$69,$67,$65
+        FCB     $6E,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20
+        FCB     $20,$20,$18,$00,$C0,$01,$98,$41,$75,$66,$20,$44,$69,$73,$6B,$65
+        FCB     $74,$74,$65,$3A,$20,$46,$69,$6C,$65,$3F,$20,$18,$00,$C0,$01,$98
+        FCB     $50,$75,$66,$66,$65,$72,$20,$76,$6F,$6C,$6C,$20,$2D,$20,$46,$69
+        FCB     $6C,$65,$3F,$20,$04,$00,$C0,$01,$98,$2C,$00,$C0,$01,$98,$09,$09
         FCB     $09,$09,$09,$09,$09,$09,$09,$09,$09,$09,$09,$09,$09,$09,$09,$09
-        FCB     $09,$57,$65,$69,$74,$65,$72,$3A,$20,$54,$61,$73,$74,$65,$2C,$00
-        FCB     $C0,$01,$98,$4D,$61,$63,$72,$6F,$20,$61,$62,$67,$65,$73,$63,$68
-        FCB     $6C,$6F,$73,$73,$65,$6E,$2E,$20,$20,$20,$20,$20,$20,$20,$20,$20
-        FCB     $20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$2C,$00,$C0,$01,$98
-        FCB     $5A,$75,$73,$61,$74,$7A,$73,$6F,$66,$74,$77,$61,$72,$65,$20,$77
-        FCB     $69,$72,$64,$20,$67,$65,$6C,$61,$64,$65,$6E,$20,$20,$20,$20,$20
-        FCB     $20,$20,$20,$20,$20,$20,$20,$20,$18,$00,$C0,$01,$98,$54,$65,$6C
-        FCB     $65,$73,$6F,$66,$74,$77,$61,$72,$65,$3A,$20,$46,$69,$6C,$65,$3F
-        FCB     $20,$2C,$00,$C0,$01,$98,$54,$65,$6C,$65,$73,$6F,$66,$74,$77,$61
-        FCB     $72,$65,$2D,$53,$65,$69,$74,$65,$20,$20,$61,$75,$66,$72,$75,$66
-        FCB     $65,$6E,$21,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$2C
-        FCB     $00,$C0,$01,$98,$44,$61,$74,$65,$6E,$20,$77,$65,$72,$64,$65,$6E
+        FCB     $09,$09,$20,$2D,$20,$6E,$6F,$63,$68,$6D,$61,$6C,$20,$28,$4A,$2F
+        FCB     $4E,$29,$20,$3F,$20,$20,$1E,$00,$C0,$01,$98,$4D,$61,$63,$72,$6F
+        FCB     $20,$61,$75,$73,$66,$75,$65,$68,$72,$65,$6E,$3A,$20,$4B,$65,$6E
+        FCB     $6E,$75,$6E,$67,$3F,$0A,$00,$C0,$01,$98,$4D,$61,$63,$72,$6F,$20
+        FCB     $2C,$00,$C0,$01,$98,$4B,$65,$69,$6E,$20,$44,$69,$73,$6B,$2D,$4C
+        FCB     $61,$75,$66,$77,$65,$72,$6B,$20,$20,$20,$20,$20,$20,$20,$20,$20
+        FCB     $20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$18,$00,$C0
+        FCB     $01,$98,$44,$72,$75,$63,$6B,$65,$72,$20,$6F,$64,$65,$72,$20,$46
+        FCB     $69,$6C,$65,$20,$20,$00,$16,$00,$C0,$01,$98,$4B,$65,$69,$6E,$20
+        FCB     $44,$72,$75,$63,$6B,$65,$72,$20,$20,$20,$20,$20,$00,$2C,$00,$C0
+        FCB     $01,$98,$4B,$65,$79,$62,$6F,$61,$72,$64,$3A,$20,$64,$65,$75,$74
+        FCB     $73,$63,$68,$20,$6F,$64,$65,$72,$20,$41,$53,$43,$49,$49,$3F,$20
+        FCB     $20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$2C,$00,$C0,$01,$98,$43
+        FCB     $2D,$36,$34,$2D,$4D,$6F,$6E,$69,$74,$6F,$72,$20,$7A,$75,$67,$65
+        FCB     $73,$63,$68,$61,$6C,$74,$65,$74,$2E,$20,$57,$65,$69,$74,$65,$72
+        FCB     $3A,$20,$54,$61,$73,$74,$65,$2C,$00,$C0,$01,$98,$43,$2D,$36,$34
+        FCB     $2D,$4D,$6F,$6E,$69,$74,$6F,$72,$20,$61,$62,$67,$65,$73,$63,$68
+        FCB     $61,$6C,$74,$65,$74,$2E,$20,$57,$65,$69,$74,$65,$72,$3A,$20,$54
+        FCB     $61,$73,$74,$65,$2C,$00,$C0,$01,$98,$50,$61,$75,$73,$65,$3A,$20
+        FCB     $77,$69,$65,$76,$69,$65,$6C,$65,$20,$53,$65,$6B,$75,$6E,$64,$65
+        FCB     $6E,$20,$28,$31,$2D,$39,$29,$3F,$20,$20,$20,$20,$20,$20,$20,$20
+        FCB     $20,$2C,$00,$C0,$01,$98,$50,$61,$75,$73,$65,$3A,$20,$62,$69,$74
+        FCB     $74,$65,$20,$77,$61,$72,$74,$65,$6E,$2E,$2E,$2E,$20,$20,$20,$20
+        FCB     $20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$1B,$00
+        FCB     $C0,$01,$98,$4D,$61,$63,$72,$6F,$20,$61,$6E,$6C,$65,$67,$65,$6E
+        FCB     $3A,$20,$4B,$65,$6E,$6E,$75,$6E,$67,$3F,$13,$00,$C0,$01,$98,$09
+        FCB     $09,$09,$09,$09,$09,$09,$3A,$20,$4E,$61,$6D,$65,$3F,$20,$2C,$00
+        FCB     $C0,$01,$98,$09,$09,$09,$09,$09,$09,$09,$09,$09,$09,$09,$09,$09
+        FCB     $09,$09,$09,$09,$09,$09,$09,$09,$09,$09,$09,$09,$09,$09,$57,$65
+        FCB     $69,$74,$65,$72,$3A,$20,$54,$61,$73,$74,$65,$2C,$00,$C0,$01,$98
+        FCB     $4D,$61,$63,$72,$6F,$20,$61,$62,$67,$65,$73,$63,$68,$6C,$6F,$73
+        FCB     $73,$65,$6E,$2E,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20
+        FCB     $20,$20,$20,$20,$20,$20,$20,$20,$2C,$00,$C0,$01,$98,$5A,$75,$73
+        FCB     $61,$74,$7A,$73,$6F,$66,$74,$77,$61,$72,$65,$20,$77,$69,$72,$64
         FCB     $20,$67,$65,$6C,$61,$64,$65,$6E,$20,$20,$20,$20,$20,$20,$20,$20
+        FCB     $20,$20,$20,$20,$20,$18,$00,$C0,$01,$98,$54,$65,$6C,$65,$73,$6F
+        FCB     $66,$74,$77,$61,$72,$65,$3A,$20,$46,$69,$6C,$65,$3F,$20,$2C,$00
+        FCB     $C0,$01,$98,$54,$65,$6C,$65,$73,$6F,$66,$74,$77,$61,$72,$65,$2D
+        FCB     $53,$65,$69,$74,$65,$20,$20,$61,$75,$66,$72,$75,$66,$65,$6E,$21
         FCB     $20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$2C,$00,$C0,$01
-        FCB     $98,$46,$61,$6C,$73,$63,$68,$65,$73,$20,$44,$61,$74,$65,$6E,$66
-        FCB     $6F,$72,$6D,$61,$74,$20,$20,$20,$20,$20,$20,$20,$57,$65,$69,$74
-        FCB     $65,$72,$3A,$20,$54,$61,$73,$74,$65,$2C,$00,$C0,$01,$98,$4B,$65
-        FCB     $69,$6E,$65,$20,$54,$65,$6C,$65,$73,$6F,$66,$74,$77,$2E
+        FCB     $98,$44,$61,$74,$65,$6E,$20,$77,$65,$72,$64,$65,$6E,$20,$67,$65
+        FCB     $6C,$61,$64,$65,$6E,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20
+        FCB     $20,$20,$20,$20,$20,$20,$20,$20,$20,$2C,$00,$C0,$01,$98,$46,$61
+        FCB     $6C,$73,$63,$68,$65,$73,$20,$44,$61,$74,$65,$6E,$66,$6F,$72,$6D
+        FCB     $61,$74,$20,$20,$20,$20,$20,$20,$20,$57,$65,$69,$74,$65,$72,$3A
+        FCB     $20,$54,$61,$73,$74,$65,$2C,$00,$C0,$01,$98,$4B,$65,$69,$6E,$65
+        FCB     $20,$54,$65,$6C,$65,$73,$6F,$66,$74,$77,$2E
 
         CPU     6502
         JSR     $6D69
@@ -2913,7 +2943,9 @@ c64Strings:
         STA     $81FC
         CLI
         JSR     $2404
-        JSR     $10A2
+
+c64ScreenOut1:
+        JSR     $10A2                   ; vector 1 at runtime $16FF - CHROUT with $D021/$D800/$D900
         LDA     $8012
         BNE     $BAD5
         LDA     #$FF
@@ -2943,7 +2975,9 @@ c64Strings:
         STA     $11E8
         STA     $11D8
         STA     $11F7
-        LDA     #$FF
+
+c64Vec02:
+        LDA     #$FF                    ; vector 2 at runtime $174C - jump-table entry 2
         STA     $800F
         SEI
         LDA     $11E9
@@ -2965,7 +2999,9 @@ c64Strings:
         JMP     $177F
         JSR     $1009
         JMP     $1751
-        CMP     #$8B
+
+c64Vec03:
+        CMP     #$8B                    ; vector 3 at runtime $1782 - jump-table entry 3
         BNE     $BB31
         JSR     $101E
         CMP     #$8C
@@ -2986,7 +3022,9 @@ c64Strings:
         BEQ     $BB5D
         JSR     $1012
         RTS
-        LDX     #$00
+
+c64Vec05:
+        LDX     #$00                    ; vector 5 at runtime $17B6 - jump-table entry 5
         STX     $11E9
         STX     $11EA
         STX     $11EB
@@ -3103,7 +3141,9 @@ c64Strings:
         LDA     #$00
         BRK
         BRK
-        LDX     $8010
+
+c64Vec06:
+        LDX     $8010                   ; vector 6 at runtime $188F - jump-table entry 6
         CPX     $8010
         BNE     $BC37
         CPX     #$00
@@ -3122,10 +3162,14 @@ c64Strings:
         STX     $800D
         JSR     $1021
         RTS
-        JSR     $1018
+
+c64Vec07:
+        JSR     $1018                   ; vector 7 at runtime $18BC - jump-table entry 7
         BCS     $BC64
         RTS
-        LDA     $800A
+
+c64Vec08:
+        LDA     $800A                   ; vector 8 at runtime $18C2 - jump-table entry 8
         CMP     $8009
         BEQ     $BC77
         CMP     $8009
@@ -3141,7 +3185,9 @@ c64Strings:
         STX     $800A
         CLC
         RTS
-        LDA     #$10
+
+c64Vec09:
+        LDA     #$10                    ; vector 9 at runtime $18E1 - jump-table entry 9
         JSR     $1012
         LDA     #$7A
         JSR     $1012
@@ -3150,7 +3196,9 @@ c64Strings:
         LDA     #$55
         JSR     $1012
         RTS
-        BIT     $11D9
+
+c64Vec10:
+        BIT     $11D9                   ; vector 10 at runtime $18F6 - jump-table entry 10
         BPL     $BCD7
         LDA     #$10
         JSR     $1012
@@ -3173,7 +3221,9 @@ c64Strings:
         JSR     $1060
         JSR     $101B
         RTS
-        LDA     #$7F
+
+c64Vec11:
+        LDA     #$7F                    ; vector 11 at runtime $1930 - jump-table entry 11
         STA     $DC00
         LDA     $DC01
         CMP     #$FB
@@ -3189,7 +3239,9 @@ c64Strings:
         DEX
         BNE     $BCED
         RTS
-        LDA     #$00
+
+c64Vec04:
+        LDA     #$00                    ; vector 4 at runtime $194E - jump-table entry 4
         STA     $11E7
         LDA     #$03
         LDX     $11E7
@@ -3241,21 +3293,27 @@ c64Strings:
         BPL     $BDB8
         FCB     $AB
         BPL     $BD67
-        LDA     #$10
+
+c64Vec12:
+        LDA     #$10                    ; vector 12 at runtime $19BF - jump-table entry 12
         JSR     $1012
         LDA     #$67
         JSR     $1012
         LDA     #$FF
         STA     $11F7
         RTS
-        LDA     #$10
+
+c64Vec13:
+        LDA     #$10                    ; vector 13 at runtime $19CF - jump-table entry 13
         JSR     $1012
         LDA     #$66
         JSR     $1012
         LDA     #$00
         STA     $11F7
         RTS
-        JSR     $101B
+
+c64Vec14:
+        JSR     $101B                   ; vector 14 at runtime $19DF - jump-table entry 14
         LDA     #$00
         STA     $8080
         LDA     #$10
@@ -3337,7 +3395,9 @@ c64Strings:
         FCB     $6B
         ADC     $6E
         BRK
-        JSR     $1078
+
+c64Vec15:
+        JSR     $1078                   ; vector 15 at runtime $1A9B - jump-table entry 15
         LDA     #$00
         JSR     $105D
         LDA     #$13
@@ -3396,7 +3456,9 @@ c64Strings:
         JSR     $1012
         JSR     $101B
         JMP     $1AF4
-        LDA     #$00
+
+c64Vec19:
+        LDA     #$00                    ; vector 19 at runtime $1B22 - jump-table entry 19
         STA     $90
         LDA     #$08
         JSR     $ED0C
@@ -3500,7 +3562,9 @@ c64Strings:
         JSR     $1009
         JSR     $EDEF
         RTS
-        JSR     $101B
+
+c64Vec20:
+        JSR     $101B                   ; vector 20 at runtime $1C1A - jump-table entry 20
         LDA     #$10
         JSR     $1012
         LDA     #$4D
@@ -3515,7 +3579,9 @@ c64Strings:
         LDA     $10C1
         STA     $66
         RTS
-        JSR     $1018
+
+c64Vec21:
+        JSR     $1018                   ; vector 21 at runtime $1C3F - jump-table entry 21
         BCS     $C03C
         LDY     #$00
         STA     ($65),Y
@@ -3550,7 +3616,9 @@ c64Strings:
         STA     $800A
         JSR     $101B
         RTS
-        LDA     #$10
+
+c64Vec22:
+        LDA     #$10                    ; vector 22 at runtime $1C95 - jump-table entry 22
         JSR     $1012
         LDA     #$4C
         JSR     $1012
@@ -3589,7 +3657,9 @@ c64Strings:
         BNE     $C098
         INC     $66
         JMP     $1CB3
-        LDA     #$FF
+
+c64Vec23:
+        LDA     #$FF                    ; vector 23 at runtime $1CF3 - jump-table entry 23
         STA     $800C
         LDA     #$93
         JSR     $FFD2
@@ -3716,7 +3786,9 @@ c64Strings:
         JSR     $EDFE
         JSR     $101B
         RTS
-        LDA     $8080
+
+c64Vec24:
+        LDA     $8080                   ; vector 24 at runtime $1E39 - jump-table entry 24
         CMP     $8080
         BNE     $C1E1
         EOR     #$FF
@@ -3734,7 +3806,9 @@ c64Strings:
         BCS     $C204
         JSR     $101B
         RTS
-        PHP
+
+c64Vec25:
+        PHP                             ; vector 25 at runtime $1E65 - jump-table entry 25
         SEI
         LDA     $808B
         CMP     $808B
@@ -3794,7 +3868,9 @@ c64Strings:
         STA     $808B
         PLP
         RTS
-        LDA     #$10
+
+c64Vec26:
+        LDA     #$10                    ; vector 26 at runtime $1EEF - jump-table entry 26
         JSR     $105D
         JSR     $109F
         CMP     #$03
@@ -3820,7 +3896,9 @@ c64Strings:
         JSR     $1012
         JSR     $101B
         RTS
-        LDA     #$13
+
+c64Vec27:
+        LDA     #$13                    ; vector 27 at runtime $1F2B - jump-table entry 27
         JSR     $105D
         JSR     $109F
         CMP     #$03
@@ -3840,7 +3918,9 @@ c64Strings:
         JSR     $107E
         JSR     $101B
         RTS
-        BIT     $11EC
+
+c64Vec28:
+        BIT     $11EC                   ; vector 28 at runtime $1F54 - jump-table entry 28
         BPL     $C305
         JSR     $101B
         RTS
@@ -3949,7 +4029,9 @@ c64Strings:
         LDA     #$4B
         JSR     $1012
         RTS
-        STA     $11BD
+
+c64Vec29:
+        STA     $11BD                   ; vector 29 at runtime $205F - jump-table entry 29
         LDY     #$00
         STY     $11BC
         JSR     $109F
@@ -4014,7 +4096,9 @@ c64Strings:
         LDA     #$08
         JSR     $1012
         JMP     $2067
-        ASL     A
+
+c64Vec31:
+        ASL     A                       ; vector 31 at runtime $20ED - jump-table entry 31
         TAY
         LDA     $10CC
         STA     $63
@@ -4026,7 +4110,9 @@ c64Strings:
         LDA     ($63),Y
         STX     $63
         STA     $64
-        LDA     #$10
+
+c64Vec30:
+        LDA     #$10                    ; vector 30 at runtime $2103 - jump-table entry 30
         JSR     $1012
         LDA     #$75
         JSR     $1012
@@ -4047,7 +4133,9 @@ c64Strings:
         CPY     $11D7
         BNE     $C4CA
         RTS
-        LDA     #$13
+
+c64Vec32:
+        LDA     #$13                    ; vector 32 at runtime $2136 - jump-table entry 32
         JSR     $1057
         BCC     $C4E6
         RTS
@@ -4086,10 +4174,14 @@ c64Strings:
         JSR     $105D
         JMP     $1060
         RTS
-        LDA     #$01
+
+c64Vec40:
+        LDA     #$01                    ; vector 40 at runtime $2190 - jump-table entry 40
         JSR     $105D
         RTS
-        LDA     $8011
+
+c64Vec41:
+        LDA     $8011                   ; vector 41 at runtime $2196 - jump-table entry 41
         STA     $81FC
         STA     $11ED
         JSR     $FFE1
@@ -4106,7 +4198,9 @@ c64Strings:
         BNE     $C561
         JMP     $219F
         RTS
-        STA     $11DE
+
+c64Vec42:
+        STA     $11DE                   ; vector 42 at runtime $21C0 - jump-table entry 42
         ASL     A
         ASL     A
         CLC
@@ -4132,7 +4226,9 @@ c64Strings:
         PLP
         BEQ     $C588
         RTS
-        JSR     $108A
+
+c64Vec43:
+        JSR     $108A                   ; vector 43 at runtime $21F4 - jump-table entry 43
         CMP     #$60
         BCC     $C5A7
         AND     #$5F
@@ -4142,7 +4238,9 @@ c64Strings:
         LDY     $11EF
         JSR     $10A5
         RTS
-        LDA     $11E1
+
+c64Vec44:
+        LDA     $11E1                   ; vector 44 at runtime $220B - jump-table entry 44
         CMP     #$7B
         BNE     $C5C8
         LDA     $11E4
@@ -4184,7 +4282,9 @@ c64Strings:
         LDA     #$21
         JSR     $EDDD
         RTS
-        PHP
+
+c64Vec46:
+        PHP                             ; vector 46 at runtime $226D - jump-table entry 46
         SEI
         LDA     $11E4
         AND     #$07
@@ -4256,7 +4356,9 @@ c64Strings:
         EOR     #$20
         PLP
         RTS
-        LDA     #$01
+
+c64Vec49:
+        LDA     #$01                    ; vector 49 at runtime $230C - jump-table entry 49
         STA     $B8
         LDA     #$04
         STA     $BA
@@ -4302,7 +4404,9 @@ c64Strings:
         TAX
         PLA
         RTI
-        LDA     $11EC
+
+c64Vec53:
+        LDA     $11EC                   ; vector 53 at runtime $236D - jump-table entry 53
         BNE     $C766
         JSR     $FFE4
         CMP     #$00
@@ -4426,7 +4530,9 @@ c64Strings:
         EOR     ($2E,X)
         EOR     $5341
         BRK
-        LDA     #$A4
+
+c64ScreenOut2:
+        LDA     #$A4                    ; vector 54 at runtime $2472 - CHROUT with $D021/$D800/$D900
         STA     $A7
         LDA     #$24
         STA     $A8
@@ -4577,7 +4683,9 @@ c64Strings:
         STA     ($A7),Y
         PLP
         RTS
-        PHP
+
+c64Vec56:
+        PHP                             ; vector 56 at runtime $25BD - jump-table entry 56
         SEI
         CPX     #$FF
         BEQ     $C978
@@ -4592,7 +4700,9 @@ c64Strings:
         STA     $CC
         PLP
         RTS
-        LDA     #$00
+
+c64Vec38:
+        LDA     #$00                    ; vector 38 at runtime $25D6 - jump-table entry 38
         STA     $90
         LDA     #$08
         STA     $BA
@@ -4650,7 +4760,9 @@ c64Strings:
         RTS
         CLC
         RTS
-        LDA     #$00
+
+c64Vec39:
+        LDA     #$00                    ; vector 39 at runtime $2654 - jump-table entry 39
         STA     $90
         LDA     #$08
         STA     $BA
@@ -4689,7 +4801,9 @@ c64Strings:
         RTS
         CLC
         RTS
-        LDY     #$0F
+
+c64Vec47:
+        LDY     #$0F                    ; vector 47 at runtime $26A9 - jump-table entry 47
         STY     $B7
         LDA     #$02
         STA     $B8
@@ -4714,7 +4828,9 @@ c64Strings:
         RTS
         SEC
         RTS
-        LDA     #$02
+
+c64Vec34:
+        LDA     #$02                    ; vector 34 at runtime $26D9 - jump-table entry 34
         STA     $B8
         LDA     #$08
         STA     $BA
@@ -4743,7 +4859,9 @@ c64Strings:
         JSR     $EDDD
         INC     $11ED
         RTS
-        LDA     #$00
+
+c64Vec35:
+        LDA     #$00                    ; vector 35 at runtime $271F - jump-table entry 35
         STA     $90
         LDA     #$08
         STA     $BA
@@ -4752,7 +4870,9 @@ c64Strings:
         STA     $B9
         JSR     $EDC7
         RTS
-        LDY     $11BC
+
+c64Vec60:
+        LDY     $11BC                   ; vector 60 at runtime $2732 - jump-table entry 60
         LDA     #$2C
         STA     $11BE,Y
         INY
@@ -4767,7 +4887,9 @@ c64Strings:
         INY
         STY     $B7
         JMP     $276F
-        LDY     $11BC
+
+c64Vec48:
+        LDY     $11BC                   ; vector 48 at runtime $2752 - jump-table entry 48
         LDA     #$2C
         STA     $11BE,Y
         INY
@@ -4816,7 +4938,9 @@ c64Strings:
         JSR     $105D
         SEC
         RTS
-        LDA     #$00
+
+c64Vec50:
+        LDA     #$00                    ; vector 50 at runtime $27B7 - jump-table entry 50
         STA     $90
         LDA     #$03
         STA     $B8
@@ -4831,7 +4955,9 @@ c64Strings:
         LDA     #$0B
         STA     $B7
         JMP     $28C3
-        BIT     $11EC
+
+c64Vec51:
+        BIT     $11EC                   ; vector 51 at runtime $27D6 - jump-table entry 51
         BMI     $CBED
         LDA     #$10
         JSR     $1012
@@ -4877,7 +5003,9 @@ c64Strings:
         LDA     #$6C
         JSR     $1012
         RTS
-        LDA     $11B4
+
+c64Vec52:
+        LDA     $11B4                   ; vector 52 at runtime $2846 - jump-table entry 52
         JSR     $1012
         LDA     #$3A
         JSR     $1012
@@ -4921,7 +5049,9 @@ c64Strings:
         JSR     $2896
         SEC
         RTS
-        LDA     #$00
+
+c64Vec16:
+        LDA     #$00                    ; vector 16 at runtime $28AA - jump-table entry 16
         STA     $90
         LDA     #$08
         STA     $BA
@@ -4952,7 +5082,9 @@ c64Strings:
         RTS
         SEC
         RTS
-        LDA     #$00
+
+c64Vec17:
+        LDA     #$00                    ; vector 17 at runtime $28ED - jump-table entry 17
         STA     $90
         LDA     #$FD
         AND     $90
@@ -4971,14 +5103,18 @@ c64Strings:
         RTS
         SEC
         RTS
-        JSR     $EDFE
+
+c64Vec33:
+        JSR     $EDFE                   ; vector 33 at runtime $290D - jump-table entry 33
         LDA     #$08
         JSR     $ED0C
         LDA     #$E4
         JSR     $EDB9
         JSR     $EDFE
         RTS
-        JSR     $1066
+
+c64Vec36:
+        JSR     $1066                   ; vector 36 at runtime $291E - jump-table entry 36
         LDA     #$00
         JSR     $EDDD
         JSR     $EDFE
@@ -4988,20 +5124,26 @@ c64Strings:
         JSR     $EDB9
         JSR     $EDFE
         RTS
-        LDA     #$66
+
+c64Vec37:
+        LDA     #$66                    ; vector 37 at runtime $2937 - jump-table entry 37
         STA     $B9
         LDA     #$08
         STA     $BA
         JSR     $F642
         RTS
-        JSR     $EDEF
+
+c64Vec18:
+        JSR     $EDEF                   ; vector 18 at runtime $2943 - jump-table entry 18
         LDA     #$08
         STA     $BA
         LDA     #$64
         STA     $B9
         JSR     $F642
         RTS
-        LDA     #$00
+
+c64Vec59:
+        LDA     #$00                    ; vector 59 at runtime $2952 - jump-table entry 59
         STA     $90
         LDA     $BA
         JSR     $ED0C
@@ -5038,7 +5180,9 @@ c64Strings:
         ASL     A
         ASL     A
         BRK
-        LDA     $11EC
+
+c64Vec57:
+        LDA     $11EC                   ; vector 57 at runtime $299B - jump-table entry 57
         ORA     $11D8
         BEQ     $CD59
         LDA     #$1E
@@ -5192,7 +5336,9 @@ c64Strings:
         BNE     $CEB3
         STA     $800A
         RTS
-        JSR     $1018
+
+c64Vec58:
+        JSR     $1018                   ; vector 58 at runtime $2B17 - jump-table entry 58
         BCS     $CEE2
         LDY     #$00
         STA     ($65),Y
