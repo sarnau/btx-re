@@ -464,11 +464,17 @@ L11D8:
 L11D9:
         FCB     $00
 
-L11DA:
-        FCB     $00
-
-L11DB:
-        FCB     $00
+; c64CapEnd, runtime $11DA - how far the capture buffer is filled.
+;
+; A 16-bit address, not two flags: c64StartSession and c64MenuTelesoft set it to
+; c64BufStart, c64CaptureRun and c64CaptureEnd copy c64BufWr into it when the
+; capture stops, and c64MenuDisplay and c64SaveBuffer walk c64BufWr from
+; c64BufStart up to it. Both halves are always written and compared as a pair.
+;
+; It sits inside the variable block, so the ROM image holds its initial value -
+; $0000 - rather than a meaningful address.
+c64CapEnd:
+        DW      $0000
 
 L11DC:
         FCB     $00
@@ -771,9 +777,9 @@ L172A:
 
 L172D:
         LDA     c64BufStart
-        STA     L11DA
+        STA     c64CapEnd
         LDA     c64BufStart+1
-        STA     L11DB
+        STA     c64CapEnd+1
         LDA     #$00
         STA     L11D9
         STA     L11EC
@@ -1098,9 +1104,9 @@ L190A:
         JSR     vecCaptureRun
         JSR     vecClearMsg
         LDA     c64BufWr
-        STA     L11DA
+        STA     c64CapEnd
         LDA     c64BufWrHi
-        STA     L11DB
+        STA     c64CapEnd+1
         LDA     #$07
         JSR     vecShowMsg
         JSR     vecSaveBuffer
@@ -1586,9 +1592,9 @@ L1C58:
         LDA     #$08
         JSR     vecShowMsg
         LDA     c64BufWr
-        STA     L11DA
+        STA     c64CapEnd
         LDA     c64BufWrHi
-        STA     L11DB
+        STA     c64CapEnd+1
         JSR     vecSaveBuffer
 
 L1C7C:
@@ -1626,10 +1632,10 @@ L1CB3:
         JSR     STOP
         BEQ     L1CC6
         LDA     c64BufWr
-        CMP     L11DA
+        CMP     c64CapEnd
         BNE     L1CD4
         LDA     c64BufWrHi
-        CMP     L11DB
+        CMP     c64CapEnd+1
         BNE     L1CD4
 
 L1CC6:
@@ -2273,10 +2279,10 @@ L214D:
         JSR     STOP
         BEQ     L2170
         LDA     c64BufWr
-        CMP     L11DA
+        CMP     c64CapEnd
         BNE     L2160
         LDA     c64BufWrHi
-        CMP     L11DB
+        CMP     c64CapEnd+1
         BEQ     L2170
 
 L2160:
@@ -3526,11 +3532,11 @@ L29D7:
         LDA     c64BufStart
         STA     c64BufWr
         STA     c64BufRd
-        STA     L11DA
+        STA     c64CapEnd
         LDA     c64BufStart+1
         STA     c64BufWrHi
         STA     c64BufRdHi
-        STA     L11DB
+        STA     c64CapEnd+1
 
 L29FA:
         JSR     vecTelesoftByte

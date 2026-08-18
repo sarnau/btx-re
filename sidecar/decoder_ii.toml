@@ -169,6 +169,7 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 [labels]
 "0xBC19" = "c64AsciiKeys"
 "0xB468" = "c64BufStart"
+"0xB582" = "c64CapEnd"
 "0xB46A" = "c64BufEnd"
 "0xB46B" = "c64BufEndPage"
 "0xB46C" = "c64StartPagePtr"
@@ -526,6 +527,16 @@ So the C64 side services the decoder on interrupt as well as polling it, and
 either passes the interrupt on to the KERNAL or consumes it. btxReg1F8 is one
 of the registers whose function is otherwise unestablished; that the handler
 tests it first says it carries a request or status bit."""
+"0xB582" = """
+c64CapEnd, runtime $11DA - how far the capture buffer is filled.
+
+A 16-bit address, not two flags: c64StartSession and c64MenuTelesoft set it to
+c64BufStart, c64CaptureRun and c64CaptureEnd copy c64BufWr into it when the
+capture stops, and c64MenuDisplay and c64SaveBuffer walk c64BufWr from
+c64BufStart up to it. Both halves are always written and compared as a pair.
+
+It sits inside the variable block, so the ROM image holds its initial value -
+$0000 - rather than a meaningful address."""
 "0xB468" = """
 Seven pointer slots, runtime $10C0-$10CD, read individually rather than indexed.
 
@@ -1551,6 +1562,16 @@ kind = "string"
 
 [[regions]]
 start = 0xB561
+end = 0xB582
+kind = "string"
+
+[[regions]]
+start = 0xB582
+end = 0xB584
+kind = "words"
+
+[[regions]]
+start = 0xB584
 end = 0xBA18
 kind = "string"
 
