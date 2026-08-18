@@ -28,7 +28,6 @@ FA          EQU     $00BA
 FNADR       EQU     $00BB
 FNADRH      EQU     $00BC
 BLNSW       EQU     $00CC
-CRSW        EQU     $00D0
 PNTR        EQU     $00D3
 TBLX        EQU     $00D6
 BUF         EQU     $0200
@@ -155,8 +154,14 @@ L101E:
 
 L1021:
         JMP     c64Vec11
+
+L1024:
         JMP     c64Vec12
+
+L1027:
         JMP     c64Vec13
+
+L102A:
         JMP     c64Vec14
 
 L102D:
@@ -173,17 +178,29 @@ L1036:
 
 L1039:
         JMP     c64Vec19
+
+L103C:
         JMP     c64Vec20
 
 L103F:
         JMP     c64Vec21
+
+L1042:
         JMP     c64Vec22
+
+L1045:
         JMP     c64Vec23
+
+L1048:
         JMP     c64Vec24
 
 L104B:
         JMP     c64Vec25
+
+L104E:
         JMP     c64Vec26
+
+L1051:
         JMP     c64Vec27
 
 L1054:
@@ -270,6 +287,8 @@ L10A5:
 
 L10A8:
         JMP     c64Vec56
+
+L10AB:
         JMP     c64Vec57
 
 L10AE:
@@ -288,18 +307,56 @@ L10B4:
 ; records such as 89 10 52 00 / 8B 10 41 00 / 8A 10 54 00, which look like a
 ; key or character translation table. Not yet decoded.
 c64VecTableEnd:
-        FCB     $00,$00,$00,$00,$00,$00,$00,$00,$00,$BD,$2B,$00,$80,$BD,$2B,$CE
-        FCB     $10,$4A,$11,$6F,$29,$70,$16,$0D,$0D,$00,$00,$8D,$0D,$0A,$00,$91
-        FCB     $0B,$00,$00,$11,$0A,$00,$00,$1D,$09,$00,$00,$14,$08,$00,$00,$9D
-        FCB     $08,$00,$00,$13,$1E,$00,$00,$93,$0C,$00,$00,$85,$13,$00,$00,$86
-        FCB     $1C,$00,$00,$87,$1A,$00,$00,$89,$10,$52,$00,$8B,$10,$41,$00,$8A
-        FCB     $10,$54,$00,$8C,$10,$45,$00,$90,$80,$00,$00,$05,$87,$00,$00,$1C
-        FCB     $81,$00,$00,$9F,$86,$00,$00,$9C,$85,$00,$00,$1E,$82,$00,$00,$1F
-        FCB     $84,$00,$00,$9E,$83,$00,$00,$5F,$11,$00,$00,$06,$14,$00,$00,$AE
-        FCB     $13,$00,$00,$AB,$11,$00,$00,$24,$A4,$00,$00,$5C,$A3,$00,$00,$00
-        FCB     $00,$00,$00,$23,$19,$27,$00,$27,$2F,$00,$00,$2B,$19,$7B,$00,$DB
-        FCB     $3F,$00,$00,$2D,$19,$42,$20,$DD,$19,$41,$20,$5C,$5B,$00,$00,$A9
-        FCB     $19,$2D,$00,$40,$19,$48,$75,$BA,$19
+        FCB     $00,$00,$00,$00,$00,$00,$00,$00,$00
+
+L10C0:
+        FCB     $BD
+
+L10C1:
+        FCB     $2B,$00
+
+L10C3:
+        FCB     $80
+
+L10C4:
+        FCB     $BD
+
+L10C5:
+        FCB     $2B
+
+L10C6:
+        FCB     $CE
+
+L10C7:
+        FCB     $10
+
+L10C8:
+        FCB     $4A
+
+L10C9:
+        FCB     $11
+
+L10CA:
+        FCB     $6F
+
+L10CB:
+        FCB     $29
+
+L10CC:
+        FCB     $70
+
+L10CD:
+        FCB     $16,$0D,$0D,$00,$00,$8D,$0D,$0A,$00,$91,$0B,$00,$00,$11,$0A,$00
+        FCB     $00,$1D,$09,$00,$00,$14,$08,$00,$00,$9D,$08,$00,$00,$13,$1E,$00
+        FCB     $00,$93,$0C,$00,$00,$85,$13,$00,$00,$86,$1C,$00,$00,$87,$1A,$00
+        FCB     $00,$89,$10,$52,$00,$8B,$10,$41,$00,$8A,$10,$54,$00,$8C,$10,$45
+        FCB     $00,$90,$80,$00,$00,$05,$87,$00,$00,$1C,$81,$00,$00,$9F,$86,$00
+        FCB     $00,$9C,$85,$00,$00,$1E,$82,$00,$00,$1F,$84,$00,$00,$9E,$83,$00
+        FCB     $00,$5F,$11,$00,$00,$06,$14,$00,$00,$AE,$13,$00,$00,$AB,$11,$00
+        FCB     $00,$24,$A4,$00,$00,$5C,$A3,$00,$00,$00,$00,$00,$00,$23,$19,$27
+        FCB     $00,$27,$2F,$00,$00,$2B,$19,$7B,$00,$DB,$3F,$00,$00,$2D,$19,$42
+        FCB     $20,$DD,$19,$41,$20,$5C,$5B,$00,$00,$A9,$19,$2D,$00,$40,$19,$48
+        FCB     $75,$BA,$19
         FCC     "HU*+"
         FCB     $00,$00,$C0,$2A,$00,$00,$5E,$5D,$00,$00,$DE,$5C,$00,$00,$3A,$19
         FCB     $48,$6F,$5B,$19,$48,$4F,$3B,$19,$48,$61,$5D,$19
@@ -309,15 +366,131 @@ c64VecTableEnd:
 
 c64Strings:
         FCC     "@:BTX-MAK-"
+
+L11B4:
         FCB     $00
         FCC     ",S,W"
-        FCB     $00,$00,$00,$00,$00
+
+L11B9:
+        FCB     $00
+
+L11BA:
+        FCB     $00
+
+L11BB:
+        FCB     $00
+
+L11BC:
+        FCB     $00
+
+L11BD:
+        FCB     $00
 
 L11BE:
+        FCB     $00
+
+L11BF:
         FCB     $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-        FCB     $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-        FCB     $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-        FCB     $00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+        FCB     $00,$00,$00,$00,$00,$00,$00,$00
+
+L11D7:
+        FCB     $00
+
+L11D8:
+        FCB     $00
+
+L11D9:
+        FCB     $00
+
+L11DA:
+        FCB     $00
+
+L11DB:
+        FCB     $00
+
+L11DC:
+        FCB     $00
+
+L11DD:
+        FCB     $00
+
+L11DE:
+        FCB     $00
+
+L11DF:
+        FCB     $00
+
+L11E0:
+        FCB     $00
+
+L11E1:
+        FCB     $00
+
+L11E2:
+        FCB     $00
+
+L11E3:
+        FCB     $00
+
+L11E4:
+        FCB     $00
+
+L11E5:
+        FCB     $00
+
+L11E6:
+        FCB     $00
+
+L11E7:
+        FCB     $00
+
+L11E8:
+        FCB     $00
+
+L11E9:
+        FCB     $00
+
+L11EA:
+        FCB     $00
+
+L11EB:
+        FCB     $00
+
+L11EC:
+        FCB     $00
+
+L11ED:
+        FCB     $00
+
+L11EE:
+        FCB     $00
+
+L11EF:
+        FCB     $00
+
+L11F0:
+        FCB     $00
+
+L11F1:
+        FCB     $00
+
+L11F2:
+        FCB     $00
+
+L11F3:
+        FCB     $00
+
+L11F4:
+        FCB     $00
+
+L11F5:
+        FCB     $00
+
+L11F6:
+        FCB     $00
+
+L11F7:
+        FCB     $00
 
 L11F8:
         FCB     $18,$00,$C0,$01,$98
@@ -515,9 +688,9 @@ c64ScreenOut1:
         BNE     L172D
         LDA     #$FF
         STA     btxReg012
-        LDA     $10C4
+        LDA     L10C4
         STA     FAC1EXP
-        LDA     $10C5
+        LDA     L10C5
         STA     FAC1MAN1
         LDA     #$FF
         STA     btxReg00F
@@ -535,17 +708,17 @@ L172A:
         JMP     L171B
 
 L172D:
-        LDA     $10C0
-        STA     $11DA
-        LDA     $10C1
-        STA     $11DB
+        LDA     L10C0
+        STA     L11DA
+        LDA     L10C1
+        STA     L11DB
         LDA     #$00
-        STA     $11D9
-        STA     $11EC
+        STA     L11D9
+        STA     L11EC
         LDA     #$00
-        STA     $11E8
-        STA     $11D8
-        STA     $11F7
+        STA     L11E8
+        STA     L11D8
+        STA     L11F7
 
 c64Vec02:
 ; vector 2 at runtime $174C - jump-table entry 2
@@ -554,9 +727,9 @@ c64Vec02:
 
 L1751:
         SEI
-        LDA     $11E9
+        LDA     L11E9
         CLI
-        BIT     $11D9
+        BIT     L11D9
         BPL     L175E
         JSR     L103F
 
@@ -571,7 +744,7 @@ L175E:
 L176D:
         CMP     #$88
         BNE     L177C
-        BIT     $11D9
+        BIT     L11D9
         BMI     L177C
         JSR     L100C
         JMP     L177F
@@ -596,20 +769,20 @@ L1789:
 L1790:
         JSR     L100F
         BCS     L17B5
-        LDA     $11F7
+        LDA     L11F7
         BEQ     L179F
-        LDA     $11E9
+        LDA     L11E9
         BMI     L17B5
 
 L179F:
-        LDA     $11E9
+        LDA     L11E9
         JSR     L1012
-        LDA     $11EA
+        LDA     L11EA
         BEQ     L17AD
         JSR     L1012
 
 L17AD:
-        LDA     $11EB
+        LDA     L11EB
         BEQ     L17B5
         JSR     L1012
 
@@ -619,12 +792,12 @@ L17B5:
 c64Vec05:
 ; vector 5 at runtime $17B6 - jump-table entry 5
         LDX     #$00
-        STX     $11E9
-        STX     $11EA
-        STX     $11EB
-        LDX     $11E8
+        STX     L11E9
+        STX     L11EA
+        STX     L11EB
+        LDX     L11E8
         BEQ     L180D
-        LDX     $11F7
+        LDX     L11F7
         BEQ     L17EF
         LDX     #$71
         STX     FAC2EXP
@@ -647,7 +820,7 @@ L17E4:
         INY
         LDA     ($69),Y
         BEQ     L185B
-        STA     $11E9
+        STA     L11E9
         CLC
         RTS
 
@@ -655,9 +828,9 @@ L17EE:
         TXA
 
 L17EF:
-        LDX     $10C8
+        LDX     L10C8
         STX     FAC2EXP
-        LDX     $10C9
+        LDX     L10C9
         STX     FAC2MAN1
         LDY     #$00
 
@@ -678,9 +851,9 @@ L180C:
         TXA
 
 L180D:
-        LDX     $10C6
+        LDX     L10C6
         STX     FAC2EXP
-        LDX     $10C7
+        LDX     L10C7
         STX     FAC2MAN1
         LDY     #$00
 
@@ -721,13 +894,13 @@ L184D:
         ORA     #$20
 
 L184F:
-        STA     $11E9
+        STA     L11E9
         CLC
         RTS
 
 L1854:
         AND     #$7F
-        STA     $11E9
+        STA     L11E9
         CLC
         RTS
 
@@ -738,13 +911,13 @@ L185B:
 L185D:
         INY
         LDA     ($69),Y
-        STA     $11E9
+        STA     L11E9
         INY
         LDA     ($69),Y
-        STA     $11EA
+        STA     L11EA
         INY
         LDA     ($69),Y
-        STA     $11EB
+        STA     L11EB
         CLC
         RTS
         FCB     $23
@@ -835,14 +1008,14 @@ c64Vec09:
 
 c64Vec10:
 ; vector 10 at runtime $18F6 - jump-table entry 10
-        BIT     $11D9
+        BIT     L11D9
         BPL     L192F
         LDA     #$10
         JSR     L1012
         LDA     #$6D
         JSR     L1012
         LDA     #$00
-        STA     $11D9
+        STA     L11D9
 
 L190A:
         LDA     btxXferEn
@@ -852,9 +1025,9 @@ L190A:
         JSR     L103F
         JSR     L1078
         LDA     FAC1MAN4
-        STA     $11DA
+        STA     L11DA
         LDA     FAC1SGN
-        STA     $11DB
+        STA     L11DB
         LDA     #$07
         JSR     L105D
         JSR     L1060
@@ -891,11 +1064,11 @@ L194D:
 c64Vec04:
 ; vector 4 at runtime $194E - jump-table entry 4
         LDA     #$00
-        STA     $11E7
+        STA     L11E7
 
 L1953:
         LDA     #$03
-        LDX     $11E7
+        LDX     L11E7
         BEQ     L195C
         LDA     #$04
 
@@ -911,16 +1084,16 @@ L195F:
         JMP     L101B
 
 L196D:
-        STA     $11B9
+        STA     L11B9
         LDY     #$FD
 
 L1972:
         INY
         INY
         INY
-        LDA     $1997,Y
+        LDA     c64MenuKeys,Y
         BEQ     L198C
-        CMP     $11B9
+        CMP     L11B9
         BNE     L1972
         LDA     $1998,Y
         STA     FAC1EXP
@@ -929,31 +1102,51 @@ L1972:
         JMP     (FAC1EXP)
 
 L198C:
-        LDA     $11E7
+        LDA     L11E7
         EOR     #$FF
-        STA     $11E7
+        STA     L11E7
         JMP     L1953
-        JMP     L102D
-        FCB     $43,$3C
-        BPL     L19E2
-        FCB     $42
-        BPL     L19EE
-        AND     $5810,Y
-        EOR     $10
-        EOR     ($24,X)
-        BPL     L19EC
-        FCB     $27
-        BPL     L1A00
-        PHA
-        BPL     L19FB
-        LSR     $5010
-        EOR     ($10),Y
-        EOR     $54
-        BPL     L1A0A
-        ROL     A
-        BPL     L1A10
-        FCB     $AB
-        BPL     c64Vec12
+
+; Menu key dispatch: records of one ASCII key byte then a 16-bit handler
+; address, terminated by $00.
+;
+;     'L' -> $102D    'C' -> $103C    'D' -> $1042    'M' -> $1039
+;     'X' -> $1045    'A' -> $1024    'B' -> $1027    'S' -> $1048
+;     'K' -> $104E    'P' -> $1051    'E' -> $1054    'Q' -> $102A
+;     'T' -> $10AB
+;
+; The keys are the highlighted letters of the two menu lines - "Load Capture
+; Display Macro Xfer Screen" and "ASCII Btx Keybd Telesoft Edit Pause Quit" -
+; and every target is an entry in the jump table at $1000, so this is what turns
+; a keypress into a command.
+c64MenuKeys:
+        FCB     $4C                    ; 'L'
+        DW      L102D
+        FCB     $43                    ; 'C'
+        DW      L103C
+        FCB     $44                    ; 'D'
+        DW      L1042
+        FCB     $4D                    ; 'M'
+        DW      L1039
+        FCB     $58                    ; 'X'
+        DW      L1045
+        FCB     $41                    ; 'A'
+        DW      L1024
+        FCB     $42                    ; 'B'
+        DW      L1027
+        FCB     $53                    ; 'S'
+        DW      L1048
+        FCB     $4B                    ; 'K'
+        DW      L104E
+        FCB     $50                    ; 'P'
+        DW      L1051
+        FCB     $45                    ; 'E'
+        DW      L1054
+        FCB     $51                    ; 'Q'
+        DW      L102A
+        FCB     $54                    ; 'T'
+        DW      L10AB
+        FCB     $00
 
 c64Vec12:
 ; vector 12 at runtime $19BF - jump-table entry 12
@@ -962,7 +1155,7 @@ c64Vec12:
         LDA     #$67
         JSR     L1012
         LDA     #$FF
-        STA     $11F7
+        STA     L11F7
         RTS
 
 c64Vec13:
@@ -972,53 +1165,34 @@ c64Vec13:
         LDA     #$66
         JSR     L1012
         LDA     #$00
-        STA     $11F7
+        STA     L11F7
         RTS
 
 c64Vec14:
 ; vector 14 at runtime $19DF - jump-table entry 14
         JSR     L101B
-
-L19E2:
         LDA     #$00
         STA     btxFifo00
         LDA     #$10
         JSR     L1012
-
-L19EC:
         LDA     #$4C
-
-L19EE:
         JSR     L1012
         LDA     #$10
-
-L19F3:
         JSR     L1012
         LDA     #$66
         JSR     L1012
-
-L19FB:
         LDA     #$41
         STA     FAC1EXP
-        FCB     $A9
-
-L1A00:
-        FCB     $1A
+        LDA     #$1A
         STA     FAC1MAN1
 
 L1A03:
         LDY     #$00
         LDA     ($61),Y
         BEQ     L1A15
-        FCB     $20
-
-L1A0A:
-        FCB     $12
-        BPL     L19F3
-        ADC     ($D0,X)
-        FCB     $F3
-
-L1A10:
+        JSR     L1012
+        INC     FAC1EXP
+        BNE     L1A03
         INC     FAC1MAN1
         JMP     L1A03
 
@@ -1149,11 +1323,11 @@ L1AF4:
         RTS
 
 L1B05:
-        BIT     $11EC
+        BIT     L11EC
         BPL     L1AF4
         JSR     L106F
         LDA     #$00
-        STA     $11EC
+        STA     L11EC
         LDA     #$10
         JSR     L1012
         LDA     #$2E
@@ -1226,16 +1400,16 @@ L1B7C:
         BCS     L1B59
 
 L1B8E:
-        STA     $11B4
+        STA     L11B4
         LDA     #$08
         JSR     L1012
         LDA     #$20
         JSR     L1012
-        LDA     $11B4
+        LDA     L11B4
         JSR     L1012
         LDA     #$00
         JSR     L1012
-        BIT     $11D8
+        BIT     L11D8
         BPL     L1BBD
         JSR     L106C
         LDA     #$10
@@ -1243,14 +1417,14 @@ L1B8E:
         LDA     #$6B
         JSR     L1012
         LDA     #$00
-        STA     $11D8
+        STA     L11D8
 
 L1BBD:
-        BIT     $11EC
+        BIT     L11EC
         BPL     L1BD7
         JSR     L106F
         LDA     #$00
-        STA     $11EC
+        STA     L11EC
         LDA     #$10
         JSR     L1012
         LDA     #$2E
@@ -1277,7 +1451,7 @@ L1BEA:
         TXA
         PHA
         LDA     #$FF
-        STA     $11EC
+        STA     L11EC
         LDA     #$10
         JSR     L1012
         LDA     #$2C
@@ -1285,7 +1459,7 @@ L1BEA:
         JSR     L1078
         LDA     #$0C
         JSR     L105D
-        LDA     $11B4
+        LDA     L11B4
         JSR     L1012
         LDA     #$20
         JSR     L1012
@@ -1305,10 +1479,10 @@ c64Vec20:
         JSR     L105D
         LDA     #$FF
         STA     btxStatus
-        STA     $11D9
-        LDA     $10C0
+        STA     L11D9
+        LDA     L10C0
         STA     FAC1MAN4
-        LDA     $10C1
+        LDA     L10C1
         STA     FAC1SGN
         RTS
 
@@ -1322,7 +1496,7 @@ c64Vec21:
         BNE     L1C55
         INC     FAC1SGN
         LDA     FAC1SGN
-        CMP     $10C3
+        CMP     L10C3
         BEQ     L1C58
 
 L1C55:
@@ -1330,7 +1504,7 @@ L1C55:
 
 L1C58:
         LDA     #$00
-        STA     $11D9
+        STA     L11D9
         LDA     #$10
         JSR     L1012
         LDA     #$6D
@@ -1339,9 +1513,9 @@ L1C58:
         LDA     #$08
         JSR     L105D
         LDA     FAC1MAN4
-        STA     $11DA
+        STA     L11DA
         LDA     FAC1SGN
-        STA     $11DB
+        STA     L11DB
         JSR     L1060
 
 L1C7C:
@@ -1368,21 +1542,21 @@ c64Vec22:
         JSR     L1012
         LDA     #$06
         JSR     L105D
-        LDA     $10C0
+        LDA     L10C0
         STA     FAC1MAN4
-        LDA     $10C1
+        LDA     L10C1
         STA     FAC1SGN
         LDA     #$00
-        STA     $11DD
+        STA     L11DD
 
 L1CB3:
         JSR     STOP
         BEQ     L1CC6
         LDA     FAC1MAN4
-        CMP     $11DA
+        CMP     L11DA
         BNE     L1CD4
         LDA     FAC1SGN
-        CMP     $11DB
+        CMP     L11DB
         BNE     L1CD4
 
 L1CC6:
@@ -1394,7 +1568,7 @@ L1CC6:
         RTS
 
 L1CD4:
-        LDA     $11DD
+        LDA     L11DD
         CMP     #$11
         BNE     L1CE0
         LDA     #$05
@@ -1403,7 +1577,7 @@ L1CD4:
 L1CE0:
         LDY     #$00
         LDA     ($65),Y
-        STA     $11DD
+        STA     L11DD
         JSR     L1012
         INC     FAC1MAN4
         BNE     L1CF0
@@ -1419,41 +1593,41 @@ c64Vec23:
         LDA     #$93
         JSR     CHROUT
         LDA     #$11
-        STA     $11E0
+        STA     L11E0
         LDA     #$FF
-        STA     $11EF
+        STA     L11EF
 
 L1D07:
         LDA     #$10
         JSR     L1012
-        LDA     $11E0
+        LDA     L11E0
         JSR     L1012
-        INC     $11EF
+        INC     L11EF
         LDA     #$FF
-        STA     $11EE
+        STA     L11EE
         LDA     #$28
-        STA     $11DF
+        STA     L11DF
 
 L1D1F:
-        INC     $11EE
+        INC     L11EE
         JSR     L1015
         AND     #$7F
-        STA     $11E1
+        STA     L11E1
         JSR     L1015
-        STA     $11E2
+        STA     L11E2
         JSR     L1015
-        STA     $11E3
+        STA     L11E3
         JSR     L1015
-        STA     $11E4
+        STA     L11E4
         JSR     L1015
-        STA     $11E5
+        STA     L11E5
         JSR     L1015
-        STA     $11E6
+        STA     L11E6
         JSR     L1081
-        DEC     $11DF
+        DEC     L11DF
         BNE     L1D1F
-        INC     $11E0
-        LDA     $11E0
+        INC     L11E0
+        LDA     L11E0
         CMP     #$2A
         BNE     L1D07
         LDA     #$00
@@ -1496,7 +1670,7 @@ L1D95:
 
 L1D9A:
         LDA     #$11
-        STA     $11E0
+        STA     L11E0
 
 L1D9F:
         JSR     STOP
@@ -1506,25 +1680,25 @@ L1D9F:
 L1DA7:
         LDA     #$10
         JSR     L1012
-        LDA     $11E0
+        LDA     L11E0
         JSR     L1012
         LDA     #$28
-        STA     $11DF
+        STA     L11DF
 
 L1DB7:
         JSR     L1015
         AND     #$7F
-        STA     $11E1
+        STA     L11E1
         JSR     L1015
-        STA     $11E2
+        STA     L11E2
         JSR     L1015
-        STA     $11E3
+        STA     L11E3
         JSR     L1015
-        STA     $11E4
+        STA     L11E4
         JSR     L1015
-        STA     $11E5
+        STA     L11E5
         JSR     L1015
-        STA     $11E6
+        STA     L11E6
         LDA     FA
         CMP     #$04
         BNE     L1DE9
@@ -1535,12 +1709,12 @@ L1DE9:
         JSR     L1084
 
 L1DEC:
-        DEC     $11DF
+        DEC     L11DF
         BNE     L1DB7
         LDA     #$0D
         JSR     IEC_CIOUT
-        INC     $11E0
-        LDA     $11E0
+        INC     L11E0
+        LDA     L11E0
         CMP     #$29
         BNE     L1D9F
         LDA     #$00
@@ -1620,17 +1794,17 @@ L1E67:
         BMI     L1EDC
         LDA     btxFifo03
         AND     #$7F
-        STA     $11E1
+        STA     L11E1
         LDA     btxFifo04
-        STA     $11E2
+        STA     L11E2
         LDA     btxFifo05
-        STA     $11E3
+        STA     L11E3
         LDA     btxFifo06
-        STA     $11E4
+        STA     L11E4
         LDA     btxFifo07
-        STA     $11E5
+        STA     L11E5
         LDA     btxFifo08
-        STA     $11E6
+        STA     L11E6
         JSR     L108A
         CMP     #$60
         BCC     L1EA9
@@ -1642,7 +1816,7 @@ L1EA9:
 
 L1EAB:
         PHA
-        LDA     $11E6
+        LDA     L11E6
         AND     #$04
         BEQ     L1EB9
         PLA
@@ -1654,7 +1828,7 @@ L1EB9:
 
 L1EBA:
         PHA
-        LDA     $11E6
+        LDA     L11E6
         AND     #$08
         BNE     L1EC8
         PLA
@@ -1701,7 +1875,7 @@ L1EF4:
         CMP     #$44
         BNE     L1EF4
         LDA     #$FF
-        STA     $11E8
+        STA     L11E8
         LDA     #$10
         JSR     L1012
         LDA     #$4E
@@ -1713,7 +1887,7 @@ L1F14:
 
 L1F18:
         LDA     #$00
-        STA     $11E8
+        STA     L11E8
         LDA     #$10
         JSR     L1012
         LDA     #$6E
@@ -1750,13 +1924,13 @@ L1F3B:
 
 c64Vec28:
 ; vector 28 at runtime $1F54 - jump-table entry 28
-        BIT     $11EC
+        BIT     L11EC
         BPL     L1F5D
         JSR     L101B
         RTS
 
 L1F5D:
-        BIT     $11D8
+        BIT     L11D8
         BPL     L1F89
         LDA     #$10
         JSR     L1012
@@ -1768,7 +1942,7 @@ L1F5D:
         LDA     #$17
         JSR     L105D
         LDA     #$00
-        STA     $11D8
+        STA     L11D8
 
 L1F7E:
         JSR     GETIN
@@ -1815,12 +1989,12 @@ L1FB4:
         BCS     L1F91
 
 L1FC6:
-        STA     $11B4
+        STA     L11B4
         LDA     #$08
         JSR     L1012
         LDA     #$20
         JSR     L1012
-        LDA     $11B4
+        LDA     L11B4
         JSR     L1012
         LDA     #$00
         JSR     L1012
@@ -1841,7 +2015,7 @@ L1FED:
 L1FF8:
         LDA     #$0C
         JSR     L105D
-        LDA     $11B4
+        LDA     L11B4
         JSR     L1012
         LDA     #$00
         JSR     L1012
@@ -1853,31 +2027,31 @@ L1FF8:
         LDA     #$20
         STA     L11BE
         LDA     #$00
-        STA     $11BF
+        STA     L11BF
         LDA     #$02
-        STA     $11BC
+        STA     L11BC
 
 L2023:
         LDA     btxReg011
         CMP     btxReg011
         BNE     L2023
-        STA     $11ED
+        STA     L11ED
         JSR     L1066
         LDY     #$00
-        STY     $11B9
+        STY     L11B9
 
 L2036:
         LDA     L11BE,Y
         JSR     IEC_CIOUT
-        INC     $11B9
-        LDY     $11B9
-        CPY     $11BC
+        INC     L11B9
+        LDY     L11B9
+        CPY     L11BC
         BNE     L2036
         LDA     #$00
         JSR     IEC_CIOUT
         JSR     IEC_UNLSN
         LDA     #$FF
-        STA     $11D8
+        STA     L11D8
         LDA     #$10
         JSR     L1012
         LDA     #$4B
@@ -1886,9 +2060,9 @@ L2036:
 
 c64Vec29:
 ; vector 29 at runtime $205F - jump-table entry 29
-        STA     $11BD
+        STA     L11BD
         LDY     #$00
-        STY     $11BC
+        STY     L11BC
 
 L2067:
         JSR     L109F
@@ -1899,10 +2073,10 @@ L2067:
         BNE     L2086
 
 L2074:
-        LDY     $11BC
+        LDY     L11BC
         CPY     #$00
         BEQ     L2067
-        DEC     $11BC
+        DEC     L11BC
         LDA     #$08
         JSR     L1012
         JMP     L2067
@@ -1914,7 +2088,7 @@ L2086:
         BNE     L209D
 
 L208E:
-        LDY     $11BC
+        LDY     L11BC
         BEQ     L2067
         LDA     #$00
         STA     L11BE,Y
@@ -1944,22 +2118,22 @@ L20A8:
         JSR     L100F
         PLA
         BCS     L2067
-        LDY     $11BC
+        LDY     L11BC
         STA     L11BE,Y
         TAX
-        LDA     $11E8
+        LDA     L11E8
         PHA
         LDA     #$00
-        STA     $11E8
+        STA     L11E8
         TXA
         JSR     L1009
         PLA
-        STA     $11E8
-        INC     $11BC
-        LDY     $11BC
-        CPY     $11BD
+        STA     L11E8
+        INC     L11BC
+        LDY     L11BC
+        CPY     L11BD
         BNE     L20EA
-        DEC     $11BC
+        DEC     L11BC
         LDA     #$08
         JSR     L1012
 
@@ -1970,9 +2144,9 @@ c64Vec31:
 ; vector 31 at runtime $20ED - jump-table entry 31
         ASL     A
         TAY
-        LDA     $10CC
+        LDA     L10CC
         STA     FAC1MAN2
-        LDA     $10CD
+        LDA     L10CD
         STA     FAC1MAN3
         LDA     ($63),Y
         TAX
@@ -1993,17 +2167,17 @@ c64Vec30:
         JSR     L1012
         LDY     #$00
         LDA     ($63),Y
-        STA     $11D7
+        STA     L11D7
         INY
-        STY     $11B9
+        STY     L11B9
 
 L2122:
-        LDY     $11B9
+        LDY     L11B9
         LDA     ($63),Y
         JSR     L1012
-        LDY     $11B9
-        INC     $11B9
-        CPY     $11D7
+        LDY     L11B9
+        INC     L11B9
+        CPY     L11D7
         BNE     L2122
         RTS
 
@@ -2017,19 +2191,19 @@ c64Vec32:
 L213E:
         JSR     L1090
         BCS     L2174
-        LDA     $10C0
+        LDA     L10C0
         STA     FAC1MAN4
-        LDA     $10C1
+        LDA     L10C1
         STA     FAC1SGN
 
 L214D:
         JSR     STOP
         BEQ     L2170
         LDA     FAC1MAN4
-        CMP     $11DA
+        CMP     L11DA
         BNE     L2160
         LDA     FAC1SGN
-        CMP     $11DB
+        CMP     L11DB
         BEQ     L2170
 
 L2160:
@@ -2075,19 +2249,19 @@ c64Vec41:
 ; vector 41 at runtime $2196 - jump-table entry 41
         LDA     btxReg011
         STA     btxReg1FC
-        STA     $11ED
+        STA     L11ED
 
 L219F:
         JSR     STOP
         BEQ     L21BF
-        BIT     $11D9
+        BIT     L11D9
         BPL     L21AC
         JSR     L103F
 
 L21AC:
         LDA     btxReg011
         STA     btxReg1FC
-        CMP     $11ED
+        CMP     L11ED
         BNE     L21BF
         LDX     #$14
 
@@ -2101,12 +2275,12 @@ L21BF:
 
 c64Vec42:
 ; vector 42 at runtime $21C0 - jump-table entry 42
-        STA     $11DE
+        STA     L11DE
         ASL     A
         ASL     A
         CLC
-        ADC     $11DE
-        STA     $11DE
+        ADC     L11DE
+        STA     L11DE
 
 L21CC:
         LDY     #$C8
@@ -2121,7 +2295,7 @@ L21D0:
         BNE     L21CE
         JSR     STOP
         BEQ     L21F3
-        DEC     $11DE
+        DEC     L11DE
         BNE     L21CC
 
 L21E0:
@@ -2150,17 +2324,17 @@ L21FF:
         AND     #$3F
 
 L2201:
-        LDX     $11EE
-        LDY     $11EF
+        LDX     L11EE
+        LDY     L11EF
         JSR     L10A5
         RTS
 
 c64Vec44:
 ; vector 44 at runtime $220B - jump-table entry 44
-        LDA     $11E1
+        LDA     L11E1
         CMP     #$7B
         BNE     L2220
-        LDA     $11E4
+        LDA     L11E4
         AND     #$07
         CMP     #$01
         BNE     L2220
@@ -2168,13 +2342,13 @@ c64Vec44:
         JMP     L2269
 
 L2220:
-        LDA     $11E4
+        LDA     L11E4
         AND     #$08
         BEQ     L2260
-        LDA     $11E2
+        LDA     L11E2
         CMP     #$48
         BNE     L2260
-        LDA     $11E1
+        LDA     L11E1
         CMP     #$61
         BEQ     L224C
         CMP     #$41
@@ -2227,7 +2401,7 @@ c64Vec46:
 ; vector 46 at runtime $226D - jump-table entry 46
         PHP
         SEI
-        LDA     $11E4
+        LDA     L11E4
         AND     #$07
         BEQ     L22EC
         CMP     #$01
@@ -2242,7 +2416,7 @@ c64Vec46:
         JMP     L230A
 
 L228B:
-        LDA     $11E1
+        LDA     L11E1
         CMP     #$20
         BEQ     L22EC
         CMP     #$50
@@ -2267,14 +2441,14 @@ L22AD:
         JMP     L230A
 
 L22B2:
-        LDA     $11E1
+        LDA     L11E1
         CMP     #$20
         BEQ     L22EC
         LDA     #$2A
         JMP     L230A
 
 L22BE:
-        LDA     $11E1
+        LDA     L11E1
         CMP     #$20
         BEQ     L22EC
         CMP     #$50
@@ -2287,7 +2461,7 @@ L22CE:
         JMP     L230A
 
 L22D3:
-        LDA     $11E1
+        LDA     L11E1
         CMP     #$20
         BEQ     L22EC
         CMP     #$40
@@ -2302,7 +2476,7 @@ L22E3:
         JMP     L230A
 
 L22EC:
-        LDA     $11E1
+        LDA     L11E1
         CMP     #$60
         BNE     L22F8
         LDA     #$20
@@ -2315,7 +2489,7 @@ L22F8:
         JMP     L230A
 
 L2301:
-        LDA     $11E1
+        LDA     L11E1
         CMP     #$41
         BCC     L230A
         EOR     #$20
@@ -2379,7 +2553,7 @@ L2364:
 
 c64Vec53:
 ; vector 53 at runtime $236D - jump-table entry 53
-        LDA     $11EC
+        LDA     L11EC
         BNE     L23BE
         JSR     GETIN
         CMP     #$00
@@ -2389,7 +2563,7 @@ c64Vec53:
         LDA     #$20
 
 L237F:
-        BIT     $11E8
+        BIT     L11E8
         BPL     L2396
         CMP     #$59
         BEQ     L2394
@@ -2404,7 +2578,7 @@ L2394:
         EOR     #$03
 
 L2396:
-        BIT     $11D8
+        BIT     L11D8
         BPL     L23A8
         PHA
         JSR     L1066
@@ -2456,7 +2630,7 @@ L23D7:
         JSR     L1012
         JSR     L101B
         LDA     #$00
-        STA     $11EC
+        STA     L11EC
         LDA     #$10
         JSR     L1012
         LDA     #$2E
@@ -2501,7 +2675,7 @@ L241E:
         BNE     L241E
 
 L2429:
-        STX     $11BC
+        STX     L11BC
         JSR     L1030
         BCS     L2460
         STA     FAC1EXP
@@ -2678,14 +2852,14 @@ c64Vec38:
         LDA     #$09
         JSR     L105D
         LDA     #$00
-        STA     $11DC
+        STA     L11DC
         JSR     L1033
         BCS     L2648
         BVS     L2648
         CMP     #$30
         BEQ     L2609
         LDA     #$FF
-        STA     $11DC
+        STA     L11DC
 
 L2609:
         JSR     L1033
@@ -2694,8 +2868,8 @@ L2609:
         CMP     #$30
         BEQ     L261C
         LDA     #$FF
-        ORA     $11DC
-        STA     $11DC
+        ORA     L11DC
+        STA     L11DC
 
 L261C:
         JSR     L1033
@@ -2728,7 +2902,7 @@ L2641:
 
 L2648:
         JSR     IEC_UNTLK
-        BIT     $11DC
+        BIT     L11DC
         BPL     L2652
 
 L2650:
@@ -2754,14 +2928,14 @@ c64Vec39:
         LDX     STATUS
         BNE     L26A5
         LDA     #$00
-        STA     $11DC
+        STA     L11DC
         JSR     L1033
         BCS     L269D
         BVS     L269D
         CMP     #$30
         BEQ     L2683
         LDA     #$FF
-        STA     $11DC
+        STA     L11DC
 
 L2683:
         JSR     L1033
@@ -2770,8 +2944,8 @@ L2683:
         CMP     #$30
         BEQ     L2696
         LDA     #$FF
-        ORA     $11DC
-        STA     $11DC
+        ORA     L11DC
+        STA     L11DC
 
 L2696:
         JSR     L1033
@@ -2780,7 +2954,7 @@ L2696:
 
 L269D:
         JSR     IEC_UNTLK
-        BIT     $11DC
+        BIT     L11DC
         BPL     L26A7
 
 L26A5:
@@ -2847,18 +3021,18 @@ L26FB:
         LDA     btxReg011
         CMP     btxReg011
         BNE     L26FB
-        STA     $11ED
+        STA     L11ED
         JMP     L271E
 
 L2709:
         LDA     btxReg011
         CMP     btxReg011
         BNE     L2709
-        CMP     $11ED
+        CMP     L11ED
         BEQ     L271E
         LDA     #$01
         JSR     IEC_CIOUT
-        INC     $11ED
+        INC     L11ED
 
 L271E:
         RTS
@@ -2877,7 +3051,7 @@ c64Vec35:
 
 c64Vec60:
 ; vector 60 at runtime $2732 - jump-table entry 60
-        LDY     $11BC
+        LDY     L11BC
         LDA     #$2C
         STA     L11BE,Y
         INY
@@ -2895,7 +3069,7 @@ c64Vec60:
 
 c64Vec48:
 ; vector 48 at runtime $2752 - jump-table entry 48
-        LDY     $11BC
+        LDY     L11BC
         LDA     #$2C
         STA     L11BE,Y
         INY
@@ -2971,15 +3145,15 @@ c64Vec50:
 
 c64Vec51:
 ; vector 51 at runtime $27D6 - jump-table entry 51
-        BIT     $11EC
+        BIT     L11EC
         BMI     L2845
         LDA     #$10
         JSR     L1012
         LDA     #$4C
         JSR     L1012
-        LDA     $10CA
+        LDA     L10CA
         STA     FAC1EXP
-        LDA     $10CB
+        LDA     L10CB
         STA     FAC1MAN1
 
 L27EF:
@@ -2994,27 +3168,27 @@ L27EF:
 
 L2801:
         LDA     #$30
-        STA     $11B4
+        STA     L11B4
 
 L2806:
         JSR     L109C
         BCS     L2833
         JSR     STOP
         BEQ     L2833
-        INC     $11B4
-        LDA     $11B4
+        INC     L11B4
+        LDA     L11B4
         CMP     #$3A
         BNE     L2806
         LDA     #$41
-        STA     $11B4
+        STA     L11B4
 
 L281F:
         JSR     L109C
         BCS     L2833
         JSR     STOP
         BEQ     L2833
-        INC     $11B4
-        LDA     $11B4
+        INC     L11B4
+        LDA     L11B4
         CMP     #$5B
         BNE     L281F
 
@@ -3032,19 +3206,19 @@ L2845:
 
 c64Vec52:
 ; vector 52 at runtime $2846 - jump-table entry 52
-        LDA     $11B4
+        LDA     L11B4
         JSR     L1012
         LDA     #$3A
         JSR     L1012
         LDA     #$20
         JSR     L1012
         LDA     #$11
-        STA     $11BA
+        STA     L11BA
         JSR     L1096
         BCS     L287B
         TXA
         JSR     L1009
-        DEC     $11BA
+        DEC     L11BA
 
 L2867:
         JSR     L1033
@@ -3053,22 +3227,22 @@ L2867:
         CMP     #$00
         BEQ     L2896
         JSR     L1009
-        DEC     $11BA
+        DEC     L11BA
         BNE     L2867
         RTS
 
 L287B:
         LDA     #$2D
         JSR     L1012
-        DEC     $11BA
-        LDA     $11BA
+        DEC     L11BA
+        LDA     L11BA
         CMP     #$0B
         BNE     L287B
 
 L288A:
         LDA     #$20
         JSR     L1012
-        DEC     $11BA
+        DEC     L11BA
         BNE     L288A
         CLC
         RTS
@@ -3076,7 +3250,7 @@ L288A:
 L2896:
         LDA     #$20
         JSR     L1012
-        DEC     $11BA
+        DEC     L11BA
         BNE     L2896
         JSR     L106F
         CLC
@@ -3099,7 +3273,7 @@ c64Vec16:
         STA     FNADR
         LDA     #L11BE>>8
         STA     FNADRH
-        LDA     $11BC
+        LDA     L11BC
         STA     FNLEN
 
 L28C3:
@@ -3108,12 +3282,12 @@ L28C3:
         JSR     L10B1
         BCS     L28EB
         LDA     SA
-        STA     $11BB
+        STA     L11BB
         JSR     L1075
         BCS     L28EB
         LDA     FA
         JSR     IEC_TALK
-        LDA     $11BB
+        LDA     L11BB
         STA     SA
         JSR     IEC_TKSA
         JSR     L1033
@@ -3223,8 +3397,8 @@ ceptMacroDir:
 
 c64Vec57:
 ; vector 57 at runtime $299B - jump-table entry 57
-        LDA     $11EC
-        ORA     $11D8
+        LDA     L11EC
+        ORA     L11D8
         BEQ     L29B1
         LDA     #$1E
         JSR     L105D
@@ -3264,14 +3438,14 @@ L29D7:
         JSR     L1012
         LDA     #$4D
         JSR     L1012
-        LDA     $10C0
+        LDA     L10C0
         STA     FAC1MAN4
         STA     FAC2MAN4
-        STA     $11DA
-        LDA     $10C1
+        STA     L11DA
+        LDA     L10C1
         STA     FAC1SGN
         STA     FAC2SGN
-        STA     $11DB
+        STA     L11DB
 
 L29FA:
         JSR     L10AE
@@ -3279,7 +3453,7 @@ L29FA:
 
 L29FF:
         LDA     #$00
-        STA     $11F0
+        STA     L11F0
         JSR     L10AE
         BCS     L29FF
         CMP     #$3C
@@ -3299,9 +3473,9 @@ L2A1D:
         CMP     #$40
         BNE     L29FA
         LDA     #$FF
-        STA     $11F0
+        STA     L11F0
         LDA     #$00
-        STA     $11F1
+        STA     L11F1
         JSR     L10AE
         BCS     L29FF
         CMP     #$43
@@ -3328,29 +3502,29 @@ L2A4A:
         BCS     L2ABA
         AND     #$0F
         BEQ     L2AB7
-        STA     $11F5
+        STA     L11F5
 
 L2A5B:
         JSR     L10AE
         BCS     L2ABA
-        DEC     $11F5
+        DEC     L11F5
         BEQ     L2AB7
         CMP     #$22
         BEQ     L2A8C
         JSR     L10AE
         BCS     L2ABA
-        DEC     $11F5
+        DEC     L11F5
         BEQ     L2AB7
         AND     #$0F
         BEQ     L2A5B
-        STA     $11F6
+        STA     L11F6
 
 L2A7A:
         JSR     L10AE
         BCS     L29FF
-        DEC     $11F5
+        DEC     L11F5
         BEQ     L2AB7
-        DEC     $11F6
+        DEC     L11F6
         BEQ     L2A5B
         JMP     L2A7A
 
@@ -3389,17 +3563,17 @@ L2ABD:
 
 L2AC0:
         LDA     #$FF
-        STA     $11F4
+        STA     L11F4
         JSR     L10AE
         BCS     L2ABA
-        STA     $11F5
+        STA     L11F5
         CMP     #$00
         BEQ     L2ADB
 
 L2AD1:
         JSR     L10AE
         BCS     L2ABA
-        DEC     $11F5
+        DEC     L11F5
         BNE     L2AD1
 
 L2ADB:
@@ -3409,7 +3583,7 @@ L2ADB:
         JMP     L2ADB
 
 L2AE6:
-        BIT     $11F4
+        BIT     L11F4
         BMI     L2AEE
         JMP     L29FF
 
@@ -3445,11 +3619,11 @@ c64Vec58:
         BNE     c64Vec58
         INC     FAC1SGN
         LDA     FAC1SGN
-        CMP     $10C3
+        CMP     L10C3
         BNE     c64Vec58
-        LDA     $10C0
+        LDA     L10C0
         STA     FAC1MAN4
-        LDA     $10C1
+        LDA     L10C1
         STA     FAC1SGN
         JMP     c64Vec58
 
@@ -3485,40 +3659,40 @@ L2B64:
         BNE     L2B7F
         INC     FAC2SGN
         LDX     FAC2SGN
-        CPX     $10C3
+        CPX     L10C3
         BNE     L2B7F
-        LDX     $10C0
+        LDX     L10C0
         STX     FAC2MAN4
-        LDX     $10C1
+        LDX     L10C1
         STX     FAC2SGN
 
 L2B7F:
         CMP     #$1F
         BEQ     L2BBB
-        BIT     $11F0
+        BIT     L11F0
         BPL     L2BB9
-        LDX     $11F1
+        LDX     L11F1
         BNE     L2B96
-        STA     $11F2
-        INC     $11F1
+        STA     L11F2
+        INC     L11F1
         JMP     L2B3A
 
 L2B96:
         AND     #$3F
-        STA     $11F3
-        LDA     $11F2
+        STA     L11F3
+        LDA     L11F2
         AND     #$3F
         ASL     A
         ASL     A
-        STA     $11F2
+        STA     L11F2
         AND     #$C0
-        ORA     $11F3
-        INC     $11F1
-        LDX     $11F1
+        ORA     L11F3
+        INC     L11F1
+        LDX     L11F1
         CPX     #$04
         BNE     L2BB9
         LDX     #$00
-        STX     $11F1
+        STX     L11F1
 
 L2BB9:
         CLC

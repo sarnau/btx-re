@@ -88,7 +88,8 @@ def _operand(insn, labels: dict[int, str], symbols: dict[int, str] | None = None
     raise AssertionError(m)  # pragma: no cover
 
 
-_DATA_KINDS = {"bytes", "string", "words", "ptr_table", "chargen", "petscii"}
+_DATA_KINDS = {"bytes", "string", "words", "ptr_table", "chargen", "petscii",
+               "byte_word"}
 _WORD_KINDS = {"ptr_table", "words"}
 
 
@@ -132,12 +133,15 @@ def collect_labels(data: bytes, base: int, block: C64Block,
     # resolve to a label, which also breaks the data runs at record boundaries.
     table_targets: set[int] = set()
     for region in sidecar.regions:
-        if region.kind not in _WORD_KINDS:
-            continue
         if not (block.start <= region.start < block.end):
             continue
-        for a in range(region.start, min(region.end, block.end) - 1, 2):
-            table_targets.add(int.from_bytes(data[a - base:a - base + 2], "little"))
+        if region.kind in _WORD_KINDS:
+            for a in range(region.start, min(region.end, block.end) - 1, 2):
+                table_targets.add(int.from_bytes(data[a - base:a - base + 2], "little"))
+        elif region.kind == "byte_word":
+            # records of one byte then a 16-bit address
+            for a in range(region.start, min(region.end, block.end) - 2, 3):
+                table_targets.add(int.from_bytes(data[a + 1 - base:a + 3 - base], "little"))
 
     labels = dict(named)
     for _ in range(8):
@@ -150,9 +154,27 @@ def collect_labels(data: bytes, base: int, block: C64Block,
                 targets.add(insn.operand)
             elif insn.mode is Mode.ABS and insn.mnemonic in _JUMPS:
                 targets.add(insn.operand)
+            elif insn.mode in (Mode.ABS, Mode.ABX, Mode.ABY):
+                # A data reference into this block names a location in it, so
+                # it deserves a label as much as a jump target does - unless it
+                # is a hardware register that merely happens to fall in the
+                # block's address range, as the BTX window does inside the
+                # bootstrap. Those already have names of their own.
+                if insn.operand not in sidecar.c64_symbols:
+                    targets.add(insn.operand)
         # An address assembled into a zero-page pointer is a location too.
         targets.update(v for v in _pointer_targets(seq, set(sidecar.c64_pointers)).values()
                        if block.org <= v < block.org + (block.end - block.start))
+        # A label cannot sit inside a record - the code indexes into the menu
+        # table, reading a record's address bytes with LDA table+1,Y - so those
+        # addresses stay numeric rather than collapsing onto the next record.
+        inside_records = set()
+        for region in sidecar.regions:
+            if region.kind == "byte_word":
+                inside_records |= set(range(region.start - block.offset + 1,
+                                            region.end - block.offset))
+        targets -= inside_records
+
         found = dict(named)
         found.update({a: f"L{a:04X}" for a in targets
                       if block.org <= a < block.org + (block.end - block.start)
@@ -374,6 +396,24 @@ def emit_block(data: bytes, base: int, block: C64Block, sidecar: Sidecar) -> str
             if note:
                 lines.append(f"; {note}")
         region = sidecar.region_at(rt + block.offset)
+        if region is not None and region.kind == "byte_word" and insn is None:
+            off = rt + block.offset - region.start
+            if off % 3 == 0 and rt + block.offset + 3 <= min(region.end, block.end):
+                flush()
+                lo = rt + block.offset
+                key = data[lo - base]
+                target = int.from_bytes(data[lo + 1 - base:lo + 3 - base], "little")
+                shown = chr(key) if 0x20 <= key < 0x7F else f"${key:02X}"
+                lines.append(f"{'':{_INDENT}}{'FCB':{_MNEM_WIDTH}}${key:02X}"
+                             f"{'':<20}; '{shown}'")
+                lines.append(f"{'':{_INDENT}}{'DW':{_MNEM_WIDTH}}"
+                             f"{all_names.get(target) or f'${target:04X}'}")
+                words_left = 2
+                continue
+            if words_left:
+                words_left -= 1
+                continue
+
         if region is not None and region.kind in _WORD_KINDS and insn is None:
             if words_left == 0:
                 flush()

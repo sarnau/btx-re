@@ -166,6 +166,7 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 
 
 [labels]
+"0xBD3F" = "c64MenuKeys"
 "0xBDE9" = "ceptMonitorMsg"
 "0xCD17" = "ceptMacroDir"
 "0xCF65" = "ceptStartPage"
@@ -395,6 +396,19 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xFFF0" = "vectors"
 
 [block_comments]
+"0xBD3F" = """
+Menu key dispatch: records of one ASCII key byte then a 16-bit handler
+address, terminated by $00.
+
+    'L' -> $102D    'C' -> $103C    'D' -> $1042    'M' -> $1039
+    'X' -> $1045    'A' -> $1024    'B' -> $1027    'S' -> $1048
+    'K' -> $104E    'P' -> $1051    'E' -> $1054    'Q' -> $102A
+    'T' -> $10AB
+
+The keys are the highlighted letters of the two menu lines - "Load Capture
+Display Macro Xfer Screen" and "ASCII Btx Keybd Telesoft Edit Pause Quit" -
+and every target is an entry in the jump table at $1000, so this is what turns
+a keypress into a command."""
 "0xBDE9" = """
 CEPT datastream, not C64 screen text.
 
@@ -1311,6 +1325,16 @@ kind = "ptr_table"
 
 [[regions]]
 start = 0xBA56
+end = 0xBD3F
+kind = "code6502"
+
+[[regions]]
+start = 0xBD3F
+end = 0xBD67
+kind = "byte_word"
+
+[[regions]]
+start = 0xBD67
 end = 0xBDE9
 kind = "code6502"
 

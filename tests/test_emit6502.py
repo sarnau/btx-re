@@ -310,3 +310,42 @@ def test_string_records_start_at_their_header():
     assert "FCB     $18,$00,$C0,$01,$98" in body
     assert 'FCC     "von Diskette: File? "' in body
     assert "c64TextBlock" not in src
+
+
+def test_in_block_data_references_use_labels():
+    """A STA/LDA into the block names a location in it, so it gets a label."""
+    src = (OUT / "c64_payload.asm").read_text()
+    refs = re.findall(r"^\s+(?:LDA|STA|LDX|LDY|STX|STY|CMP|INC|DEC)\s+(L[0-9A-F]{4})$",
+                      src, re.M)
+    assert len(refs) > 200, len(refs)
+    defined = {m.group(1) for m in re.finditer(r"^([A-Za-z_][A-Za-z0-9_]*):", src, re.M)}
+    assert not (set(refs) - defined), sorted(set(refs) - defined)[:5]
+
+
+def test_hardware_registers_keep_their_own_names():
+    """The BTX window falls inside the bootstrap's address range, so a naive
+    rule labelled $8005 and friends as code locations and split the cartridge
+    header apart. They are hardware and already named."""
+    boot = (OUT / "c64_bootstrap.asm").read_text()
+    assert "L8005" not in boot and "L8009" not in boot
+    assert "btxFifoWr" in boot
+    head = boot.split("c64CartSignature:", 1)[1].split("c64ColdStart:", 1)[0]
+    assert len([ln for ln in head.splitlines() if ln.strip().startswith("FCB")]) == 1
+
+
+def test_menu_key_table_uses_byte_word_records():
+    """One ASCII key byte then a 16-bit handler address, $00-terminated."""
+    src = (OUT / "c64_payload.asm").read_text()
+    body = src.split("c64MenuKeys:", 1)[1].split("\n\n", 1)[0]
+    assert "FCB     $4C" in body and "; 'L'" in body
+    assert "DW      L102D" in body
+    assert body.rstrip().endswith("FCB     $00")
+    assert len(re.findall(r"^\s+DW\s", body, re.M)) == 13
+
+
+def test_labels_never_land_inside_a_record():
+    """The code reads a record's address bytes with LDA table+1,Y. Labelling
+    those collapsed them onto the next record and changed the operand."""
+    src = (OUT / "c64_payload.asm").read_text()
+    assert "L1998" not in src and "L1999" not in src
+    assert "LDA     $1998,Y" in src or "LDA     $1999,Y" in src

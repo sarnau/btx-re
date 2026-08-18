@@ -11,7 +11,7 @@ import pathlib
 import tomllib
 
 REGION_KINDS = {"code", "bytes", "words", "string", "ptr_table", "chargen",
-                "code6502", "petscii"}
+                "code6502", "petscii", "byte_word"}
 
 
 @dataclasses.dataclass(frozen=True)
