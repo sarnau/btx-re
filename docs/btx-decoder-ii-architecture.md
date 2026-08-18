@@ -124,272 +124,61 @@ vectors, then initialises the subsystems and hands the C64 its software.
 
 ## 3. The C64 interface
 
-### The cartridge announces itself
+The two processors share one hardware window — the 6801 sees it at `$6000`, the
+C64 at `$8000`, with matching low offsets. Every register in it, both
+directions, and the full command set are in
+`docs/6801-6502-protocol.md`; this section is the shape of the relationship,
+and the two facts about it that change how the rest of this document reads.
 
-The C64 sees an autostart cartridge at `$8000`, but not by an address decode
-onto this ROM. `copyBootstrapToC64` at `$B2B4` puts it there:
+### The cartridge is copied, not mapped
 
-```
-        LDS     #c64BootstrapBlock-1
-        LDX     #c64Window
-loop:   PULA
-        STAA    $00,X
-        INX
-        CPX     #$6079
-        BCS     loop
-```
+The C64 finds an autostart cartridge at `$8000`, but not by a second address
+decode onto this ROM. `copyBootstrapToC64` at `$B2B4` walks
+`c64BootstrapBlock` with `PUL` and stores 121 bytes into `c64Window` —
+`$6079 - $6000`, exactly the size of the block at `$B32D`–`$B3A5`. The CBM80
+header the C64 autostarts from is RAM the decoder filled a moment earlier.
 
-`$6079 - $6000` is 121 bytes — exactly the size of the bootstrap block,
-`$B32D`–`$B3A5`. So the decoder **copies** the whole thing, CBM80 header
-included, into the dual-port window it shares with the C64. The C64 autostarts
-out of RAM the decoder filled a moment earlier, which is also what makes
-`btxLoadLo`/`btxLoadHi` writable at all.
+Everything the header proves still holds, because the bytes are identical
+either way: the cold-start vector reads `$8013`, that resolves to `$B340` where
+`c64CartStart` begins, and the `JMP $8036` at `$B36D` lands on `c64CopyLoop`.
+What changes is the mechanism — and it explains what a mapped ROM could not,
+which is why `btxLoadLo` and `btxLoadHi` are writable at all. `c64StartPayload`
+banks the cartridge out and does `JMP (btxLoadLo)`, and the same indirect that
+read `$8013` a moment earlier now reads `$1000`, because the loader wrote the
+fetched load address over it.
 
-Everything the header proves still holds, because the bytes are the same either
-way:
-
-```
-$B32D  13 80              cold start vector  $8013
-$B32F  72 FE              warm start vector  $FE72, the KERNAL's NNMI20
-$B331  C3 C2 CD 38 30     "CBM80"
-```
-
-`$8013` resolves to ROM `$B340`, exactly where `c64CartStart` begins, and the
-`JMP $8036` at `$B36D` lands on `c64CopyLoop`.
-
-### The C64 pulls its own software across
-
-`c64CartStart` runs from the copy in the window, not from this ROM. It runs
-the C64's cold-start sequence, then fetches a two-byte destination pointer and copies a byte stream into it:
-
-```
-JSR IOINIT / SIZE+8 / RESTOR / PCINT   KERNAL init
-LDX #$00 / STX $D016                   VIC setup
-JSR c64BootGetByte / STA c64Ptr        destination low byte
-JSR c64BootGetByte / STA c64PtrHi      destination high byte
-LDY #$00
-c64CopyLoop:
-  JSR c64BootGetByte / BCS c64StartPayload / STA (c64Ptr),Y
-  INY / BNE c64CopyLoop / INC c64PtrHi / JMP c64CopyLoop
-```
+`c64CartStart` runs from that copy, not from this ROM. It runs the C64's
+cold-start sequence — entering the KERNAL's memory sizing eight bytes in, at
+`SIZE+8`, which sets `MEMSTR` and `HIBASE` but skips the top-of-memory scan
+that would otherwise walk into the cartridge window — then reads a two-byte
+load address and copies the stream after it to `$1000`.
 
 One more thing happens before the terminal starts. `c64LoadExtra` scans
-keyboard row 7 for CTRL, and if it is held at power-on it loads
-`c64ExtraFile` — "BTX-EXTRA.MAS" — from device 8.
+keyboard row 7 for CTRL, and if it is held at power-on it loads "BTX-EXTRA.MAS"
+from device 8: an ordinary CBM `.prg`, two bytes of load address then data,
+**executed at its own load address** by the same store-the-address-twice idiom
+the bootstrap uses. That is the whole extension mechanism, on a key nothing on
+screen mentions.
 
-The file is an ordinary CBM `.prg` and nothing more: two bytes of load address,
-low first, then data stored from that address upward until EOI. No length, no
-checksum, no header beyond those two bytes. The filename carries no `,P,R`
-suffix, so CBM DOS opens it as PRG by default and the address bytes arrive as
-ordinary data.
+### The display update is interrupt-driven
 
-What makes it more than a load is the last instruction:
+Three rings and a mailbox connect the two sides. The rings carry bytes — 32
+slots decoder-to-C64, 64 slots C64-to-decoder, and a third of 16 that exists
+only while the payload is being sent. The mailbox carries one display cell:
+eleven bytes at `$x081`–`$x08B` that the decoder fills and the C64 plots.
 
-```
-        JSR     vecDiskCloseRead
-        JSR     vecHideMsg
-        JMP     (c64BufWr)
-```
+What makes it more than polling is the doorbell. The 6801 only ever *writes*
+`c64IrqSet`, and every write is the instruction after setting `cellReady`; the
+C64 only ever *reads* `btxIrqAck`, on both exit paths of `c64IrqPlotCell`.
+Write to raise, read to clear, with no counterexample on either side. Its
+handler chains to the KERNAL when `btxIrqCtrl` bit 7 says the interrupt was not
+the decoder's, so the reduced display shares `CINV` with the keyboard scan
+rather than displacing it.
 
-`c64BufWr` was given the load address alongside `c64Ptr`, and only `c64Ptr` is
-advanced by the copy — so the pair still holds where the file began, and the
-file is **executed at its own load address**. That is the same idiom
-`c64CartStart` uses to reach the payload: one copy of the address for the loop,
-an untouched one for the jump.
-
-So the extension mechanism is a self-contained program, free to choose where it
-lands, on a key nothing on screen mentions. Status message 25,
-*"Zusatzsoftware wird geladen"*, is shown while it loads.
-
-`SIZE+8` is an entry eight bytes into the KERNAL's memory sizing, at the tail
-that sets `MEMSTR` to `$0800` and `HIBASE` to `$0400`. It skips the
-top-of-memory scan, which would otherwise walk into the cartridge window. Both
-the bootstrap and the payload's own cold start enter there.
-
-The two bytes the loop reads first are the `$00 $10` at ROM `$B3A6` — **load
-address `$1000`**. The payload proper is `$B3A8`–`$D108`, 7521 bytes, landing at
-`$1000`–`$2D60`.
-
-Handing over is the last thing `c64StartPayload` does:
-
-```
-LDA #$00 / STA btxStatus     bank the cartridge out
-JMP (btxLoadLo)              jump through $8000
-```
-
-`$8000` holds the cold-start vector `$8013` while the cartridge is visible, and
-the loader has already written the fetched load address over it in
-`btxLoadLo`/`btxLoadHi`. Because the window is RAM the decoder filled — not
-ROM — that store simply takes, and once the cartridge is banked out the same
-indirect read returns `$1000`. That is why the loader stores the load address
-twice: to `c64Ptr` for its own copy loop, and to `btxLoadLo` for this jump.
-
-### The dual-port interface
-
-The same hardware window appears at different addresses on each side — the 6801
-at `$6000`, the C64 at `$8000`, with matching low offsets. There are **three
-rings**, and the boot one is not the one used afterwards:
-
-| 6801 | C64 | Size | Direction |
-|---|---|---|---|
-| `$6020` | `btxRxFifo` `$8020` | 32 | decoder → C64, indices `$8009`/`$800A` |
-| `$6040` | `btxTxFifo` `$8040` | 64 | C64 → decoder, indices `$800D`/`$800E` |
-| `$6080` | `btxFifo00` `$8080` | 16 | payload transfer only |
-
-The masks prove the sizes on both sides independently: the 6801 uses
-`ANDB #$1F` on `c64OutFifo` and `CMPB #$40` on `hostInFifo`, the C64 `CPX #$20` on
-`btxRxFifo` and `CPX #$40` on `btxTxFifo`. `sendPayloadToC64` uses `ANDB #$0F`
-over `$6080`, and `c64BootGetByte` `CPX #$10` — a third, smaller ring that
-exists only during the transfer.
-
-Once the payload is running, `$8080`–`$808B` is reused as a **mailbox** and
-`$8080` itself becomes the reduced-display toggle. The mailbox is one display
-cell, and the two sides name the same twelve bytes:
-
-| | 6801 writes | C64 reads |
-|---|---|---|
-| `$x081` | `cellCurCol` — `cursorCol` with `cursorVisible` folded in | cursor column |
-| `$x082` | `cellCurRow` | cursor row |
-| `$x083` | `cellChar` ← `glyphCode` | `c64CellChar` |
-| `$x084` | `cellAccent` ← `accentCode` | `c64CellAccent` |
-| `$x085` | `cellAttr0` ← `$00E0` | `c64Cell3` — stored, never read |
-| `$x086` | `cellSet` ← `$00E1` | `c64CellSet` |
-| `$x087` | `cellAttr2` ← `$00E2` | `c64Cell5` — stored, never read |
-| `$x088` | `cellAttr3` ← `$00E3` | `c64CellAttr` |
-| `$x089` | `cellRow` ← `renderRow` | plot row |
-| `$x08A` | `cellCol` ← `renderCol` | plot column |
-| `$x08B` | `cellReady` | the flag both sides poll |
-
-Two of the six the payload stores are then never read — `c64Cell3` and
-`c64Cell5`, by every instruction in the image. They are the two it could not
-act on: `c64Cell3` is `curAttr0`, carrying the line-continuation and
-separated-mosaic bits, and there are no separated mosaics on a PETSCII screen;
-`c64Cell5` is `curAttr2`, the colour byte `applyColour` builds as
-`(clutIndex << 3) | colourIndex`, and the reduced display has exactly one
-colour — `c64ShowSplash` fills all four pages of colour RAM with `$0B` and
-nothing writes them again.
-
-So the record has a fixed shape because the decoder sends **a cell, not a
-rendering**, and the payload keeps the fields its own screen can express.
-
-`cellSet` is worth a second look. On the C64 side `c64CellSet`'s low three bits
-select the character set; on the 6801 side the byte is `$00E1`, and `$00E1 & $07
-== 5` is exactly the test that sets `drcsCell`. The two processors agree on the
-field without either listing saying so.
-
-### The interface register map
-
-Every register in the window now has a name on at least one side. The 6801 sees
-it at `c64Window`, the C64 at `$8000`:
-
-| 6801 | C64 | |
-|---|---|---|
-| — | `btxLoadLo` `btxLoadHi` | the payload's load address, and what `c64StartPayload` jumps through |
-| — | `btxCartCtrl` | write `$00` to unmap the cartridge |
-| `c64FifoWr` `c64FifoRd` | `btxRxWr` `btxRxRd` | indices into the decoder → C64 ring |
-| `c64XferEn` | `btxXferEn` | transfer enable |
-| `c64Status` | `btxStatus` | status |
-| — | `btxTxWr` `btxTxRd` | indices into the C64 → decoder ring |
-| — | `btxHostActive` | write-only, purpose open |
-| `c64XferDone` | `btxXferDone` | completion |
-| `pageCount` | `btxPageCount` | `$1A` markers counted off the line |
-| — | `btxSessionUp` | the startup page has already been sent |
-| `$6020` | `btxRxFifo` | 32-byte ring, decoder → C64 |
-| `$6040` | `btxTxFifo` | 64-byte ring, C64 → decoder |
-| `c64Fifo` | `btxFifo00` | boot ring base, then the reduced-display toggle |
-| `cellCurCol`…`cellReady` | `btxCellCurCol`…`btxCellReady` | the cell mailbox above |
-| `c64StatusMsg` | `btxStatusMsg` | `statusMsg`, the status-message index |
-| — | `btxIrqCtrl` | bit 6 enables, bit 7 says the interrupt is the decoder's |
-| `c64IrqSet` | `btxIrqAck` | write to raise, read to clear |
-| `c64IrqArmA` `c64IrqArmB` | `btxIrqArmA` `btxIrqArmB` | strobes, purpose open |
-
-### The four registers only one side touches
-
-`$8005`, `$800F` and `$8012` are addressed by the C64 alone — the 6801 never
-touches `$6005`, `$600F` or `$6012` by any mode. What they do follows from
-where the payload writes them:
-
-- **`btxCartCtrl`** at `$8005` gets `#$00` in exactly one place: `c64MenuQuit`,
-  the instruction before `JMP (KERNAL_RESET)`. That is what makes Quit work —
-  the cartridge unmaps itself so the reset comes up as a plain C64, which is
-  what `ceptMonitorMsg` has just told the user to expect.
-- **`btxSessionUp`** at `$8012` is read once and set once, both in
-  `c64StartSession`: if it is already set the startup page is not sent again.
-  It lives in the cartridge, so it survives the C64 reset that Quit performs.
-- **`btxHostActive`** at `$800F` is written `$FF` and never read.
-
-`$8011` is the one both sides share, and the 6801 end says what it counts:
-
-```
-LF0B5:  LDAB    pageCount
-        CMPB    pageCount
-        BNE     LF0B5
-        INCB
-        STAB    pageCount
-```
-
-reached only from `CMPA #$1A` at the end of the receive loop. So the decoder
-counts `$1A` bytes arriving from the line — the end-of-page marker in the BTX
-datastream — and publishes the count as `btxPageCount`. `c64WaitDecoder` spins
-until it changes, which is how a macro waits for the next page, and
-`c64MacroRecOpen` paces the macro file against it.
-
-### The interrupt line
-
-The mailbox has a doorbell, and both ends of it are unambiguous. The 6801 only
-ever **writes** `$61F9` — never reads it — and every write is the instruction
-after `STAA $608B`, the flag saying a cell is waiting:
-
-```
-        LDAA    renderRow
-        STAA    $6089
-        LDAA    renderCol
-        STAA    $608A
-        LDAA    #$FF
-        STAA    $608B
-        STAA    c64IrqSet
-```
-
-The C64 only ever **reads** `$81F9` — never writes it — on both exit paths of
-`c64IrqPlotCell`, after consuming that cell. Write to raise, read to clear,
-with no counterexample on either side.
-
-`btxIrqCtrl` at `$81F8` is the C64's control and status half. Cold start writes
-`#$40` to enable it, and the IRQ handler tests bit 7 to decide whose interrupt
-this is:
-
-```
-L2359:  BIT     btxIrqCtrl
-        BMI     L2364           ours - service the cell and RTI
-        JSR     vecIrqPlotCell
-        JMP     KEY             not ours - chain to the KERNAL
-```
-
-So the decoder-driven display update is genuinely interrupt-driven on the C64
-side, sharing `CINV` with the KERNAL's keyboard scan rather than displacing it.
-
-`sendPayloadToC64` (`$B2E2`) drives the boot transfer:
-
-```
-LDAA #$FF / STAA c64XferEn
-TST c64Status (twice)              wait for the C64
-loop: LDX $0406 / INX
-      CPX #$D109 / BEQ done        payload ends at $D108
-      LDAA 0,X
-      LDAB c64FifoWr
-      LDX #c64Fifo / ABX           slot = $6080 + index
-      INCB / ANDB #$0F             16-slot ring
-      CMPB c64FifoRd (twice)       spin while full
-      STAA 0,X / STAB c64FifoWr
-      BRA loop
-```
-
-Both sides guard against metastability identically: read a shared index twice
-and act only when the two reads agree — `CMPB c64FifoRd` here, `LDA btxRxWr /
-CMP btxRxWr / BNE` in the C64 bootstrap. The idiom recurs everywhere the two
-processors share a byte, including the cell mailbox and the line counter.
-
----
+The mailbox is a verbatim copy of a cell, so the C64 receives six attribute
+fields and acts on four. It drops the two its screen cannot express:
+separated-mosaic geometry, and CEPT colour on a display whose colour RAM is
+filled with a single value.
 
 ## 4. The C64 terminal application
 
@@ -483,25 +272,17 @@ mailbox whenever the decoder posts it. For a hardcopy, `c64MenuXfer` walks rows
 
 Everything the C64 sends arrives through one byte. `fetchHostByte` at `$F1D8`
 runs masked, returns at once if `pendingByte` is already occupied, and
-otherwise pulls from `hostFifoGet` — the `hostInFifo` end of the ring the C64 fills
-through `c64SendByte`. `execHostByte` at `$F45B` is the consumer, and `CLR
-pendingByte` is how it says it is done.
+otherwise pulls from `hostFifoGet`. `execHostByte` at `$F45B` is the consumer,
+and `CLR pendingByte` is how it says it is done — so `pendingByte` is the
+single byte of decoder state the C64 controls.
 
-The commands are the `$10 xx` pairs the payload's menu handlers send, so the
-two listings read against each other directly:
-
-| Sent by | Bytes | Effect on the decoder |
-|---|---|---|
-| `c64MenuCapture` / `c64CaptureEnd` | `$10 $4D` / `$10 $6D` | `captureMode` — forward every received byte to the C64 |
-| `c64MenuLoad` / `c64MenuDisplay` | `$10 $4C` / `$10 $6C` | `hostFeedMode` — the C64 is supplying the page |
-| `c64MenuKeybd` | `$10 $4E` / `$10 $6E` | `germanFont` — which font the reduced display uses |
-| `c64ShowMsgPtr` / `c64HideMsg` | `$10 $75` / `$10 $55` | `blinkOff` — stop the cursor blinking over the overlay |
-| `c64ShowMsgPtr` / `c64HideMsg` | `$10 $5A` / `$10 $7A` | begin a status-line record, and put the default line back |
-
-`captureMode` is the clearest of them: `TST captureMode / JSR $F979` in two
-different loops, and `$F979` is the routine that pushes a byte into the
-decoder-to-C64 ring. Capture is implemented by the decoder echoing its input,
-not by the C64 listening in.
+The commands themselves are a `$10` prefix and a letter, tabulated against the
+payload routine that sends each one in `docs/6801-6502-protocol.md`. One is
+worth pulling out here because it is not what the name suggests: `captureMode`
+is `TST captureMode / JSR c64Put` in two different loops, and `c64Put` pushes
+into the decoder-to-C64 ring. **Capture is the decoder echoing its own input**,
+not the C64 listening in — which is why capturing a page needs a command at all
+rather than just reading the ring.
 
 ### What a status-line record is
 
