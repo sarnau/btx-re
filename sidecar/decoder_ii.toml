@@ -1247,10 +1247,17 @@ start = 0xF9FA
 end = 0xFA3A
 kind = "ptr_table"
 
-# The C64-side code runs on the 6502. The span covers the cartridge header, the
-# loader, the streamed payload and the text between them; data inside it still
-# renders as FCB, just under CPU 6502. It ends where ctrlTableC0 begins.
-[[cpu_spans]]
+
+# The two 6502 blocks. Each is assembled as its own program at the address it
+# really runs at, and linked back in as binary. See docs/.
+[[c64_blocks]]
+name = "bootstrap"
 start = 0xB32D
+end = 0xB3A6
+org = 0x8000
+
+[[c64_blocks]]
+name = "payload"
+start = 0xB3A8
 end = 0xD109
-cpu = "6502"
+org = 0x1000

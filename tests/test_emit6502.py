@@ -1,64 +1,68 @@
-"""The listing mixes two instruction sets; these guard the switch."""
+"""The 6502 blocks are separate programs, linked into the 6801 listing as binary."""
+
+import pathlib
+import re
 
 import build
 from dis65xx.asm import assemble
 
-
-def test_cpu_switches_once_around_a_single_span():
-    """One CPU 6502 span covers all the C64-side code, header and text alike.
-
-    The directive is an assembler mode over a range, not a per-region marker -
-    data inside the span still renders as FCB, just under CPU 6502.
-    """
-    lines = build.run(write=False).listing.splitlines()
-    cpu = [(i, ln.split()[1]) for i, ln in enumerate(lines) if ln.strip().startswith("CPU")]
-    assert [c for _, c in cpu] == ["6801", "6502", "6801"], cpu
-
-    def line_of(label):
-        return next(i for i, ln in enumerate(lines) if ln.startswith(label + ":"))
-
-    # 6502 mode opens before the cartridge header and closes before ctrlTableC0
-    assert cpu[1][0] < line_of("c64CartHeader")
-    assert line_of("c64Payload") < cpu[2][0] < line_of("ctrlTableC0")
+OUT = pathlib.Path(__file__).resolve().parent.parent / "out"
 
 
-def test_data_inside_the_span_still_renders_as_fcb():
-    lines = build.run(write=False).listing.splitlines()
-    start = next(i for i, ln in enumerate(lines) if ln.startswith("c64CartHeader:"))
-    assert "FCB" in lines[start + 1]
-
-
-def test_6502_region_disassembles_rather_than_dumping_bytes():
+def test_6801_listing_is_pure_6801():
+    """One CPU directive, no 6502 anywhere. Separating the sources is the point."""
     listing = build.run(write=False).listing
-    body = listing.split("c64ColdStart:", 1)[1][:600]
-    for expected in ("LDX     #$00", "STX     $D016", "JSR     IOINIT", "STA     ($61),Y"):
-        assert expected in body, expected
+    cpu = [ln.strip() for ln in listing.splitlines() if ln.strip().startswith("CPU")]
+    assert cpu == ["CPU     6801"], cpu
 
 
-def test_mixed_cpu_source_round_trips_through_our_assembler():
-    src = """
-        CPU     6502
-        ORG     $8000
-        LDA     #$01
-        STA     >$0002
-        JSR     $FDA3
-        STA     ($61),Y
-        ASL     A
-        JMP     ($8000)
-        CPU     6801
-        LDAA    #$02
-        STAA    >$0003
-        END
-"""
-    _, out = assemble(src)
-    assert out == bytes([0xA9, 0x01, 0x8D, 0x02, 0x00, 0x20, 0xA3, 0xFD,
-                         0x91, 0x61, 0x0A, 0x6C, 0x00, 0x80,
-                         0x86, 0x02, 0xB7, 0x00, 0x03])
+def test_6801_listing_pulls_the_blocks_in_as_binary():
+    listing = build.run(write=False).listing
+    assert 'BINCLUDE "c64_bootstrap.bin"' in listing
+    assert 'BINCLUDE "c64_payload.bin"' in listing
 
 
-def test_zero_page_versus_absolute_is_preserved():
-    # $85 is zero-page STA, $8D absolute; the > prefix must force the long form.
-    assert assemble("        CPU 6502\n        ORG $8000\n        STA $02\n        END\n")[1] \
-        == bytes([0x85, 0x02])
-    assert assemble("        CPU 6502\n        ORG $8000\n        STA >$0002\n        END\n")[1] \
-        == bytes([0x8D, 0x02, 0x00])
+def test_each_block_assembles_to_exactly_its_rom_bytes():
+    """build.run() raises if a block does not match, so reaching here is the
+    check; this pins the sizes and load addresses too."""
+    result = build.run(write=True)
+    rom = result.rom
+    for name, start, end, org in (("bootstrap", 0xB32D, 0xB3A6, 0x8000),
+                                  ("payload", 0xB3A8, 0xD109, 0x1000)):
+        blob = (OUT / f"c64_{name}.bin").read_bytes()
+        assert blob == rom[start - 0x8000:end - 0x8000], name
+        src = (OUT / f"c64_{name}.asm").read_text()
+        assert f"ORG     ${org:04X}" in src, name
+        assert "CPU     6502" in src, name
+
+
+def test_block_sources_use_real_labels_at_real_addresses():
+    """Assembled at the address it runs at, so targets are ordinary labels -
+    no EQU indirection and no cross-reference comments."""
+    src = (OUT / "c64_bootstrap.asm").read_text()
+    assert re.search(r"^L80[0-9A-F]{2}:", src, re.M), "expected labels in $80xx"
+    assert "JSR     IOINIT" in src
+    # the old mixed listing annotated each absolute operand with "; name ($ROM)"
+    assert not re.search(r"^\s+(JSR|JMP)\s+\S+\s+;\s+\S+\s+\(\$[0-9A-F]{4}\)$",
+                         src, re.M), "cross-references belong to the old mixed listing"
+
+
+def test_kernal_entries_are_named_not_l_addresses():
+    src = (OUT / "c64_bootstrap.asm").read_text()
+    for name, addr in (("IOINIT", 0xFDA3), ("CINT", 0xFF5B), ("RESTOR", 0xFD15)):
+        assert re.search(rf"^{name}\s+EQU\s+\${addr:04X}$", src, re.M), name
+        assert f"L{addr:04X}" not in src
+
+
+def test_binclude_round_trips_through_our_assembler(tmp_path):
+    (tmp_path / "blob.bin").write_bytes(bytes([0xAA, 0xBB, 0xCC]))
+    src = ('        ORG $8000\n        LDAA #$01\n'
+           '        BINCLUDE "blob.bin"\n        LDAB #$02\n        END\n')
+    _, out = assemble(src, include_dir=tmp_path)
+    assert out == bytes([0x86, 0x01, 0xAA, 0xBB, 0xCC, 0xC6, 0x02])
+
+
+def test_binclude_missing_file_is_reported():
+    import pytest
+    with pytest.raises(ValueError, match="BINCLUDE file not found"):
+        assemble('        ORG $8000\n        BINCLUDE "nope.bin"\n        END\n')

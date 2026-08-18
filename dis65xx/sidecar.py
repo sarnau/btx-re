@@ -15,17 +15,24 @@ REGION_KINDS = {"code", "bytes", "words", "string", "ptr_table", "chargen",
 
 
 @dataclasses.dataclass(frozen=True)
-class CpuSpan:
-    """A range the listing assembles under a non-default CPU.
+class C64Block:
+    """A stretch of 6502 code embedded in the ROM.
 
-    Orthogonal to Region: a span says which instruction set is in force, while
-    regions say whether a given range is code or data. Data inside a 6502 span
-    still renders as FCB, just under CPU 6502.
+    It is assembled as its own program at `org` - the address it really runs at
+    on the C64 - and the result is pulled back into the 6801 listing as binary.
+    Keeping the two instruction sets in separate sources means neither listing
+    has to carry the other's addressing quirks.
     """
 
-    start: int
+    name: str
+    start: int    # in this ROM
     end: int      # exclusive
-    cpu: str
+    org: int      # where it runs on the C64
+
+    @property
+    def offset(self) -> int:
+        """rom_address - runtime_address."""
+        return self.start - self.org
 
 
 @dataclasses.dataclass(frozen=True)
@@ -45,14 +52,13 @@ class Sidecar:
     block_comments: dict[int, str]
     symbols: dict[int, str]
     regions: list[Region]
-    cpu_spans: list[CpuSpan] = dataclasses.field(default_factory=list)
+    c64_blocks: list[C64Block] = dataclasses.field(default_factory=list)
 
-    def cpu_at(self, addr: int) -> str:
-        """Instruction set in force at `addr`. The 6801 is the default."""
-        for span in self.cpu_spans:
-            if span.start <= addr < span.end:
-                return span.cpu
-        return "6801"
+    def c64_block_at(self, addr: int) -> C64Block | None:
+        for b in self.c64_blocks:
+            if b.start <= addr < b.end:
+                return b
+        return None
 
     def region_at(self, addr: int) -> Region | None:
         for r in self.regions:
@@ -93,13 +99,12 @@ def load_sidecar(path: str | pathlib.Path) -> Sidecar:
                 f"regions overlap: ${a.start:04X}-${a.end:04X} and ${b.start:04X}-${b.end:04X}"
             )
 
-    spans = [CpuSpan(start=c["start"], end=c["end"], cpu=c["cpu"])
-             for c in raw.get("cpu_spans", [])]
-    spans.sort(key=lambda c: c.start)
-    for a, b in zip(spans, spans[1:]):
+    blocks = [C64Block(name=b["name"], start=b["start"], end=b["end"], org=b["org"])
+              for b in raw.get("c64_blocks", [])]
+    blocks.sort(key=lambda b: b.start)
+    for a, b in zip(blocks, blocks[1:]):
         if a.end > b.start:
-            raise ValueError(
-                f"cpu_spans overlap: ${a.start:04X}-${a.end:04X} and ${b.start:04X}-${b.end:04X}")
+            raise ValueError(f"c64_blocks overlap: {a.name} and {b.name}")
 
     return Sidecar(
         rom=meta["rom"],
@@ -110,5 +115,5 @@ def load_sidecar(path: str | pathlib.Path) -> Sidecar:
         block_comments=_int_keys(raw.get("block_comments", {})),
         symbols=_int_keys(raw.get("symbols", {})),
         regions=regions,
-        cpu_spans=spans,
+        c64_blocks=blocks,
     )

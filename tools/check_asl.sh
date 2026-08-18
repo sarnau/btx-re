@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
-# Independent verification: assemble the generated listing with asl and compare
-# against the ROM. dis65xx/asm.py shares an opcode table with the disassembler;
-# asl does not, so this catches table errors that round-trip cleanly.
+# Independent verification with asl (Macro Assembler AS).
+#
+# Mirrors the real build order: each 6502 block is assembled on its own at the
+# address it runs at, then the 6801 listing pulls the results in with BINCLUDE.
+# dis65xx/asm.py shares an opcode table with the disassembler; asl does not, so
+# this catches table errors that round-trip cleanly.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 ASL="${ASL:-asl}"
 P2BIN="${P2BIN:-p2bin}"
-LISTING="$ROOT/out/btx_decoder_ii.asm"
+OUT="$ROOT/out"
 ROM="$ROOT/../C64 BTX Decoder/c64_btx_decoder_ii.bin"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
@@ -17,13 +20,27 @@ if ! command -v "$ASL" >/dev/null 2>&1; then
     exit 77
 fi
 
-"$ASL" -cpu 6801 -L -o "$WORK/out.p" "$LISTING"
-"$P2BIN" "$WORK/out.p" "$WORK/out.bin" -r '$8000-$FFFF'
+cd "$OUT"
 
-if cmp -s "$WORK/out.bin" "$ROM"; then
-    echo "OK  asl output is byte-identical to the ROM"
+# 1. the 6502 blocks, each at its own load address
+for block in bootstrap:8000:8078 payload:1000:2D60; do
+    name="${block%%:*}"; rest="${block#*:}"; lo="${rest%%:*}"; hi="${rest##*:}"
+    "$ASL" -q -o "$WORK/$name.p" "c64_$name.asm"
+    "$P2BIN" "$WORK/$name.p" "$WORK/c64_$name.bin" -r "\$$lo-\$$hi" >/dev/null
+    if ! cmp -s "$WORK/c64_$name.bin" "c64_$name.bin"; then
+        echo "FAIL  asl and dis65xx disagree on the $name block" >&2
+        exit 1
+    fi
+done
+
+# 2. the 6801 listing, which BINCLUDEs those binaries
+"$ASL" -q -o "$WORK/rom.p" btx_decoder_ii.asm
+"$P2BIN" "$WORK/rom.p" "$WORK/rom.bin" -r '$8000-$FFFF' >/dev/null
+
+if cmp -s "$WORK/rom.bin" "$ROM"; then
+    echo "OK  asl output is byte-identical to the ROM (6502 blocks assembled separately)"
 else
     echo "FAIL  asl output differs from the ROM:" >&2
-    cmp -l "$WORK/out.bin" "$ROM" | head -20 >&2
+    cmp -l "$WORK/rom.bin" "$ROM" | head -20 >&2
     exit 1
 fi

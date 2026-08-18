@@ -7,6 +7,7 @@ so it deliberately supports no macros, expressions, or conditional assembly.
 
 from __future__ import annotations
 
+import pathlib
 import re
 
 from dis65xx import codec6502
@@ -68,6 +69,20 @@ def _value(token: str, symbols: dict[str, int], line_no: int) -> int:
     raise ValueError(f"line {line_no}: undefined symbol {token!r}")
 
 
+_BINCLUDE_DIR = pathlib.Path(".")
+
+
+def _binclude_path(line: _Line) -> pathlib.Path:
+    return _BINCLUDE_DIR / line.operand.strip().strip('"')
+
+
+def _binclude_size(line: _Line) -> int:
+    path = _binclude_path(line)
+    if not path.is_file():
+        raise ValueError(f"line {line.no}: BINCLUDE file not found: {path}")
+    return path.stat().st_size
+
+
 def _cpu_per_line(lines: list[_Line]) -> list[str]:
     """Which CPU each line assembles under. The listing switches with CPU."""
     cpus = []
@@ -84,6 +99,8 @@ def _sizeof(line: _Line, symbols: dict[str, int], strict: bool, cpu: str) -> int
     op = line.op
     if op in (None, "CPU", "ORG", "END", "EQU"):
         return 0
+    if op == "BINCLUDE":
+        return _binclude_size(line)
     if op == "FCB":
         return len(_split_values(line.operand))
     if op == "FDB":
@@ -212,8 +229,10 @@ def _resolve_value(token: str, symbols: dict[str, int], line: _Line, strict: boo
         return None  # pass 1: unknown forward reference
 
 
-def assemble(source: str) -> tuple[int, bytes]:
+def assemble(source: str, *, include_dir: str | pathlib.Path = ".") -> tuple[int, bytes]:
     """Assemble `source`, returning (origin, bytes)."""
+    global _BINCLUDE_DIR
+    _BINCLUDE_DIR = pathlib.Path(include_dir)
     lines = _parse(source)
     cpus = _cpu_per_line(lines)
     symbols: dict[str, int] = {}
@@ -251,6 +270,11 @@ def assemble(source: str) -> tuple[int, bytes]:
             pc = target
             continue
         if op in (None, "CPU", "END", "EQU"):
+            continue
+        if op == "BINCLUDE":
+            blob = _binclude_path(line).read_bytes()
+            out.extend(blob)
+            pc += len(blob)
             continue
         if op == "FCB":
             for token in _split_values(line.operand):

@@ -18,6 +18,7 @@ import sys
 
 from dis65xx.asm import assemble
 from dis65xx.emit import emit
+from dis65xx.emit6502 import emit_block
 from dis65xx.sidecar import load_sidecar
 from dis65xx.trace import trace
 from tools.report import format_report
@@ -25,6 +26,7 @@ from tools.report import format_report
 ROOT = pathlib.Path(__file__).resolve().parent
 SIDECAR_PATH = ROOT / "sidecar" / "decoder_ii.toml"
 OUT_PATH = ROOT / "out" / "btx_decoder_ii.asm"
+OUT_DIR = ROOT / "out"
 
 
 @dataclasses.dataclass
@@ -62,11 +64,28 @@ def run(*, write: bool = True) -> BuildResult:
     rom = (SIDECAR_PATH.parent.parent / sidecar.rom).resolve().read_bytes()
 
     result = trace(rom, base=sidecar.base, entry_points=sidecar.entry_points)
+
+    # The 6502 blocks are separate programs. Assemble each at the address it
+    # really runs at, check it against the ROM bytes it came from, and leave the
+    # binary for the 6801 listing to BINCLUDE.
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    c64_sources: dict[str, str] = {}
+    for block in sidecar.c64_blocks:
+        src = emit_block(rom, sidecar.base, block, sidecar)
+        c64_sources[block.name] = src
+        _, blob = assemble(src)
+        expected = rom[block.start - sidecar.base:block.end - sidecar.base]
+        if blob != expected:
+            raise ValueError(f"{block.name}: assembles to {len(blob)} bytes that do "
+                             f"not match ROM ${block.start:04X}-${block.end - 1:04X}")
+        (OUT_DIR / f"c64_{block.name}.bin").write_bytes(blob)
+        if write:
+            (OUT_DIR / f"c64_{block.name}.asm").write_text(src)
+
     listing = emit(rom, result, sidecar)
-    _, assembled = assemble(listing)
+    _, assembled = assemble(listing, include_dir=OUT_DIR)
 
     if write:
-        OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
         OUT_PATH.write_text(listing)
 
     cov = result.coverage()

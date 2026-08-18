@@ -24,7 +24,7 @@ Bildschirmtext Decoder II ROM (`c64_btx_decoder_ii.bin`, MC6801, 32 KB at
 | `block_comments` | Address → multi-line banner above that address. |
 | `symbols` | Address → name for hardware registers and RAM locations. |
 | `regions` | Typed data ranges: `bytes`, `words`, `string`, `ptr_table`, `chargen`, `code6502`. |
-| `cpu_spans` | Ranges assembling under a non-default CPU. Orthogonal to regions. |
+| `c64_blocks` | 6502 blocks: ROM range plus the address each runs at on the C64. |
 
 `entry_points` must appear **above** the `[meta]` header. TOML assigns bare keys
 written after a table header to that table, so putting it below silently makes it
@@ -45,46 +45,38 @@ The package was originally `dis6801`, renamed to `dis65xx` once the embedded
 The design spec and plan under `docs/superpowers/` were updated to match, so
 their paths point at real files.
 
+## Two instruction sets, two sources
+
+The image holds a C64-side 6502 program as well as the 68B01 firmware. They are
+kept in **separate sources**, because the two live in different address spaces
+and mixing them made every operand a special case.
+
+Each 6502 block is assembled on its own at the address it really runs at, and
+the result is linked back into the 6801 listing as binary:
+
+    out/c64_bootstrap.asm   ORG $8000   ->  c64_bootstrap.bin    121 bytes
+    out/c64_payload.asm     ORG $1000   ->  c64_payload.bin     7521 bytes
+    out/btx_decoder_ii.asm  ORG $8000   ->  BINCLUDEs both      32768 bytes
+
+`build.py` checks each block against the ROM bytes it came from before the 6801
+listing pulls it in, so a failure says which block broke rather than giving one
+offset in a 32 KB image.
+
+The payoff is that neither listing carries the other's quirks. The 6801 listing
+is pure 6801 with a single `CPU` directive. The 6502 sources sit at their real
+addresses, so every target is an ordinary label - no EQU indirection, no
+cross-reference comments - and C64 ROM entry points are named
+(`dis65xx/c64kernal.py`) rather than given `L<addr>` forms that would collide
+with 6801 listing labels.
+
+Which ROM range is which block, and where it runs, is declared in the sidecar
+under `c64_blocks`.
+
 ## Labels
 
-Every branch and jump target inside the image is a label. Targets the sidecar
-has named keep that name; the rest get `L<address>`, defined at the address they
-point to. Nothing on the 6801 side branches to a bare address.
-
-The 6502 side is different, because its code lives in two other address spaces:
-the bootstrap executes in place from the cartridge window at `$8000`, and the
-payload is streamed to the C64 and runs at `$1000`. An absolute operand there
-names a location in one of those, not in this listing, so making it a label
-would assemble to the ROM address and change the bytes. Those stay literal and
-carry a cross-reference comment instead:
-
-    JMP     $174C                   ; c64Vec02 ($BAF4)
-
-    JSR     IOINIT
-    JSR     L804D                   ; LB37A ($B37A)
-
-Relative branches are PC-relative and so resolve correctly in listing space;
-they use labels on both CPUs.
-
-C64 ROM entry points are named rather than given `L<addr>` forms - see
-`dis65xx/c64kernal.py`. That is not only for readability: `LFDA3` would share a
-namespace with a listing label at ROM `$FDA3` on the 6801 side. Entries whose
-identity is well established carry their usual name; anything else gets
-`KERNAL_<addr>`, which says C64 ROM without claiming to know what it does.
-
-## Two instruction sets
-
-The image holds a C64-side 6502 program as well as the 68B01 firmware, so the
-listing carries both. A `cpu_spans` entry says which instruction set is in force over a range; a
-`code6502` region says a range is 6502 *code*. The two are orthogonal, so data
-inside a 6502 span still renders as `FCB` - just under `CPU 6502`. One span
-covers all the C64-side material, opening before the cartridge header and
-closing where `ctrlTableC0` begins, which asl and `dis65xx/asm.py` both honour.
-
-The payload is stored at one address and runs at another, so its absolute
-operands are runtime addresses with no position in this ROM. They are emitted
-verbatim rather than relabelled - that is what keeps the round-trip exact. The
-block comment at `$B32D` records the mapping.
+Every branch and jump target is a label. Targets the sidecar has named keep that
+name; the rest get `L<address>`. Nothing branches to a bare address in either
+listing.
 
 ## Why not Ghidra
 
