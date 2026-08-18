@@ -89,13 +89,23 @@ $1B00-$1B2D   display and cursor state
 $2000-$2FFF   rxBuffer, the 4 KB receive ring
 $4000-$5BC7   display memory, four planes
 $5C00-$5FFF   videoRam, the pixels the hardware scans
-$6009-$6011   C64 interface control and status
+$6000-$61FF   the window shared with the C64, which sees it at $8000
+$8000-$FFFF   this ROM
+```
+
+The window is the only memory the two processors share, and it is the only
+memory of the decoder's the C64 can address at all — 512 bytes against the
+64 KB the firmware works in. Its 32 live locations, both directions and the
+command set are in `docs/6801-6502-protocol.md`; in outline:
+
+```
+$6009-$6012   control, status and the two ring index pairs
 $6020-$603F   32-byte ring, decoder to C64
 $6040-$607F   64-byte ring, C64 to decoder
 $6080-$608F   16-byte ring during payload transfer, cell mailbox afterwards
-$6090         c64StatusMsg - the status message index, mirrored for the C64
-$61F9-$61FD   write-only control registers
-$8000-$FFFF   this ROM
+$6090         c64StatusMsg, the status-message index the C64 polls
+$61F9         c64IrqSet, written to raise the C64's interrupt
+$61FC-$61FD   strobes in the interrupt-enable path, purpose open
 ```
 
 External RAM divides into six groups, and naming them is what made the rest of
