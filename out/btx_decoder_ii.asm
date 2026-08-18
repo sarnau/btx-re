@@ -34,6 +34,8 @@ softVecOcf    EQU     $F4
 softVecIcf    EQU     $F6
 softVecIrq1   EQU     $F8
 softVecSwi    EQU     $FA
+scrollEnd     EQU     $0406
+scrollStart   EQU     $0408
 rowAttr       EQU     $040A
 rowAccent     EQU     $040C
 rowRender     EQU     $040E
@@ -92,16 +94,23 @@ txBitsLeft    EQU     $04EC
 txRing        EQU     $04EE
 asciiCol      EQU     $0617
 asciiRow      EQU     $0618
+glyphPtr      EQU     $07B2
+videoPtr      EQU     $07B6
+glyphBuf      EQU     $07BE
+glyphCode     EQU     $07E0
 cursorRowMax  EQU     $1B00
+glyphRows     EQU     $1B01
 scrollTop     EQU     $1B1C
 scrollBottom  EQU     $1B1D
 cursorRow     EQU     $1B1E
 cursorCol     EQU     $1B1F
 rowChar       EQU     $1B21
+redrawReq     EQU     $1B23
 planeRender   EQU     $4000
 planeAttr     EQU     $4400
 planeChar     EQU     $5400
 planeAccent   EQU     $5800
+videoRam      EQU     $5C00
 c64FifoWr     EQU     $6009
 c64FifoRd     EQU     $600A
 c64XferEn     EQU     $600B
@@ -723,25 +732,25 @@ fontNarrow:
         FCB     $00,$00,$22,$1C,$22,$22,$3E,$22,$22,$00,$00,$00,$22,$1C,$22,$22
         FCB     $22,$22,$1C,$00,$00,$00,$22,$00,$22,$22,$22,$22,$1C,$00,$00,$00
 
-LA210:
-        LDAA    $1B23
+redrawScreen:
+        LDAA    redrawReq
 
 LA213:
         STAA    $07DF
-        CLR     $1B23
+        CLR     redrawReq
         LDAA    $1B25
         STAA    $07DD
         LDAA    $1B26
         STAA    $07DE
         LDAA    #$0A
-        STAA    $1B01
+        STAA    glyphRows
         LDAA    #$FF
         STAA    >$00EE
         LDAA    cursorRowMax
         CMPA    #$17
         BEQ     LA23E
         LDAA    #$0C
-        STAA    $1B01
+        STAA    glyphRows
         CLR     $00EE
 
 LA23E:
@@ -760,7 +769,7 @@ LA250:
         BEQ     LA26F
         LDAA    #$17
         STAA    >PORT3
-        LDX     #$5C00
+        LDX     #videoRam
         LDAB    #$04
         LDAA    #$00
 
@@ -779,12 +788,12 @@ LA26F:
         SEI
         STS     >$00EC
         LDS     #$1B02
-        LDX     #$5C00
+        LDX     #videoRam
 
 LA284:
         PULA
         ANDA    #$7F
-        LDAB    $1B01
+        LDAB    glyphRows
         STAB    $07B8
         LDAB    #$04
 
@@ -1107,7 +1116,7 @@ LA4E2:
         LDX     >$00E6
         LDAA    $00,X
         ANDA    #$7F
-        STAA    $07E0
+        STAA    glyphCode
         STAA    $00,X
         LDAB    >$00E1
         ANDB    #$10
@@ -1187,7 +1196,7 @@ LA55B:
         STAA    $6081
         LDAA    cursorRow
         STAA    $6082
-        LDAA    $07E0
+        LDAA    glyphCode
         STAA    $6083
         LDAA    $07E1
         STAA    $6084
@@ -1222,18 +1231,34 @@ LA5C0:
         ANDB    #$33
         CMPB    #$13
         BNE     LA5D6
-        LDAA    $07E0
+        LDAA    glyphCode
         CMPA    #$20
         BEQ     LA5D6
         JMP     LA5D6
 
+; Fetching a glyph, and why the stack pointer is involved.
+;
+; glyphPtr is set to the font base for the current set - through fontBaseTable -
+; plus 20 times glyphCode, since a glyph is 10 rows of 2 bytes. It is then
+; decremented, because the 6801's PUL pre-increments.
+;
+; The rows are read with PULA rather than LDAA 0,X: S is loaded from glyphPtr and
+; the real stack is parked in $00EC for the duration, under SEI. PULA/ORAA/STAA
+; is a byte fetched, combined and stored in three instructions with no pointer
+; arithmetic, which is what makes it worth the trouble at 40 columns times 10
+; rows a frame. The payload transfer at $B2B4 uses the same trick to walk ROM.
+;
+; Each pass ORs into glyphBuf, and afterwards glyphPtr is pointed at glyphBuf
+; itself - so a second pass composites over the first. That is how a combining
+; accent from planeAccent is merged onto its base character before either
+; reaches videoRam through videoPtr.
 LA5D6:
         LDAB    >$00E1
         ANDB    #$07
         CMPB    #$06
         BNE     LA5F3
         LDX     #$AF8E
-        STX     $07B2
+        STX     glyphPtr
         CLR     $07DC
         LDAB    >$00E1
         ANDB    #$FC
@@ -1246,14 +1271,14 @@ LA5F3:
         ABX
         LDX     $00,X
         DEX
-        STX     $07B2
-        LDAB    $07E0
+        STX     glyphPtr
+        LDAB    glyphCode
         ANDB    #$7F
         SUBB    #$20
         LDAA    #$14
         MUL
-        ADDD    $07B2
-        STD     $07B2
+        ADDD    glyphPtr
+        STD     glyphPtr
         LDAA    >$00E1
         ANDA    #$08
         BNE     LA618
@@ -1269,14 +1294,14 @@ LA61D:
         ABX
         LDAA    $00,X
         BEQ     LA639
-        CMPA    $07E0
+        CMPA    glyphCode
         BNE     LA61D
         ASLB
         LDX     #$AFBB
         ABX
         LDX     $00,X
         DEX
-        STX     $07B2
+        STX     glyphPtr
         DEC     $07DC
 
 LA639:
@@ -1292,8 +1317,8 @@ LA639:
         STD     $07B4
         SEI
         STS     >$00EC
-        LDS     $07B2
-        LDX     #$07BE
+        LDS     glyphPtr                ; the glyph is read with PUL, so S becomes the source pointer and the real stack is parked in $00EC
+        LDX     #glyphBuf
         LDAB    #$0A
         TST     $07DC
         BMI     LA66E
@@ -1321,7 +1346,7 @@ LA66E:
 
 LA679:
         LDS     $07B4
-        LDX     #$07BE
+        LDX     #glyphBuf
         LDAB    #$0A
 
 LA681:
@@ -1337,12 +1362,12 @@ LA681:
         BNE     LA681
         LDS     >$00EC
         CLI
-        LDX     #$07BE
+        LDX     #glyphBuf
         DEX
-        STX     $07B2
+        STX     glyphPtr
 
 LA69B:
-        LDX     $07B2
+        LDX     glyphPtr
         TST     $02,X
         BPL     LA6F8
         LDAA    >$00E1
@@ -1361,8 +1386,8 @@ LA6B7:
         STAA    >$00E0
         SEI
         STS     >$00EC
-        LDS     $07B2
-        LDX     #$07BE
+        LDS     glyphPtr
+        LDX     #glyphBuf
         LDAB    #$0A
 
 LA6CB:
@@ -1375,7 +1400,7 @@ LA6CB:
         DECB
         BNE     LA6CB
         LDS     #$AF7A
-        LDX     #$07BE
+        LDX     #glyphBuf
         LDAB    #$0A
 
 LA6DE:
@@ -1391,9 +1416,9 @@ LA6DE:
         BNE     LA6DE
         LDS     >$00EC
         CLI
-        LDX     #$07BE
+        LDX     #glyphBuf
         DEX
-        STX     $07B2
+        STX     glyphPtr
 
 LA6F8:
         LDAA    >$00E0
@@ -1434,11 +1459,11 @@ LA71D:
         LDAB    cursorRow
         ASLB
         ASLB
-        LDAA    $1B01
+        LDAA    glyphRows
         MUL
-        ADDD    #$5C00
-        STD     $07B6
-        LDX     $07B6
+        ADDD    #videoRam
+        STD     videoPtr
+        LDX     videoPtr
         LDD     #$FF0F
         STD     $24,X
         LDD     #$C4D0
@@ -1476,7 +1501,7 @@ LA797:
         LDAA    #$18
         STAA    $07B0
         LDAA    #$0A
-        STAA    $1B01
+        STAA    glyphRows
         LDAA    #$FF
         STAA    >$00EE
         LDX     #$57C0
@@ -1506,41 +1531,41 @@ LA7D2:
 
 LA7D5:
         LDAA    #$0A
-        STAA    $1B01
+        STAA    glyphRows
         LDAA    cursorRowMax
         CMPA    #$17
         BEQ     LA7E6
         LDAA    #$0C
-        STAA    $1B01
+        STAA    glyphRows
 
 LA7E6:
         RTS
 
 LA7E7:
-        LDAB    $07E0
+        LDAB    glyphCode
         ANDB    #$7F
         SUBB    #$20
         LDAA    #$30
         MUL
         ADDD    #$07FF
-        STD     $07B2
-        LDAA    $1B01
+        STD     glyphPtr
+        LDAA    glyphRows
         CMPA    #$0B
         BCC     LA81C
-        LDD     $07B2
+        LDD     glyphPtr
         ADDD    #$0002
-        STD     $07B2
+        STD     glyphPtr
         STD     $07D6
-        LDX     $07B2
+        LDX     glyphPtr
         LDAA    $00,X
         ANDA    #$20
         BEQ     LA81C
-        LDD     $07B2
+        LDD     glyphPtr
         ADDD    #$0002
-        STD     $07B2
+        STD     glyphPtr
 
 LA81C:
-        LDX     $07B2
+        LDX     glyphPtr
         STX     $07D8
         LDAA    $02,X
         ANDA    #$30
@@ -1652,7 +1677,7 @@ LA8E4:
         STAA    $07BC
         LDX     fontBaseTable
         DEX
-        STX     $07B2
+        STX     glyphPtr
         BRA     LA900
 
 LA8F3:
@@ -1680,18 +1705,18 @@ LA90D:
         LDAB    $07B0
         ASLB
         ASLB
-        LDAA    $1B01
+        LDAA    glyphRows
         MUL
-        ADDD    #$5C00
-        STD     $07B6
+        ADDD    #videoRam
+        STD     videoPtr
         LDAB    >$00E0
         ANDB    #$01
         BEQ     LA95B
         SEI
         STS     >$00EC
-        LDX     $07B6
-        LDS     $07B2
-        LDAB    $1B01
+        LDX     videoPtr
+        LDS     glyphPtr
+        LDAB    glyphRows
         STAB    $07B8
 
 LA93B:
@@ -1716,9 +1741,9 @@ LA93B:
 LA95B:
         SEI
         STS     >$00EC
-        LDX     $07B6
-        LDS     $07B2
-        LDAB    $1B01
+        LDX     videoPtr
+        LDS     glyphPtr
+        LDAB    glyphRows
         STAB    $07B8
 
 LA96B:
@@ -1746,10 +1771,10 @@ LA98A:
         LDAB    $07B0
         ASLB
         ASLB
-        LDAA    $1B01
+        LDAA    glyphRows
         MUL
-        ADDD    #$5C00
-        STD     $07B6
+        ADDD    #videoRam
+        STD     videoPtr
         CLR     $07E3
         LDAB    >$00E0
         ANDB    #$01
@@ -1759,8 +1784,8 @@ LA98A:
 LA9AE:
         SEI
         STS     >$00EC
-        LDS     $07B2
-        LDAB    $1B01
+        LDS     glyphPtr
+        LDAB    glyphRows
         STAB    $07B8
 
 LA9BB:
@@ -1782,7 +1807,7 @@ LA9C5:
         LDX     #$AEFB
         ABX
         LDD     $00,X
-        LDX     $07B6
+        LDX     videoPtr
         ORAB    #$20
         STD     $00,X
         TST     $07E3
@@ -1795,7 +1820,7 @@ LA9E5:
         LDX     #$AEFB
         ABX
         LDD     $00,X
-        LDX     $07B6
+        LDX     videoPtr
         ORAB    #$20
         INC     PORT3
         STD     $00,X
@@ -1817,7 +1842,7 @@ LAA01:
         LDX     #$AEFB
         ABX
         LDD     $00,X
-        LDX     $07B6
+        LDX     videoPtr
         EORA    $07BA
         EORB    $07BB
         STD     $02,X
@@ -1831,7 +1856,7 @@ LAA28:
         LDX     #$AEFB
         ABX
         LDD     $00,X
-        LDX     $07B6
+        LDX     videoPtr
         INC     PORT3
         EORA    $07BA
         EORB    $07BB
@@ -1845,7 +1870,7 @@ LAA48:
         JMP     LAAEA
 
 LAA4E:
-        STS     $07B2
+        STS     glyphPtr
         PULB
         TBA
         ANDA    #$07
@@ -1861,7 +1886,7 @@ LAA4E:
         ABX
         LDD     $00,X
         ORAB    #$30
-        LDX     $07B6
+        LDX     videoPtr
         INC     PORT3
         STD     $00,X
         TST     $07E3
@@ -1885,14 +1910,14 @@ LAA79:
         LDD     $00,X
         EORA    $07BA
         EORB    $07BB
-        LDX     $07B6
+        LDX     videoPtr
         STD     $02,X
         TST     $07E3
         BEQ     LAAA2
         STD     $06,X
 
 LAAA2:
-        LDS     $07B2
+        LDS     glyphPtr
         PULB
         PULA
         ASLB
@@ -1906,7 +1931,7 @@ LAAA2:
         LDX     #$AEFB
         ABX
         LDD     $00,X
-        LDX     $07B6
+        LDX     videoPtr
         DEC     PORT3
         ORAB    #$30
         STD     $00,X
@@ -1928,7 +1953,7 @@ LAAC7:
         LDX     #$AEFB
         ABX
         LDD     $00,X
-        LDX     $07B6
+        LDX     videoPtr
         EORA    $07BA
         EORB    $07BB
         STD     $02,X
@@ -1944,7 +1969,7 @@ LAAEA:
         ABX
 
 LAAF3:
-        STX     $07B6
+        STX     videoPtr
         DEC     $07B8
         BEQ     LAAFE
         JMP     LA9BB
@@ -1961,11 +1986,11 @@ LAB05:
         LDAB    $07B0
         ASLB
         ASLB
-        LDAA    $1B01
+        LDAA    glyphRows
         MUL
-        ADDD    #$5C00
-        STD     $07B6
-        LDX     $07B6
+        ADDD    #videoRam
+        STD     videoPtr
+        LDX     videoPtr
         LDD     >$00EA
         STD     $02,X
         STD     $06,X
@@ -1985,7 +2010,7 @@ LAB05:
 LAB3F:
         SEI
         STS     >$00EC
-        LDS     $07B2
+        LDS     glyphPtr
         TST     $00EE
         BEQ     LAB76
         PULA
@@ -2099,11 +2124,11 @@ LABD9:
         LDAB    $07B0
         ASLB
         ASLB
-        LDAA    $1B01
+        LDAA    glyphRows
         MUL
-        ADDD    #$5C00
-        STD     $07B6
-        LDX     $07B6
+        ADDD    #videoRam
+        STD     videoPtr
+        LDX     videoPtr
         LDD     >$00EA
         STD     $02,X
         STD     $06,X
@@ -2135,7 +2160,7 @@ LABD9:
 LAC2B:
         SEI
         STS     >$00EC
-        LDS     $07B2
+        LDS     glyphPtr
         TST     $00EE
         BEQ     LAC76
         PULA
@@ -2276,16 +2301,16 @@ LACFB:
         LDAB    $07B0
         ASLB
         ASLB
-        LDAA    $1B01
+        LDAA    glyphRows
         MUL
-        ADDD    #$5C00
-        STD     $07B6
+        ADDD    #videoRam
+        STD     videoPtr
         CLR     $00EF
-        LDX     $07B6
+        LDX     videoPtr
         PSHX
         SEI
         STS     >$00EC
-        LDS     $07B2
+        LDS     glyphPtr
         LDAB    #$0A
         STAB    $07B8
         LDAA    >$00EE
@@ -2301,7 +2326,7 @@ LAD36:
         LDAB    $01,X
         BMI     LAD50
         LDD     #$0000
-        LDX     $07B6
+        LDX     videoPtr
         STD     $00,X
         INC     PORT3
         STD     $00,X
@@ -2321,7 +2346,7 @@ LAD55:
         LDX     #$AEFB
         ABX
         LDD     $00,X
-        LDX     $07B6
+        LDX     videoPtr
         STD     $00,X
         DEC     PORT3
         DES
@@ -2335,7 +2360,7 @@ LAD55:
         LDX     #$AEFB
         ABX
         LDD     $00,X
-        LDX     $07B6
+        LDX     videoPtr
         STD     $00,X
 
 LAD7E:
@@ -2346,7 +2371,7 @@ LAD7E:
         DEC     PORT3
         LDAB    #$04
         ABX
-        STX     $07B6
+        STX     videoPtr
         TST     $00EF
         BEQ     LAD9D
         DES
@@ -2404,16 +2429,16 @@ LADE8:
         LDAB    $07B0
         ASLB
         ASLB
-        LDAA    $1B01
+        LDAA    glyphRows
         MUL
-        ADDD    #$5C00
-        STD     $07B6
+        ADDD    #videoRam
+        STD     videoPtr
         CLR     $00EF
-        LDX     $07B6
+        LDX     videoPtr
         PSHX
         SEI
         STS     >$00EC
-        LDS     $07B2
+        LDS     glyphPtr
         LDAB    #$0A
         STAB    $07B8
         LDAB    >$00EE
@@ -2429,7 +2454,7 @@ LAE23:
         LDAB    $01,X
         BMI     LAE41
         LDD     #$0000
-        LDX     $07B6
+        LDX     videoPtr
         STD     $00,X
         STD     $04,X
         INC     PORT3
@@ -2451,7 +2476,7 @@ LAE46:
         LDX     #$AEFB
         ABX
         LDD     $00,X
-        LDX     $07B6
+        LDX     videoPtr
         STD     $00,X
         STD     $04,X
         DEC     PORT3
@@ -2466,7 +2491,7 @@ LAE46:
         LDX     #$AEFB
         ABX
         LDD     $00,X
-        LDX     $07B6
+        LDX     videoPtr
         STD     $00,X
         STD     $04,X
 
@@ -2480,7 +2505,7 @@ LAE73:
         DEC     PORT3
         LDAB    #$08
         ABX
-        STX     $07B6
+        STX     videoPtr
         TST     $00EF
         BEQ     LAE96
         DES
@@ -2652,7 +2677,7 @@ reset:
         JSR     LECCB
         JSR     LB2A3
         JSR     LEED2
-        JSR     LA210
+        JSR     redrawScreen
         LDD     #$F87F
         STAA    PORT4
         STAB    PORT4
@@ -2688,7 +2713,7 @@ LB2B4:
         TPA
         PSHA
         SEI
-        STS     $0406
+        STS     scrollEnd               ; scrollEnd is scratch here - nothing scrolls until the payload has been sent
         LDS     #$B32C
         LDX     #$6000
 
@@ -2698,7 +2723,7 @@ LB2C2:
         INX
         CPX     #$6079
         BCS     LB2C2
-        LDS     $0406
+        LDS     scrollEnd
         PULA
         TAP
         LDAA    PORT1
@@ -2707,7 +2732,7 @@ LB2C2:
         STAA    $61FD
         STAA    $61FC
         LDX     #$B3A5
-        STX     $0406
+        STX     scrollEnd
 
 ; Ship the C64 payload across the dual-port interface.
 ;
@@ -2748,11 +2773,11 @@ LB2E7:
         BEQ     LB2E7
 
 LB2F1:
-        LDX     $0406
+        LDX     scrollEnd
         INX
         CPX     #ctrlTableC0            ; one past c64Payload's last byte - the address is also where ctrlTableC0 starts
         BEQ     LB31A
-        STX     $0406
+        STX     scrollEnd
         LDAA    $00,X
 
 LB2FF:
@@ -3451,7 +3476,7 @@ LD6C3:
 LD6C4:
         JSR     LD6D9
         LDAA    #$FF
-        STAA    $1B23
+        STAA    redrawReq
         LDAA    #$1F
         JMP     LD358
 
@@ -3631,7 +3656,7 @@ LD7F3:
         BCS     LD7F3
         JSR     LD6D9
         LDAA    #$FF
-        STAA    $1B23
+        STAA    redrawReq
         JMP     LD349
 
 LD808:
@@ -4029,7 +4054,7 @@ LDAB1:
         CLR     cursorCol
         JSR     setRowPointers
         LDAA    $1B25
-        STAA    $1B23
+        STAA    redrawReq
         CLR     clutIndex
         CLR     $1B24
         CLR     $1B25
@@ -4920,12 +4945,12 @@ LE067:
         LDAA    #$FF
         STAA    scrollTop
         STAA    scrollBottom
-        STAA    $1B23
+        STAA    redrawReq
         JMP     parseNextByte
 
 LE075:
         LDAA    #$FF
-        STAA    $1B23
+        STAA    redrawReq
         LDAA    scrollTop
         BEQ     LE067
         LDAA    scrollBottom
@@ -5085,7 +5110,7 @@ LE19C:
 
 LE1B3:
         LDAA    #$FF
-        STAA    $1B23
+        STAA    redrawReq
         JMP     LE4F4
 
 LE1BB:
@@ -5163,7 +5188,7 @@ LE235:
 
 LE24C:
         LDAA    #$FF
-        STAA    $1B23
+        STAA    redrawReq
         JMP     LE4F4
 
 csiDigit0:
@@ -5426,7 +5451,7 @@ LE3CD:
 
 LE3D7:
         LDAA    #$FF
-        STAA    $1B23
+        STAA    redrawReq
         LDX     #$0000
         LDAB    #$03
         LDAA    #$00
@@ -5515,7 +5540,7 @@ LE43D:
 
 LE446:
         LDAA    #$FF
-        STAA    $1B23
+        STAA    redrawReq
         LDX     #$0000
         LDAB    #$80
         TBA
@@ -5523,7 +5548,7 @@ LE446:
 
 LE454:
         LDAA    #$FF
-        STAA    $1B23
+        STAA    redrawReq
         LDAB    #$80
         LDX     #$0000
         LDAA    #$00
@@ -5773,7 +5798,7 @@ LE5D7:
 LE5FA:
         LDAA    #$FF
         STAA    $04A4
-        STAA    $1B23
+        STAA    redrawReq
         LDAA    #$17
         STAA    cursorRowMax
         JSR     LE98C
@@ -5790,7 +5815,7 @@ LE616:
         LDAA    #$13
         STAA    cursorRowMax
         LDAA    #$FF
-        STAA    $1B23
+        STAA    redrawReq
         JSR     LE98C
 
 LE62A:
@@ -5850,7 +5875,7 @@ LE669:
         LDAA    #$17
         STAA    cursorRowMax
         LDAA    #$FF
-        STAA    $1B23
+        STAA    redrawReq
         STAA    $04A4
         LDAA    #$80
         STAA    $1B02
@@ -5875,7 +5900,7 @@ LE6A5:
         INCB
         STAB    gsetG3
         LDAA    #$FF
-        STAA    $1B23
+        STAA    redrawReq
         JMP     parseNextByte
 
 enterStatusLine:
@@ -6369,15 +6394,15 @@ LEA4A:
         LDX     #lineAddrChar
         ABX
         LDD     $00,X
-        STD     $0406
+        STD     scrollEnd
         LDAB    scrollTop
         ASLB
         LDX     #lineAddrChar
         ABX
         LDD     $00,X
-        STD     $0408
-        LDX     $0408
-        CPX     $0406
+        STD     scrollStart
+        LDX     scrollStart
+        CPX     scrollEnd
         BEQ     LEA78
 
 LEA6C:
@@ -6385,7 +6410,7 @@ LEA6C:
         ORAA    #$80
         STAA    $00,X
         INX
-        CPX     $0406
+        CPX     scrollEnd
         BCS     LEA6C
 
 LEA78:
@@ -6402,22 +6427,22 @@ LEA7C:
         LDX     #lineAddrAccent
         ABX
         LDD     $00,X
-        STD     $0406
+        STD     scrollEnd
         LDAB    scrollTop
         ASLB
         LDX     #lineAddrAccent
         ABX
         LDD     $00,X
-        STD     $0408
-        LDX     $0408
-        CPX     $0406
+        STD     scrollStart
+        LDX     scrollStart
+        CPX     scrollEnd
         BEQ     LEAAE
 
 LEAA4:
         LDAA    $28,X
         STAA    $00,X
         INX
-        CPX     $0406
+        CPX     scrollEnd
         BCS     LEAA4
 
 LEAAE:
@@ -6426,22 +6451,22 @@ LEAAE:
         LDX     #lineAddrRender
         ABX
         LDD     $00,X
-        STD     $0406
+        STD     scrollEnd
         LDAB    scrollTop
         ASLB
         LDX     #lineAddrRender
         ABX
         LDD     $00,X
-        STD     $0408
-        LDX     $0408
-        CPX     $0406
+        STD     scrollStart
+        LDX     scrollStart
+        CPX     scrollEnd
         BEQ     LEADA
 
 LEAD0:
         LDAA    $28,X
         STAA    $00,X
         INX
-        CPX     $0406
+        CPX     scrollEnd
         BCS     LEAD0
 
 LEADA:
@@ -6457,22 +6482,22 @@ LEADC:
         LDX     #lineAddrAttr
         ABX
         LDD     $00,X
-        STD     $0406
+        STD     scrollEnd
         LDAB    scrollTop
         ASLB
         LDX     #lineAddrAttr
         ABX
         LDD     $00,X
-        STD     $0408
-        LDX     $0408
-        CPX     $0406
+        STD     scrollStart
+        LDX     scrollStart
+        CPX     scrollEnd
         BEQ     LEB0E
 
 LEB04:
         LDAA    $A0,X
         STAA    $00,X
         INX
-        CPX     $0406
+        CPX     scrollEnd
         BCS     LEB04
 
 LEB0E:
@@ -6508,15 +6533,15 @@ LEB2E:
         LDX     #lineAddrChar
         ABX
         LDD     $00,X
-        STD     $0406
+        STD     scrollEnd
         LDAB    scrollBottom
         ASLB
         LDX     #lineAddrChar
         ABX
         LDD     $00,X
-        STD     $0408
-        LDX     $0408
-        CPX     $0406
+        STD     scrollStart
+        LDX     scrollStart
+        CPX     scrollEnd
         BEQ     LEB5E
         DEX
 
@@ -6525,7 +6550,7 @@ LEB51:
         ORAA    #$80
         STAA    $28,X
         DEX
-        CPX     $0406
+        CPX     scrollEnd
         BCC     LEB51
         INX
 
@@ -6543,15 +6568,15 @@ LEB62:
         LDX     #lineAddrAccent
         ABX
         LDD     $00,X
-        STD     $0406
+        STD     scrollEnd
         LDAB    scrollBottom
         ASLB
         LDX     #lineAddrAccent
         ABX
         LDD     $00,X
-        STD     $0408
-        LDX     $0408
-        CPX     $0406
+        STD     scrollStart
+        LDX     scrollStart
+        CPX     scrollEnd
         BEQ     LEB95
         DEX
 
@@ -6559,7 +6584,7 @@ LEB8B:
         LDAA    $00,X
         STAA    $28,X
         DEX
-        CPX     $0406
+        CPX     scrollEnd
         BCC     LEB8B
 
 LEB95:
@@ -6568,15 +6593,15 @@ LEB95:
         LDX     #lineAddrRender
         ABX
         LDD     $00,X
-        STD     $0406
+        STD     scrollEnd
         LDAB    scrollBottom
         ASLB
         LDX     #lineAddrRender
         ABX
         LDD     $00,X
-        STD     $0408
-        LDX     $0408
-        CPX     $0406
+        STD     scrollStart
+        LDX     scrollStart
+        CPX     scrollEnd
         BEQ     LEBC3
         DEX
 
@@ -6584,7 +6609,7 @@ LEBB8:
         LDAA    $00,X
         STAA    $28,X
         DEX
-        CPX     $0406
+        CPX     scrollEnd
         BCC     LEBB8
         INX
 
@@ -6601,15 +6626,15 @@ LEBC5:
         LDX     #lineAddrAttr
         ABX
         LDD     $00,X
-        STD     $0406
+        STD     scrollEnd
         LDAB    scrollBottom
         ASLB
         LDX     #lineAddrAttr
         ABX
         LDD     $00,X
-        STD     $0408
-        LDX     $0408
-        CPX     $0406
+        STD     scrollStart
+        LDX     scrollStart
+        CPX     scrollEnd
         BEQ     LEBFC
         DEX
         DEX
@@ -6620,7 +6645,7 @@ LEBF1:
         LDAA    $00,X
         STAA    $A0,X
         DEX
-        CPX     $0406
+        CPX     scrollEnd
         BCC     LEBF1
         INX
 
@@ -6750,7 +6775,7 @@ LECCB:
         CLR     $04DC
         CLR     $04DD
         CLR     $04DE
-        CLR     $1B23
+        CLR     redrawReq
         CLR     $1B25
         CLR     $1B24
         CLR     $0616
@@ -6969,7 +6994,7 @@ LEE91:
 
 LEE9A:
         JSR     clearPlanes
-        CLR     $1B23
+        CLR     redrawReq
         LDX     #$1B03
         LDAA    #$0F
 
@@ -7155,12 +7180,12 @@ LF081:
         CMPA    #$00
         BNE     LF0A9
         CLR     $04AE
-        JSR     LA210
+        JSR     redrawScreen
 
 LF094:
         JSR     LF1D8
         JSR     LF45B
-        LDAA    $1B23
+        LDAA    redrawReq
         ORAA    $04AE
         BNE     LF081
         JSR     LF7FE
@@ -7553,7 +7578,7 @@ LF2ED:
         EORA    #$01
         STAA    $1B24
         LDAA    #$FF
-        STAA    $1B23
+        STAA    redrawReq
         JMP     LF409
 
 LF304:
@@ -7563,7 +7588,7 @@ LF304:
         EORA    #$FF
         STAA    $1B25
         LDAA    #$FF
-        STAA    $1B23
+        STAA    redrawReq
         JMP     LF409
 
 LF318:
@@ -7571,7 +7596,7 @@ LF318:
         BNE     LF327
         LDAA    #$FF
         STAA    $1B26
-        STAA    $1B23
+        STAA    redrawReq
         JMP     LF409
 
 LF327:
@@ -7579,7 +7604,7 @@ LF327:
         BNE     LF336
         CLR     $1B26
         LDAA    #$FF
-        STAA    $1B23
+        STAA    redrawReq
         JMP     LF409
 
 LF336:
@@ -7808,7 +7833,7 @@ LF487:
         STAB    $04E2
         STAB    $6090
         JSR     LEFCB
-        JSR     LA210
+        JSR     redrawScreen
         JSR     LF5CF
         CLR     $04DD
         SEC
@@ -7854,7 +7879,7 @@ LF4D9:
         CMPA    #$78
         BNE     LF4E5
         LDAA    #$FF
-        STAA    $1B23
+        STAA    redrawReq
         JMP     LF59F
 
 LF4E5:
@@ -7886,7 +7911,7 @@ LF503:
         STAB    $04E2
         STAB    $6090
         JSR     LEFCB
-        JSR     LA210
+        JSR     redrawScreen
         JSR     LF5CF
         LDAB    P4DDR
         ANDB    #$0F
@@ -8014,7 +8039,7 @@ LF601:
         STAA    $04E2
         STAA    $6090
         JSR     LEFCB
-        JSR     LA210
+        JSR     redrawScreen
         SEI
         LDD     #txBitTick
         STD     >softVecOcf
@@ -8356,7 +8381,7 @@ LF83E:
         CLR     $04E2
         CLR     $6090
         JSR     LEFCB
-        JSR     LA210
+        JSR     redrawScreen
         SEI
         LDD     COUNTH
         ADDD    #$03E8
@@ -8404,7 +8429,7 @@ LF897:
         STAB    $04E2
         STAB    $6090
         JSR     LEFCB
-        JSR     LA210
+        JSR     redrawScreen
         JSR     LF5CF
         RTS
 
@@ -8432,7 +8457,7 @@ LF8D0:
         STAB    $04E2
         STAB    $6090
         JSR     LEFCB
-        JSR     LA210
+        JSR     redrawScreen
         LDD     #$84D0
         STD     $04E3
 
@@ -8461,7 +8486,7 @@ LF907:
         STAB    $04E2
         STAB    $6090
         JSR     LEFCB
-        JSR     LA210
+        JSR     redrawScreen
         LDAA    #$FF
         STAA    $04D9
         RTS
@@ -8472,7 +8497,7 @@ LF92F:
         STAB    $04E2
         STAB    $6090
         JSR     LEFCB
-        JSR     LA210
+        JSR     redrawScreen
         JSR     LF5CF
         RTS
 
@@ -8481,7 +8506,7 @@ LF942:
         STAB    $04E2
         STAB    $6090
         JSR     LEFCB
-        JSR     LA210
+        JSR     redrawScreen
         JSR     LF5CF
         RTS
 
@@ -8546,11 +8571,11 @@ LF9C3:
         INX
         CPX     #$1B1B
         BNE     LF9C3
-        JSR     LA210
+        JSR     redrawScreen
         LDAA    #$17
         STAA    >PORT3
         LDD     #$0010
-        LDX     #$5C00
+        LDX     #videoRam
 
 LF9D9:
         STAA    $03,X
@@ -8600,7 +8625,7 @@ LFA46:
 
 LFA48:
         STAA    >PORT3
-        LDX     #$5C00
+        LDX     #videoRam
 
 LFA4E:
         LDD     $28,X
@@ -8641,7 +8666,7 @@ asciiFF:
 
 LFA8E:
         STAA    PORT3
-        LDX     #$5C00
+        LDX     #videoRam
 
 LFA93:
         LDD     #$1200
@@ -8760,7 +8785,7 @@ LFB23:
         LDAB    asciiRow
         LDAA    #$28
         MUL
-        ADDD    #$5C00
+        ADDD    #videoRam
         STD     $061A
         LDAA    #$0A
         STAA    $0619
@@ -8873,13 +8898,13 @@ LFC01:
         BNE     LFC1C
         JSR     LF1D8
         JSR     LF45B
-        TST     $1B23
+        TST     redrawReq
         BNE     LFC17
         TST     $04AE
         BEQ     LFC1A
 
 LFC17:
-        JSR     LA210
+        JSR     redrawScreen
 
 LFC1A:
         BRA     LFC01

@@ -446,6 +446,7 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xE34E" = "csiDigit9"
 "0xE35B" = "csiFinalB"
 "0xE367" = "escDefine"
+"0xA210" = "redrawScreen"
 "0xD4C4" = "drcsDefineChar"
 "0xD527" = "drcsStartChar"
 "0xD5B5" = "drcsStoreRow"
@@ -568,6 +569,23 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xFFF0" = "vectors"
 
 [block_comments]
+"0xA5D6" = """
+Fetching a glyph, and why the stack pointer is involved.
+
+glyphPtr is set to the font base for the current set - through fontBaseTable -
+plus 20 times glyphCode, since a glyph is 10 rows of 2 bytes. It is then
+decremented, because the 6801's PUL pre-increments.
+
+The rows are read with PULA rather than LDAA 0,X: S is loaded from glyphPtr and
+the real stack is parked in $00EC for the duration, under SEI. PULA/ORAA/STAA
+is a byte fetched, combined and stored in three instructions with no pointer
+arithmetic, which is what makes it worth the trouble at 40 columns times 10
+rows a frame. The payload transfer at $B2B4 uses the same trick to walk ROM.
+
+Each pass ORs into glyphBuf, and afterwards glyphPtr is pointed at glyphBuf
+itself - so a second pass composites over the first. That is how a combining
+accent from planeAccent is merged onto its base character before either
+reaches videoRam through videoPtr."""
 "0xD4C4" = """
 DRCS - loading a dynamically redefinable character.
 
@@ -1492,6 +1510,8 @@ Sets up the stack, configures ports 1 and 2, and installs the interrupt soft
 vectors before entering the main firmware."""
 
 [line_comments]
+"0xA654" = "the glyph is read with PUL, so S becomes the source pointer and the real stack is parked in $00EC"
+"0xB2B9" = "scrollEnd is scratch here - nothing scrolls until the payload has been sent"
 "0xB2F5" = "one past c64Payload's last byte - the address is also where ctrlTableC0 starts"
 "0xB340" = "runs at C64 $8000 from cartridge ROM - the terminal's own cold start is c64ColdStart, in the payload"
 "0xB363" = "copy one byte, 256 at a time, until c64BootGetByte reports end of stream"
@@ -1704,6 +1724,15 @@ vectors before entering the main firmware."""
 
 # MC6801 internal register file. Names from the MC6801 Reference Manual.
 [symbols]
+"0x0406" = "scrollEnd"
+"0x0408" = "scrollStart"
+"0x07B2" = "glyphPtr"
+"0x07B6" = "videoPtr"
+"0x07BE" = "glyphBuf"
+"0x07E0" = "glyphCode"
+"0x1B01" = "glyphRows"
+"0x1B23" = "redrawReq"
+"0x5C00" = "videoRam"
 "0x041B" = "drcsChar"
 "0x041C" = "drcsWide"
 "0x041D" = "drcsTall"

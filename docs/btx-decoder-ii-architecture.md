@@ -452,6 +452,40 @@ The C64 side shows the same design from the other end: the cell it receives has
 the accent in its own byte, and `c64CellOut` recombines accent plus base letter
 into a single printer code.
 
+### Turning cells into pixels
+
+The four planes are not what the video hardware scans. `redrawScreen` at
+`$A210` walks them and renders into `videoRam` at `$5C00` through `videoPtr`,
+one 12-pixel cell at a time. `redrawReq` at `$1B23` is how the CEPT handlers
+ask for that: they set it, and the main loops test it against `$04AE` and call
+in.
+
+Fetching a glyph is done in an unusual way. `glyphPtr` is set to the font base
+for the current set — through `fontBaseTable` — plus 20 times `glyphCode`,
+then decremented, because the 6801's `PUL` pre-increments. The rows are then
+read with `PULA`: **S is loaded from `glyphPtr`** and the real stack is parked
+in `$00EC` under `SEI` for the duration.
+
+```
+        LDS     glyphPtr
+loop:   PULA
+        ORAA    $00,X
+        STAA    $00,X
+        INX
+        ...
+        LDS     >$00EC
+```
+
+A byte fetched, combined and stored in three instructions with no pointer
+arithmetic — worth the trouble at 40 columns times `glyphRows` a frame. The
+payload transfer at `$B2B4` uses the same trick to walk ROM, which is why it
+saves S into what is otherwise `scrollEnd`.
+
+Each pass ORs into `glyphBuf`, and `glyphPtr` is afterwards pointed at
+`glyphBuf` itself, so a second pass composites over the first. That is how the
+combining accent from `planeAccent` is merged onto its base character before
+either reaches `videoRam`.
+
 ### Cursor and scrolling
 
 `cursorCol` (`$1B1F`) wraps against 40 and 39; `cursorRow` (`$1B1E`) is clamped
@@ -547,7 +581,11 @@ entire C64 payload is byte-for-byte identical. See
 - **Font bit 15.** The contiguous-graphics reading is an inference from
   distribution; the firmware never reads the font, so nothing in the ROM tests
   the bit. A schematic would settle it.
-- **`$1B22`–`$1B2D`.** Part of the display-state block, individually unnamed.
+- **106 external-RAM locations.** Down from 149. What is left is mostly shared
+  scratch, where a name fitting one use would misread in another — `$048E` is a
+  mask complement in `setAttrSpan` and an index into `rowAttr` fifty lines
+  later — plus the modem state around `$04C8`–`$04ED`, which needs the
+  datacomms path read end to end rather than a sweep.
 - **`$61F9`–`$61FD`.** Write-only control registers whose function is unknown.
   Their C64-side counterparts `$81F8`–`$81FD` are touched by the payload's cold
   start and its IRQ handler, which says they carry an interrupt enable and
