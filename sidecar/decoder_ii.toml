@@ -585,6 +585,25 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xFFF0" = "vectors"
 
 [block_comments]
+"0xF0B1" = """
+pageCount, and why the C64 watches it.
+
+This sits at the end of the receive loop, after a byte has come off the line
+and been forwarded to the C64 if captureMode is on:
+
+    CMPA #$1A / BNE done
+    LDAB pageCount / CMPB pageCount / BNE again    the usual double read
+    INCB / STAB pageCount
+
+So the decoder counts $1A bytes arriving from the line - the end-of-page
+marker in the BTX datastream - and publishes the count where the C64 can see
+it as btxPageCount. c64WaitDecoder spins until it changes, which is how a
+macro waits for the next page before continuing, and c64MacroRecOpen paces the
+macro file against it.
+
+It is the only one of the four registers at $8005, $800F, $8011 and $8012 that
+both processors touch. The other three are C64-side only - the 6801 never
+addresses $6005, $600F or $6012 by any mode."""
 "0x61F9" = """
 The interrupt line to the C64, from both ends.
 
@@ -931,7 +950,7 @@ reads as unprintable filler in front of the text.
   $11EC  c64PlayFlag    a macro is being played back, so c64GetKey reads the
                         file instead of the keyboard
   $11ED  c64LineShadow  the last value read from the decoder's line counter
-                        btxReg011, which is how c64WaitDecoder sees it move
+                        btxPageCount, which is how c64WaitDecoder sees it move
   $11F7  c64AlphaFlag   alpha mode, which puts c64AsciiKeys in front of
                         c64XlatKey's search chain
 
@@ -1731,7 +1750,7 @@ vectors before entering the main firmware."""
 "0xC4AB" = "vector 30 $105A - send $10 $75 $10 $5A then the length-prefixed CEPT record at (c64MsgPtr): draw the status-line overlay"
 "0xC4DE" = "vector 32 $1060 - msg 7 \"Auf Diskette: File?\", open a SEQ file and CIOUT the capture buffer to it; msg $0A offers a retry (\"nochmal (J/N)?\")"
 "0xC538" = "vector 40 $1078 - show msgBlank, the all-blank 40-column record: blank the status line without closing the overlay"
-"0xC53E" = "vector 41 $107B - spin until the decoder's line counter btxReg011 changes, servicing an active capture, so a macro waits for the page to arrive"
+"0xC53E" = "vector 41 $107B - spin until the decoder's line counter btxPageCount changes, servicing an active capture, so a macro waits for the page to arrive"
 "0xC568" = "vector 42 $107E - delay A units (A*5 inner passes of ~40 ms); STOP aborts, and CTRL held at the end extends it"
 "0xC59C" = "vector 43 $1081 - translate the six cell bytes with c64CellToChar and plot the result at column $11EE / row $11EF"
 "0xC5B3" = "vectors 44 $1084 and 45 $1087 - the same routine under two entries: translate one cell to ASCII and CIOUT it. Maps the CEPT umlaut composition to the printer codes $BB-$DD"
@@ -1744,7 +1763,7 @@ vectors before entering the main firmware."""
 "0xC97E" = "vector 38 $1072 - read the DOS error channel, msg 9, and forward the message text to the decoder for display. C=1 when the code is not 00"
 "0xC9FC" = "vector 39 $1075 - read and discard the DOS error channel; C=1 when the code is not 00"
 "0xCA51" = "vector 47 $108D - OPEN \"@:BTX-MAK-<id>,S,W\" on device 8 channel 5 to begin recording a macro; msg $0D on failure"
-"0xCA81" = "vector 34 $1066 - LISTN device 8 channel 5, the macro record file, and emit a $01 filler whenever the decoder's line counter btxReg011 has advanced"
+"0xCA81" = "vector 34 $1066 - LISTN device 8 channel 5, the macro record file, and emit a $01 filler whenever the decoder's line counter btxPageCount has advanced"
 "0xCAC7" = "vector 35 $1069 - TALK device 8 channel 6: make the macro file the talker for playback"
 "0xCADA" = "vector 60 $10B4 - append \",P,W\" to the filename and OPEN it on device 8 channel 4, then share c64OpenSeqWrite's tail"
 "0xCAFA" = "vector 48 $1090 - append \",S,W\" to the filename and OPEN it on device 8 channel 4"
@@ -1930,6 +1949,7 @@ vectors before entering the main firmware."""
 "0xE222" = "attrFillHi"
 
 [symbols]
+"0x6011" = "pageCount"
 "0x61F9" = "c64IrqSet"
 "0x61FC" = "c64IrqArmA"
 "0x61FD" = "c64IrqArmB"
@@ -2500,17 +2520,17 @@ org = 0x0FFE
 "0x0314" = "CINV"
 "0x8000" = "btxLoadLo"
 "0x8001" = "btxLoadHi"
-"0x8005" = "btxReg005"
+"0x8005" = "btxCartCtrl"
 "0x8009" = "btxRxWr"
 "0x800A" = "btxRxRd"
 "0x800B" = "btxXferEn"
 "0x800C" = "btxStatus"
 "0x800D" = "btxTxWr"
 "0x800E" = "btxTxRd"
-"0x800F" = "btxReg00F"
+"0x800F" = "btxHostActive"
 "0x8010" = "btxXferDone"
-"0x8011" = "btxReg011"
-"0x8012" = "btxReg012"
+"0x8011" = "btxPageCount"
+"0x8012" = "btxSessionUp"
 "0x8020" = "btxRxFifo"
 "0x8040" = "btxTxFifo"
 "0x8080" = "btxFifo00"

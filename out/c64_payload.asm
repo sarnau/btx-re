@@ -5,62 +5,62 @@
         CPU     6502
 
 ; Decoder hardware and RAM, as the C64 sees it.
-c64Ptr       EQU     $0061
-c64PtrHi     EQU     $0062
-c64MsgPtr    EQU     $0063
-c64MsgPtrHi  EQU     $0064
-c64BufWr     EQU     $0065
-c64BufWrHi   EQU     $0066
-c64KeyPtr    EQU     $0069
-c64KeyPtrHi  EQU     $006A
-c64BufRd     EQU     $006D
-c64BufRdHi   EQU     $006E
-STATUS       EQU     $0090
-DFLTO        EQU     $009A
-c64ScrPtr    EQU     $00A7
-c64ScrPtrHi  EQU     $00A8
-FNLEN        EQU     $00B7
-LA           EQU     $00B8
-SA           EQU     $00B9
-FA           EQU     $00BA
-FNADR        EQU     $00BB
-BLNSW        EQU     $00CC
-PNTR         EQU     $00D3
-TBLX         EQU     $00D6
-LDTB1        EQU     $00D9
-BUF          EQU     $0200
-IERROR       EQU     $0300
-CINV         EQU     $0314
-btxReg005    EQU     $8005
-btxRxWr      EQU     $8009
-btxRxRd      EQU     $800A
-btxXferEn    EQU     $800B
-btxStatus    EQU     $800C
-btxTxWr      EQU     $800D
-btxTxRd      EQU     $800E
-btxReg00F    EQU     $800F
-btxXferDone  EQU     $8010
-btxReg011    EQU     $8011
-btxReg012    EQU     $8012
-btxRxFifo    EQU     $8020
-btxTxFifo    EQU     $8040
-btxFifo00    EQU     $8080
-btxFifo01    EQU     $8081
-btxFifo02    EQU     $8082
-btxFifo03    EQU     $8083
-btxFifo04    EQU     $8084
-btxFifo05    EQU     $8085
-btxFifo06    EQU     $8086
-btxFifo07    EQU     $8087
-btxFifo08    EQU     $8088
-btxFifo09    EQU     $8089
-btxFifo0A    EQU     $808A
-btxFifo0B    EQU     $808B
-btxStatusMsg EQU     $8090
-btxIrqCtrl   EQU     $81F8
-btxIrqAck    EQU     $81F9
-btxIrqArmA   EQU     $81FC
-btxIrqArmB   EQU     $81FD
+c64Ptr        EQU     $0061
+c64PtrHi      EQU     $0062
+c64MsgPtr     EQU     $0063
+c64MsgPtrHi   EQU     $0064
+c64BufWr      EQU     $0065
+c64BufWrHi    EQU     $0066
+c64KeyPtr     EQU     $0069
+c64KeyPtrHi   EQU     $006A
+c64BufRd      EQU     $006D
+c64BufRdHi    EQU     $006E
+STATUS        EQU     $0090
+DFLTO         EQU     $009A
+c64ScrPtr     EQU     $00A7
+c64ScrPtrHi   EQU     $00A8
+FNLEN         EQU     $00B7
+LA            EQU     $00B8
+SA            EQU     $00B9
+FA            EQU     $00BA
+FNADR         EQU     $00BB
+BLNSW         EQU     $00CC
+PNTR          EQU     $00D3
+TBLX          EQU     $00D6
+LDTB1         EQU     $00D9
+BUF           EQU     $0200
+IERROR        EQU     $0300
+CINV          EQU     $0314
+btxCartCtrl   EQU     $8005
+btxRxWr       EQU     $8009
+btxRxRd       EQU     $800A
+btxXferEn     EQU     $800B
+btxStatus     EQU     $800C
+btxTxWr       EQU     $800D
+btxTxRd       EQU     $800E
+btxHostActive EQU     $800F
+btxXferDone   EQU     $8010
+btxPageCount  EQU     $8011
+btxSessionUp  EQU     $8012
+btxRxFifo     EQU     $8020
+btxTxFifo     EQU     $8040
+btxFifo00     EQU     $8080
+btxFifo01     EQU     $8081
+btxFifo02     EQU     $8082
+btxFifo03     EQU     $8083
+btxFifo04     EQU     $8084
+btxFifo05     EQU     $8085
+btxFifo06     EQU     $8086
+btxFifo07     EQU     $8087
+btxFifo08     EQU     $8088
+btxFifo09     EQU     $8089
+btxFifo0A     EQU     $808A
+btxFifo0B     EQU     $808B
+btxStatusMsg  EQU     $8090
+btxIrqCtrl    EQU     $81F8
+btxIrqAck     EQU     $81F9
+btxIrqArmA    EQU     $81FC
+btxIrqArmB    EQU     $81FD
 
 ; C64 ROM entry points and tables.
 INITCZ       EQU     $E3BF
@@ -482,7 +482,7 @@ c64MacroId:
 ;   $11EC  c64PlayFlag    a macro is being played back, so c64GetKey reads the
 ;                         file instead of the keyboard
 ;   $11ED  c64LineShadow  the last value read from the decoder's line counter
-;                         btxReg011, which is how c64WaitDecoder sees it move
+;                         btxPageCount, which is how c64WaitDecoder sees it move
 ;   $11F7  c64AlphaFlag   alpha mode, which puts c64AsciiKeys in front of
 ;                         c64XlatKey's search chain
 ;
@@ -820,16 +820,16 @@ L16B9:
 c64StartSession:
 ; vector 1 $1003 - show the splash, send ceptStartPage to the decoder, reset the capture-buffer pointers and mode flags
         JSR     vecShowSplash
-        LDA     btxReg012
+        LDA     btxSessionUp
         BNE     L172D
         LDA     #$FF
-        STA     btxReg012
+        STA     btxSessionUp
         LDA     c64StartPagePtr
         STA     c64Ptr
         LDA     c64StartPagePtr+1
         STA     c64PtrHi
         LDA     #$FF
-        STA     btxReg00F
+        STA     btxHostActive
 
 L171B:
         LDY     #$00
@@ -859,7 +859,7 @@ L172D:
 c64MainLoop:
 ; vector 2 $1006 - main loop: fetch a key, STOP ends a capture, F7 ($88) opens the menu, anything else goes to c64SendKey
         LDA     #$FF
-        STA     btxReg00F
+        STA     btxHostActive
 
 L1751:
         SEI
@@ -1360,7 +1360,7 @@ L1A15:
         JSR     SECND
         JSR     UNLSN
         LDA     #$00
-        STA     btxReg005
+        STA     btxCartCtrl
         JMP     (KERNAL_RESET)
 
 ; CEPT datastream, not C64 screen text.
@@ -2185,8 +2185,8 @@ L1FF8:
         STA     c64FnLen
 
 L2023:
-        LDA     btxReg011
-        CMP     btxReg011
+        LDA     btxPageCount
+        CMP     btxPageCount
         BNE     L2023
         STA     c64LineShadow
         JSR     vecMacroRecOpen
@@ -2400,8 +2400,8 @@ c64ClearMsg:
         RTS
 
 c64WaitDecoder:
-; vector 41 $107B - spin until the decoder's line counter btxReg011 changes, servicing an active capture, so a macro waits for the page to arrive
-        LDA     btxReg011
+; vector 41 $107B - spin until the decoder's line counter btxPageCount changes, servicing an active capture, so a macro waits for the page to arrive
+        LDA     btxPageCount
         STA     btxIrqArmA
         STA     c64LineShadow
 
@@ -2413,7 +2413,7 @@ L219F:
         JSR     vecCaptureRun
 
 L21AC:
-        LDA     btxReg011
+        LDA     btxPageCount
         STA     btxIrqArmA
         CMP     c64LineShadow
         BNE     L21BF
@@ -3164,7 +3164,7 @@ L26D7:
         RTS
 
 c64MacroRecOpen:
-; vector 34 $1066 - LISTN device 8 channel 5, the macro record file, and emit a $01 filler whenever the decoder's line counter btxReg011 has advanced
+; vector 34 $1066 - LISTN device 8 channel 5, the macro record file, and emit a $01 filler whenever the decoder's line counter btxPageCount has advanced
         LDA     #$02
         STA     LA
         LDA     #$08
@@ -3184,15 +3184,15 @@ L26EF:
         BEQ     L2709
 
 L26FB:
-        LDA     btxReg011
-        CMP     btxReg011
+        LDA     btxPageCount
+        CMP     btxPageCount
         BNE     L26FB
         STA     c64LineShadow
         JMP     L271E
 
 L2709:
-        LDA     btxReg011
-        CMP     btxReg011
+        LDA     btxPageCount
+        CMP     btxPageCount
         BNE     L2709
         CMP     c64LineShadow
         BEQ     L271E

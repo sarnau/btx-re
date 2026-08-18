@@ -231,6 +231,7 @@ c64FifoRd      EQU     $600A
 c64XferEn      EQU     $600B
 c64Status      EQU     $600C
 c64XferDone    EQU     $6010
+pageCount      EQU     $6011
 c64Fifo        EQU     $6080
 c64StatusMsg   EQU     $6090
 c64IrqSet      EQU     $61F9
@@ -7389,16 +7390,34 @@ LF0A9:
         BEQ     LF0B1
         JSR     LF979
 
+; pageCount, and why the C64 watches it.
+;
+; This sits at the end of the receive loop, after a byte has come off the line
+; and been forwarded to the C64 if captureMode is on:
+;
+;     CMPA #$1A / BNE done
+;     LDAB pageCount / CMPB pageCount / BNE again    the usual double read
+;     INCB / STAB pageCount
+;
+; So the decoder counts $1A bytes arriving from the line - the end-of-page
+; marker in the BTX datastream - and publishes the count where the C64 can see
+; it as btxPageCount. c64WaitDecoder spins until it changes, which is how a
+; macro waits for the next page before continuing, and c64MacroRecOpen paces the
+; macro file against it.
+;
+; It is the only one of the four registers at $8005, $800F, $8011 and $8012 that
+; both processors touch. The other three are C64-side only - the 6801 never
+; addresses $6005, $600F or $6012 by any mode.
 LF0B1:
         CMPA    #$1A
         BNE     LF0C1
 
 LF0B5:
-        LDAB    $6011
-        CMPB    $6011
+        LDAB    pageCount
+        CMPB    pageCount
         BNE     LF0B5
         INCB
-        STAB    $6011
+        STAB    pageCount
 
 LF0C1:
         RTS

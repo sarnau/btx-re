@@ -177,6 +177,37 @@ Once the payload is running, `$8080`–`$808B` is reused as a **mailbox**: the
 decoder posts one display cell there and raises `$808B`, and the payload's IRQ
 handler picks it up. `$8080` itself becomes the reduced-display toggle.
 
+### The four registers only one side touches
+
+`$8005`, `$800F` and `$8012` are addressed by the C64 alone — the 6801 never
+touches `$6005`, `$600F` or `$6012` by any mode. What they do follows from
+where the payload writes them:
+
+- **`btxCartCtrl`** at `$8005` gets `#$00` in exactly one place: `c64MenuQuit`,
+  the instruction before `JMP (KERNAL_RESET)`. That is what makes Quit work —
+  the cartridge unmaps itself so the reset comes up as a plain C64, which is
+  what `ceptMonitorMsg` has just told the user to expect.
+- **`btxSessionUp`** at `$8012` is read once and set once, both in
+  `c64StartSession`: if it is already set the startup page is not sent again.
+  It lives in the cartridge, so it survives the C64 reset that Quit performs.
+- **`btxHostActive`** at `$800F` is written `$FF` and never read.
+
+`$8011` is the one both sides share, and the 6801 end says what it counts:
+
+```
+LF0B5:  LDAB    pageCount
+        CMPB    pageCount
+        BNE     LF0B5
+        INCB
+        STAB    pageCount
+```
+
+reached only from `CMPA #$1A` at the end of the receive loop. So the decoder
+counts `$1A` bytes arriving from the line — the end-of-page marker in the BTX
+datastream — and publishes the count as `btxPageCount`. `c64WaitDecoder` spins
+until it changes, which is how a macro waits for the next page, and
+`c64MacroRecOpen` paces the macro file against it.
+
 ### The interrupt line
 
 The mailbox has a doorbell, and both ends of it are unambiguous. The 6801 only
@@ -821,10 +852,10 @@ entire C64 payload is byte-for-byte identical. See
   they gate is not established — only that the data written is ignored, since
   the C64 writes back what it read and the 6801 writes whatever `PORT1` left in
   A.
-- **Four interface registers.** `$8005`, `$800F`, `$8011` and `$8012` are read
-  or written by the payload without their meaning being established. `$8011` is
-  a counter the decoder advances — `c64WaitDecoder` spins on it and
-  `c64MacroRecOpen` paces the macro file against it.
+- **`btxHostActive` at `$800F`.** Write-only, `$FF`, at exactly two points —
+  the top of `c64MainLoop` and just before `c64StartSession` sends the startup
+  page. Nothing reads it and the 6801 never addresses `$600F`, so the name
+  records where it is written, not what it does.
 
   `$8090` is settled and now called `btxStatusMsg`: it is `c64StatusMsg` at
   `$6090`, the decoder's copy of `statusMsg`. The C64's `$28` and `$50` tests
