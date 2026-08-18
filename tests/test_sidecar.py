@@ -86,3 +86,11 @@ def test_entry_points_nested_under_meta_is_rejected(tmp_path):
     path.write_text('[meta]\nrom = "x"\nbase = 0\nentry_points = [1, 2]\n')
     with pytest.raises(ValueError, match="entry_points must be a top-level key"):
         load_sidecar(path)
+
+
+def test_code6502_is_a_valid_region_kind(tmp_path):
+    """The ROM embeds a C64-side 6502 program alongside the 6801 firmware."""
+    path = tmp_path / "s.toml"
+    path.write_text('entry_points = []\n[meta]\nrom = "x"\nbase = 0\n'
+                    '[[regions]]\nstart = 0\nend = 16\nkind = "code6502"\n')
+    assert load_sidecar(path).regions[0].kind == "code6502"

@@ -34,6 +34,7 @@ class BuildResult:
     assembled: bytes
     code_bytes: int
     unknown_bytes: int
+    typed_bytes: int
     kind: list[str]
     unresolved: list[int]
     bad_opcodes: list[int]
@@ -69,12 +70,19 @@ def run(*, write: bool = True) -> BuildResult:
         OUT_PATH.write_text(listing)
 
     cov = result.coverage()
+    # Bytes that are not code but sit in a typed sidecar region are documented,
+    # not unknown; counting them as unknown understates real progress.
+    typed = sum(
+        1 for a in range(sidecar.base, sidecar.base + len(rom))
+        if result.kind[a - sidecar.base] == "unknown" and sidecar.region_at(a) is not None
+    )
     return BuildResult(
         rom=rom,
         listing=listing,
         assembled=assembled,
         code_bytes=cov["code"],
         unknown_bytes=cov["unknown"],
+        typed_bytes=typed,
         kind=result.kind,
         unresolved=result.unresolved,
         bad_opcodes=result.bad_opcodes,
@@ -92,8 +100,11 @@ def main() -> int:
     total = len(result.rom)
 
     print(f"ROM        {total} bytes, sha256 {hashlib.sha256(result.rom).hexdigest()[:16]}")
-    print(f"coverage   {result.code_bytes} code / {result.unknown_bytes} unknown "
-          f"({result.coverage_pct:.1f}% classified)")
+    unclassified = result.unknown_bytes - result.typed_bytes
+    print(f"coverage   {result.code_bytes} code / {result.typed_bytes} typed data / "
+          f"{unclassified} unclassified")
+    print(f"           {100.0 * (result.code_bytes + result.typed_bytes) / total:.1f}% "
+          f"of the image is accounted for")
     print(f"unresolved {len(result.unresolved)} computed jumps")
     print(f"bad opcode {len(result.bad_opcodes)} sites")
 

@@ -139,6 +139,9 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 
 
 [labels]
+"0xB32D" = "c64Payload"
+"0xB3AE" = "c64JumpTable"
+"0xB552" = "c64Strings"
 "0xD419" = "fmtKeys"
 "0xD42B" = "fmtVals041C"
 "0xD43D" = "fmtVals041D"
@@ -174,6 +177,35 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xFFF0" = "vectors"
 
 [block_comments]
+"0xB32D" = """
+C64-side 6502 program, $B32D-$D108 (~7.9 KB).
+
+This is NOT 6801 code. The cartridge carries the C64's BTX terminal
+application embedded in the same 32 KB image as the 68B01 decoder firmware,
+which is why a 6801 trace never reaches it and why the earlier Ghidra project
+was named BTX_6502.
+
+Evidence:
+  - Sweeping as 6502 gives 0.0-0.5% illegal opcodes over $C000-$C700 and
+    $CA00-$CBFF, where known 6801 code scores 34-40% under the same test.
+    Sweeping those same blocks as 6801 is not clean.
+  - A 38-entry 6502 JMP table at $B3AE ($4C lo hi, little-endian targets
+    $174C-$2943 - C64 RAM, not cartridge ROM).
+  - German terminal UI strings padded to 40 columns, the C64 screen width.
+
+Strings begin at $B552 and run to about $B9F0: menu lines such as
+"Load Capture Display Macro Xfer Screen", "ASCII Btx Keybd Telesoft Edit
+Pause Quit", "Capture-Modus ein - Ende: STOP-Taste", "Telesoftware: File?",
+and the macro filename prefix "@:BTX-MAK-".
+
+OPEN: the runtime load address is not established. The JMP table targets bound
+the ROM-to-runtime offset to $9BE1-$AA06, but neither a pointer-table scan nor
+a search for the LDA #<ptr / LDY #>ptr idiom produced a consistent value, so
+the strings must be reached some other way. Finding the 6801 routine that
+transfers this payload to the C64 would settle it.
+
+Note $D109-$D348 is NOT part of this payload - those are the 6801 control-code
+dispatch tables documented at $D36A."""
 "0xD419" = """
 Format-parameter lookup: one key table plus three parallel value tables,
 18 entries each, $D419-$D460.
@@ -382,3 +414,19 @@ kind = "bytes"
 start = 0xD44F
 end = 0xD461
 kind = "bytes"
+
+# C64-side 6502 payload. See the block comment at $B32D.
+[[regions]]
+start = 0xB32D
+end = 0xB552
+kind = "code6502"
+
+[[regions]]
+start = 0xB552
+end = 0xBA00
+kind = "string"
+
+[[regions]]
+start = 0xBA00
+end = 0xD109
+kind = "code6502"
