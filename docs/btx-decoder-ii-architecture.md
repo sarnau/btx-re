@@ -148,8 +148,8 @@ $B331  C3 C2 CD 38 30     "CBM80"
 
 ### The C64 pulls its own software across
 
-`c64CartStart` runs from cartridge ROM. It runs the C64's cold-start sequence,
-then fetches a two-byte destination pointer and copies a byte stream into it:
+`c64CartStart` runs from the copy in the window, not from this ROM. It runs
+the C64's cold-start sequence, then fetches a two-byte destination pointer and copies a byte stream into it:
 
 ```
 JSR IOINIT / SIZE+8 / RESTOR / PCINT   KERNAL init
@@ -178,12 +178,12 @@ LDA #$00 / STA btxStatus     bank the cartridge out
 JMP (btxLoadLo)              jump through $8000
 ```
 
-`$8000` is cartridge ROM while the cartridge is mapped, holding the cold-start
-vector `$8013`. The loader has already written the fetched load address into
-`$8000`/`$8001` — stores land in the RAM underneath the ROM — so once the
-cartridge is banked out, the same indirect read returns `$1000`. That is why
-the loader stores the load address twice: to `$61`/`$62` for its own copy loop
-and to `$8000`/`$8001` for this jump.
+`$8000` holds the cold-start vector `$8013` while the cartridge is visible, and
+the loader has already written the fetched load address over it in
+`btxLoadLo`/`btxLoadHi`. Because the window is RAM the decoder filled — not
+ROM — that store simply takes, and once the cartridge is banked out the same
+indirect read returns `$1000`. That is why the loader stores the load address
+twice: to `c64Ptr` for its own copy loop, and to `btxLoadLo` for this jump.
 
 ### The dual-port interface
 
@@ -229,7 +229,7 @@ field without either listing saying so.
 ### The interface register map
 
 Every register in the window now has a name on at least one side. The 6801 sees
-it at `$6000`, the C64 at `$8000`:
+it at `c64Window`, the C64 at `$8000`:
 
 | 6801 | C64 | |
 |---|---|---|
@@ -876,7 +876,7 @@ The four planes are not what the video hardware scans. `redrawScreen` at
 12-pixel cell at a time.
 
 `videoRam` runs `$5C00`–`videoRamTop` at `$5FFF` — 1 KB, ending exactly where
-the C64 interface window at `$6000` begins. Both clear loops step through it by
+`c64Window` begins. Both clear loops step through it by
 4 and stop on `CPX #videoRamTop`, which is what fixes the extent.
 
 The unit of 4 bytes is a **scanline, not a cell**: `renderCol` never enters the
@@ -906,9 +906,9 @@ loop:   PULA
 ```
 
 A byte fetched, combined and stored in three instructions with no pointer
-arithmetic — worth the trouble at 40 columns times `glyphRows` a frame. The
-payload transfer at `$B2B4` uses the same trick to walk ROM, which is why it
-saves S into what is otherwise `scrollEnd`.
+arithmetic — worth the trouble at 40 columns times `glyphRows` a frame. `copyBootstrapToC64` uses the same trick to walk ROM, which is why it parks S
+in what is otherwise `scrollEnd`, and `showModeName` and `showStatusMsg` use it
+to walk their message tables.
 
 Each pass ORs into `glyphBuf`, and `glyphPtr` is afterwards pointed at
 `glyphBuf` itself, so a second pass composites over the first. That is how the
@@ -1061,7 +1061,8 @@ entire C64 payload is byte-for-byte identical. See
 
 100% of the 32 KB is classified, the listing reassembles byte-identical under
 two independent assemblers, and no operand anywhere in either processor's
-source is a bare address. Every location in external RAM, every zero-page
+source is a bare address — an address inside a named table now reads as
+`NAME+offset`, and one loaded a byte early for a `PUL` walk as `NAME-1`. Every location in external RAM, every zero-page
 variable on both sides, every dispatch-table entry, every C64 ROM entry point
 and every register in the shared interface window carries a name.
 
