@@ -45,17 +45,17 @@ btxSessionUp  EQU     $8012
 btxRxFifo     EQU     $8020
 btxTxFifo     EQU     $8040
 btxFifo00     EQU     $8080
-btxFifo01     EQU     $8081
-btxFifo02     EQU     $8082
-btxFifo03     EQU     $8083
-btxFifo04     EQU     $8084
-btxFifo05     EQU     $8085
-btxFifo06     EQU     $8086
-btxFifo07     EQU     $8087
-btxFifo08     EQU     $8088
-btxFifo09     EQU     $8089
-btxFifo0A     EQU     $808A
-btxFifo0B     EQU     $808B
+btxCellCurCol EQU     $8081
+btxCellCurRow EQU     $8082
+btxCellChar   EQU     $8083
+btxCellAccent EQU     $8084
+btxCellAttr0  EQU     $8085
+btxCellSet    EQU     $8086
+btxCellAttr2  EQU     $8087
+btxCellAttr3  EQU     $8088
+btxCellRow    EQU     $8089
+btxCellCol    EQU     $808A
+btxCellReady  EQU     $808B
 btxStatusMsg  EQU     $8090
 btxIrqCtrl    EQU     $81F8
 btxIrqAck     EQU     $81F9
@@ -801,7 +801,7 @@ L16B9:
         JSR     CLALL
         LDA     #$00
         STA     btxFifo00
-        STA     btxFifo0B
+        STA     btxCellReady
         SEI
         LDA     #L2359&255
         STA     CINV
@@ -1932,30 +1932,30 @@ L1E5C:
         RTS
 
 c64IrqPlotCell:
-; vector 25 $104B - the CINV hook body: if the decoder posted a cell in btxFifo01-0B, translate it with c64CellToChar and plot it, or move the cursor with c64SetCursor
+; vector 25 $104B - the CINV hook body: if the decoder posted a cell in btxCellCurCol-0B, translate it with c64CellToChar and plot it, or move the cursor with c64SetCursor
         PHP
         SEI
 
 L1E67:
-        LDA     btxFifo0B
-        CMP     btxFifo0B
+        LDA     btxCellReady
+        CMP     btxCellReady
         BNE     L1E67
         CMP     #$00
         BEQ     L1ED7
-        LDY     btxFifo09
+        LDY     btxCellRow
         BMI     L1EDC
-        LDA     btxFifo03
+        LDA     btxCellChar
         AND     #$7F
         STA     c64CellChar
-        LDA     btxFifo04
+        LDA     btxCellAccent
         STA     c64CellAccent
-        LDA     btxFifo05
+        LDA     btxCellAttr0
         STA     c64Cell3
-        LDA     btxFifo06
+        LDA     btxCellSet
         STA     c64CellSet
-        LDA     btxFifo07
+        LDA     btxCellAttr2
         STA     c64Cell5
-        LDA     btxFifo08
+        LDA     btxCellAttr3
         STA     c64CellAttr
         JSR     vecCellToChar
         CMP     #$60
@@ -1991,11 +1991,11 @@ L1EC8:
         PLA
 
 L1EC9:
-        LDX     btxFifo0A
-        LDY     btxFifo09
+        LDX     btxCellCol
+        LDY     btxCellRow
         JSR     vecPlotChar
         LDA     #$00
-        STA     btxFifo0B
+        STA     btxCellReady
 
 L1ED7:
         LDA     btxIrqAck
@@ -2003,12 +2003,12 @@ L1ED7:
         RTS
 
 L1EDC:
-        LDX     btxFifo01
-        LDY     btxFifo02
+        LDX     btxCellCurCol
+        LDY     btxCellCurRow
         JSR     vecSetCursor
         LDA     btxIrqAck
         LDA     #$00
-        STA     btxFifo0B
+        STA     btxCellReady
         PLP
         RTS
 

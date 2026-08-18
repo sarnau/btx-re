@@ -101,7 +101,7 @@ vectors, then initialises the subsystems and hands the C64 its software.
 
 ---
 
-## 3. Bringing the C64 up
+## 3. The C64 interface
 
 ### The cartridge announces itself
 
@@ -173,9 +173,54 @@ The masks prove the sizes on both sides independently: the 6801 uses
 over `$6080`, and `c64BootGetByte` `CPX #$10` — a third, smaller ring that
 exists only during the transfer.
 
-Once the payload is running, `$8080`–`$808B` is reused as a **mailbox**: the
-decoder posts one display cell there and raises `$808B`, and the payload's IRQ
-handler picks it up. `$8080` itself becomes the reduced-display toggle.
+Once the payload is running, `$8080`–`$808B` is reused as a **mailbox** and
+`$8080` itself becomes the reduced-display toggle. The mailbox is one display
+cell, and the two sides name the same twelve bytes:
+
+| | 6801 writes | C64 reads |
+|---|---|---|
+| `$x081` | `cellCurCol` — `cursorCol` with `cursorVisible` folded in | cursor column |
+| `$x082` | `cellCurRow` | cursor row |
+| `$x083` | `cellChar` ← `glyphCode` | `c64CellChar` |
+| `$x084` | `cellAccent` ← `accentCode` | `c64CellAccent` |
+| `$x085` | `cellAttr0` ← `$00E0` | `c64Cell3` — stored, never read |
+| `$x086` | `cellSet` ← `$00E1` | `c64CellSet` |
+| `$x087` | `cellAttr2` ← `$00E2` | `c64Cell5` — stored, never read |
+| `$x088` | `cellAttr3` ← `$00E3` | `c64CellAttr` |
+| `$x089` | `cellRow` ← `renderRow` | plot row |
+| `$x08A` | `cellCol` ← `renderCol` | plot column |
+| `$x08B` | `cellReady` | the flag both sides poll |
+
+`cellSet` is worth a second look. On the C64 side `c64CellSet`'s low three bits
+select the character set; on the 6801 side the byte is `$00E1`, and `$00E1 & $07
+== 5` is exactly the test that sets `drcsCell`. The two processors agree on the
+field without either listing saying so.
+
+### The interface register map
+
+Every register in the window now has a name on at least one side. The 6801 sees
+it at `$6000`, the C64 at `$8000`:
+
+| 6801 | C64 | |
+|---|---|---|
+| — | `btxLoadLo` `btxLoadHi` | the payload's load address, and what `c64StartPayload` jumps through |
+| — | `btxCartCtrl` | write `$00` to unmap the cartridge |
+| `c64FifoWr` `c64FifoRd` | `btxRxWr` `btxRxRd` | indices into the decoder → C64 ring |
+| `c64XferEn` | `btxXferEn` | transfer enable |
+| `c64Status` | `btxStatus` | status |
+| — | `btxTxWr` `btxTxRd` | indices into the C64 → decoder ring |
+| — | `btxHostActive` | write-only, purpose open |
+| `c64XferDone` | `btxXferDone` | completion |
+| `pageCount` | `btxPageCount` | `$1A` markers counted off the line |
+| — | `btxSessionUp` | the startup page has already been sent |
+| `$6020` | `btxRxFifo` | 32-byte ring, decoder → C64 |
+| `$6040` | `btxTxFifo` | 64-byte ring, C64 → decoder |
+| `c64Fifo` | `btxFifo00` | boot ring base, then the reduced-display toggle |
+| `cellCurCol`…`cellReady` | `btxCellCurCol`…`btxCellReady` | the cell mailbox above |
+| `c64StatusMsg` | `btxStatusMsg` | `statusMsg`, the status-message index |
+| — | `btxIrqCtrl` | bit 6 enables, bit 7 says the interrupt is the decoder's |
+| `c64IrqSet` | `btxIrqAck` | write to raise, read to clear |
+| `c64IrqArmA` `c64IrqArmB` | `btxIrqArmA` `btxIrqArmB` | strobes, purpose open |
 
 ### The four registers only one side touches
 
@@ -828,8 +873,8 @@ Two ROM images exist. Both carry a version string at `$EFF5`:
 | `c64_btx_decoder_ii.bin` | Decodersoftware **V3.3** |
 | `CV30113 C375-B1-1 (EX)` | Decodersoftware **V3.1** |
 
-Only two things changed between them: the `$04AF` guard was removed from the
-`CAN` handler, and three umlaut glyphs went from lowercase to uppercase. The
+Only two things changed between them: the `inStatusLine` guard was removed from
+the `CAN` handler, and three umlaut glyphs went from lowercase to uppercase. The
 entire C64 payload is byte-for-byte identical. See
 `docs/cv30113-revision-diff.md`.
 
@@ -856,27 +901,32 @@ entire C64 payload is byte-for-byte identical. See
   the top of `c64MainLoop` and just before `c64StartSession` sends the startup
   page. Nothing reads it and the 6801 never addresses `$600F`, so the name
   records where it is written, not what it does.
-
-  `$8090` is settled and now called `btxStatusMsg`: it is `c64StatusMsg` at
-  `$6090`, the decoder's copy of `statusMsg`. The C64's `$28` and `$50` tests
-  are records 2 and 4 — "Verbindung" and "Abbruch".
 - **`videoReg0`–`videoReg3`.** Four bytes at `$1B2A` written to `P3CSR` with
   `AND #$1F`, initialised to 0, 1, 2, 3. They select something in the video
   hardware; nothing in the ROM says what.
 - **The `$D419` no-match path.** Reachable, but harmless: two of its three
   outputs are read only for bit 7 and the third is clamped. Documented in the
   sidecar rather than treated as a bug.
-- **Two cell bytes.** Both cell readers store `c64Cell3` and `c64Cell5`, and
-  nothing in the payload reads them back.
+- **Two cell bytes.** The decoder puts `$00E0` and `$00E2` into `cellAttr0` and
+  `cellAttr2`, and the C64 stores them as `c64Cell3` and `c64Cell5` and never
+  reads them back. Both sides carry the fields; neither uses them.
+
 ---
 
 ## 11. Where this stands
 
 100% of the 32 KB is classified, the listing reassembles byte-identical under
 two independent assemblers, and no operand anywhere in either processor's
-source is a bare address: every location in external RAM, every zero-page
-variable on both sides, every dispatch-table entry and every C64 ROM entry
-point carries a name.
+source is a bare address. Every location in external RAM, every zero-page
+variable on both sides, every dispatch-table entry, every C64 ROM entry point
+and every register in the shared interface window carries a name.
+
+That last one is what closed most recently, and it is worth saying what it
+bought: the two listings can now be read against each other. `cellSet` and
+`c64CellSet` are the same field, `pageCount` and `btxPageCount` the same
+counter, `statusMsg` and `btxStatusMsg` the same index — so a question about
+one processor can be answered from the other. Several findings here came out
+that way rather than from either image alone.
 
 The names are not uniformly strong, and the difference matters when reading
 them. Most are evidenced — `inStatusLine` by the routine pair that saves and

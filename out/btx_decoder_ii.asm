@@ -233,6 +233,17 @@ c64Status      EQU     $600C
 c64XferDone    EQU     $6010
 pageCount      EQU     $6011
 c64Fifo        EQU     $6080
+cellCurCol     EQU     $6081
+cellCurRow     EQU     $6082
+cellChar       EQU     $6083
+cellAccent     EQU     $6084
+cellAttr0      EQU     $6085
+cellSet        EQU     $6086
+cellAttr2      EQU     $6087
+cellAttr3      EQU     $6088
+cellRow        EQU     $6089
+cellCol        EQU     $608A
+cellReady      EQU     $608B
 c64StatusMsg   EQU     $6090
 c64IrqSet      EQU     $61F9
 c64IrqArmA     EQU     $61FC
@@ -959,20 +970,20 @@ LA2AD:
         BEQ     LA2DF
 
 LA2B8:
-        LDAA    $608B
-        CMPA    $608B
+        LDAA    cellReady
+        CMPA    cellReady
         BNE     LA2B8
         TSTA
         BNE     LA2AD
         LDAA    cursorVisible
         EORA    #$FF
         ORAA    cursorCol
-        STAA    $6081
+        STAA    cellCurCol
         LDAA    cursorRow
-        STAA    $6082
+        STAA    cellCurRow
         LDAA    #$FF
-        STAA    $6089
-        STAA    $608B
+        STAA    cellRow
+        STAA    cellReady
         STAA    c64IrqSet
 
 LA2DF:
@@ -1001,7 +1012,7 @@ LA2E4:
 ;              the other loads a hardware latch, but both are the same position
 ;   sent       $A59B and $A5A1 copy them into $6089 and $608A, the row and column
 ;              bytes of the cell mailbox. The C64 reads exactly those two as
-;              btxFifo09 and btxFifo0A and hands them to c64PlotChar as Y and X
+;              btxCellRow and btxCellCol and hands them to c64PlotChar as Y and X
 ;
 ; renderCol wraps against the byte at $AEFA rather than an immediate, so the
 ; line width is a ROM constant sitting just under fontBaseTable. renderRow wraps
@@ -1340,35 +1351,35 @@ LA550:
         BEQ     LA5AF
 
 LA55B:
-        LDAA    $608B
-        CMPA    $608B
+        LDAA    cellReady
+        CMPA    cellReady
         BNE     LA55B
         TSTA
         BNE     LA550
         LDAA    cursorVisible
         EORA    #$FF
         ORAA    cursorCol
-        STAA    $6081
+        STAA    cellCurCol
         LDAA    cursorRow
-        STAA    $6082
+        STAA    cellCurRow
         LDAA    glyphCode
-        STAA    $6083
+        STAA    cellChar
         LDAA    accentCode
-        STAA    $6084
+        STAA    cellAccent
         LDAA    >$00E0
-        STAA    $6085
+        STAA    cellAttr0
         LDAA    >$00E1
-        STAA    $6086
+        STAA    cellSet
         LDAA    >$00E2
-        STAA    $6087
+        STAA    cellAttr2
         LDAA    >$00E3
-        STAA    $6088
+        STAA    cellAttr3
         LDAA    renderRow
-        STAA    $6089
+        STAA    cellRow
         LDAA    renderCol
-        STAA    $608A
+        STAA    cellCol
         LDAA    #$FF
-        STAA    $608B
+        STAA    cellReady
         STAA    c64IrqSet
 
 ; drcsCell - is this cell a redefined character?
