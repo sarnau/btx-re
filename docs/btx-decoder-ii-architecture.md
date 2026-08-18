@@ -67,7 +67,7 @@ $0800-$1AFF   drcsStore, 96 redefinable characters of 48 bytes
 $1B00-$1B2D   display and cursor state
 $2000-$2FFF   rxBuffer, the 4 KB receive ring
 $4000-$5BC7   display memory, four planes
-$5C00-...     videoRam, the pixels the hardware scans
+$5C00-$5FFF   videoRam, the pixels the hardware scans
 $6009-$6011   C64 interface control and status
 $6020-$603F   32-byte ring, decoder to C64
 $6040-$607F   64-byte ring, C64 to decoder
@@ -637,8 +637,20 @@ into a single printer code.
 ### Turning cells into pixels
 
 The four planes are not what the video hardware scans. `redrawScreen` at
-`$A210` walks them and renders into `videoRam` at `$5C00` through `videoPtr`,
-one 12-pixel cell at a time. `redrawReq` at `$1B23` is how the CEPT handlers
+`$A210` walks them and renders into `videoRam` through `videoPtr`, one
+12-pixel cell at a time.
+
+`videoRam` runs `$5C00`–`videoRamTop` at `$5FFF` — 1 KB, ending exactly where
+the C64 interface window at `$6000` begins. Both clear loops step through it by
+4 and stop on `CPX #videoRamTop`, which is what fixes the extent.
+
+The unit of 4 bytes is a **scanline, not a cell**: `renderCol` never enters the
+address at all, it goes to `PORT3` with `#$18` added, so the hardware latches
+the column and the four bytes at `videoPtr` are that column's slice of one
+line. 25 rows times `glyphRows` of 10 is 250 units, which is why the clear
+fills the six-unit tail separately. Within a unit the renderer writes `$00,X`
+and `$02,X` — plus `$04,X` and `$06,X` when `tallCell` is set — while the clear
+touches only `$03,X`, from `rowFlags`. `redrawReq` at `$1B23` is how the CEPT handlers
 ask for that: they set it, and the main loops test it against `$04AE` and call
 in.
 

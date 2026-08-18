@@ -225,6 +225,7 @@ planeAttr      EQU     $4400
 planeChar      EQU     $5400
 planeAccent    EQU     $5800
 videoRam       EQU     $5C00
+videoRamTop    EQU     $5FFF
 c64FifoWr      EQU     $6009
 c64FifoRd      EQU     $600A
 c64XferEn      EQU     $600B
@@ -878,6 +879,22 @@ LA23E:
         ORAA    #$80
         STAA    $00,X
 
+; Clearing videoRam, which is what fixes its extent.
+;
+; Both loops start at videoRam and step by 4 until CPX #videoRamTop / BLS, so
+; the region is $5C00-$5FFF - 1 KB, 256 units of four bytes, ending exactly
+; where the C64 interface window at $6000 begins.
+;
+; The unit is a scanline, not a cell. renderCol never enters the address: it
+; goes to PORT3 with #$18 added, so the hardware latches the column and the four
+; bytes at videoPtr are that column's slice of one line. 25 rows times
+; glyphRows of 10 is 250 units, which is why the second loop fills the 6-unit
+; tail separately.
+;
+; Within a unit the renderer writes $00,X and $02,X - and $04,X and $06,X again
+; when tallCell is set - while these loops write only $03,X, from rowFlags. So
+; byte 3 carries something per line that survives a clear, and rowFlags is read
+; through S with PUL, one byte per screen row.
 LA250:
         LDAA    redrawT
         ORAA    redrawW
@@ -891,7 +908,7 @@ LA250:
 LA264:
         STAA    $03,X
         ABX
-        CPX     #$5FFF
+        CPX     #videoRamTop
         BLS     LA264
         JMP     LA2AD
 
@@ -927,7 +944,7 @@ LA28F:
 LA2A5:
         STAA    $03,X
         ABX
-        CPX     #$5FFF
+        CPX     #videoRamTop
         BLS     LA2A5
 
 LA2AD:

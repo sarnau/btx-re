@@ -585,6 +585,23 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xFFF0" = "vectors"
 
 [block_comments]
+"0xA250" = """
+Clearing videoRam, which is what fixes its extent.
+
+Both loops start at videoRam and step by 4 until CPX #videoRamTop / BLS, so
+the region is $5C00-$5FFF - 1 KB, 256 units of four bytes, ending exactly
+where the C64 interface window at $6000 begins.
+
+The unit is a scanline, not a cell. renderCol never enters the address: it
+goes to PORT3 with #$18 added, so the hardware latches the column and the four
+bytes at videoPtr are that column's slice of one line. 25 rows times
+glyphRows of 10 is 250 units, which is why the second loop fills the 6-unit
+tail separately.
+
+Within a unit the renderer writes $00,X and $02,X - and $04,X and $06,X again
+when tallCell is set - while these loops write only $03,X, from rowFlags. So
+byte 3 carries something per line that survives a clear, and rowFlags is read
+through S with PUL, one byte per screen row."""
 "0xEED2" = """
 The default status line, and what a c64StrTable record actually is.
 
@@ -2005,6 +2022,7 @@ vectors before entering the main firmware."""
 "0x1B01" = "glyphRows"
 "0x1B23" = "redrawReq"
 "0x5C00" = "videoRam"
+"0x5FFF" = "videoRamTop"
 "0x041B" = "drcsChar"
 "0x041C" = "drcsWide"
 "0x041D" = "drcsTall"
