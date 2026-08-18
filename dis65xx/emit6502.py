@@ -142,13 +142,17 @@ def collect_labels(data: bytes, base: int, block: C64Block,
     labels = dict(named)
     for _ in range(8):
         targets: set[int] = set(table_targets)
-        for rt, insn, _b in _decode_block(data, base, block, labels, sidecar):
+        seq = [i for _r, i, _b in _decode_block(data, base, block, labels, sidecar)]
+        for insn in seq:
             if insn is None:
                 continue
             if insn.mode is Mode.REL:
                 targets.add(insn.operand)
             elif insn.mode is Mode.ABS and insn.mnemonic in _JUMPS:
                 targets.add(insn.operand)
+        # An address assembled into a zero-page pointer is a location too.
+        targets.update(v for v in _pointer_targets(seq, set(sidecar.c64_pointers)).values()
+                       if block.org <= v < block.org + (block.end - block.start))
         found = dict(named)
         found.update({a: f"L{a:04X}" for a in targets
                       if block.org <= a < block.org + (block.end - block.start)
@@ -159,6 +163,43 @@ def collect_labels(data: bytes, base: int, block: C64Block,
     else:
         raise ValueError(f"{block.name}: label collection did not converge")
     return labels
+
+
+def _pointer_targets(decoded: list, pairs: set[int]) -> dict[tuple[int, int], int]:
+    """Addresses assembled into a zero-page pointer, keyed by the pair of LDA
+    addresses that supply the low and high bytes."""
+    out: dict[tuple[int, int], int] = {}
+    for i in range(len(decoded) - 3):
+        a, b, c, d = decoded[i:i + 4]
+        if not all(x is not None for x in (a, b, c, d)):
+            continue
+        if (a.mnemonic, b.mnemonic, c.mnemonic, d.mnemonic) != ("LDA", "STA", "LDA", "STA"):
+            continue
+        if a.mode is not Mode.IMM or c.mode is not Mode.IMM:
+            continue
+        if b.mode is not Mode.ZP or d.mode is not Mode.ZP:
+            continue
+        if b.operand not in pairs or d.operand != b.operand + 1:
+            continue
+        out[(a.addr, c.addr)] = a.operand | (c.operand << 8)
+    return out
+
+
+def _pointer_loads(decoded: list, labels: dict[int, str],
+                   pairs: set[int]) -> dict[int, str]:
+    """Find `LDA #lo / STA zp / LDA #hi / STA zp+1` and name the address.
+
+    Those four instructions set up a 16-bit pointer, so the two immediates are
+    halves of one address rather than independent constants.
+    """
+    out: dict[int, str] = {}
+    for (lo_addr, hi_addr), target in _pointer_targets(decoded, pairs).items():
+        name = labels.get(target)
+        if not name:
+            continue
+        out[lo_addr] = f"{name}&255"
+        out[hi_addr] = f"{name}>>8"
+    return out
 
 
 def emit_block(data: bytes, base: int, block: C64Block, sidecar: Sidecar) -> str:
@@ -297,6 +338,9 @@ def emit_block(data: bytes, base: int, block: C64Block, sidecar: Sidecar) -> str
             lines.append(f"{'':{_INDENT}}{'FCB':{_MNEM_WIDTH}}"
                          + ",".join(f"${b:02X}" for b in chunk))
 
+    decoded = [insn for _rt, insn, _b in _decode_block(data, base, block, labels, sidecar)]
+    ptr_loads = _pointer_loads(decoded, labels, set(sidecar.c64_pointers))
+
     words_left = 0
     in_petscii = False
     def flush() -> None:
@@ -356,8 +400,9 @@ def emit_block(data: bytes, base: int, block: C64Block, sidecar: Sidecar) -> str
             pending.append(byte)
             continue
         flush()
-        body = (f"{'':{_INDENT}}{insn.mnemonic:{_MNEM_WIDTH}}"
-                f"{_operand(insn, all_names, used_symbols)}").rstrip()
+        text = ptr_loads.get(rt)
+        operand = f"#{text}" if text else _operand(insn, all_names, used_symbols)
+        body = f"{'':{_INDENT}}{insn.mnemonic:{_MNEM_WIDTH}}{operand}".rstrip()
         comment = sidecar.line_comments.get(rt + block.offset)
         # A label already printed this note above; repeating it on the first
         # instruction just doubles it.

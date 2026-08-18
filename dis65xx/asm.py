@@ -108,6 +108,14 @@ def _split_values(operand: str) -> list[str]:
 
 def _value(token: str, symbols: dict[str, int], line_no: int) -> int:
     token = token.strip()
+    # Low/high byte of an address. asl spells these &255 and >>8; it rejects
+    # the <label / >label convention other 6502 assemblers use, and matching
+    # asl matters more than matching convention because it is what verifies us.
+    for op, fn in ((">>", lambda a, b: a >> b), ("&", lambda a, b: a & b)):
+        if op in token:
+            lhs, rhs = token.split(op, 1)
+            return fn(_value(lhs, symbols, line_no),
+                      _value(rhs, symbols, line_no)) & 0xFFFF
     if token.startswith("$"):
         return int(token[1:], 16)
     if token.startswith("%"):

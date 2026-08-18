@@ -285,10 +285,13 @@ c64Strings:
         FCC     "@:BTX-MAK-"
         FCB     $00
         FCC     ",S,W"
+        FCB     $00,$00,$00,$00,$00
+
+L11BE:
         FCB     $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
         FCB     $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
         FCB     $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-        FCB     $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+        FCB     $00,$00,$00,$00,$00,$00,$00,$00,$00,$00
 
 L11F8:
         FCB     $18,$00,$C0,$01,$98
@@ -1826,7 +1829,7 @@ L1FF8:
         JSR     L1057
         BCC     L2023
         LDA     #$20
-        STA     $11BE
+        STA     L11BE
         LDA     #$00
         STA     $11BF
         LDA     #$02
@@ -1847,7 +1850,7 @@ L202D:
         STY     $11B9
 
 L2036:
-        LDA     $11BE,Y
+        LDA     L11BE,Y
         JSR     IEC_CIOUT
         INC     $11B9
         LDY     $11B9
@@ -1897,7 +1900,7 @@ L208E:
         LDY     $11BC
         BEQ     L2067
         LDA     #$00
-        STA     $11BE,Y
+        STA     L11BE,Y
         JSR     L1012
         CLC
         RTS
@@ -1925,7 +1928,7 @@ L20A8:
         PLA
         BCS     L2067
         LDY     $11BC
-        STA     $11BE,Y
+        STA     L11BE,Y
         TAX
         LDA     $11E8
         PHA
@@ -2476,7 +2479,7 @@ L2404:
 L241E:
         LDA     c64ExtraFile,X
         BEQ     L2429
-        STA     $11BE,X
+        STA     L11BE,X
         INX
         BNE     L241E
 
@@ -2529,9 +2532,9 @@ c64ExtraFile:
 
 c64ShowSplash:
 ; vector 54 - print c64SplashText, then set background and colour RAM
-        LDA     #$A4
+        LDA     #c64SplashText&255
         STA     $A7
-        LDA     #$24
+        LDA     #c64SplashText>>8
         STA     $A8
 
 L247A:
@@ -2781,9 +2784,9 @@ c64Vec47:
         STA     $BA
         LDA     #$65
         STA     $B9
-        LDA     #$AA
+        LDA     #c64Strings&255
         STA     $BB
-        LDA     #$11
+        LDA     #c64Strings>>8
         STA     $BC
         LDA     #$00
         STA     $90
@@ -2859,16 +2862,16 @@ c64Vec60:
 ; vector 60 at runtime $2732 - jump-table entry 60
         LDY     $11BC
         LDA     #$2C
-        STA     $11BE,Y
+        STA     L11BE,Y
         INY
         LDA     #$50
-        STA     $11BE,Y
+        STA     L11BE,Y
         INY
         LDA     #$2C
-        STA     $11BE,Y
+        STA     L11BE,Y
         INY
         LDA     #$57
-        STA     $11BE,Y
+        STA     L11BE,Y
         INY
         STY     $B7
         JMP     L276F
@@ -2877,16 +2880,16 @@ c64Vec48:
 ; vector 48 at runtime $2752 - jump-table entry 48
         LDY     $11BC
         LDA     #$2C
-        STA     $11BE,Y
+        STA     L11BE,Y
         INY
         LDA     #$53
-        STA     $11BE,Y
+        STA     L11BE,Y
         INY
         LDA     #$2C
-        STA     $11BE,Y
+        STA     L11BE,Y
         INY
         LDA     #$57
-        STA     $11BE,Y
+        STA     L11BE,Y
         INY
         STY     $B7
 
@@ -2897,9 +2900,9 @@ L276F:
         STA     $BA
         LDA     #$64
         STA     $B9
-        LDA     #$BE
+        LDA     #L11BE&255
         STA     $BB
-        LDA     #$11
+        LDA     #L11BE>>8
         STA     $BC
         LDA     #$00
         STA     $90
@@ -2941,9 +2944,9 @@ c64Vec50:
         STA     $BA
         LDA     #$66
         STA     $B9
-        LDA     #$AA
+        LDA     #c64Strings&255
         STA     $BB
-        LDA     #$11
+        LDA     #c64Strings>>8
         STA     $BC
         LDA     #$0B
         STA     $B7
@@ -3075,9 +3078,9 @@ c64Vec16:
         STA     $BA
         LDA     #$64
         STA     $B9
-        LDA     #$BE
+        LDA     #L11BE&255
         STA     $BB
-        LDA     #$11
+        LDA     #L11BE>>8
         STA     $BC
         LDA     $11BC
         STA     $B7

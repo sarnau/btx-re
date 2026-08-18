@@ -54,6 +54,7 @@ class Sidecar:
     regions: list[Region]
     c64_blocks: list[C64Block] = dataclasses.field(default_factory=list)
     c64_symbols: dict[int, str] = dataclasses.field(default_factory=dict)
+    c64_pointers: list[int] = dataclasses.field(default_factory=list)
 
     def c64_block_at(self, addr: int) -> C64Block | None:
         for b in self.c64_blocks:
@@ -118,4 +119,5 @@ def load_sidecar(path: str | pathlib.Path) -> Sidecar:
         regions=regions,
         c64_blocks=blocks,
         c64_symbols=_int_keys(raw.get("c64_symbols", {})),
+        c64_pointers=list(raw.get("c64_pointers", [])),
     )

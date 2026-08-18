@@ -239,3 +239,26 @@ def test_extra_filename_is_a_string_not_code():
     body = src.split("c64ExtraFile:", 1)[1][:200]
     assert 'FCC     "BTX-EXTRA.MAS"' in body
     assert "FCB     $00" in body
+
+
+def test_pointer_pairs_name_their_target():
+    """LDA #lo / STA zp / LDA #hi / STA zp+1 sets up a 16-bit address, so the
+    two immediates are halves of one label rather than loose constants."""
+    src = (OUT / "c64_payload.asm").read_text()
+    assert "LDA     #c64SplashText&255" in src
+    assert "LDA     #c64SplashText>>8" in src
+    assert "LDA     #c64Strings&255" in src
+    # the low/high halves must pair with the right zero-page bytes
+    lines = [ln.strip() for ln in src.splitlines()]
+    i = lines.index("LDA     #c64SplashText&255")
+    assert lines[i + 1] == "STA     $A7"
+    assert lines[i + 2] == "LDA     #c64SplashText>>8"
+    assert lines[i + 3] == "STA     $A8"
+
+
+def test_low_high_byte_expressions_assemble():
+    """asl rejects the <label / >label convention; &255 and >>8 are its forms."""
+    src = ('        CPU 6502\n        ORG $1000\nT       EQU $24A4\n'
+           '        LDA #T&255\n        LDA #T>>8\n        END\n')
+    _, out = assemble(src)
+    assert out == bytes([0xA9, 0xA4, 0xA9, 0x24])
