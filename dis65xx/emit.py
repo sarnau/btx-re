@@ -193,7 +193,11 @@ def emit(data: bytes, result: TraceResult, sidecar: Sidecar) -> str:
         block = sidecar.block_comments.get(addr)
         region = sidecar.region_at(addr)
         insn = result.insns.get(addr)
-        is_code = insn is not None and result.kind[addr - base] is CODE
+        # An address the tracer decoded from is a real entry point even if an
+        # overlapping instruction later marked its bytes as operand - that is
+        # exactly the skip-chain case, where each stub is entered directly.
+        is_code = insn is not None and (
+            result.kind[addr - base] is CODE or addr in sidecar.labels)
 
         if label or block:
             flush()
@@ -223,6 +227,18 @@ def emit(data: bytes, result: TraceResult, sidecar: Sidecar) -> str:
                 continue
 
         if is_code:
+            # A label strictly inside this instruction is an overlapping entry
+            # point - the skip-chain idiom, where a 3-byte CPX # swallows the
+            # following stub. Emit the leading bytes as FCB so the label can sit
+            # on its own address instead of being silently dropped.
+            split = next((x for x in range(insn.addr + 1, insn.end)
+                          if x in sidecar.labels or x in sidecar.block_comments), None)
+            if split is not None:
+                flush()
+                lines.append(_fcb_line(data[addr - base:split - base])
+                             + f"{'':<8}; overlapped by the entry point below")
+                addr = split
+                continue
             flush()
             lines.append(_instruction_line(insn, sidecar))
             addr = insn.end

@@ -49,6 +49,7 @@ txRingTail    EQU     $04D1
 txCurBit      EQU     $04EA
 txShift       EQU     $04EB
 txBitsLeft    EQU     $04EC
+txRing        EQU     $04EE
 cursorRowMax  EQU     $1B00
 scrollTop     EQU     $1B1C
 scrollBottom  EQU     $1B1D
@@ -5526,8 +5527,16 @@ parseNextByte:
 ;   $D3C3  after ESC ($1B)    escTable      96 entries  A - $20, range $20-$7F
 ;   $D3E3  after CSI ($9B)    csiTable      96 entries  A - $20, range $20-$7F
 ;
-; $0497 bit 7 selects between two complete C1 sets, which is how the serial and
-; parallel attribute modes of the CEPT presentation layer are switched.
+; $0497 selects between the two complete C1 sets. escSelectC1Set ($DFB5, reached
+; by ESC $22) is what writes it: it reads a parameter byte, masks bit 0 and
+; stores $FF or $00. ESC 2/2 is the CEPT serial/parallel attribute mode select,
+; so ctrlTableC1a is the serial set and ctrlTableC1b the parallel one.
+;
+; The handler names follow the CEPT control sets and were checked against the
+; code, not just assumed: ctlAPB decrements cursorCol, ctlAPF increments it,
+; ctlCS resets scrollTop/scrollBottom, ctlRPT reads a count and re-emits the last
+; character, ctlSS2 sets the G-set selector to 2 while escLS2 sets both the
+; current and saved G-set - the single-shift versus locking-shift distinction.
 ;
 ; All 106 distinct targets lie inside the ROM. Unhandled codes fall to
 ; ctrlIgnored ($DA40, 14 of the 32 C0 slots) and seqIgnored ($FC42, 85 of the 96
@@ -6336,13 +6345,19 @@ fmtLookup:
 
 ctrlIgnored:
         JMP     $E9A2
-        DEC     cursorCol
+
+ctlAPB:
+        DEC     cursorCol               ; C0 $08 APB - cursor back
         JSR     $EC16
         JMP     parseNextByte
-        INC     cursorCol
+
+ctlAPF:
+        INC     cursorCol               ; C0 $09 APF - cursor forward
         JSR     $EC16
         JMP     parseNextByte
-        TST     $04AF
+
+ctlAPD:
+        TST     $04AF                   ; C0 $0A APD - cursor down
         BPL     $DA5D
         JMP     parseNextByte
         JSR     $EE3A
@@ -6357,7 +6372,9 @@ ctrlIgnored:
         JSR     $EC16
         JSR     $E9A5
         JMP     parseNextByte
-        TST     $04AF
+
+ctlAPU:
+        TST     $04AF                   ; C0 $0B APU - cursor up
         BPL     $DA87
         JMP     parseNextByte
         JSR     $EE3A
@@ -6372,7 +6389,9 @@ ctrlIgnored:
         JSR     $EC16
         JSR     $E9A5
         JMP     parseNextByte
-        TST     $04AF
+
+ctlCS:
+        TST     $04AF                   ; C0 $0C CS - clear screen
         BPL     $DAB1
         JMP     parseNextByte
         LDAA    #$FF
@@ -6389,26 +6408,34 @@ ctrlIgnored:
         CLR     $0495
         CLR     $1B24
         CLR     $1B25
-        JMP     $DBF2
-        CLR     cursorCol
+        JMP     ctlAPH
+
+ctlAPR:
+        CLR     cursorCol               ; C0 $0D APR - cursor to start of line
         JSR     $EC16
         JSR     $E9A5
         JMP     parseNextByte
-        TST     $04AF
+
+ctlSO:
+        TST     $04AF                   ; C0 $0E SO - shift out to G1
         BPL     $DAF0
         JMP     parseNextByte
         LDAA    #$01
         STAA    $049D
         STAA    $04A2
         JMP     parseNextByte
-        TST     $04AF
+
+ctlSI:
+        TST     $04AF                   ; C0 $0F SI - shift in to G0
         BPL     $DB03
         JMP     parseNextByte
         LDAA    #$00
         STAA    $049D
         STAA    $04A2
         JMP     parseNextByte
-        TST     $04AF
+
+ctlCON:
+        TST     $04AF                   ; C0 $11 CON - cursor on
         BPL     $DB16
         JMP     parseNextByte
         LDAA    #$FF
@@ -6420,7 +6447,9 @@ ctrlIgnored:
         ORAA    #$80
         STAA    $00,X
         JMP     parseNextByte
-        TST     $04AF
+
+ctlRPT:
+        TST     $04AF                   ; C0 $12 RPT - repeat last character
         BPL     $DB33
         JMP     parseNextByte
         JSR     $E98C
@@ -6437,12 +6466,16 @@ ctrlIgnored:
         DEC     $0490
         JMP     $DB41
         JMP     parseNextByte
-        TST     $04AF
+
+ctlCOF:
+        TST     $04AF                   ; C0 $14 COF - cursor off
         BPL     $DB63
         JMP     parseNextByte
         CLR     $1B20
         JMP     parseNextByte
-        LDX     rowAttr
+
+ctlCAN:
+        LDX     rowAttr                 ; C0 $18 CAN - cancel to end of line
         LDAA    $00,X
         BMI     $DB66
         LDAB    cursorCol
@@ -6488,25 +6521,33 @@ ctrlIgnored:
         LDAA    $0490
         STAA    cursorCol
         JMP     parseNextByte
-        TST     $04AF
+
+ctlSS2:
+        TST     $04AF                   ; C0 $19 SS2 - single shift G2
         BPL     $DBDA
         JMP     parseNextByte
         LDAA    #$02
         STAA    $049F
         JMP     parseNextByte
-        TST     $04AF
+
+ctlSS3:
+        TST     $04AF                   ; C0 $1D SS3 - single shift G3
         BPL     $DBEA
         JMP     parseNextByte
         LDAA    #$03
         STAA    $049F
         JMP     parseNextByte
-        CLR     cursorRow
+
+ctlAPH:
+        CLR     cursorRow               ; C0 $1E APH - cursor home
         CLR     cursorCol
         JSR     $ECB5
         JSR     $E9A5
         JSR     $EE3A
         JMP     parseNextByte
-        TST     $04AF
+
+ctlUS:
+        TST     $04AF                   ; C0 $1F US - unit separator
         BPL     $DC0C
         JSR     $E744
         JSR     $E98C
@@ -6547,19 +6588,61 @@ ctrlIgnored:
         JSR     $E9A5
         JMP     parseNextByte
         JMP     $D34C
-        LDAA    #$00
-        BITA    $8601
-        BITA    $8602
-        BITA    $8603
-        BITA    $8604
-        BITA    $8605
-        BITA    $8606
-        BITA    $8607
+
+; Colour handlers, written as a skip chain.
+;
+; The eight entries are three bytes apart and each is a separate jump-table
+; target:
+;
+;     c1aAlphaBlack:  LDAA #$00
+;                     FCB  $B5        <- BITA extended, swallows the next stub
+;     c1aAlphaRed:    LDAA #$01
+;                     FCB  $B5
+;     ...
+;
+; Entering at any stub loads that colour index; the $B5 opcode then consumes the
+; following LDAA as its own two operand bytes, so control falls through to the
+; common tail without a jump. Three bytes per colour instead of five.
+;
+; The listing shows the skipped opcode as FCB because it overlaps the next entry
+; point. The same idiom appears at $DD41, $DE01 and $DE9C.
+c1aAlphaBlack:
+        LDAA    #$00                    ; C1 $80 AlphaBlack - alphanumeric foreground black (serial set)
+        FCB     $B5        ; overlapped by the entry point below
+
+c1aAlphaRed:
+        LDAA    #$01                    ; C1 $81 AlphaRed - alphanumeric foreground red (serial set)
+        FCB     $B5        ; overlapped by the entry point below
+
+c1aAlphaGreen:
+        LDAA    #$02                    ; C1 $82 AlphaGreen - alphanumeric foreground green (serial set)
+        FCB     $B5        ; overlapped by the entry point below
+
+c1aAlphaYellow:
+        LDAA    #$03                    ; C1 $83 AlphaYellow - alphanumeric foreground yellow (serial set)
+        FCB     $B5        ; overlapped by the entry point below
+
+c1aAlphaBlue:
+        LDAA    #$04                    ; C1 $84 AlphaBlue - alphanumeric foreground blue (serial set)
+        FCB     $B5        ; overlapped by the entry point below
+
+c1aAlphaMagenta:
+        LDAA    #$05                    ; C1 $85 AlphaMagenta - alphanumeric foreground magenta (serial set)
+        FCB     $B5        ; overlapped by the entry point below
+
+c1aAlphaCyan:
+        LDAA    #$06                    ; C1 $86 AlphaCyan - alphanumeric foreground cyan (serial set)
+        FCB     $B5        ; overlapped by the entry point below
+
+c1aAlphaWhite:
+        LDAA    #$07                    ; C1 $87 AlphaWhite - alphanumeric foreground white (serial set)
         JSR     $E9CE
         LDAA    $04A2
         STAA    $049D
         JMP     $DDFB
-        LDX     #$1003
+
+c1aFSH:
+        LDX     #$1003                  ; C1 $88 FSH - flash on (serial set)
         LDAB    #$80
         LDAA    #$00
         JSR     $E4FF
@@ -6572,7 +6655,9 @@ ctrlIgnored:
         LDAA    #$10
         JSR     $E4FF
         JMP     $DDFB
-        LDX     #$1003
+
+c1aSTD:
+        LDX     #$1003                  ; C1 $89 STD - steady (serial set)
         LDAB    #$80
         TBA
         JSR     $E4FF
@@ -6585,22 +6670,30 @@ ctrlIgnored:
         LDAA    #$10
         JSR     $E4FF
         JMP     $DDFB
-        LDX     #$4000
+
+c1aEBX:
+        LDX     #$4000                  ; C1 $8A EBX - end box (serial set)
         LDAB    #$04
         LDAA    #$00
         JSR     $E4FF
         JMP     $DDFB
-        LDX     #$4000
+
+c1aSBX:
+        LDX     #$4000                  ; C1 $8B SBX - start box (serial set)
         LDAB    #$04
         LDAA    #$04
         JSR     $E4FF
         JMP     $DDFB
-        LDX     #$0400
+
+c1aNSZ:
+        LDX     #$0400                  ; C1 $8C NSZ - normal size (serial set)
         LDAB    #$03
         LDAA    #$00
         JSR     $E4FF
         JMP     $DDFB
-        LDX     rowAttr
+
+c1aDBH:
+        LDX     rowAttr                 ; C1 $8D DBH - double height (serial set)
         LDAA    $00,X
         BMI     $DD3E
         LDX     #$0400
@@ -6608,12 +6701,16 @@ ctrlIgnored:
         LDAA    #$01
         JSR     $E4FF
         JMP     $DD2A
-        LDX     #$0400
+
+c1aDBW:
+        LDX     #$0400                  ; C1 $8E DBW - double width (serial set)
         LDAB    #$03
         LDAA    #$02
         JSR     $E4FF
         JMP     $DDFB
-        LDX     rowAttr
+
+c1aDBS:
+        LDX     rowAttr                 ; C1 $8F DBS - double size (serial set)
         LDAA    $00,X
         BMI     $DD3E
         LDX     #$0400
@@ -6628,14 +6725,37 @@ ctrlIgnored:
         JSR     $EC16
         JSR     $E9A5
         JMP     $DDFB
-        LDAA    #$00
-        BITA    $8601
-        BITA    $8602
-        BITA    $8603
-        BITA    $8604
-        BITA    $8605
-        BITA    $8606
-        BITA    $8607
+
+c1aMosaicBlack:
+        LDAA    #$00                    ; C1 $90 MosaicBlack - mosaic foreground black (serial set)
+        FCB     $B5        ; overlapped by the entry point below
+
+c1aMosaicRed:
+        LDAA    #$01                    ; C1 $91 MosaicRed - mosaic foreground red (serial set)
+        FCB     $B5        ; overlapped by the entry point below
+
+c1aMosaicGreen:
+        LDAA    #$02                    ; C1 $92 MosaicGreen - mosaic foreground green (serial set)
+        FCB     $B5        ; overlapped by the entry point below
+
+c1aMosaicYellow:
+        LDAA    #$03                    ; C1 $93 MosaicYellow - mosaic foreground yellow (serial set)
+        FCB     $B5        ; overlapped by the entry point below
+
+c1aMosaicBlue:
+        LDAA    #$04                    ; C1 $94 MosaicBlue - mosaic foreground blue (serial set)
+        FCB     $B5        ; overlapped by the entry point below
+
+c1aMosaicMagenta:
+        LDAA    #$05                    ; C1 $95 MosaicMagenta - mosaic foreground magenta (serial set)
+        FCB     $B5        ; overlapped by the entry point below
+
+c1aMosaicCyan:
+        LDAA    #$06                    ; C1 $96 MosaicCyan - mosaic foreground cyan (serial set)
+        FCB     $B5        ; overlapped by the entry point below
+
+c1aMosaicWhite:
+        LDAA    #$07                    ; C1 $97 MosaicWhite - mosaic foreground white (serial set)
         STAA    $048D
         TST     $04AF
         BPL     $DD63
@@ -6647,26 +6767,38 @@ ctrlIgnored:
         LDAA    #$FF
         STAA    $049D
         JMP     $DDFB
-        LDX     #$2003
+
+c1aCDY:
+        LDX     #$2003                  ; C1 $98 CDY - conceal display (serial set)
         LDAB    #$08
         LDAA    #$00
         JSR     $E4FF
         JMP     $DDFB
-        LDX     #$0800
+
+c1aSPL:
+        LDX     #$0800                  ; C1 $99 SPL - stop lining (serial set)
         LDAB    #$08
         LDAA    #$00
         JSR     $E4FF
         JMP     $DDFB
-        LDX     #$0800
+
+c1aSTL:
+        LDX     #$0800                  ; C1 $9A STL - start lining (serial set)
         LDAB    #$08
         LDAA    #$08
         JSR     $E4FF
         JMP     $DDFB
-        JMP     $E9A2
-        LDAA    #$00
+
+c1aCSI:
+        JMP     $E9A2                   ; C1 $9B CSI - control sequence introducer (serial set)
+
+c1aBBD:
+        LDAA    #$00                    ; C1 $9C BBD - black background (serial set)
         JSR     $E9FF
         JMP     $DDFB
-        LDAB    cursorCol
+
+c1aNBD:
+        LDAB    cursorCol               ; C1 $9D NBD - new background (serial set)
         ASLB
         ASLB
         LDX     rowAttr
@@ -6690,7 +6822,9 @@ ctrlIgnored:
         LDX     #$0202
         JSR     $E4FF
         JMP     $DDFB
-        TST     $04AF
+
+c1aHMS:
+        TST     $04AF                   ; C1 $9E HMS - hold mosaic (serial set)
         BPL     $DDE0
         JMP     parseNextByte
         LDAA    $049D
@@ -6698,24 +6832,51 @@ ctrlIgnored:
         LDAA    charCode
         STAA    $0498
         JMP     $DDFB
-        TST     $04AF
+
+c1aRMS:
+        TST     $04AF                   ; C1 $9F RMS - release mosaic (serial set)
         BPL     $DDF6
         JMP     parseNextByte
         LDAA    #$09
         STAA    $0498
         LDAA    $0498
         JMP     $D358
-        LDAA    #$00
-        BITA    $8601
-        BITA    $8602
-        BITA    $8603
-        BITA    $8604
-        BITA    $8605
-        BITA    $8606
-        BITA    $8607
+
+c1bAlphaBlack:
+        LDAA    #$00                    ; C1 $80 AlphaBlack - alphanumeric foreground black (parallel set)
+        FCB     $B5        ; overlapped by the entry point below
+
+c1bAlphaRed:
+        LDAA    #$01                    ; C1 $81 AlphaRed - alphanumeric foreground red (parallel set)
+        FCB     $B5        ; overlapped by the entry point below
+
+c1bAlphaGreen:
+        LDAA    #$02                    ; C1 $82 AlphaGreen - alphanumeric foreground green (parallel set)
+        FCB     $B5        ; overlapped by the entry point below
+
+c1bAlphaYellow:
+        LDAA    #$03                    ; C1 $83 AlphaYellow - alphanumeric foreground yellow (parallel set)
+        FCB     $B5        ; overlapped by the entry point below
+
+c1bAlphaBlue:
+        LDAA    #$04                    ; C1 $84 AlphaBlue - alphanumeric foreground blue (parallel set)
+        FCB     $B5        ; overlapped by the entry point below
+
+c1bAlphaMagenta:
+        LDAA    #$05                    ; C1 $85 AlphaMagenta - alphanumeric foreground magenta (parallel set)
+        FCB     $B5        ; overlapped by the entry point below
+
+c1bAlphaCyan:
+        LDAA    #$06                    ; C1 $86 AlphaCyan - alphanumeric foreground cyan (parallel set)
+        FCB     $B5        ; overlapped by the entry point below
+
+c1bAlphaWhite:
+        LDAA    #$07                    ; C1 $87 AlphaWhite - alphanumeric foreground white (parallel set)
         JSR     $E9CE
         JMP     parseNextByte
-        LDAA    attr3
+
+c1bFSH:
+        LDAA    attr3                   ; C1 $88 FSH - flash on (parallel set)
         ANDA    #$4F
         ORAA    #$10
         STAA    attr3
@@ -6726,7 +6887,9 @@ ctrlIgnored:
         ORAA    #$80
         STAA    attr1
         JMP     parseNextByte
-        LDAA    #$00
+
+c1bSTD:
+        LDAA    #$00                    ; C1 $89 STD - steady (parallel set)
         STAA    $04B0
         LDAA    attr1
         ANDA    #$3F
@@ -6737,64 +6900,113 @@ ctrlIgnored:
         ORAA    #$B0
         STAA    attr3
         JMP     parseNextByte
-        LDAA    attr0
+
+c1bEBX:
+        LDAA    attr0                   ; C1 $8A EBX - end box (parallel set)
         ANDA    #$FB
         STAA    attr0
         JMP     parseNextByte
-        LDAA    attr0
+
+c1bSBX:
+        LDAA    attr0                   ; C1 $8B SBX - start box (parallel set)
         ORAA    #$04
         STAA    attr0
         JMP     parseNextByte
-        LDAA    attr0
+
+c1bNSZ:
+        LDAA    attr0                   ; C1 $8C NSZ - normal size (parallel set)
         ANDA    #$FC
         STAA    attr0
         JMP     parseNextByte
-        LDAA    attr0
+
+c1bDBH:
+        LDAA    attr0                   ; C1 $8D DBH - double height (parallel set)
         ANDA    #$FC
         ORAA    #$01
         STAA    attr0
         JMP     parseNextByte
-        LDAA    attr0
+
+c1bDBW:
+        LDAA    attr0                   ; C1 $8E DBW - double width (parallel set)
         ANDA    #$FC
         ORAA    #$02
         STAA    attr0
         JMP     parseNextByte
-        LDAA    attr0
+
+c1bDBS:
+        LDAA    attr0                   ; C1 $8F DBS - double size (parallel set)
         ORAA    #$03
         STAA    attr0
         JMP     parseNextByte
-        LDAA    #$00
-        BITA    $8601
-        BITA    $8602
-        BITA    $8603
-        BITA    $8604
-        BITA    $8605
-        BITA    $8606
-        BITA    $8607
+
+c1bMosaicBlack:
+        LDAA    #$00                    ; C1 $90 MosaicBlack - mosaic foreground black (parallel set)
+        FCB     $B5        ; overlapped by the entry point below
+
+c1bMosaicRed:
+        LDAA    #$01                    ; C1 $91 MosaicRed - mosaic foreground red (parallel set)
+        FCB     $B5        ; overlapped by the entry point below
+
+c1bMosaicGreen:
+        LDAA    #$02                    ; C1 $92 MosaicGreen - mosaic foreground green (parallel set)
+        FCB     $B5        ; overlapped by the entry point below
+
+c1bMosaicYellow:
+        LDAA    #$03                    ; C1 $93 MosaicYellow - mosaic foreground yellow (parallel set)
+        FCB     $B5        ; overlapped by the entry point below
+
+c1bMosaicBlue:
+        LDAA    #$04                    ; C1 $94 MosaicBlue - mosaic foreground blue (parallel set)
+        FCB     $B5        ; overlapped by the entry point below
+
+c1bMosaicMagenta:
+        LDAA    #$05                    ; C1 $95 MosaicMagenta - mosaic foreground magenta (parallel set)
+        FCB     $B5        ; overlapped by the entry point below
+
+c1bMosaicCyan:
+        LDAA    #$06                    ; C1 $96 MosaicCyan - mosaic foreground cyan (parallel set)
+        FCB     $B5        ; overlapped by the entry point below
+
+c1bMosaicWhite:
+        LDAA    #$07                    ; C1 $97 MosaicWhite - mosaic foreground white (parallel set)
         JSR     $E9FF
         JMP     parseNextByte
-        LDAA    attr3
+
+c1bCDY:
+        LDAA    attr3                   ; C1 $98 CDY - conceal display (parallel set)
         ANDA    #$F7
         STAA    attr3
         JMP     parseNextByte
-        LDAA    attr0
+
+c1bSPL:
+        LDAA    attr0                   ; C1 $99 SPL - stop lining (parallel set)
         ANDA    #$F7
         STAA    attr0
         JMP     parseNextByte
-        LDAA    attr0
+
+c1bSTL:
+        LDAA    attr0                   ; C1 $9A STL - start lining (parallel set)
         ORAA    #$08
         STAA    attr0
         JMP     parseNextByte
-        JMP     $E9A2
-        LDAA    attr3
+
+c1bCSI:
+        JMP     $E9A2                   ; C1 $9B CSI - control sequence introducer (parallel set)
+
+c1bBBD:
+        LDAA    attr3                   ; C1 $9C BBD - black background (parallel set)
         ANDA    #$FB
         STAA    attr3
         JMP     parseNextByte
-        LDAA    attr3
+
+c1bNBD:
+        LDAA    attr3                   ; C1 $9D NBD - new background (parallel set)
         ORAA    #$04
         STAA    attr3
         JMP     parseNextByte
-        LDAA    attr3
+
+c1bHMS:
+        LDAA    attr3                   ; C1 $9E HMS - hold mosaic (parallel set)
         ANDA    #$FC
         ORAA    #$01
         STAA    attr3
@@ -6802,28 +7014,42 @@ ctrlIgnored:
         ANDA    #$1F
         STAA    attr2
         JMP     parseNextByte
-        LDAA    attr3
+
+c1bRMS:
+        LDAA    attr3                   ; C1 $9F RMS - release mosaic (parallel set)
         ORAA    #$08
         STAA    attr3
         JMP     parseNextByte
-        LDAA    #$01
+
+escLS1R:
+        LDAA    #$01                    ; ESC $7E - locking shift G1 right
         STAA    $049E
         JMP     parseNextByte
-        LDAA    #$02
+
+escLS2R:
+        LDAA    #$02                    ; ESC $7D - locking shift G2 right
         STAA    $049E
         JMP     parseNextByte
-        LDAA    #$03
+
+escLS3R:
+        LDAA    #$03                    ; ESC $7C - locking shift G3 right
         STAA    $049E
         JMP     parseNextByte
-        LDAA    #$02
+
+escLS2:
+        LDAA    #$02                    ; ESC $6E - locking shift G2
         STAA    $049D
         STAA    $04A2
         JMP     parseNextByte
-        LDAA    #$03
+
+escLS3:
+        LDAA    #$03                    ; ESC $6F - locking shift G3
         STAA    $049D
         STAA    $04A2
         JMP     parseNextByte
-        JSR     $E98C
+
+escDesignateG0:
+        JSR     $E98C                   ; ESC $28 - ESC 2/8
         CMPA    #$20
         BNE     $DF53
         LDAA    #$05
@@ -6835,7 +7061,9 @@ ctrlIgnored:
         DECA
         STAA    $0499
         JMP     parseNextByte
-        JSR     $E98C
+
+escDesignateG1:
+        JSR     $E98C                   ; ESC $29 - ESC 2/9
         CMPA    #$20
         BNE     $DF70
         LDAA    #$05
@@ -6847,7 +7075,9 @@ ctrlIgnored:
         DECA
         STAA    $049A
         JMP     parseNextByte
-        JSR     $E98C
+
+escDesignateG2:
+        JSR     $E98C                   ; ESC $2A - ESC 2/10
         CMPA    #$20
         BNE     $DF8D
         LDAA    #$05
@@ -6859,7 +7089,9 @@ ctrlIgnored:
         DECA
         STAA    $049B
         JMP     parseNextByte
-        JSR     $E98C
+
+escDesignateG3:
+        JSR     $E98C                   ; ESC $2B - ESC 2/11
         CMPA    #$20
         BNE     $DFAA
         LDAA    #$05
@@ -6871,7 +7103,9 @@ ctrlIgnored:
         DECA
         STAA    $049C
         JMP     parseNextByte
-        JSR     $E98C
+
+escSelectC1Set:
+        JSR     $E98C                   ; ESC $22 - ESC 2/2 - writes $0497, choosing ctrlTableC1a or C1b
         ANDA    #$01
         BEQ     $DFC7
         LDAA    $04A2
@@ -7137,7 +7371,9 @@ ctrlIgnored:
         LDAA    #$FF
         STAA    $1B23
         JMP     $E4F4
-        JSR     $E98C
+
+csiDigit0:
+        JSR     $E98C                   ; CSI $30 - numeric parameter '0'
         CMPA    #$40
         BNE     $E25E
         JMP     $DFCF
@@ -7151,7 +7387,9 @@ ctrlIgnored:
         BCS     $E273
         JMP     $DFE0
         JMP     $E9A2
-        JSR     $E98C
+
+csiDigit1:
+        JSR     $E98C                   ; CSI $31 - numeric parameter '1'
         CMPA    #$40
         BNE     $E280
         JMP     $DFD2
@@ -7171,7 +7409,9 @@ ctrlIgnored:
         BCS     $E2A3
         JMP     $DFE3
         JMP     $E9A2
-        JSR     $E98C
+
+csiDigit2:
+        JSR     $E98C                   ; CSI $32 - numeric parameter '2'
         CMPA    #$40
         BNE     $E2B0
         JMP     $DFD5
@@ -7191,7 +7431,9 @@ ctrlIgnored:
         BCS     $E2D3
         JMP     $DFE6
         JMP     $E9A2
-        JSR     $E98C
+
+csiDigit3:
+        JSR     $E98C                   ; CSI $33 - numeric parameter '3'
         CMPA    #$40
         BNE     $E2E0
         JMP     $DFD8
@@ -7205,7 +7447,9 @@ ctrlIgnored:
         BCS     $E2F5
         JMP     $DFE9
         JMP     $E9A2
-        JSR     $E98C
+
+csiDigit4:
+        JSR     $E98C                   ; CSI $34 - numeric parameter '4'
         CMPA    #$41
         BNE     $E302
         JMP     $E108
@@ -7213,7 +7457,9 @@ ctrlIgnored:
         BCS     $E309
         JMP     $DFEC
         JMP     $E9A2
-        JSR     $E98C
+
+csiDigit5:
+        JSR     $E98C                   ; CSI $35 - numeric parameter '5'
         CMPA    #$41
         BNE     $E316
         JMP     $E122
@@ -7221,7 +7467,9 @@ ctrlIgnored:
         BCS     $E31D
         JMP     $DFEF
         JMP     $E9A2
-        JSR     $E98C
+
+csiDigit6:
+        JSR     $E98C                   ; CSI $36 - numeric parameter '6'
         CMPA    #$41
         BNE     $E32A
         JMP     $E1BB
@@ -7229,27 +7477,37 @@ ctrlIgnored:
         BCS     $E331
         JMP     $DFF2
         JMP     $E9A2
-        JSR     $E98C
+
+csiDigit7:
+        JSR     $E98C                   ; CSI $37 - numeric parameter '7'
         CMPA    #$30
         BCS     $E33E
         JMP     $DFF5
         JMP     $E9A2
-        JSR     $E98C
+
+csiDigit8:
+        JSR     $E98C                   ; CSI $38 - numeric parameter '8'
         CMPA    #$30
         BCS     $E34B
         JMP     $DFF8
         JMP     $E9A2
-        JSR     $E98C
+
+csiDigit9:
+        JSR     $E98C                   ; CSI $39 - numeric parameter '9'
         CMPA    #$30
         BCS     $E358
         JMP     $DFFB
         JMP     $E9A2
-        LDX     #$2003
+
+csiFinalB:
+        LDX     #$2003                  ; CSI $42 - final byte 'B'
         LDAB    #$08
         TBA
         JSR     $E573
         JMP     $E4F4
-        JSR     $E98C
+
+escDefine:
+        JSR     $E98C                   ; ESC $23 - ESC 2/3 - definition sequence
         CMPA    #$20
         BNE     $E371
         JMP     $E4C7
@@ -7602,7 +7860,7 @@ ctrlIgnored:
         INX
         CPX     #$1B1C
         BNE     $E69A
-        JMP     $DAA9
+        JMP     ctlCS
         CLR     $0499
         CLR     $049D
         CLR     $04A2
