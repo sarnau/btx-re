@@ -15,6 +15,20 @@ REGION_KINDS = {"code", "bytes", "words", "string", "ptr_table", "chargen",
 
 
 @dataclasses.dataclass(frozen=True)
+class CpuSpan:
+    """A range the listing assembles under a non-default CPU.
+
+    Orthogonal to Region: a span says which instruction set is in force, while
+    regions say whether a given range is code or data. Data inside a 6502 span
+    still renders as FCB, just under CPU 6502.
+    """
+
+    start: int
+    end: int      # exclusive
+    cpu: str
+
+
+@dataclasses.dataclass(frozen=True)
 class Region:
     start: int
     end: int      # exclusive
@@ -31,6 +45,14 @@ class Sidecar:
     block_comments: dict[int, str]
     symbols: dict[int, str]
     regions: list[Region]
+    cpu_spans: list[CpuSpan] = dataclasses.field(default_factory=list)
+
+    def cpu_at(self, addr: int) -> str:
+        """Instruction set in force at `addr`. The 6801 is the default."""
+        for span in self.cpu_spans:
+            if span.start <= addr < span.end:
+                return span.cpu
+        return "6801"
 
     def region_at(self, addr: int) -> Region | None:
         for r in self.regions:
@@ -71,6 +93,14 @@ def load_sidecar(path: str | pathlib.Path) -> Sidecar:
                 f"regions overlap: ${a.start:04X}-${a.end:04X} and ${b.start:04X}-${b.end:04X}"
             )
 
+    spans = [CpuSpan(start=c["start"], end=c["end"], cpu=c["cpu"])
+             for c in raw.get("cpu_spans", [])]
+    spans.sort(key=lambda c: c.start)
+    for a, b in zip(spans, spans[1:]):
+        if a.end > b.start:
+            raise ValueError(
+                f"cpu_spans overlap: ${a.start:04X}-${a.end:04X} and ${b.start:04X}-${b.end:04X}")
+
     return Sidecar(
         rom=meta["rom"],
         base=meta["base"],
@@ -80,4 +110,5 @@ def load_sidecar(path: str | pathlib.Path) -> Sidecar:
         block_comments=_int_keys(raw.get("block_comments", {})),
         symbols=_int_keys(raw.get("symbols", {})),
         regions=regions,
+        cpu_spans=spans,
     )

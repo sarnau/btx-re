@@ -82,8 +82,6 @@ def format_operand_6502(insn) -> str:
 def _emit_6502(data: bytes, base: int, start: int, end: int,
                sidecar: Sidecar, lines: list[str]) -> None:
     """Linear-disassemble a code6502 region. Undecodable bytes become FCB."""
-    lines.append("")
-    lines.append(f"{'':{_INDENT}}{'CPU':{_MNEM_WIDTH}}6502")
     addr = start
     pending: list[int] = []
 
@@ -122,8 +120,6 @@ def _emit_6502(data: bytes, base: int, start: int, end: int,
         lines.append(f"{body:<40}; {comment}" if comment else body)
         addr = insn.end
     flush()
-    lines.append(f"{'':{_INDENT}}{'CPU':{_MNEM_WIDTH}}6801")
-    lines.append("")
 
 
 def _instruction_line(insn: Insn, sidecar: Sidecar) -> str:
@@ -188,7 +184,16 @@ def emit(data: bytes, result: TraceResult, sidecar: Sidecar) -> str:
             del pending[:BYTES_PER_FCB]
             lines.append(_fcb_line(chunk))
 
+    current_cpu = "6801"
     while addr < end:
+        desired = sidecar.cpu_at(addr)
+        if desired != current_cpu:
+            flush()
+            lines.append("")
+            lines.append(f"{'':{_INDENT}}{'CPU':{_MNEM_WIDTH}}{desired}")
+            lines.append("")
+            current_cpu = desired
+
         label = sidecar.labels.get(addr)
         block = sidecar.block_comments.get(addr)
         region = sidecar.region_at(addr)

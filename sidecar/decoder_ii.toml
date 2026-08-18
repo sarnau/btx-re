@@ -160,6 +160,7 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 
 
 [labels]
+"0xB45F" = "c64VecTableEnd"
 "0xB4B0" = "c64VarBlock"
 "0xB5A5" = "c64TextBlock"
 "0xBA56" = "c64ScreenInit"
@@ -383,6 +384,13 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xFFF0" = "vectors"
 
 [block_comments]
+"0xB45F" = """
+Data following the C64 payload's jump table.
+
+The table is 61 entries of three bytes, $B3A8-$B45E, ending with JMP $2732.
+Everything from here to c64Strings is data, not code: runs of $00 and 4-byte
+records such as 89 10 52 00 / 8B 10 41 00 / 8A 10 54 00, which look like a
+key or character translation table. Not yet decoded."""
 "0xB3A8" = """
 C64 payload: a 61-entry JMP dispatch table at runtime $1000-$10B6, then code at
 $174C-$2943 with data below it. The table is the module's whole API surface and
@@ -1162,8 +1170,13 @@ kind = "bytes"
 
 [[regions]]
 start = 0xB3A8
-end = 0xB552
+end = 0xB45F
 kind = "code6502"
+
+[[regions]]
+start = 0xB45F
+end = 0xB552
+kind = "bytes"
 
 [[regions]]
 start = 0xB552
@@ -1233,3 +1246,11 @@ kind = "bytes"
 start = 0xF9FA
 end = 0xFA3A
 kind = "ptr_table"
+
+# The C64-side code runs on the 6502. The span covers the cartridge header, the
+# loader, the streamed payload and the text between them; data inside it still
+# renders as FCB, just under CPU 6502. It ends where ctrlTableC0 begins.
+[[cpu_spans]]
+start = 0xB32D
+end = 0xD109
+cpu = "6502"

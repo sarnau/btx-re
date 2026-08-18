@@ -4,10 +4,28 @@ import build
 from dis65xx.asm import assemble
 
 
-def test_listing_switches_cpu_around_the_6502_regions():
-    listing = build.run(write=False).listing
-    assert "CPU     6502" in listing
-    assert listing.count("CPU     6502") == listing.count("CPU     6801") - 1  # 1 header
+def test_cpu_switches_once_around_a_single_span():
+    """One CPU 6502 span covers all the C64-side code, header and text alike.
+
+    The directive is an assembler mode over a range, not a per-region marker -
+    data inside the span still renders as FCB, just under CPU 6502.
+    """
+    lines = build.run(write=False).listing.splitlines()
+    cpu = [(i, ln.split()[1]) for i, ln in enumerate(lines) if ln.strip().startswith("CPU")]
+    assert [c for _, c in cpu] == ["6801", "6502", "6801"], cpu
+
+    def line_of(label):
+        return next(i for i, ln in enumerate(lines) if ln.startswith(label + ":"))
+
+    # 6502 mode opens before the cartridge header and closes before ctrlTableC0
+    assert cpu[1][0] < line_of("c64CartHeader")
+    assert line_of("c64Payload") < cpu[2][0] < line_of("ctrlTableC0")
+
+
+def test_data_inside_the_span_still_renders_as_fcb():
+    lines = build.run(write=False).listing.splitlines()
+    start = next(i for i, ln in enumerate(lines) if ln.startswith("c64CartHeader:"))
+    assert "FCB" in lines[start + 1]
 
 
 def test_6502_region_disassembles_rather_than_dumping_bytes():

@@ -24,6 +24,7 @@ Bildschirmtext Decoder II ROM (`c64_btx_decoder_ii.bin`, MC6801, 32 KB at
 | `block_comments` | Address → multi-line banner above that address. |
 | `symbols` | Address → name for hardware registers and RAM locations. |
 | `regions` | Typed data ranges: `bytes`, `words`, `string`, `ptr_table`, `chargen`, `code6502`. |
+| `cpu_spans` | Ranges assembling under a non-default CPU. Orthogonal to regions. |
 
 `entry_points` must appear **above** the `[meta]` header. TOML assigns bare keys
 written after a table header to that table, so putting it below silently makes it
@@ -47,9 +48,11 @@ their paths point at real files.
 ## Two instruction sets
 
 The image holds a C64-side 6502 program as well as the 68B01 firmware, so the
-listing carries both. A `code6502` region is linear-disassembled as 6502 and
-bracketed with `CPU 6502` / `CPU 6801`, which asl and `dis65xx/asm.py` both
-honour. Undecodable bytes inside such a region fall back to `FCB`.
+listing carries both. A `cpu_spans` entry says which instruction set is in force over a range; a
+`code6502` region says a range is 6502 *code*. The two are orthogonal, so data
+inside a 6502 span still renders as `FCB` - just under `CPU 6502`. One span
+covers all the C64-side material, opening before the cartridge header and
+closing where `ctrlTableC0` begins, which asl and `dis65xx/asm.py` both honour.
 
 The payload is stored at one address and runs at another, so its absolute
 operands are runtime addresses with no position in this ROM. They are emitted

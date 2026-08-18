@@ -2427,6 +2427,9 @@ sendPayloadToC64:
         STAA    c64XferDone
         RTS
 
+        CPU     6502
+
+
 ; C64-side 6502 code, $B32D-$D108. Not 6801 - the cartridge carries the C64's
 ; BTX terminal application in the same 32 KB image as the 68B01 firmware, which
 ; is why a 6801 trace never reaches it.
@@ -2484,8 +2487,6 @@ c64CartHeader:
         FCB     $00,$00,$00
 
 c64ColdStart:
-
-        CPU     6502
         LDX     #$00
         STX     $D016
         JSR     $FDA3
@@ -2530,8 +2531,6 @@ c64ColdStart:
         STX     $800A
         CLC
         RTS
-        CPU     6801
-
 
 c64LoadAddr:
         FCB     $00,$10
@@ -2564,8 +2563,6 @@ c64LoadAddr:
 ;     ($2C $00 $C0 $01 $98). Nothing addresses them directly, so they are reached
 ;     by index; the only LDA #$2D in the payload is at runtime $287B.
 c64Payload:
-
-        CPU     6502
         JMP     $16AE
         JMP     $16FF
         JMP     $174C
@@ -2627,166 +2624,33 @@ c64Payload:
         JMP     $2B17
         JMP     $2952
         JMP     $2732
-        BRK
-        BRK
-        BRK
-        BRK
-        BRK
-        BRK
-        BRK
-        BRK
-        BRK
-        LDA     >$002B,X
-        FCB     $80
-        LDA     $CE2B,X
-        BPL     $B4BB
-        ORA     ($6F),Y
-        AND     #$70
-        ASL     $0D,X
-        ORA     >$0000
-        STA     $0A0D
-        BRK
-        STA     ($0B),Y
-        BRK
-        BRK
-        ORA     ($0A),Y
-        BRK
-        BRK
-        ORA     >$0009,X
-        BRK
-        FCB     $14
-        PHP
-        BRK
-        BRK
-        STA     >$0008,X
-        BRK
-        FCB     $13
-        ASL     >$0000,X
-        FCB     $93,$0C
-        BRK
-        BRK
-        STA     $13
-        BRK
-        BRK
-        STX     $1C
-        BRK
-        BRK
-        FCB     $87,$1A
-        BRK
-        BRK
-        FCB     $89
-        BPL     $B4FB
-        BRK
-        FCB     $8B
-        BPL     $B4EE
-        BRK
-        TXA
-        BPL     $B505
-        BRK
-        STY     $4510
-        BRK
-        BCC     $B438
-        BRK
-        BRK
-        ORA     $87
-        BRK
-        BRK
-        FCB     $1C
-        STA     ($00,X)
-        BRK
-        FCB     $9F
-        STX     $00
-        BRK
-        FCB     $9C
-        STA     $00
-        BRK
-        ASL     >$0082,X
-        BRK
-        FCB     $1F
-        STY     $00
-        BRK
-        FCB     $9E,$83
-        BRK
-        BRK
-        FCB     $5F
-        ORA     ($00),Y
-        BRK
-        ASL     $14
-        BRK
-        BRK
-        LDX     >$0013
-        BRK
-        FCB     $AB
-        ORA     ($00),Y
-        BRK
-        BIT     $A4
-        BRK
-        BRK
-        FCB     $5C,$A3
-        BRK
-        BRK
-        BRK
-        BRK
-        BRK
-        BRK
-        FCB     $23
-        ORA     >$0027,Y
-        FCB     $27,$2F
-        BRK
-        BRK
-        FCB     $2B
-        ORA     >$007B,Y
-        FCB     $DB,$3F
-        BRK
-        BRK
-        AND     $4219
-        JSR     $19DD
-        EOR     ($20,X)
-        FCB     $5C,$5B
-        BRK
-        BRK
-        LDA     #$19
-        AND     $4000
-        ORA     $7548,Y
-        TSX
-        ORA     $5548,Y
-        ROL     A
-        FCB     $2B
-        BRK
-        BRK
-        CPY     #$2A
-        BRK
-        BRK
-        LSR     >$005D,X
-        BRK
-        DEC     >$005C,X
-        BRK
-        FCB     $3A
-        ORA     $6F48,Y
-        FCB     $5B
-        ORA     $4F48,Y
-        FCB     $3B
-        ORA     $6148,Y
-        EOR     $4819,X
-        EOR     ($3D,X)
-        FCB     $23
-        BRK
-        BRK
-        FCB     $3C,$3B
-        BRK
-        BRK
-        ROL     >$003A,X
-        BRK
-        FCB     $2F
-        AND     >$0000
-        FCB     $3F
-        AND     >$0000,X
-        BRK
-        BRK
-        BRK
-        BRK
-        CPU     6801
 
+; Data following the C64 payload's jump table.
+;
+; The table is 61 entries of three bytes, $B3A8-$B45E, ending with JMP $2732.
+; Everything from here to c64Strings is data, not code: runs of $00 and 4-byte
+; records such as 89 10 52 00 / 8B 10 41 00 / 8A 10 54 00, which look like a
+; key or character translation table. Not yet decoded.
+c64VecTableEnd:
+        FCB     $00,$00,$00,$00,$00,$00,$00,$00,$00,$BD,$2B,$00,$80,$BD,$2B,$CE
+        FCB     $10,$4A,$11,$6F,$29,$70,$16,$0D,$0D,$00,$00,$8D,$0D,$0A,$00,$91
+        FCB     $0B,$00,$00,$11,$0A,$00,$00,$1D,$09,$00,$00,$14,$08,$00,$00,$9D
+        FCB     $08,$00,$00,$13,$1E,$00,$00,$93,$0C,$00,$00,$85,$13,$00,$00,$86
+        FCB     $1C,$00,$00,$87,$1A,$00,$00,$89,$10,$52,$00,$8B,$10,$41,$00,$8A
+        FCB     $10
+
+c64VarBlock:
+        FCB     $54,$00,$8C,$10,$45,$00,$90,$80,$00,$00,$05,$87,$00,$00,$1C,$81
+        FCB     $00,$00,$9F,$86,$00,$00,$9C,$85,$00,$00,$1E,$82,$00,$00,$1F,$84
+        FCB     $00,$00,$9E,$83,$00,$00,$5F,$11,$00,$00,$06,$14,$00,$00,$AE,$13
+        FCB     $00,$00,$AB,$11,$00,$00,$24,$A4,$00,$00,$5C,$A3,$00,$00,$00,$00
+        FCB     $00,$00,$23,$19,$27,$00,$27,$2F,$00,$00,$2B,$19,$7B,$00,$DB,$3F
+        FCB     $00,$00,$2D,$19,$42,$20,$DD,$19,$41,$20,$5C,$5B,$00,$00,$A9,$19
+        FCB     $2D,$00,$40,$19,$48,$75,$BA,$19,$48,$55,$2A,$2B,$00,$00,$C0,$2A
+        FCB     $00,$00,$5E,$5D,$00,$00,$DE,$5C,$00,$00,$3A,$19,$48,$6F,$5B,$19
+        FCB     $48,$4F,$3B,$19,$48,$61,$5D,$19,$48,$41,$3D,$23,$00,$00,$3C,$3B
+        FCB     $00,$00,$3E,$3A,$00,$00,$2F,$2D,$00,$00,$3F,$3D,$00,$00,$00,$00
+        FCB     $00,$00
 
 c64Strings:
         FCB     $40,$3A,$42,$54,$58,$2D,$4D,$41,$4B,$2D,$00,$2C,$53,$2C,$57,$00
@@ -2867,8 +2731,6 @@ c64TextBlock:
         FCB     $61,$74,$20,$20,$20,$20,$20,$20,$20,$57,$65,$69,$74,$65,$72,$3A
         FCB     $20,$54,$61,$73,$74,$65,$2C,$00,$C0,$01,$98,$4B,$65,$69,$6E,$65
         FCB     $20,$54,$65,$6C,$65,$73,$6F,$66,$74,$77,$2E
-
-        CPU     6502
         JSR     $6D69
         JSR     $614D
         FCB     $63,$72,$6F
@@ -5608,6 +5470,7 @@ c64Vec58:
         SEC
         FCB     $37,$77,$72,$1F,$2F,$43,$1E
         BRK
+
         CPU     6801
 
 
