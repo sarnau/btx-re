@@ -89,18 +89,33 @@ def _operand(insn, labels: dict[int, str], symbols: dict[int, str] | None = None
     if m is Mode.IMM:
         return f"#${v:02X}"
     symbols = symbols or {}
+
+    def sym(addr: int, width: int) -> str | None:
+        """A symbol, or SYM+1 for the second byte of a named two-byte field.
+
+        The ROM source names only the first byte of TIME, FNADR and CINV, and
+        C64 listings write the others as FNADR+1 - so do that rather than
+        invent a name the source does not have."""
+        if addr in symbols:
+            return symbols[addr]
+        if addr - 1 in symbols:
+            return f"{symbols[addr - 1]}+1"
+        if addr - 2 in symbols:
+            return f"{symbols[addr - 2]}+2"
+        return None
+
     if m is Mode.ZP:
-        return symbols.get(v) or f"${v:02X}"
+        return sym(v, 2) or f"${v:02X}"
     # These all name a zero-page location - a pointer for the indirect forms -
     # so they take a symbol just as a plain zero-page operand does.
     if m is Mode.ZPX:
-        return f"{symbols.get(v) or f'${v:02X}'},X"
+        return f"{sym(v, 2) or f'${v:02X}'},X"
     if m is Mode.ZPY:
-        return f"{symbols.get(v) or f'${v:02X}'},Y"
+        return f"{sym(v, 2) or f'${v:02X}'},Y"
     if m is Mode.IZX:
-        return f"({symbols.get(v) or f'${v:02X}'},X)"
+        return f"({sym(v, 2) or f'${v:02X}'},X)"
     if m is Mode.IZY:
-        return f"({symbols.get(v) or f'${v:02X}'}),Y"
+        return f"({sym(v, 2) or f'${v:02X}'}),Y"
     if m is Mode.IND:
         # The operand names the location holding the address, not the target,
         # so a data symbol describes it better than a code label.
@@ -112,7 +127,7 @@ def _operand(insn, labels: dict[int, str], symbols: dict[int, str] | None = None
     if insn.mnemonic in _JUMPS and m is not Mode.IND:
         name = labels.get(v)
     else:
-        name = symbols.get(v) or labels.get(v)
+        name = sym(v, 3) or labels.get(v)
         if name is None and interiors is not None and v in interiors:
             name = _interior_name(v, labels)
     pre = ">" if v < 0x100 and name is None else ""
@@ -271,7 +286,10 @@ def emit_block(data: bytes, base: int, block: C64Block, sidecar: Sidecar) -> str
     labels = collect_labels(data, base, block, sidecar)
 
     # External references: C64 ROM entry points and anything outside this block.
+    # `external` is what gets an EQU; `extern_ops` is what operands print, and
+    # the two differ where a name is an offset - SIZE+8 prints, SIZE declares.
     external: dict[int, str] = {}
+    extern_ops: dict[int, str] = {}
     for _rt, insn, _b in _decode_block(data, base, block, labels, sidecar):
         if insn is None or insn.operand is None:
             continue
@@ -282,7 +300,14 @@ def emit_block(data: bytes, base: int, block: C64Block, sidecar: Sidecar) -> str
             continue
         name = c64kernal.name_for(v)
         if name:
-            external[v] = name
+            # A name like SIZE+8 is an offset into a labelled routine, so what
+            # needs declaring is the base symbol, not the expression.
+            extern_ops[v] = name
+            if "+" in name:
+                base_name, off = name.split("+", 1)
+                external[v - int(off)] = base_name
+            else:
+                external[v] = name
 
     lines = [
         f"; C64 {block.name} - extracted from the BTX Decoder II ROM.",
@@ -304,7 +329,7 @@ def emit_block(data: bytes, base: int, block: C64Block, sidecar: Sidecar) -> str
             if v in labels:
                 continue
             name = sidecar.c64_symbols.get(v) or c64kernal.name_for(v)
-            if name:
+            if name and "+" not in name:
                 external[v] = name
 
     # Which hardware/RAM symbols this block actually touches.
@@ -332,7 +357,7 @@ def emit_block(data: bytes, base: int, block: C64Block, sidecar: Sidecar) -> str
     lines.append(f"{'':{_INDENT}}{'ORG':{_MNEM_WIDTH}}${block.org:04X}")
     lines.append("")
 
-    all_names = {**external, **labels}
+    all_names = {**external, **extern_ops, **labels}
     used_symbols = {a: n for a, n in sidecar.c64_symbols.items()}
     pending: list[int] = []
 

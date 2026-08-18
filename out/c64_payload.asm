@@ -5,20 +5,20 @@
         CPU     6502
 
 ; Decoder hardware and RAM, as the C64 sees it.
-FAC1EXP     EQU     $0061
-FAC1MAN1    EQU     $0062
-FAC1MAN2    EQU     $0063
-FAC1MAN3    EQU     $0064
-FAC1MAN4    EQU     $0065
-FAC1SGN     EQU     $0066
-FAC2EXP     EQU     $0069
-FAC2MAN1    EQU     $006A
-FAC2MAN3    EQU     $006C
-FAC2MAN4    EQU     $006D
-FAC2SGN     EQU     $006E
+FACEXP      EQU     $0061
+FACHO       EQU     $0062
+FACMOH      EQU     $0063
+FACMO       EQU     $0064
+FACLO       EQU     $0065
+FACSGN      EQU     $0066
+ARGEXP      EQU     $0069
+ARGHO       EQU     $006A
+ARGMO       EQU     $006C
+ARGLO       EQU     $006D
+ARGSGN      EQU     $006E
 STATUS      EQU     $0090
 DFLTO       EQU     $009A
-TIMEHI      EQU     $00A0
+TIME_       EQU     $00A0
 INBIT       EQU     $00A7
 BITCI       EQU     $00A8
 FNLEN       EQU     $00B7
@@ -26,14 +26,12 @@ LA          EQU     $00B8
 SA          EQU     $00B9
 FA          EQU     $00BA
 FNADR       EQU     $00BB
-FNADRH      EQU     $00BC
 BLNSW       EQU     $00CC
 PNTR        EQU     $00D3
 TBLX        EQU     $00D6
 BUF         EQU     $0200
 IERROR      EQU     $0300
 CINV        EQU     $0314
-CINVH       EQU     $0315
 btxReg005   EQU     $8005
 btxFifoWr   EQU     $8009
 btxFifoRd   EQU     $800A
@@ -66,25 +64,25 @@ btxReg1FC   EQU     $81FC
 btxReg1FD   EQU     $81FD
 
 ; C64 ROM entry points.
-KERNAL_E3BF  EQU     $E3BF
-KERNAL_E56C  EQU     $E56C
-IRQ          EQU     $EA31
+INITCZ       EQU     $E3BF
+STUPT        EQU     $E56C
+KEY          EQU     $EA31
 TALK         EQU     $ED09
-LISTEN       EQU     $ED0C
-SECOND       EQU     $EDB9
+LISTN        EQU     $ED0C
+SECND        EQU     $EDB9
 TKSA         EQU     $EDC7
 CIOUT        EQU     $EDDD
 UNTLK        EQU     $EDEF
 UNLSN        EQU     $EDFE
 ACPTR        EQU     $EE13
-KERNAL_F3D5  EQU     $F3D5
-KERNAL_F3F6  EQU     $F3F6
-KERNAL_F642  EQU     $F642
+OPENI        EQU     $F3D5
+OP35         EQU     $F3F6
+CLSEI        EQU     $F642
 RESTOR       EQU     $FD15
-KERNAL_FD90  EQU     $FD90
+SIZE         EQU     $FD88
 IOINIT       EQU     $FDA3
-CINT         EQU     $FF5B
-CHROUT       EQU     $FFD2
+PCINT        EQU     $FF5B
+BSOUT        EQU     $FFD2
 STOP         EQU     $FFE1
 GETIN        EQU     $FFE4
 CLALL        EQU     $FFE7
@@ -94,7 +92,7 @@ KERNAL_RESET EQU     $FFFC
 
 
 c64LoadAddr:
-        FCB     $00,$10
+        DW      c64Payload
 
 ; C64 payload: a 61-entry JMP dispatch table at runtime $1000-$10B6, then code at
 ; $174C-$2943 with data below it. The table is the module's whole API surface and
@@ -105,7 +103,7 @@ c64LoadAddr:
 ; evidenced names rather than structural ones:
 ;
 ;   c64ScreenInit  vector 0   CLALL and $D016/$D021/$D800
-;   c64ScreenOut1  vector 1   CHROUT with $D021/$D800/$D900
+;   c64ScreenOut1  vector 1   BSOUT with $D021/$D800/$D900
 ;   c64ShowSplash  vector 54  prints c64SplashText, then sets the colours
 ;
 ; The rest keep structural names because tracing them transitively is not
@@ -299,14 +297,6 @@ L10B1:
 
 L10B4:
         JMP     c64Vec60
-
-; Data following the C64 payload's jump table.
-;
-; The table is 61 entries of three bytes, $B3A8-$B45E, ending with JMP $2732.
-; Everything from here to c64Strings is data, not code: runs of $00 and 4-byte
-; records such as 89 10 52 00 / 8B 10 41 00 / 8A 10 54 00, which look like a
-; key or character translation table. Not yet decoded.
-c64VecTableEnd:
         FCB     $00,$00,$00,$00,$00,$00,$00,$00,$00
 
 ; 16-bit pointers, runtime $10C0-$10CD.
@@ -659,10 +649,10 @@ L16B9:
         STA     IERROR,Y
         INY
         BNE     L16B9
-        JSR     KERNAL_FD90
+        JSR     SIZE+8
         JSR     RESTOR
-        JSR     CINT
-        JSR     KERNAL_E3BF
+        JSR     PCINT
+        JSR     INITCZ
         JSR     CLALL
         LDA     #$00
         STA     btxFifo00
@@ -671,7 +661,7 @@ L16B9:
         LDA     #L2359&255
         STA     CINV
         LDA     #L2359>>8
-        STA     CINVH
+        STA     CINV+1
         LDA     btxReg1F9
         LDA     #$40
         STA     btxReg1F8
@@ -683,27 +673,27 @@ L16B9:
         JSR     L2404
 
 c64ScreenOut1:
-; vector 1 at runtime $16FF - CHROUT with $D021/$D800/$D900
+; vector 1 at runtime $16FF - BSOUT with $D021/$D800/$D900
         JSR     L10A2
         LDA     btxReg012
         BNE     L172D
         LDA     #$FF
         STA     btxReg012
         LDA     L10C4
-        STA     FAC1EXP
+        STA     FACEXP
         LDA     L10C4+1
-        STA     FAC1MAN1
+        STA     FACHO
         LDA     #$FF
         STA     btxReg00F
 
 L171B:
         LDY     #$00
-        LDA     (FAC1EXP),Y
+        LDA     (FACEXP),Y
         BEQ     L172D
         JSR     L1012
-        INC     FAC1EXP
+        INC     FACEXP
         BNE     L172A
-        INC     FAC1MAN1
+        INC     FACHO
 
 L172A:
         JMP     L171B
@@ -801,17 +791,17 @@ c64Vec05:
         LDX     L11F7
         BEQ     L17EF
         LDX     #c64KeyTable&255
-        STX     FAC2EXP
+        STX     ARGEXP
         LDX     #c64KeyTable>>8
-        STX     FAC2MAN1
+        STX     ARGHO
         LDY     #$00
 
 L17D5:
         TAX
-        LDA     (FAC2EXP),Y
+        LDA     (ARGEXP),Y
         BEQ     L17EE
         TXA
-        CMP     (FAC2EXP),Y
+        CMP     (ARGEXP),Y
         BEQ     L17E4
         INY
         INY
@@ -819,7 +809,7 @@ L17D5:
 
 L17E4:
         INY
-        LDA     (FAC2EXP),Y
+        LDA     (ARGEXP),Y
         BEQ     L185B
         STA     L11E9
         CLC
@@ -830,17 +820,17 @@ L17EE:
 
 L17EF:
         LDX     L10C8
-        STX     FAC2EXP
+        STX     ARGEXP
         LDX     L10C8+1
-        STX     FAC2MAN1
+        STX     ARGHO
         LDY     #$00
 
 L17FB:
         TAX
-        LDA     (FAC2EXP),Y
+        LDA     (ARGEXP),Y
         BEQ     L180C
         TXA
-        CMP     (FAC2EXP),Y
+        CMP     (ARGEXP),Y
         BEQ     L185D
         INY
         INY
@@ -853,17 +843,17 @@ L180C:
 
 L180D:
         LDX     L10C6
-        STX     FAC2EXP
+        STX     ARGEXP
         LDX     L10C6+1
-        STX     FAC2MAN1
+        STX     ARGHO
         LDY     #$00
 
 L1819:
         TAX
-        LDA     (FAC2EXP),Y
+        LDA     (ARGEXP),Y
         BEQ     L182A
         TXA
-        CMP     (FAC2EXP),Y
+        CMP     (ARGEXP),Y
         BEQ     L185D
         INY
         INY
@@ -911,13 +901,13 @@ L185B:
 
 L185D:
         INY
-        LDA     (FAC2EXP),Y
+        LDA     (ARGEXP),Y
         STA     L11E9
         INY
-        LDA     (FAC2EXP),Y
+        LDA     (ARGEXP),Y
         STA     L11EA
         INY
-        LDA     (FAC2EXP),Y
+        LDA     (ARGEXP),Y
         STA     L11EB
         CLC
         RTS
@@ -935,10 +925,10 @@ L185D:
 ; positions map to.
 ;
 ; Read as a layout translation table on that basis, and the code confirms the
-; shape: $17D2 points FAC2EXP/FAC2MAN1 here and then walks it with
+; shape: $17D2 points ARGEXP/ARGHO here and then walks it with
 ;
-;     LDA (FAC2EXP),Y / BEQ done      $00 ends the table
-;     TXA / CMP (FAC2EXP),Y / BEQ hit
+;     LDA (ARGEXP),Y / BEQ done      $00 ends the table
+;     TXA / CMP (ARGEXP),Y / BEQ hit
 ;     INY / INY                       two bytes per entry
 ;
 ; so it is a two-byte-per-entry lookup terminated by $00. Which byte is the
@@ -1036,9 +1026,9 @@ L190A:
         BNE     L190A
         JSR     L103F
         JSR     L1078
-        LDA     FAC1MAN4
+        LDA     FACLO
         STA     L11DA
-        LDA     FAC1SGN
+        LDA     FACSGN
         STA     L11DB
         LDA     #$07
         JSR     L105D
@@ -1108,10 +1098,10 @@ L1972:
         CMP     L11B9
         BNE     L1972
         LDA     c64MenuKeys+1,Y
-        STA     FAC1EXP
+        STA     FACEXP
         LDA     c64MenuKeys+2,Y
-        STA     FAC1MAN1
-        JMP     (FAC1EXP)
+        STA     FACHO
+        JMP     (FACEXP)
 
 L198C:
         LDA     L11E7
@@ -1194,18 +1184,18 @@ c64Vec14:
         LDA     #$66
         JSR     L1012
         LDA     #$41
-        STA     FAC1EXP
+        STA     FACEXP
         LDA     #$1A
-        STA     FAC1MAN1
+        STA     FACHO
 
 L1A03:
         LDY     #$00
-        LDA     (FAC1EXP),Y
+        LDA     (FACEXP),Y
         BEQ     L1A15
         JSR     L1012
-        INC     FAC1EXP
+        INC     FACEXP
         BNE     L1A03
-        INC     FAC1MAN1
+        INC     FACHO
         JMP     L1A03
 
 L1A15:
@@ -1219,9 +1209,9 @@ L1A15:
         JSR     L107E
         JSR     UNLSN
         LDA     #$08
-        JSR     LISTEN
+        JSR     LISTN
         LDA     #$EF
-        JSR     SECOND
+        JSR     SECND
         JSR     UNLSN
         LDA     #$00
         STA     btxReg005
@@ -1352,11 +1342,11 @@ c64Vec19:
         LDA     #$00
         STA     STATUS
         LDA     #$08
-        JSR     LISTEN
+        JSR     LISTN
         BIT     STATUS
         BMI     L1B38
         LDA     #$6F
-        JSR     SECOND
+        JSR     SECND
         BIT     STATUS
         BPL     L1B4B
 
@@ -1493,9 +1483,9 @@ c64Vec20:
         STA     btxStatus
         STA     L11D9
         LDA     c64PtrTable
-        STA     FAC1MAN4
+        STA     FACLO
         LDA     c64PtrTable+1
-        STA     FAC1SGN
+        STA     FACSGN
         RTS
 
 c64Vec21:
@@ -1503,11 +1493,11 @@ c64Vec21:
         JSR     L1018
         BCS     L1C94
         LDY     #$00
-        STA     (FAC1MAN4),Y
-        INC     FAC1MAN4
+        STA     (FACLO),Y
+        INC     FACLO
         BNE     L1C55
-        INC     FAC1SGN
-        LDA     FAC1SGN
+        INC     FACSGN
+        LDA     FACSGN
         CMP     L10C3
         BEQ     L1C58
 
@@ -1524,9 +1514,9 @@ L1C58:
         JSR     L1078
         LDA     #$08
         JSR     L105D
-        LDA     FAC1MAN4
+        LDA     FACLO
         STA     L11DA
-        LDA     FAC1SGN
+        LDA     FACSGN
         STA     L11DB
         JSR     L1060
 
@@ -1555,19 +1545,19 @@ c64Vec22:
         LDA     #$06
         JSR     L105D
         LDA     c64PtrTable
-        STA     FAC1MAN4
+        STA     FACLO
         LDA     c64PtrTable+1
-        STA     FAC1SGN
+        STA     FACSGN
         LDA     #$00
         STA     L11DD
 
 L1CB3:
         JSR     STOP
         BEQ     L1CC6
-        LDA     FAC1MAN4
+        LDA     FACLO
         CMP     L11DA
         BNE     L1CD4
-        LDA     FAC1SGN
+        LDA     FACSGN
         CMP     L11DB
         BNE     L1CD4
 
@@ -1588,12 +1578,12 @@ L1CD4:
 
 L1CE0:
         LDY     #$00
-        LDA     (FAC1MAN4),Y
+        LDA     (FACLO),Y
         STA     L11DD
         JSR     L1012
-        INC     FAC1MAN4
+        INC     FACLO
         BNE     L1CF0
-        INC     FAC1SGN
+        INC     FACSGN
 
 L1CF0:
         JMP     L1CB3
@@ -1603,7 +1593,7 @@ c64Vec23:
         LDA     #$FF
         STA     btxStatus
         LDA     #$93
-        JSR     CHROUT
+        JSR     BSOUT
         LDA     #$11
         STA     L11E0
         LDA     #$FF
@@ -1755,11 +1745,11 @@ L1E20:
 
 L1E24:
         LDA     FA
-        JSR     LISTEN
+        JSR     LISTN
         LDA     SA
         AND     #$EF
         ORA     #$E0
-        JSR     SECOND
+        JSR     SECND
         JSR     UNLSN
         JSR     L101B
         RTS
@@ -2157,15 +2147,15 @@ c64Vec31:
         ASL     A
         TAY
         LDA     L10CC
-        STA     FAC1MAN2
+        STA     FACMOH
         LDA     L10CC+1
-        STA     FAC1MAN3
-        LDA     (FAC1MAN2),Y
+        STA     FACMO
+        LDA     (FACMOH),Y
         TAX
         INY
-        LDA     (FAC1MAN2),Y
-        STX     FAC1MAN2
-        STA     FAC1MAN3
+        LDA     (FACMOH),Y
+        STX     FACMOH
+        STA     FACMO
 
 c64Vec30:
 ; vector 30 at runtime $2103 - jump-table entry 30
@@ -2178,14 +2168,14 @@ c64Vec30:
         LDA     #$5A
         JSR     L1012
         LDY     #$00
-        LDA     (FAC1MAN2),Y
+        LDA     (FACMOH),Y
         STA     L11D7
         INY
         STY     L11B9
 
 L2122:
         LDY     L11B9
-        LDA     (FAC1MAN2),Y
+        LDA     (FACMOH),Y
         JSR     L1012
         LDY     L11B9
         INC     L11B9
@@ -2204,27 +2194,27 @@ L213E:
         JSR     L1090
         BCS     L2174
         LDA     c64PtrTable
-        STA     FAC1MAN4
+        STA     FACLO
         LDA     c64PtrTable+1
-        STA     FAC1SGN
+        STA     FACSGN
 
 L214D:
         JSR     STOP
         BEQ     L2170
-        LDA     FAC1MAN4
+        LDA     FACLO
         CMP     L11DA
         BNE     L2160
-        LDA     FAC1SGN
+        LDA     FACSGN
         CMP     L11DB
         BEQ     L2170
 
 L2160:
         LDY     #$00
-        LDA     (FAC1MAN4),Y
+        LDA     (FACLO),Y
         JSR     CIOUT
-        INC     FAC1MAN4
+        INC     FACLO
         BNE     L216D
-        INC     FAC1SGN
+        INC     FACSGN
 
 L216D:
         JMP     L214D
@@ -2522,11 +2512,11 @@ c64Vec49:
         STA     STATUS
         LDA     #$00
         STA     FNLEN
-        JSR     KERNAL_F3D5
+        JSR     OPENI
         LDA     FA
-        JSR     LISTEN
+        JSR     LISTN
         LDA     SA
-        JSR     SECOND
+        JSR     SECND
         BIT     STATUS
         BMI     L234C
         LDA     #$1B
@@ -2554,7 +2544,7 @@ L234C:
 ;
 ;     BIT btxReg1F8 / BMI ...     test a decoder register
 ;     JSR L104B                   a jump-table entry
-;     JMP IRQ_ENTRY               chain to the KERNAL handler
+;     JMP KEY                     chain to the KERNAL handler
 ;
 ; So the C64 side services the decoder on interrupt as well as polling it, and
 ; either passes the interrupt on to the KERNAL or consumes it. btxReg1F8 is one
@@ -2564,7 +2554,7 @@ L2359:
         BIT     btxReg1F8
         BMI     L2364
         JSR     L104B
-        JMP     IRQ
+        JMP     KEY
 
 L2364:
         JSR     L104B
@@ -2702,12 +2692,12 @@ L2429:
         STX     L11BC
         JSR     L1030
         BCS     L2460
-        STA     FAC1EXP
-        STA     FAC1MAN4
+        STA     FACEXP
+        STA     FACLO
         JSR     L1033
         BVS     L2460
-        STA     FAC1MAN1
-        STA     FAC1SGN
+        STA     FACHO
+        STA     FACSGN
         LDA     #$19
         JSR     L105D
 
@@ -2716,10 +2706,10 @@ L2443:
         BVS     L2457
         BCS     L2460
         LDY     #$00
-        STA     (FAC1EXP),Y
-        INC     FAC1EXP
+        STA     (FACEXP),Y
+        INC     FACEXP
         BNE     L2454
-        INC     FAC1MAN1
+        INC     FACHO
 
 L2454:
         JMP     L2443
@@ -2727,7 +2717,7 @@ L2454:
 L2457:
         JSR     L1036
         JSR     L101B
-        JMP     (FAC1MAN4)
+        JMP     (FACLO)
 
 L2460:
         JSR     L1036
@@ -2756,7 +2746,7 @@ L247A:
         LDY     #$00
         LDA     (INBIT),Y
         BEQ     L248B
-        JSR     CHROUT
+        JSR     BSOUT
         INC     INBIT
         BNE     L247A
         INC     BITCI
@@ -2850,7 +2840,7 @@ c64Vec56:
         STY     TBLX
         LDA     #$00
         STA     BLNSW
-        JSR     KERNAL_E56C
+        JSR     STUPT
         PLP
         RTS
 
@@ -3002,7 +2992,7 @@ c64Vec47:
         LDA     #c64Strings&255
         STA     FNADR
         LDA     #c64Strings>>8
-        STA     FNADRH
+        STA     FNADR+1
         LDA     #$00
         STA     STATUS
         JSR     L10B1
@@ -3030,9 +3020,9 @@ c64Vec34:
         LDA     #$65
         STA     SA
         LDA     FA
-        JSR     LISTEN
+        JSR     LISTN
         LDA     SA
-        JSR     SECOND
+        JSR     SECND
 
 L26EF:
         LDA     btxReg090
@@ -3118,7 +3108,7 @@ L276F:
         LDA     #L11BE&255
         STA     FNADR
         LDA     #L11BE>>8
-        STA     FNADRH
+        STA     FNADR+1
         LDA     #$00
         STA     STATUS
         JSR     L10B1
@@ -3134,9 +3124,9 @@ L2795:
         LDA     #$64
         STA     SA
         LDA     FA
-        JSR     LISTEN
+        JSR     LISTN
         LDA     SA
-        JSR     SECOND
+        JSR     SECND
         LDA     FA
         STA     DFLTO
         CLC
@@ -3162,7 +3152,7 @@ c64Vec50:
         LDA     #c64Strings&255
         STA     FNADR
         LDA     #c64Strings>>8
-        STA     FNADRH
+        STA     FNADR+1
         LDA     #$0B
         STA     FNLEN
         JMP     L28C3
@@ -3176,18 +3166,18 @@ c64Vec51:
         LDA     #$4C
         JSR     L1012
         LDA     L10CA
-        STA     FAC1EXP
+        STA     FACEXP
         LDA     L10CA+1
-        STA     FAC1MAN1
+        STA     FACHO
 
 L27EF:
         LDY     #$00
-        LDA     (FAC1EXP),Y
+        LDA     (FACEXP),Y
         BEQ     L2801
         JSR     L1012
-        INC     FAC1EXP
+        INC     FACEXP
         BNE     L27EF
-        INC     FAC1MAN1
+        INC     FACHO
         JMP     L27EF
 
 L2801:
@@ -3296,7 +3286,7 @@ c64Vec16:
         LDA     #L11BE&255
         STA     FNADR
         LDA     #L11BE>>8
-        STA     FNADRH
+        STA     FNADR+1
         LDA     L11BC
         STA     FNLEN
 
@@ -3353,9 +3343,9 @@ c64Vec33:
 ; vector 33 at runtime $290D - jump-table entry 33
         JSR     UNLSN
         LDA     #$08
-        JSR     LISTEN
+        JSR     LISTN
         LDA     #$E4
-        JSR     SECOND
+        JSR     SECND
         JSR     UNLSN
         RTS
 
@@ -3366,9 +3356,9 @@ c64Vec36:
         JSR     CIOUT
         JSR     UNLSN
         LDA     #$08
-        JSR     LISTEN
+        JSR     LISTN
         LDA     #$E5
-        JSR     SECOND
+        JSR     SECND
         JSR     UNLSN
         RTS
 
@@ -3378,7 +3368,7 @@ c64Vec37:
         STA     SA
         LDA     #$08
         STA     FA
-        JSR     KERNAL_F642
+        JSR     CLSEI
         RTS
 
 c64Vec18:
@@ -3388,7 +3378,7 @@ c64Vec18:
         STA     FA
         LDA     #$64
         STA     SA
-        JSR     KERNAL_F642
+        JSR     CLSEI
         RTS
 
 c64Vec59:
@@ -3396,12 +3386,12 @@ c64Vec59:
         LDA     #$00
         STA     STATUS
         LDA     FA
-        JSR     LISTEN
+        JSR     LISTN
         LDA     STATUS
         BMI     L296A
         LDA     SA
         ORA     #$F0
-        JSR     SECOND
+        JSR     SECND
         LDA     STATUS
         BPL     L296C
 
@@ -3410,7 +3400,7 @@ L296A:
         RTS
 
 L296C:
-        JMP     KERNAL_F3F6
+        JMP     OP35
 
 ceptMacroDir:
         FCB     $1F,$2F,$41,$9B,$31,$40,$1B,$23,$20,$57,$9B,$30,$40,$1F
@@ -3463,12 +3453,12 @@ L29D7:
         LDA     #$4D
         JSR     L1012
         LDA     c64PtrTable
-        STA     FAC1MAN4
-        STA     FAC2MAN4
+        STA     FACLO
+        STA     ARGLO
         STA     L11DA
         LDA     c64PtrTable+1
-        STA     FAC1SGN
-        STA     FAC2SGN
+        STA     FACSGN
+        STA     ARGSGN
         STA     L11DB
 
 L29FA:
@@ -3638,17 +3628,17 @@ c64Vec58:
         JSR     L1018
         BCS     L2B3A
         LDY     #$00
-        STA     (FAC1MAN4),Y
-        INC     FAC1MAN4
+        STA     (FACLO),Y
+        INC     FACLO
         BNE     c64Vec58
-        INC     FAC1SGN
-        LDA     FAC1SGN
+        INC     FACSGN
+        LDA     FACSGN
         CMP     L10C3
         BNE     c64Vec58
         LDA     c64PtrTable
-        STA     FAC1MAN4
+        STA     FACLO
         LDA     c64PtrTable+1
-        STA     FAC1SGN
+        STA     FACSGN
         JMP     c64Vec58
 
 L2B3A:
@@ -3668,27 +3658,27 @@ L2B50:
         JMP     L2AEE
 
 L2B55:
-        LDA     FAC1MAN4
-        CMP     FAC2MAN4
+        LDA     FACLO
+        CMP     ARGLO
         BNE     L2B64
-        LDA     FAC1SGN
-        CMP     FAC2SGN
+        LDA     FACSGN
+        CMP     ARGSGN
         BNE     L2B64
         JMP     c64Vec58
 
 L2B64:
         LDY     #$00
-        LDA     (FAC2MAN4),Y
-        INC     FAC2MAN4
+        LDA     (ARGLO),Y
+        INC     ARGLO
         BNE     L2B7F
-        INC     FAC2SGN
-        LDX     FAC2SGN
+        INC     ARGSGN
+        LDX     ARGSGN
         CPX     L10C3
         BNE     L2B7F
         LDX     c64PtrTable
-        STX     FAC2MAN4
+        STX     ARGLO
         LDX     c64PtrTable+1
-        STX     FAC2SGN
+        STX     ARGSGN
 
 L2B7F:
         CMP     #$1F

@@ -1,46 +1,69 @@
-"""C64 ROM entry points called by the embedded 6502 code.
+"""C64 ROM entry points, taken from the ROM source itself.
+
+Names come from Michael Steil's reconstruction of the original Commodore
+sources at https://github.com/mist64/c64rom, built with cc65 so every label
+carries its real address. Earlier versions of this file used names invented
+here - IEC_CIOUT, KERNAL_CLOSE - which looked plausible and were wrong.
 
 These live in the C64's address space, not in this ROM, so they are emitted as
 EQU symbols. Naming them matters for more than readability: an L<address> name
-for, say, $FDA3 would sit in the same namespace as a listing label at ROM
-$FDA3 and could collide with the 6801 side.
+for $FDA3 would share a namespace with a listing label at ROM $FDA3 on the
+6801 side.
 
-Only entries whose identity is well established carry a name. Anything else
-gets a KERNAL_<addr> form - explicitly C64 ROM, but making no claim about what
-it does.
+Addresses the source does not label keep a KERNAL_<addr> form, which says C64
+ROM without claiming to know what it is.
 """
 
 from __future__ import annotations
 
-# Documented KERNAL jump-table entries.
-JUMP_TABLE = {
-    0xFFD2: "CHROUT", 0xFFE1: "STOP", 0xFFE4: "GETIN", 0xFFE7: "CLALL",
-    0xFFBA: "SETLFS", 0xFFBD: "SETNAM", 0xFFC0: "OPEN", 0xFFC3: "CLOSE",
-    0xFFC6: "CHKIN", 0xFFC9: "CHKOUT", 0xFFCC: "CLRCHN", 0xFFCF: "CHRIN",
-    0xFFD5: "LOAD", 0xFFD8: "SAVE", 0xFFB7: "READST",
-}
-
-# Internal KERNAL routines behind those entries. These carry the ROM's own
-# names - the serial group is the implementation the jump table dispatches to,
-# and the payload calls it directly instead of going through OPEN/LOAD.
-INTERNAL = {
-    0xED09: "TALK", 0xED0C: "LISTEN", 0xEDB9: "SECOND",
-    0xEDC7: "TKSA", 0xEDDD: "CIOUT", 0xEDEF: "UNTLK",
-    0xEDFE: "UNLSN", 0xEE13: "ACPTR",
-    0xFD15: "RESTOR", 0xFDA3: "IOINIT", 0xFF5B: "CINT",
-    0xEA31: "IRQ",
-    # $FFFC holds the address of the reset routine, so JMP ($FFFC) restarts
-    # the machine.
+NAMES: dict[int, str] = {
+    0xFD88: "SIZE",
+    0xE3BF: "INITCZ",
+    0xE56C: "STUPT",
+    0xEA31: "KEY",
+    0xED09: "TALK",
+    0xED0C: "LISTN",
+    0xEDB9: "SECND",
+    0xEDC7: "TKSA",
+    0xEDDD: "CIOUT",
+    0xEDEF: "UNTLK",
+    0xEDFE: "UNLSN",
+    0xEE13: "ACPTR",
+    0xF3D5: "OPENI",
+    0xF3F6: "OP35",
+    0xF642: "CLSEI",
+    0xFD15: "RESTOR",
+    0xFDA3: "IOINIT",
+    0xFF5B: "PCINT",
+    0xFFC0: "OPEN",
+    0xFFC3: "CLOSE",
+    0xFFC6: "CHKIN",
+    0xFFC9: "CKOUT",
+    0xFFCC: "CLRCH",
+    0xFFCF: "BASIN",
+    0xFFD2: "BSOUT",
+    0xFFE1: "STOP",
+    0xFFE4: "GETIN",
+    0xFFE7: "CLALL",
+    # Not labelled in the source: $FFFC is a CPU vector rather than a routine.
     0xFFFC: "KERNAL_RESET",
 }
 
-NAMES: dict[int, str] = {**JUMP_TABLE, **INTERNAL}
+# Entry points partway into a labelled routine. The bootstrap enters ramtas
+# eight bytes in, at $FD90, which skips the memory clear and keeps only the
+# pointer setup - so name it relative to the label the source does give.
+INTERIOR: dict[int, tuple[str, int]] = {
+    0xFD90: ("SIZE", 0xFD88),
+}
 
 
 def name_for(addr: int) -> str | None:
     """Symbol for a C64 ROM address, or None if it is not in ROM space."""
     if addr in NAMES:
         return NAMES[addr]
+    if addr in INTERIOR:
+        name, base = INTERIOR[addr]
+        return f"{name}+{addr - base}"
     if addr >= 0xA000:
         return f"KERNAL_{addr:04X}"
     return None

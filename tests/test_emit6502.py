@@ -45,7 +45,8 @@ def test_payload_binary_is_a_real_prg():
     assert blob[:2] == bytes([0x00, 0x10]), blob[:2].hex()
     src = (OUT / "c64_payload.asm").read_text()
     assert "c64LoadAddr:" in src
-    assert "FCB     $00,$10" in src
+    # the load address is a 16-bit word, and it names where the payload runs
+    assert "DW      c64Payload" in src
     assert "ORG     $0FFE" in src
 
 
@@ -82,7 +83,7 @@ def test_block_sources_use_real_labels_at_real_addresses():
 
 def test_kernal_entries_are_named_not_l_addresses():
     src = (OUT / "c64_bootstrap.asm").read_text()
-    for name, addr in (("IOINIT", 0xFDA3), ("CINT", 0xFF5B), ("RESTOR", 0xFD15)):
+    for name, addr in (("IOINIT", 0xFDA3), ("PCINT", 0xFF5B), ("RESTOR", 0xFD15)):
         assert re.search(rf"^{name}\s+EQU\s+\${addr:04X}$", src, re.M), name
         assert f"L{addr:04X}" not in src
 
@@ -269,7 +270,7 @@ def test_low_high_byte_expressions_assemble():
 def test_low_memory_uses_c64_rom_names():
     """Named after the C64 ROM so the listing lines up with a memory map."""
     src = (OUT / "c64_payload.asm").read_text()
-    for name, addr in (("FAC1EXP", 0x61), ("STATUS", 0x90), ("FNLEN", 0xB7),
+    for name, addr in (("FACEXP", 0x61), ("STATUS", 0x90), ("FNLEN", 0xB7),
                        ("SA", 0xB9), ("FA", 0xBA), ("FNADR", 0xBB),
                        ("CINV", 0x0314), ("BUF", 0x0200)):
         assert re.search(rf"^{name}\s+EQU\s+\${addr:04X}$", src, re.M), name
@@ -280,7 +281,7 @@ def test_sa_fa_are_not_treated_as_a_pointer_pair():
     address and device 8, so it only looked like a pointer setup."""
     src = (OUT / "c64_payload.asm").read_text()
     lines = [ln.strip() for ln in src.splitlines()]
-    i = lines.index("JSR     KERNAL_F642")
+    i = lines.index("JSR     CLSEI")
     assert lines[i - 4:i] == ["LDA     #$66", "STA     SA",
                               "LDA     #$08", "STA     FA"]
 
@@ -397,7 +398,7 @@ def test_indirect_operands_name_their_pointer():
     """LDA ($BB),Y reads through a zero-page pointer, so the operand names the
     pointer rather than showing its address."""
     src = (OUT / "c64_payload.asm").read_text()
-    assert "(FAC2EXP),Y" in src
+    assert "(ARGEXP),Y" in src
     assert "(INBIT),Y" in src
 
 
@@ -417,7 +418,7 @@ def test_irq_vector_names_its_handler():
     i = lines.index("STA     CINV")
     assert lines[i - 1] == "LDA     #L2359&255"
     assert lines[i + 1] == "LDA     #L2359>>8"
-    assert lines[i + 2] == "STA     CINVH"
+    assert lines[i + 2] == "STA     CINV+1"
     assert "L2359:" in src
 
 
@@ -441,3 +442,40 @@ def test_reset_vector_is_named():
     assert re.search(r"^KERNAL_RESET\s+EQU\s+\$FFFC$", src, re.M)
     assert "JMP     (KERNAL_RESET)" in src
     assert "KERNAL_FFFC" not in src
+
+
+def test_kernal_names_come_from_the_rom_source():
+    """Names are the ROM's own, from mist64/c64rom built with cc65 - not
+    plausible-looking inventions. BSOUT, not CHROUT; LISTN, not LISTEN."""
+    src = (OUT / "c64_payload.asm").read_text()
+    for name, addr in (("BSOUT", 0xFFD2), ("LISTN", 0xED0C), ("SECND", 0xEDB9),
+                       ("KEY", 0xEA31), ("CLSEI", 0xF642), ("INITCZ", 0xE3BF)):
+        assert re.search(rf"^{name}\s+EQU\s+\${addr:04X}$", src, re.M), name
+    code = "\n".join(ln for ln in src.splitlines() if not ln.lstrip().startswith(";"))
+    for gone in ("IEC_CIOUT", "KERNAL_CLOSE", "IRQ_ENTRY", "CHROUT"):
+        assert gone not in code, gone
+
+
+def test_second_byte_of_a_field_reads_as_plus_one():
+    """The source names only the first byte of TIME, FNADR and CINV; C64
+    listings write the others as FNADR+1 rather than inventing a name."""
+    src = (OUT / "c64_payload.asm").read_text()
+    assert "STA     CINV+1" in src
+    assert "STA     FNADR+1" in src
+    assert "CINVH" not in src and "FNADRH" not in src
+
+
+def test_fd90_is_named_relative_to_the_routine_it_enters():
+    """The bootstrap enters ramtas eight bytes in, at $FD90, skipping the
+    memory clear. The source labels $FD88 as size, so name it from there."""
+    src = (OUT / "c64_bootstrap.asm").read_text()
+    assert "JSR     SIZE+8" in src
+    assert re.search(r"^SIZE\s+EQU\s+\$FD88$", src, re.M)
+    assert "KERNAL_FD90" not in src
+
+
+def test_time_is_renamed_around_an_asl_builtin():
+    """asl reserves TIME, so the source's name for $A0 carries a trailing
+    underscore - my assembler accepted TIME, asl refused it."""
+    src = (OUT / "c64_payload.asm").read_text()
+    assert re.search(r"^TIME_\s+EQU\s+\$00A0$", src, re.M)

@@ -5,8 +5,8 @@
         CPU     6502
 
 ; Decoder hardware and RAM, as the C64 sees it.
-FAC1EXP   EQU     $0061
-FAC1MAN1  EQU     $0062
+FACEXP    EQU     $0061
+FACHO     EQU     $0062
 btxLoadLo EQU     $8000
 btxLoadHi EQU     $8001
 btxFifoWr EQU     $8009
@@ -17,10 +17,10 @@ btxFifo00 EQU     $8080
 
 ; C64 ROM entry points.
 RESTOR      EQU     $FD15
-KERNAL_FD90 EQU     $FD90
+SIZE        EQU     $FD88
 IOINIT      EQU     $FDA3
 KERNAL_FE72 EQU     $FE72
-CINT        EQU     $FF5B
+PCINT       EQU     $FF5B
 
         ORG     $8000
 
@@ -46,7 +46,7 @@ CINT        EQU     $FF5B
 ;
 ; The bootstrap then runs from cartridge ROM at C64 $8000:
 ;
-;     JSR $FDA3 / $FD90 / $FD15 / $FF5B   KERNAL init, restore vectors, CINT
+;     JSR IOINIT / SIZE+8 / RESTOR / PCINT   the C64 cold-start sequence
 ;     LDX #$00 / STX $D016                VIC setup
 ;     JSR $804D / STA $61                 fetch load address low byte
 ;     JSR $804D / STA $62                 fetch load address high byte
@@ -88,24 +88,24 @@ c64ColdStart:
         LDX     #$00
         STX     $D016
         JSR     IOINIT
-        JSR     KERNAL_FD90
+        JSR     SIZE+8
         JSR     RESTOR
-        JSR     CINT
+        JSR     PCINT
         JSR     L804D
         STA     btxLoadLo
-        STA     FAC1EXP
+        STA     FACEXP
         JSR     L804D
         STA     btxLoadHi
-        STA     FAC1MAN1
+        STA     FACHO
         LDY     #$00
 
 L8036:
         JSR     L804D
         BCS     L8045
-        STA     (FAC1EXP),Y
+        STA     (FACEXP),Y
         INY
         BNE     L8036
-        INC     FAC1MAN1
+        INC     FACHO
         JMP     L8036
 
 ; Handing control to the payload.

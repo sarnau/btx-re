@@ -177,7 +177,6 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xC84C" = "c64SplashText"
 "0xB331" = "c64CartSignature"
 "0xBA18" = "c64StrTable"
-"0xB45F" = "c64VecTableEnd"
 "0xBA56" = "c64ScreenInit"
 "0xBAA7" = "c64ScreenOut1"
 "0xBAF4" = "c64Vec02"
@@ -399,6 +398,15 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xFFF0" = "vectors"
 
 [block_comments]
+"0xB4B0" = """
+Data between the jump table and the string records.
+
+The nine $00 bytes at runtime $10B7 are padding, not data: the jump table ends
+there and $10B7 + 9 is $10C0, where c64PtrTable begins, so they align the
+pointer table to a 16-byte boundary. Nothing references them.
+
+What follows is 4-byte records such as 89 10 52 00 / 8B 10 41 00 / 8A 10 54 00,
+which look like a key or character translation table. Not yet decoded."""
 "0xBC19" = """
 Character table, runtime $1871-$188E, sitting straight after an RTS so a
 linear sweep runs into it and disassembles the bytes as instructions.
@@ -413,10 +421,10 @@ a high-bit code ($DD, $DE, $A9), which look like the PETSCII characters those
 positions map to.
 
 Read as a layout translation table on that basis, and the code confirms the
-shape: $17D2 points FAC2EXP/FAC2MAN1 here and then walks it with
+shape: $17D2 points ARGEXP/ARGHO here and then walks it with
 
-    LDA (FAC2EXP),Y / BEQ done      $00 ends the table
-    TXA / CMP (FAC2EXP),Y / BEQ hit
+    LDA (ARGEXP),Y / BEQ done      $00 ends the table
+    TXA / CMP (ARGEXP),Y / BEQ hit
     INY / INY                       two bytes per entry
 
 so it is a two-byte-per-entry lookup terminated by $00. Which byte is the
@@ -427,7 +435,7 @@ The payload's IRQ handler, installed into CINV.
 
     BIT btxReg1F8 / BMI ...     test a decoder register
     JSR L104B                   a jump-table entry
-    JMP IRQ_ENTRY               chain to the KERNAL handler
+    JMP KEY                     chain to the KERNAL handler
 
 So the C64 side services the decoder on interrupt as well as polling it, and
 either passes the interrupt on to the KERNAL or consumes it. btxReg1F8 is one
@@ -493,7 +501,7 @@ this data encodes."""
 "0x0061" = """
 Low memory is named with the C64 ROM's own names.
 
-The payload does no floating-point arithmetic, so FAC1EXP..FAC2SGN are being
+The payload does no floating-point arithmetic, so FACEXP..ARGSGN are being
 reused as scratch rather than used for their documented purpose; the names
 still identify the locations, which is what makes the listing comparable with
 a C64 memory map.
@@ -564,13 +572,6 @@ control lands on the payload rather than back in the bootstrap.
 
 That is why the loader stores the load address twice, to $61/$62 for its own
 copy loop and to $8000/$8001 for this jump."""
-"0xB45F" = """
-Data following the C64 payload's jump table.
-
-The table is 61 entries of three bytes, $B3A8-$B45E, ending with JMP $2732.
-Everything from here to c64Strings is data, not code: runs of $00 and 4-byte
-records such as 89 10 52 00 / 8B 10 41 00 / 8A 10 54 00, which look like a
-key or character translation table. Not yet decoded."""
 "0xB3A8" = """
 C64 payload: a 61-entry JMP dispatch table at runtime $1000-$10B6, then code at
 $174C-$2943 with data below it. The table is the module's whole API surface and
@@ -581,7 +582,7 @@ Entries are labelled c64Vec00..c64Vec60 at their ROM addresses. Vectors 44 and
 evidenced names rather than structural ones:
 
   c64ScreenInit  vector 0   CLALL and $D016/$D021/$D800
-  c64ScreenOut1  vector 1   CHROUT with $D021/$D800/$D900
+  c64ScreenOut1  vector 1   BSOUT with $D021/$D800/$D900
   c64ShowSplash  vector 54  prints c64SplashText, then sets the colours
 
 The rest keep structural names because tracing them transitively is not
@@ -844,7 +845,7 @@ begins - and independently, the JMP $8036 at $B36D lands exactly on $B363.
 
 The bootstrap then runs from cartridge ROM at C64 $8000:
 
-    JSR $FDA3 / $FD90 / $FD15 / $FF5B   KERNAL init, restore vectors, CINT
+    JSR IOINIT / SIZE+8 / RESTOR / PCINT   the C64 cold-start sequence
     LDX #$00 / STX $D016                VIC setup
     JSR $804D / STA $61                 fetch load address low byte
     JSR $804D / STA $62                 fetch load address high byte
@@ -1020,7 +1021,7 @@ vectors before entering the main firmware."""
 [line_comments]
 "0xB331" = "C3 C2 CD 38 30 = \"CBM80\", CBM in PETSCII (bit 7 set), then padding"
 "0xBA56" = "vector 0 at runtime $16AE - CLALL and $D016/$D021/$D800 - screen and colour RAM setup"
-"0xBAA7" = "vector 1 at runtime $16FF - CHROUT with $D021/$D800/$D900"
+"0xBAA7" = "vector 1 at runtime $16FF - BSOUT with $D021/$D800/$D900"
 "0xBAF4" = "vector 2 at runtime $174C - jump-table entry 2"
 "0xBB2A" = "vector 3 at runtime $1782 - jump-table entry 3"
 "0xBB5E" = "vector 5 at runtime $17B6 - jump-table entry 5"
@@ -1352,7 +1353,7 @@ kind = "code6502"
 [[regions]]
 start = 0xB3A6
 end = 0xB3A8
-kind = "bytes"
+kind = "words"
 
 [[regions]]
 start = 0xB3A8
@@ -1547,21 +1548,20 @@ org = 0x0FFE
 # $6000; see the block comment at $B2E2 for the pairing. $8000/$8001 are RAM
 # under the cartridge ROM, used to stash the load address.
 [c64_symbols]
-"0x0061" = "FAC1EXP"
-"0x0062" = "FAC1MAN1"
-"0x0063" = "FAC1MAN2"
-"0x0064" = "FAC1MAN3"
-"0x0065" = "FAC1MAN4"
-"0x0066" = "FAC1SGN"
-"0x0069" = "FAC2EXP"
-"0x006A" = "FAC2MAN1"
-"0x006C" = "FAC2MAN3"
-"0x006D" = "FAC2MAN4"
-"0x006E" = "FAC2SGN"
+"0x0061" = "FACEXP"
+"0x0062" = "FACHO"
+"0x0063" = "FACMOH"
+"0x0064" = "FACMO"
+"0x0065" = "FACLO"
+"0x0066" = "FACSGN"
+"0x0069" = "ARGEXP"
+"0x006A" = "ARGHO"
+"0x006C" = "ARGMO"
+"0x006D" = "ARGLO"
+"0x006E" = "ARGSGN"
 "0x0090" = "STATUS"
 "0x009A" = "DFLTO"
-"0x00A0" = "TIMEHI"
-"0x00A1" = "TIMEMID"
+"0x00A0" = "TIME_"
 "0x00A7" = "INBIT"
 "0x00A8" = "BITCI"
 "0x00B7" = "FNLEN"
@@ -1569,7 +1569,6 @@ org = 0x0FFE
 "0x00B9" = "SA"
 "0x00BA" = "FA"
 "0x00BB" = "FNADR"
-"0x00BC" = "FNADRH"
 "0x00CC" = "BLNSW"
 "0x00D0" = "CRSW"
 "0x00D3" = "PNTR"
@@ -1577,7 +1576,6 @@ org = 0x0FFE
 "0x0200" = "BUF"
 "0x0300" = "IERROR"
 "0x0314" = "CINV"
-"0x0315" = "CINVH"
 "0x8000" = "btxLoadLo"
 "0x8001" = "btxLoadHi"
 "0x8005" = "btxReg005"
