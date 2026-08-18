@@ -53,6 +53,24 @@ def _fcb_line(chunk: bytes) -> str:
     return f"{'':{_INDENT}}{'FCB':{_MNEM_WIDTH}}{values}"
 
 
+def _equ_lines(sidecar: Sidecar) -> list[str]:
+    """Declare sidecar symbols so the listing is self-contained.
+
+    format_operand() renders hardware registers and RAM locations by name. Those
+    addresses live outside the ROM image, so unlike code labels nothing in the
+    listing defines them — without these EQUs the listing does not assemble.
+    """
+    if not sidecar.symbols:
+        return []
+    width = max(len(n) for n in sidecar.symbols.values())
+    lines = ["; Hardware registers and RAM locations referenced below.", ""]
+    for addr, name in sorted(sidecar.symbols.items()):
+        value = f"${addr:02X}" if addr < 0x100 else f"${addr:04X}"
+        lines.append(f"{name:{max(width, _INDENT - 1)}} EQU     {value}")
+    lines.append("")
+    return lines
+
+
 def _fdb_line(words: list[int]) -> str:
     values = ",".join(f"${w:04X}" for w in words)
     return f"{'':{_INDENT}}{'FDB':{_MNEM_WIDTH}}{values}"
@@ -67,6 +85,10 @@ def emit(data: bytes, result: TraceResult, sidecar: Sidecar) -> str:
         "; Regenerate and verify with:  python3 build.py",
         "",
         f"{'':{_INDENT}}{'CPU':{_MNEM_WIDTH}}6801",
+        "",
+    ]
+    lines += _equ_lines(sidecar)
+    lines += [
         f"{'':{_INDENT}}{'ORG':{_MNEM_WIDTH}}${base:04X}",
         "",
     ]
