@@ -82,6 +82,12 @@ the repository root on `sys.path` for pytest. Deleting it breaks every test.
 
 See `docs/superpowers/specs/2026-08-17-c64-btx-decoder-re-design.md` for the design.
 
+## Documents
+
+- `docs/btx-decoder-ii-architecture.md` - how the module works
+- `docs/cv30113-revision-diff.md` - the two ROM revisions compared
+- `docs/superpowers/specs/` - the original design spec and plan
+
 ## Current state
 
 Bootstrap trace from the reset vector and the seven interrupt stubs classifies
