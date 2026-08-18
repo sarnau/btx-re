@@ -162,6 +162,20 @@ def emit_block(data: bytes, base: int, block: C64Block, sidecar: Sidecar) -> str
         f"{'':{_INDENT}}{'CPU':{_MNEM_WIDTH}}6502",
         "",
     ]
+    # Word tables name things too - a vector is an address like any other.
+    for region in sidecar.regions:
+        if region.kind not in _WORD_KINDS:
+            continue
+        if not (block.start <= region.start < block.end):
+            continue
+        for a in range(region.start, min(region.end, block.end) - 1, 2):
+            v = int.from_bytes(data[a - base:a - base + 2], "little")
+            if v in labels:
+                continue
+            name = sidecar.c64_symbols.get(v) or c64kernal.name_for(v)
+            if name:
+                external[v] = name
+
     # Which hardware/RAM symbols this block actually touches.
     touched: dict[int, str] = {}
     for _rt, insn, _b in _decode_block(data, base, block, labels, sidecar):
@@ -253,8 +267,9 @@ def emit_block(data: bytes, base: int, block: C64Block, sidecar: Sidecar) -> str
                     vals = [int.from_bytes(data[lo - base + 2 * i:lo - base + 2 * i + 2],
                                            "little") for i in range(count)]
                     lines.append(f"{'':{_INDENT}}{'DW':{_MNEM_WIDTH}}"
-                                 + ",".join(all_names.get(v) or f"${v:04X}"
-                                            for v in vals))
+                                 + ",".join(all_names.get(v)
+                                            or used_symbols.get(v)
+                                            or f"${v:04X}" for v in vals))
                     words_left = count * 2
             if words_left:
                 words_left -= 1

@@ -169,10 +169,21 @@ def test_fcc_threshold_keeps_binary_data_out_of_strings():
 
 
 def test_data_runs_are_not_fragmented():
-    """The cartridge header is one run of bytes; splitting it at every
-    printable byte scattered it over three lines and hid the signature."""
+    """Signature plus padding is one run; splitting it at every printable byte
+    scattered it over several lines and hid the signature inside them."""
     src = (OUT / "c64_bootstrap.asm").read_text()
-    head = src.split("c64CartHeader:", 1)[1].split("c64ColdStart:", 1)[0]
+    head = src.split("c64CartSignature:", 1)[1].split("c64ColdStart:", 1)[0]
     fcb = [ln for ln in head.splitlines() if ln.strip().startswith("FCB")]
-    assert len(fcb) == 2, fcb          # 16 bytes + the remaining 3
-    assert "$13,$80,$72,$FE,$C3,$C2,$CD,$38,$30" in fcb[0]
+    assert len(fcb) == 1, fcb
+    assert "$C3,$C2,$CD,$38,$30,$00,$00,$00,$FF" in fcb[0]
+
+
+def test_cartridge_header_vectors_render_as_addresses():
+    """$8000/$8001 and $8002/$8003 are the cold- and warm-start vectors, so
+    they are DW, not bytes. The cold vector resolves to the label it points at,
+    which is what proves ROM $B32D maps to C64 $8000."""
+    src = (OUT / "c64_bootstrap.asm").read_text()
+    assert "DW      c64ColdStart,KERNAL_FE72" in src
+    assert re.search(r"^KERNAL_FE72\s+EQU\s+\$FE72$", src, re.M)
+    # the signature stays bytes - FCC would change them, CBM is PETSCII
+    assert "FCB     $C3,$C2,$CD,$38,$30" in src

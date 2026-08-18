@@ -17,6 +17,7 @@ btxFifo   EQU     $8080
 RESTOR      EQU     $FD15
 KERNAL_FD90 EQU     $FD90
 IOINIT      EQU     $FDA3
+KERNAL_FE72 EQU     $FE72
 CINT        EQU     $FF5B
 
         ORG     $8000
@@ -75,9 +76,11 @@ CINT        EQU     $FF5B
 ; Note $D109-$D348 is NOT part of this payload - those are the 6801 control-code
 ; dispatch tables documented at $D36A.
 c64CartHeader:
-; cold $8013, warm $FE72, then C3 C2 CD 38 30 = "CBM80" with CBM in PETSCII
-        FCB     $13,$80,$72,$FE,$C3,$C2,$CD,$38,$30,$00,$00,$00,$FF,$00,$00,$00
-        FCB     $00,$00,$00
+        DW      c64ColdStart,KERNAL_FE72
+
+c64CartSignature:
+; C3 C2 CD 38 30 = "CBM80", CBM in PETSCII (bit 7 set), then padding
+        FCB     $C3,$C2,$CD,$38,$30,$00,$00,$00,$FF,$00,$00,$00,$00,$00,$00
 
 c64ColdStart:
         LDX     #$00
