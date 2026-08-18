@@ -1017,6 +1017,10 @@ entire C64 payload is byte-for-byte identical. See
   the top of `c64MainLoop` and just before `c64StartSession` sends the startup
   page. Nothing reads it and the 6801 never addresses `$600F`, so the name
   records where it is written, not what it does.
+- **Whether the shared window is dual-port RAM or a latch array.** Writes from
+  one side are demonstrably visible to the other, but the double-read idiom on
+  both sides implies no hardware interlock, so they are not atomic. Which part
+  provides the window needs the schematic.
 - **`videoReg0`–`videoReg3`.** Four bytes at `$1B2A` written to `P3CSR` with
   `AND #$1F`, initialised to 0, 1, 2, 3. They select something in the video
   hardware; nothing in the ROM says what.
