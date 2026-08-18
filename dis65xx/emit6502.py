@@ -46,7 +46,21 @@ def _petscii_char(b: int) -> str | None:
     return None
 
 
-def _operand(insn, labels: dict[int, str], symbols: dict[int, str] | None = None) -> str:
+def _interior_name(v: int, labels: dict[int, str], span: int = 4) -> str | None:
+    """`label+n` for an address inside a multi-byte entry.
+
+    Those interiors carry no label of their own - one there would collapse onto
+    the next entry - but the code does reference them, so name them relative to
+    the entry they belong to.
+    """
+    for back in range(1, span + 1):
+        if v - back in labels:
+            return f"{labels[v - back]}+{back}"
+    return None
+
+
+def _operand(insn, labels: dict[int, str], symbols: dict[int, str] | None = None,
+             interiors: set[int] | None = None) -> str:
     m, v = insn.mode, insn.operand
     if m is Mode.IMP:
         return ""
@@ -77,6 +91,8 @@ def _operand(insn, labels: dict[int, str], symbols: dict[int, str] | None = None
         name = labels.get(v)
     else:
         name = symbols.get(v) or labels.get(v)
+        if name is None and interiors is not None and v in interiors:
+            name = _interior_name(v, labels)
     pre = ">" if v < 0x100 and name is None else ""
     body = name or f"${v:04X}"
     if m is Mode.ABS:
@@ -361,6 +377,13 @@ def emit_block(data: bytes, base: int, block: C64Block, sidecar: Sidecar) -> str
             lines.append(f"{'':{_INDENT}}{'FCB':{_MNEM_WIDTH}}"
                          + ",".join(f"${b:02X}" for b in chunk))
 
+    interiors: set[int] = set()
+    for region in sidecar.regions:
+        if region.kind in _WORD_KINDS or region.kind == "byte_word":
+            if block.start <= region.start < block.end:
+                interiors |= set(range(region.start - block.offset + 1,
+                                       region.end - block.offset))
+
     decoded = [insn for _rt, insn, _b in _decode_block(data, base, block, labels, sidecar)]
     ptr_loads = _pointer_loads(decoded, labels, set(sidecar.c64_pointers))
 
@@ -442,7 +465,8 @@ def emit_block(data: bytes, base: int, block: C64Block, sidecar: Sidecar) -> str
             continue
         flush()
         text = ptr_loads.get(rt)
-        operand = f"#{text}" if text else _operand(insn, all_names, used_symbols)
+        operand = (f"#{text}" if text
+                   else _operand(insn, all_names, used_symbols, interiors))
         body = f"{'':{_INDENT}}{insn.mnemonic:{_MNEM_WIDTH}}{operand}".rstrip()
         comment = sidecar.line_comments.get(rt + block.offset)
         # A label already printed this note above; repeating it on the first

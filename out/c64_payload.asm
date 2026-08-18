@@ -679,7 +679,7 @@ c64ScreenOut1:
         STA     btxReg012
         LDA     L10C4
         STA     FAC1EXP
-        LDA     $10C5
+        LDA     L10C4+1
         STA     FAC1MAN1
         LDA     #$FF
         STA     btxReg00F
@@ -699,7 +699,7 @@ L172A:
 L172D:
         LDA     c64PtrTable
         STA     L11DA
-        LDA     $10C1
+        LDA     c64PtrTable+1
         STA     L11DB
         LDA     #$00
         STA     L11D9
@@ -817,7 +817,7 @@ L17EE:
         TXA
 
 L17EF:
-        LDX     $10C8
+        LDX     L10C4+4
         STX     FAC2EXP
         LDX     $10C9
         STX     FAC2MAN1
@@ -840,9 +840,9 @@ L180C:
         TXA
 
 L180D:
-        LDX     $10C6
+        LDX     L10C4+2
         STX     FAC2EXP
-        LDX     $10C7
+        LDX     L10C4+3
         STX     FAC2MAN1
         LDY     #$00
 
@@ -1084,9 +1084,9 @@ L1972:
         BEQ     L198C
         CMP     L11B9
         BNE     L1972
-        LDA     $1998,Y
+        LDA     c64MenuKeys+1,Y
         STA     FAC1EXP
-        LDA     $1999,Y
+        LDA     c64MenuKeys+2,Y
         STA     FAC1MAN1
         JMP     (FAC1EXP)
 
@@ -1471,7 +1471,7 @@ c64Vec20:
         STA     L11D9
         LDA     c64PtrTable
         STA     FAC1MAN4
-        LDA     $10C1
+        LDA     c64PtrTable+1
         STA     FAC1SGN
         RTS
 
@@ -1533,7 +1533,7 @@ c64Vec22:
         JSR     L105D
         LDA     c64PtrTable
         STA     FAC1MAN4
-        LDA     $10C1
+        LDA     c64PtrTable+1
         STA     FAC1SGN
         LDA     #$00
         STA     L11DD
@@ -2182,7 +2182,7 @@ L213E:
         BCS     L2174
         LDA     c64PtrTable
         STA     FAC1MAN4
-        LDA     $10C1
+        LDA     c64PtrTable+1
         STA     FAC1SGN
 
 L214D:
@@ -3431,7 +3431,7 @@ L29D7:
         STA     FAC1MAN4
         STA     FAC2MAN4
         STA     L11DA
-        LDA     $10C1
+        LDA     c64PtrTable+1
         STA     FAC1SGN
         STA     FAC2SGN
         STA     L11DB
@@ -3612,7 +3612,7 @@ c64Vec58:
         BNE     c64Vec58
         LDA     c64PtrTable
         STA     FAC1MAN4
-        LDA     $10C1
+        LDA     c64PtrTable+1
         STA     FAC1SGN
         JMP     c64Vec58
 
@@ -3652,7 +3652,7 @@ L2B64:
         BNE     L2B7F
         LDX     c64PtrTable
         STX     FAC2MAN4
-        LDX     $10C1
+        LDX     c64PtrTable+1
         STX     FAC2SGN
 
 L2B7F:

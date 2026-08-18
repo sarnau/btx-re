@@ -116,6 +116,12 @@ def _value(token: str, symbols: dict[str, int], line_no: int) -> int:
             lhs, rhs = token.split(op, 1)
             return fn(_value(lhs, symbols, line_no),
                       _value(rhs, symbols, line_no)) & 0xFFFF
+    # label+n / label-n, for an address that points inside a multi-byte entry.
+    for op, fn in (("+", lambda a, b: a + b), ("-", lambda a, b: a - b)):
+        idx = token.find(op, 1)
+        if idx > 0:
+            return fn(_value(token[:idx], symbols, line_no),
+                      _value(token[idx + 1:], symbols, line_no)) & 0xFFFF
     if token.startswith("$"):
         return int(token[1:], 16)
     if token.startswith("%"):

@@ -346,12 +346,26 @@ def test_menu_key_table_uses_byte_word_records():
     assert len(re.findall(r"^\s+DW\s", body, re.M)) == 13
 
 
-def test_labels_never_land_inside_a_record():
-    """The code reads a record's address bytes with LDA table+1,Y. Labelling
-    those collapsed them onto the next record and changed the operand."""
+def test_record_interiors_read_as_offsets_from_their_entry():
+    """A label inside a record would collapse onto the next one and change the
+    operand, so the interior is named relative to the entry instead."""
     src = (OUT / "c64_payload.asm").read_text()
-    assert "L1998" not in src and "L1999" not in src
-    assert "LDA     $1998,Y" in src or "LDA     $1999,Y" in src
+    assert "L1998:" not in src and "L1999:" not in src
+    assert "LDA     c64MenuKeys+1,Y" in src
+    assert "LDA     c64MenuKeys+2,Y" in src
+
+
+def test_no_indexed_reference_uses_a_bare_address():
+    src = (OUT / "c64_payload.asm").read_text()
+    bare = re.findall(r"^\s+[A-Z]{3}\s+\$1[0-9A-F]{3},[XY]$", src, re.M)
+    assert not bare, bare[:6]
+
+
+def test_offset_expressions_assemble():
+    _, out = assemble('        ORG $1000\nT       EQU $1997\n'
+                      '        CPU 6502\n        LDA T+1,Y\n        LDA T+2,Y\n'
+                      '        END\n')
+    assert out == bytes([0xB9, 0x98, 0x19, 0xB9, 0x99, 0x19])
 
 
 def test_pointer_table_resolves_to_its_targets():
