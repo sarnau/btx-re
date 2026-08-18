@@ -123,3 +123,15 @@ def test_clear_planes_lands_on_an_instruction():
     src = (OUT / "btx_decoder_ii.asm").read_text()
     body = src.split("clearPlanes:", 1)[1][:80]
     assert "FCB" not in body, body
+
+
+def test_drcs_buffers_are_named_across_their_whole_span():
+    """The 102 bytes drcsDefineChar clears are the DRCS layout exactly: the
+    row pair, four plane selectors, and four 24-byte planes."""
+    src = (OUT / "btx_decoder_ii.asm").read_text()
+    for name, addr in (("drcsRowHi", 0x0420), ("drcsSel0", 0x0422),
+                       ("drcsPlane0", 0x0426), ("drcsPlane3", 0x046E),
+                       ("drcsOffset", 0x0487)):
+        assert re.search(rf"^{name}\s+EQU\s+\${addr:04X}$", src, re.M), name
+    assert "LDX     #drcsPlane1" in src
+    assert "ROR     drcsRowLo" in src and "ASR     drcsRowLo" in src

@@ -407,6 +407,37 @@ What separates attributes from content is decisive: `$04B1`–`$04B4` are never
 assigned a raw byte — only ever bit-manipulated by the C1 handlers — whereas
 the incoming character lands in `$04B5` and only that value reaches `$5400`.
 
+### DRCS
+
+A CEPT page can define its own characters, and `$D4C4` is where they are
+loaded. `drcsDefineChar` takes the character code and clears 102 bytes, which
+is the layout stated exactly:
+
+| | | |
+|---|---|---|
+| `$0420` | `drcsRowHi` `drcsRowLo` | the row being assembled, 16 bits |
+| `$0422` | `drcsSel0`–`drcsSel3` | which planes this data belongs to |
+| `$0426` `$043E` `$0456` `$046E` | `drcsPlane0`–`drcsPlane3` | 24 bytes each — 12 rows of 2 |
+
+Four planes is what makes a DRCS cell colour: each contributes one bit per
+pixel, and the selectors say which of them the incoming rows go into.
+
+Each data byte carries six pixels (`ANDA #$3F`). Whether they are expanded
+depends on the format `fmtLookup` resolved from the `$D419` tables:
+
+- `drcsWide` — `LSRA / ROR / ASR`, eight times. `ROR` walks a bit out of A into
+  bit 7 and `ASR` then copies it down one, so **every input bit lands twice**.
+  Horizontal pixel doubling, done in the shift rather than through
+  `bitDoubleTable`.
+- `drcsTall` — `drcsStoreRow` is called twice for the same row: the vertical
+  half of the same idea.
+- `drcsFormat = 4` — no expansion; A goes straight into `drcsRowLo`.
+
+The doubling lands exactly where the fonts are. Six input pixels become twelve,
+and the 16-bit pair leaves its top four bits clear — the same shape as the ROM
+character sets, whose ink occupies columns 4–15 of a 16-bit row. A DRCS
+character and a built-in glyph are the same 12-pixel cell.
+
 ### Combining accents
 
 The `$5800` plane is not a duplicate character plane. When a character comes

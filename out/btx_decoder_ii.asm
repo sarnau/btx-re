@@ -37,6 +37,21 @@ softVecSwi    EQU     $FA
 rowAttr       EQU     $040A
 rowAccent     EQU     $040C
 rowRender     EQU     $040E
+drcsChar      EQU     $041B
+drcsWide      EQU     $041C
+drcsTall      EQU     $041D
+drcsFormat    EQU     $041E
+drcsRowHi     EQU     $0420
+drcsRowLo     EQU     $0421
+drcsSel0      EQU     $0422
+drcsSel1      EQU     $0423
+drcsSel2      EQU     $0424
+drcsSel3      EQU     $0425
+drcsPlane0    EQU     $0426
+drcsPlane1    EQU     $043E
+drcsPlane2    EQU     $0456
+drcsPlane3    EQU     $046E
+drcsOffset    EQU     $0487
 colourIndex   EQU     $048D
 gSetSelector  EQU     $048F
 clutIndex     EQU     $0495
@@ -3076,7 +3091,7 @@ LD47E:
         STAA    $0488
         JSR     LE98C
         ANDA    #$07
-        STAA    $041E
+        STAA    drcsFormat
         ASLA
         ASLA
         ASLA
@@ -3098,11 +3113,11 @@ LD49F:
         LDX     #fmtVals041C
         ABX
         LDAA    $00,X
-        STAA    $041C
+        STAA    drcsWide
         LDX     #fmtVals041D
         ABX
         LDAA    $00,X
-        STAA    $041D
+        STAA    drcsTall
         LDX     #fmtVals041F
         ABX
         LDAA    $00,X
@@ -3111,11 +3126,46 @@ LD49F:
 
 LD4BD:
         CMPA    #$7F
-        BCS     LD4C4
+        BCS     drcsDefineChar
         JMP     LD349
 
-LD4C4:
-        STAA    $041B
+; DRCS - loading a dynamically redefinable character.
+;
+; drcsDefineChar takes the character code into drcsChar, then clears the 102
+; bytes from drcsRowHi through the end of drcsPlane3. That count is the layout,
+; exactly:
+;
+;     $0420  drcsRowHi  drcsRowLo      the row being assembled, 16 bits
+;     $0422  drcsSel0..drcsSel3        which planes this data is going into
+;     $0426  drcsPlane0                24 bytes - 12 rows of 2
+;     $043E  drcsPlane1                24
+;     $0456  drcsPlane2                24
+;     $046E  drcsPlane3                24
+;                                      2 + 4 + 96 = 102
+;
+; Four planes is what makes a DRCS cell colour: each contributes one bit per
+; pixel, and the selectors say which of them the incoming rows belong to.
+;
+; Each data byte carries six pixels, masked with ANDA #$3F. How they become a
+; row depends on the format that fmtLookup resolved:
+;
+;   drcsWide  negative - LSRA / ROR / ASR eight times, which walks a bit out of
+;             A into bit 7 and then lets ASR copy it down one, so every input bit
+;             lands twice. That is horizontal pixel doubling done in the shift
+;             rather than through bitDoubleTable
+;   drcsTall  negative - drcsStoreRow is called twice for the same row, which is
+;             the vertical half of the same idea
+;   drcsFormat = 4 - no expansion at all: A goes straight into drcsRowLo
+;
+; drcsStoreRow writes the pair at drcsOffset into every enabled plane and steps
+; the offset by 2, stopping at 24.
+;
+; The doubling lands exactly where the fonts are: six input pixels become twelve,
+; and the 16-bit pair leaves its top four bits clear - which is the same shape as
+; the ROM character sets, whose ink occupies columns 4-15 of a 16-bit row. A
+; DRCS character and a built-in glyph are the same 12-pixel cell.
+drcsDefineChar:
+        STAA    drcsChar
         LDAB    #$66
         LDAA    #$00
 
@@ -3126,7 +3176,7 @@ LD4CB:
         DECB
         BNE     LD4CB
         JSR     LE98C
-        JMP     LD527
+        JMP     drcsStartChar
 
 LD4DA:
         JSR     LE98C
@@ -3149,7 +3199,7 @@ LD4F3:
         ANDA    #$03
         TAB
         LDAA    #$FF
-        LDX     #$0422
+        LDX     #drcsSel0
         ABX
         STAA    $00,X
         JMP     LD4DA
@@ -3184,124 +3234,124 @@ LD523:
         CMPA    #$40
         BCC     LD54F
 
-LD527:
-        CLR     $0422
-        CLR     $0423
-        CLR     $0424
-        CLR     $0425
-        CLR     $0487
-        CLR     $0420
-        CLR     $0421
+drcsStartChar:
+        CLR     drcsSel0
+        CLR     drcsSel1
+        CLR     drcsSel2
+        CLR     drcsSel3
+        CLR     drcsOffset
+        CLR     drcsRowHi
+        CLR     drcsRowLo
         LDAB    cursorRowMax
         CMPB    #$13
         BNE     LD546
         JMP     LD4DD
 
 LD546:
-        INC     $0487
-        INC     $0487
+        INC     drcsOffset
+        INC     drcsOffset
         JMP     LD4DD
 
 LD54F:
         ANDA    #$3F
-        LDAB    $041C
+        LDAB    drcsWide
         BMI     LD559
         JMP     LD623
 
 LD559:
-        LDAB    $041E
+        LDAB    drcsFormat
         CMPB    #$04
         BNE     LD569
-        STAA    $0421
-        CLR     $0420
+        STAA    drcsRowLo
+        CLR     drcsRowHi
         JMP     LD5A7
 
 LD569:
-        CLR     $0420
-        CLR     $0421
+        CLR     drcsRowHi
+        CLR     drcsRowLo
         LSRA
-        ROR     $0421
-        ASR     $0421
+        ROR     drcsRowLo
+        ASR     drcsRowLo
         LSRA
-        ROR     $0421
-        ASR     $0421
+        ROR     drcsRowLo
+        ASR     drcsRowLo
         LSRA
-        ROR     $0421
-        ASR     $0421
+        ROR     drcsRowLo
+        ASR     drcsRowLo
         LSRA
-        ROR     $0421
-        ASR     $0421
+        ROR     drcsRowLo
+        ASR     drcsRowLo
         LSRA
-        ROR     $0420
-        ASR     $0420
+        ROR     drcsRowHi
+        ASR     drcsRowHi
         LSRA
-        ROR     $0420
-        ASR     $0420
+        ROR     drcsRowHi
+        ASR     drcsRowHi
         LSRA
-        ROR     $0420
-        ASR     $0420
+        ROR     drcsRowHi
+        ASR     drcsRowHi
         LSRA
-        ROR     $0420
-        ASR     $0420
+        ROR     drcsRowHi
+        ASR     drcsRowHi
 
 LD5A7:
-        JSR     LD5B5
-        LDAB    $041D
+        JSR     drcsStoreRow
+        LDAB    drcsTall
         BPL     LD5B2
-        JSR     LD5B5
+        JSR     drcsStoreRow
 
 LD5B2:
         JMP     LD501
 
-LD5B5:
-        LDAB    $0487
+drcsStoreRow:
+        LDAB    drcsOffset
         CMPB    #$18
         BCC     LD61F
-        LDAA    $0422
+        LDAA    drcsSel0
         BPL     LD5D2
-        LDAB    $0487
-        LDAA    $0420
-        LDX     #$0426
+        LDAB    drcsOffset
+        LDAA    drcsRowHi
+        LDX     #drcsPlane0
         ABX
         STAA    $00,X
-        LDAA    $0421
+        LDAA    drcsRowLo
         STAA    $01,X
 
 LD5D2:
-        LDAA    $0423
+        LDAA    drcsSel1
         BPL     LD5E8
-        LDAB    $0487
-        LDX     #$043E
+        LDAB    drcsOffset
+        LDX     #drcsPlane1
         ABX
-        LDAA    $0420
+        LDAA    drcsRowHi
         STAA    $00,X
-        LDAA    $0421
+        LDAA    drcsRowLo
         STAA    $01,X
 
 LD5E8:
-        LDAA    $0424
+        LDAA    drcsSel2
         BPL     LD5FE
-        LDAB    $0487
-        LDAA    $0420
-        LDX     #$0456
+        LDAB    drcsOffset
+        LDAA    drcsRowHi
+        LDX     #drcsPlane2
         ABX
         STAA    $00,X
-        LDAA    $0421
+        LDAA    drcsRowLo
         STAA    $01,X
 
 LD5FE:
-        LDAA    $0425
+        LDAA    drcsSel3
         BPL     LD614
-        LDAB    $0487
-        LDAA    $0420
-        LDX     #$046E
+        LDAB    drcsOffset
+        LDAA    drcsRowHi
+        LDX     #drcsPlane3
         ABX
         STAA    $00,X
-        LDAA    $0421
+        LDAA    drcsRowLo
         STAA    $01,X
 
 LD614:
-        LDAB    $0487
+        LDAB    drcsOffset
         INCB
         INCB
         CMPB    #$19
@@ -3309,48 +3359,48 @@ LD614:
         LDAB    #$18
 
 LD61F:
-        STAB    $0487
+        STAB    drcsOffset
         RTS
 
 LD623:
-        LDAB    $0487
+        LDAB    drcsOffset
         RORB
         BCS     LD644
-        STAA    $0420
-        CLR     $0421
-        LSR     $0420
-        ROR     $0421
-        LSR     $0420
-        ROR     $0421
-        JSR     LD5B5
-        DEC     $0487
+        STAA    drcsRowHi
+        CLR     drcsRowLo
+        LSR     drcsRowHi
+        ROR     drcsRowLo
+        LSR     drcsRowHi
+        ROR     drcsRowLo
+        JSR     drcsStoreRow
+        DEC     drcsOffset
         JMP     LD501
 
 LD644:
-        ORAA    $0421
-        STAA    $0421
-        DEC     $0487
-        JSR     LD5B5
+        ORAA    drcsRowLo
+        STAA    drcsRowLo
+        DEC     drcsOffset
+        JSR     drcsStoreRow
         JMP     LD501
 
 LD653:
-        LDAB    $0487
+        LDAB    drcsOffset
         RORB
         BCC     LD65C
-        INC     $0487
+        INC     drcsOffset
 
 LD65C:
         CMPA    #$20
         BNE     LD669
-        CLR     $0420
-        CLR     $0421
+        CLR     drcsRowHi
+        CLR     drcsRowLo
         JMP     LD697
 
 LD669:
         CMPA    #$2C
         BNE     LD679
-        CLR     $0420
-        CLR     $0421
+        CLR     drcsRowHi
+        CLR     drcsRowLo
         JSR     LD6B8
         JMP     LD501
 
@@ -3358,8 +3408,8 @@ LD679:
         CMPA    #$2D
         BNE     LD68B
         LDAB    #$FF
-        STAB    $0420
-        STAB    $0421
+        STAB    drcsRowHi
+        STAB    drcsRowLo
         JSR     LD6B8
         JMP     LD501
 
@@ -3367,12 +3417,12 @@ LD68B:
         CMPA    #$2F
         BNE     LD6A4
         LDAB    #$FF
-        STAB    $0420
-        STAB    $0421
+        STAB    drcsRowHi
+        STAB    drcsRowLo
 
 LD697:
         JSR     LD6B8
-        LDAB    $0487
+        LDAB    drcsOffset
         CMPB    #$18
         BCS     LD697
         JMP     LD501
@@ -3390,10 +3440,10 @@ LD6AD:
         JMP     LD501
 
 LD6B8:
-        JSR     LD5B5
-        LDAB    $041D
+        JSR     drcsStoreRow
+        LDAB    drcsTall
         BPL     LD6C3
-        JSR     LD5B5
+        JSR     drcsStoreRow
 
 LD6C3:
         RTS
@@ -3409,24 +3459,24 @@ LD6D1:
         PSHA
         JSR     LD6D9
         PULA
-        JMP     LD527
+        JMP     drcsStartChar
 
 LD6D9:
-        LDAB    $0487
+        LDAB    drcsOffset
         RORB
         BCC     LD6E2
-        INC     $0487
+        INC     drcsOffset
 
 LD6E2:
-        CLR     $0420
-        CLR     $0421
+        CLR     drcsRowHi
+        CLR     drcsRowLo
 
 LD6E8:
         JSR     LD6B8
-        LDAB    $0487
+        LDAB    drcsOffset
         CMPB    #$18
         BCS     LD6E8
-        LDAA    $041B
+        LDAA    drcsChar
         SUBA    #$20
         BCC     LD6FA
         RTS
@@ -3436,15 +3486,15 @@ LD6FA:
         MUL
         ADDD    #$0800
         STD     $0402
-        LDAA    $041B
+        LDAA    drcsChar
         ADDA    $041F
         CMPA    #$7F
         BCS     LD70F
         LDAA    #$7F
 
 LD70F:
-        STAA    $041B
-        LDAA    $041E
+        STAA    drcsChar
+        LDAA    drcsFormat
         CMPA    #$01
         BEQ     LD73D
         CMPA    #$02
@@ -3455,10 +3505,10 @@ LD720:
         PSHB
         PSHA
         PSHX
-        LDAA    $0420
+        LDAA    drcsRowHi
         LDX     $0402
         STAA    $00,X
-        LDAA    $0421
+        LDAA    drcsRowLo
         STAA    $01,X
         LDD     $0402
         ADDD    #$0002
@@ -3472,14 +3522,14 @@ LD73D:
         LDAB    #$00
 
 LD73F:
-        LDX     #$0426
+        LDX     #drcsPlane0
         ABX
         LDAA    $01,X
-        STAA    $0420
+        STAA    drcsRowHi
         LDAA    $00,X
         ANDA    #$0F
         ORAA    #$00
-        STAA    $0421
+        STAA    drcsRowLo
         JSR     LD720
         INCB
         INCB
@@ -3491,22 +3541,22 @@ LD75B:
         LDAB    #$00
 
 LD75D:
-        LDX     #$0426
+        LDX     #drcsPlane0
         ABX
         LDAA    $01,X
-        STAA    $0420
+        STAA    drcsRowHi
         LDAA    $00,X
         ANDA    #$0F
         ORAA    #$20
-        STAA    $0421
+        STAA    drcsRowLo
         JSR     LD720
-        LDX     #$043E
+        LDX     #drcsPlane1
         ABX
         LDAA    $01,X
-        STAA    $0420
+        STAA    drcsRowHi
         LDAA    $00,X
         ANDA    #$0F
-        STAA    $0421
+        STAA    drcsRowLo
         JSR     LD720
         INCB
         INCB
@@ -3518,14 +3568,14 @@ LD78C:
         CLRB
 
 LD78D:
-        LDX     #$043E
+        LDX     #drcsPlane1
         ABX
         LDAA    $01,X
         LSRA
         LSRA
         ANDA    #$0F
         ORAA    #$30
-        STAA    $0421
+        STAA    drcsRowLo
         LDAA    $01,X
         RORA
         RORA
@@ -3533,20 +3583,20 @@ LD78D:
         ANDA    #$C0
         STAA    $01,X
         STAA    $0489
-        LDX     #$0426
+        LDX     #drcsPlane0
         ABX
         LDAA    $01,X
         ANDA    #$3F
         ORAA    $0489
-        STAA    $0420
+        STAA    drcsRowHi
         JSR     LD720
-        LDX     #$046E
+        LDX     #drcsPlane3
         ABX
         LDAA    $01,X
         LSRA
         LSRA
         ANDA    #$0F
-        STAA    $0421
+        STAA    drcsRowLo
         LDAA    $01,X
         RORA
         RORA
@@ -3554,12 +3604,12 @@ LD78D:
         ANDA    #$C0
         STAA    $01,X
         STAA    $0489
-        LDX     #$0456
+        LDX     #drcsPlane2
         ABX
         LDAA    $01,X
         ANDA    #$3F
         ORAA    $0489
-        STAA    $0420
+        STAA    drcsRowHi
         JSR     LD720
         INCB
         INCB
@@ -3571,12 +3621,12 @@ LD7EC:
         RTS
 
 LD7ED:
-        CLR     $0420
-        CLR     $0421
+        CLR     drcsRowHi
+        CLR     drcsRowLo
 
 LD7F3:
         JSR     LD6B8
-        LDAB    $0487
+        LDAB    drcsOffset
         CMPB    #$18
         BCS     LD7F3
         JSR     LD6D9
@@ -3668,7 +3718,7 @@ LD8A0:
 
 LD8A8:
         ANDA    #$0F
-        STAA    $0420
+        STAA    drcsRowHi
         JSR     LF081
         CMPA    #$40
         BCC     LD8E0
@@ -3682,12 +3732,12 @@ LD8BB:
 
 LD8C0:
         ANDA    #$0F
-        STAA    $0421
-        LDAA    $0420
+        STAA    drcsRowLo
+        LDAA    drcsRowHi
         LDAB    #$0A
         MUL
-        ADDB    $0421
-        STAB    $0420
+        ADDB    drcsRowLo
+        STAB    drcsRowHi
         JSR     LF081
         CMPA    #$1F
         BNE     LD8DB
@@ -3705,7 +3755,7 @@ LD8E0:
         JMP     LD9C9
 
 LD8EC:
-        LDAB    $0420
+        LDAB    drcsRowHi
         CMPB    #$10
         BCC     LD8F6
         JMP     LD349
@@ -3717,7 +3767,7 @@ LD8F6:
 
 LD8FD:
         SUBB    #$10
-        STAB    $0420
+        STAB    drcsRowHi
         CLR     $04C1
         CLR     $04C2
         CLR     $04C3
@@ -3809,7 +3859,7 @@ LD997:
         ROL     $04C4
         DECA
         BNE     LD997
-        LDAA    $0420
+        LDAA    drcsRowHi
         ASLA
         TAB
         LDAA    $04C4
@@ -3819,8 +3869,8 @@ LD997:
         LDAA    $04C5
         STAA    $00,X
         JSR     LD9FE
-        INC     $0420
-        LDAB    $0420
+        INC     drcsRowHi
+        LDAB    drcsRowHi
         CMPB    #$10
         BCS     LD9C3
         JMP     LD34C
@@ -3848,17 +3898,17 @@ LD9D7:
 
 LD9DE:
         ANDA    #$1F
-        LDAB    $0420
+        LDAB    drcsRowHi
         LDX     #$1B2A
         ABX
         STAA    $00,X
-        INC     $0420
+        INC     drcsRowHi
         JSR     LDA1C
-        LDAB    $0420
+        LDAB    drcsRowHi
         CMPB    #$04
         BCS     LD9FB
         LDAA    #$05
-        STAA    $0420
+        STAA    drcsRowHi
 
 LD9FB:
         JMP     LD9C6

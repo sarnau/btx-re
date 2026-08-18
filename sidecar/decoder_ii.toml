@@ -446,6 +446,9 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xE34E" = "csiDigit9"
 "0xE35B" = "csiFinalB"
 "0xE367" = "escDefine"
+"0xD4C4" = "drcsDefineChar"
+"0xD527" = "drcsStartChar"
+"0xD5B5" = "drcsStoreRow"
 "0xE4FF" = "setAttrSpan"
 "0xE6C6" = "enterStatusLine"
 "0xE744" = "leaveStatusLine"
@@ -565,6 +568,42 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xFFF0" = "vectors"
 
 [block_comments]
+"0xD4C4" = """
+DRCS - loading a dynamically redefinable character.
+
+drcsDefineChar takes the character code into drcsChar, then clears the 102
+bytes from drcsRowHi through the end of drcsPlane3. That count is the layout,
+exactly:
+
+    $0420  drcsRowHi  drcsRowLo      the row being assembled, 16 bits
+    $0422  drcsSel0..drcsSel3        which planes this data is going into
+    $0426  drcsPlane0                24 bytes - 12 rows of 2
+    $043E  drcsPlane1                24
+    $0456  drcsPlane2                24
+    $046E  drcsPlane3                24
+                                     2 + 4 + 96 = 102
+
+Four planes is what makes a DRCS cell colour: each contributes one bit per
+pixel, and the selectors say which of them the incoming rows belong to.
+
+Each data byte carries six pixels, masked with ANDA #$3F. How they become a
+row depends on the format that fmtLookup resolved:
+
+  drcsWide  negative - LSRA / ROR / ASR eight times, which walks a bit out of
+            A into bit 7 and then lets ASR copy it down one, so every input bit
+            lands twice. That is horizontal pixel doubling done in the shift
+            rather than through bitDoubleTable
+  drcsTall  negative - drcsStoreRow is called twice for the same row, which is
+            the vertical half of the same idea
+  drcsFormat = 4 - no expansion at all: A goes straight into drcsRowLo
+
+drcsStoreRow writes the pair at drcsOffset into every enabled plane and steps
+the offset by 2, stopping at 24.
+
+The doubling lands exactly where the fonts are: six input pixels become twelve,
+and the 16-bit pair leaves its top four bits clear - which is the same shape as
+the ROM character sets, whose ink occupies columns 4-15 of a 16-bit row. A
+DRCS character and a built-in glyph are the same 12-pixel cell."""
 "0xE4FF" = """
 Apply one attribute across the span that starts at the cursor.
 
@@ -1665,6 +1704,21 @@ vectors before entering the main firmware."""
 
 # MC6801 internal register file. Names from the MC6801 Reference Manual.
 [symbols]
+"0x041B" = "drcsChar"
+"0x041C" = "drcsWide"
+"0x041D" = "drcsTall"
+"0x041E" = "drcsFormat"
+"0x0420" = "drcsRowHi"
+"0x0421" = "drcsRowLo"
+"0x0422" = "drcsSel0"
+"0x0423" = "drcsSel1"
+"0x0424" = "drcsSel2"
+"0x0425" = "drcsSel3"
+"0x0426" = "drcsPlane0"
+"0x043E" = "drcsPlane1"
+"0x0456" = "drcsPlane2"
+"0x046E" = "drcsPlane3"
+"0x0487" = "drcsOffset"
 "0x04B6" = "attrSpanBit"
 "0x04B7" = "attrByteIndex"
 "0x04B8" = "attrMask"
