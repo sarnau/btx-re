@@ -598,6 +598,30 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xFFF0" = "vectors"
 
 [block_comments]
+"0xB58B" = """
+c64Cell3 and c64Cell5, the two the C64 is sent and never reads.
+
+The mailbox is a verbatim copy of one cell - the character, the accent and all
+four attribute bytes - so the payload receives six and stores six. Four are
+read afterwards and two are not, by every instruction in the image:
+
+    c64CellChar    8 reads   the code
+    c64CellAccent  1 read    c64CellOut composes the umlauts from it
+    c64Cell3       0
+    c64CellSet     3 reads   c64CellToChar picks the set from its low 3 bits
+    c64Cell5       0
+    c64CellAttr    2 reads   bit 2 reverses, bit 3 shows
+
+The two it drops are the two it could not act on. c64Cell3 is the decoder's
+curAttr0 - line-continuation bits, the separated-mosaic bit - and there are no
+separated mosaics on a PETSCII screen. c64Cell5 is curAttr2, the colour byte
+applyColour builds as (clutIndex << 3) | colourIndex, and the reduced display
+has one colour: c64ShowSplash fills all four pages of colour RAM with $0B and
+nothing writes them again.
+
+So this is not an oversight at either end. The record has a fixed shape because
+the decoder sends a cell, not a rendering, and the payload keeps the fields its
+own screen can express."""
 "0xD492" = """
 Resolve a DRCS format, and what happens when it does not resolve.
 

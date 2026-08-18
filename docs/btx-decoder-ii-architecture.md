@@ -226,6 +226,18 @@ cell, and the two sides name the same twelve bytes:
 | `$x08A` | `cellCol` ← `renderCol` | plot column |
 | `$x08B` | `cellReady` | the flag both sides poll |
 
+Two of the six the payload stores are then never read — `c64Cell3` and
+`c64Cell5`, by every instruction in the image. They are the two it could not
+act on: `c64Cell3` is `curAttr0`, carrying the line-continuation and
+separated-mosaic bits, and there are no separated mosaics on a PETSCII screen;
+`c64Cell5` is `curAttr2`, the colour byte `applyColour` builds as
+`(clutIndex << 3) | colourIndex`, and the reduced display has exactly one
+colour — `c64ShowSplash` fills all four pages of colour RAM with `$0B` and
+nothing writes them again.
+
+So the record has a fixed shape because the decoder sends **a cell, not a
+rendering**, and the payload keeps the fields its own screen can express.
+
 `cellSet` is worth a second look. On the C64 side `c64CellSet`'s low three bits
 select the character set; on the 6801 side the byte is `$00E1`, and `$00E1 & $07
 == 5` is exactly the test that sets `drcsCell`. The two processors agree on the
@@ -1133,9 +1145,6 @@ entire C64 payload is byte-for-byte identical. See
 - **`videoReg0`–`videoReg3`.** Four bytes at `$1B2A` written to `P3CSR` with
   `AND #$1F`, initialised to 0, 1, 2, 3. They select something in the video
   hardware; nothing in the ROM says what.
-- **Two cell bytes.** The decoder puts `curAttr0` and `curAttr2` into `cellAttr0` and
-  `cellAttr2`, and the C64 stores them as `c64Cell3` and `c64Cell5` and never
-  reads them back. Both sides carry the fields; neither uses them.
 
 ---
 
