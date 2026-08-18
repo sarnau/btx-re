@@ -141,6 +141,11 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 
 
 [labels]
+"0xAEF0" = "fontBaseTable"
+"0xAEFC" = "bitDoubleTable"
+"0xEF67" = "strModeNames"
+"0xEFF5" = "strStatusMsgs"
+"0xFD21" = "romPadding"
 "0xDA43" = "ctlAPB"
 "0xDA4C" = "ctlAPF"
 "0xDA55" = "ctlAPD"
@@ -290,6 +295,34 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xFFF0" = "vectors"
 
 [block_comments]
+"0xAEF0" = """
+Font bases, then a bit-doubling table.
+
+$AEF0 holds the five character-generator base addresses - $8000, $8780, $8F00,
+$9680 and $9E00 - followed by $2700.
+
+$AEFC begins a lookup that expands each bit of an index into two, which is the
+transform double-width rendering needs. Entries 1..15 are exactly
+bit-double(index) ($0003, $000C, $000F, $0030, ...), and the table continues in
+16-entry blocks past $AF1A. It feeds the DBW and DBS attribute handlers."""
+"0xEFF5" = """
+Status messages, 20 columns each, and the version string.
+
+"Anwahl", "Bitte warten...", "Verbindung", "nicht verbunden", "Abbruch",
+"Decodersoftware V3.3", "Belegt".
+
+The version string is what dates the two ROM revisions against each other:
+this image is V3.3 and CV30113 is V3.1, so this is the newer build. See
+docs/cv30113-revision-diff.md."""
+"0xEF67" = """
+Terminal mode names, 20 columns each: "CEPT Bildschirmtext", "PRESTEL
+Videotex", "ASCII Terminal-Mode", "ANTIOPE", "HEX-Tastatureingabe".
+
+The decoder therefore speaks more than CEPT - PRESTEL is the British videotex
+variant and ANTIOPE the French one."""
+"0xFD21" = """
+Unused ROM. 719 bytes of $FF fill running to $FFEF, where the hardware vector
+table begins."""
 "0xDC6D" = """
 Colour handlers, written as a skip chain.
 
@@ -951,3 +984,34 @@ kind = "ptr_table"
 start = 0xFCDB
 end = 0xFD0D
 kind = "ptr_table"
+
+# Tables and strings identified from the unclassified sweep.
+[[regions]]
+start = 0xAEF0
+end = 0xB200
+kind = "bytes"
+
+[[regions]]
+start = 0xEF67
+end = 0xEFCB
+kind = "string"
+
+[[regions]]
+start = 0xEFF5
+end = 0xF081
+kind = "string"
+
+[[regions]]
+start = 0xFD0D
+end = 0xFFF0
+kind = "bytes"
+
+[[regions]]
+start = 0xD823
+end = 0xD843
+kind = "bytes"
+
+[[regions]]
+start = 0xFC30
+end = 0xFC42
+kind = "bytes"
