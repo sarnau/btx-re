@@ -1686,19 +1686,19 @@ LA6F8:
         BEQ     LA713
         CMPA    #$02
         BEQ     LA718
-        JSR     LADE8
+        JSR     blitDoubleHW
         BRA     LA71D
 
 LA70E:
-        JSR     LAB05
+        JSR     blitNormal
         BRA     LA71D
 
 LA713:
-        JSR     LABD9
+        JSR     blitDoubleH
         BRA     LA71D
 
 LA718:
-        JSR     LACFB
+        JSR     blitDoubleW
         BRA     LA71D
 
 LA71D:
@@ -2237,7 +2237,8 @@ LAAFE:
         CLI
         JMP     LA71D
 
-LAB05:
+blitNormal:
+; draw the cell at normal size - curAttr0 bits 0-1 are 0, the NSZ attribute
         LDAB    renderCol
         ADDB    #$18
         STAB    >PORT3
@@ -2375,7 +2376,8 @@ LABC8:
 LABD8:
         RTS
 
-LABD9:
+blitDoubleH:
+; double height, DBH
         LDAB    renderCol
         ADDB    #$18
         STAB    >PORT3
@@ -2552,7 +2554,8 @@ LACE8:
 LACFA:
         RTS
 
-LACFB:
+blitDoubleW:
+; double width, DBW
         LDAB    renderCol
         ADDB    #$18
         STAB    >PORT3
@@ -2680,7 +2683,8 @@ LADCE:
 LADE7:
         RTS
 
-LADE8:
+blitDoubleHW:
+; double size, DBS - both at once
         LDAB    renderCol
         ADDB    #$18
         STAB    >PORT3
@@ -2985,13 +2989,13 @@ reset:
         STAA    TRCSR
         LDAA    TRCSR
         LDAA    RDR
-        JSR     LEEB1
-        JSR     LEE9A
-        JSR     LD849
+        JSR     clearVideoRam
+        JSR     clearScreen
+        JSR     initVideoRegs
         JSR     drcsClearStore
         JSR     setRowPointers
-        JSR     LECCB
-        JSR     LB2A3
+        JSR     resetAll
+        JSR     startC64
         JSR     resetStatusLine
         JSR     redrawScreen
         LDD     #$F87F
@@ -3008,13 +3012,14 @@ LB280:
         CLR     modeAscii
         CLR     modePrestel
         CLR     modeAntiope
-        JSR     LEE9A
+        JSR     clearScreen
         JSR     resetStatusLine
         CLR     pendingByte
-        JSR     LED9D
+        JSR     resetProtocol
         JMP     parseNextByte
 
-LB2A3:
+startC64:
+; set up ports 1 and 4, then fall into copyBootstrapToC64
         LDAA    #$03
         STAA    P1DDR
         LDAA    #$03
@@ -3204,14 +3209,14 @@ LD349:
         LDS     #stackTop
 
 LD34C:
-        JSR     LF081
+        JSR     getLineByte
         CMPA    #$1F
         BNE     LD34C
         BEQ     LD358
 
 parseNextByte:
 ; the parser's main loop - fetch a byte and dispatch it: $1B to ctlEsc, $9B to the CSI path, C0 and C1 through their tables
-        JSR     LF081
+        JSR     getLineByte
 
 LD358:
         CMPA    #$1B
@@ -3308,7 +3313,7 @@ LD3A2:
 
 ctlEsc:
 ; C0 $1B ESC - fetch the next byte and hand it to dispatchEsc, unless inStatusLine says to ignore it
-        JSR     LF081
+        JSR     getLineByte
         TST     inStatusLine
         BPL     dispatchEsc
         JMP     LE9A2
@@ -3331,7 +3336,7 @@ LD3B8:
         JMP     $00,X
 
 LD3C5:
-        JSR     LF081
+        JSR     getLineByte
         TST     inStatusLine
         BPL     dispatchCsi
         JMP     LE9A2
@@ -3377,7 +3382,7 @@ LD3F2:
         RTS
 
 LD40A:
-        JSR     LE98C
+        JSR     nextParamByte
         CMPA    #$20
         BEQ     parseFormatParams
         BCS     LD416
@@ -3443,7 +3448,7 @@ fmtVals041F:
 
 parseFormatParams:
 ; read a DRCS header: $28 clears the store first, then the format byte resolves drcsWide, drcsTall and drcsFormat through fmtLookup
-        JSR     LE98C
+        JSR     nextParamByte
         CMPA    #$40
         BHI     LD47E
         CMPA    #$28
@@ -3452,17 +3457,17 @@ parseFormatParams:
         JMP     LD475
 
 LD472:
-        JSR     LE98C
+        JSR     nextParamByte
 
 LD475:
-        JSR     LE98C
-        JSR     LE98C
-        JSR     LE98C
+        JSR     nextParamByte
+        JSR     nextParamByte
+        JSR     nextParamByte
 
 LD47E:
         ANDA    #$0F
         STAA    fmtKeyLo
-        JSR     LE98C
+        JSR     nextParamByte
         ANDA    #$07
         STAA    drcsFormat
         ASLA
@@ -3582,11 +3587,11 @@ LD4CB:
         STAA    $00,X
         DECB
         BNE     LD4CB
-        JSR     LE98C
+        JSR     nextParamByte
         JMP     drcsStartChar
 
 LD4DA:
-        JSR     LE98C
+        JSR     nextParamByte
 
 LD4DD:
         CMPA    #$30
@@ -3612,7 +3617,7 @@ LD4F3:
         JMP     LD4DA
 
 LD501:
-        JSR     LF081
+        JSR     getLineByte
 
 LD504:
         CMPA    #$1F
@@ -3810,7 +3815,7 @@ LD669:
         BNE     LD679
         CLR     drcsRowHi
         CLR     drcsRowLo
-        JSR     LD6B8
+        JSR     drcsEmitRow
         JMP     LD501
 
 LD679:
@@ -3819,7 +3824,7 @@ LD679:
         LDAB    #$FF
         STAB    drcsRowHi
         STAB    drcsRowLo
-        JSR     LD6B8
+        JSR     drcsEmitRow
         JMP     LD501
 
 LD68B:
@@ -3830,7 +3835,7 @@ LD68B:
         STAB    drcsRowLo
 
 LD697:
-        JSR     LD6B8
+        JSR     drcsEmitRow
         LDAB    drcsOffset
         CMPB    #$18
         BCS     LD697
@@ -3843,12 +3848,13 @@ LD6A4:
         STAA    drcsRepeat
 
 LD6AD:
-        JSR     LD6B8
+        JSR     drcsEmitRow
         DEC     drcsRepeat
         BNE     LD6AD
         JMP     LD501
 
-LD6B8:
+drcsEmitRow:
+; store the assembled row once, or twice when drcsTall - the vertical half of the doubling
         JSR     drcsStoreRow
         LDAB    drcsTall
         BPL     LD6C3
@@ -3858,7 +3864,7 @@ LD6C3:
         RTS
 
 LD6C4:
-        JSR     LD6D9
+        JSR     drcsPadChar
         LDAA    #$FF
         STAA    redrawReq
         LDAA    #$1F
@@ -3866,11 +3872,12 @@ LD6C4:
 
 LD6D1:
         PSHA
-        JSR     LD6D9
+        JSR     drcsPadChar
         PULA
         JMP     drcsStartChar
 
-LD6D9:
+drcsPadChar:
+; pad the definition out to 24 bytes and step drcsChar on to the next character
         LDAB    drcsOffset
         RORB
         BCC     LD6E2
@@ -3881,7 +3888,7 @@ LD6E2:
         CLR     drcsRowLo
 
 LD6E8:
-        JSR     LD6B8
+        JSR     drcsEmitRow
         LDAB    drcsOffset
         CMPB    #$18
         BCS     LD6E8
@@ -4035,17 +4042,17 @@ LD7ED:
         CLR     drcsRowLo
 
 LD7F3:
-        JSR     LD6B8
+        JSR     drcsEmitRow
         LDAB    drcsOffset
         CMPB    #$18
         BCS     LD7F3
-        JSR     LD6D9
+        JSR     drcsPadChar
         LDAA    #$FF
         STAA    redrawReq
         JMP     LD349
 
 LD808:
-        JSR     LE98C
+        JSR     nextParamByte
         CMPA    #$20
         BNE     LD812
         JMP     LD870
@@ -4066,10 +4073,11 @@ LD820:
         FCB     $00,$00,$00,$0F,$00,$F0,$00,$FF,$0F,$00,$0F,$0F,$0F,$F0,$0F,$FF
 
 LD843:
-        JSR     LD849
+        JSR     initVideoRegs
         JMP     LD34C
 
-LD849:
+initVideoRegs:
+; seed videoReg0..videoReg3 with 0..3, shift them out, then load $05F6 from the table at $D823
         CLRA
         STAA    videoReg0
         INCA
@@ -4078,7 +4086,7 @@ LD849:
         STAA    videoReg2
         INCA
         STAA    videoReg3
-        JSR     LDA1C
+        JSR     writeVideoRegs
         LDAB    #$1F
 
 LD85E:
@@ -4090,12 +4098,12 @@ LD85E:
         STAA    $00,X
         DECB
         BPL     LD85E
-        JMP     LD9FE
+        JMP     writePortRegs
 
 LD870:
         CLR     seqParam0
         CLR     seqParam1
-        JSR     LF081
+        JSR     getLineByte
         CMPA    #$30
         BCS     LD880
         JMP     LD34C
@@ -4112,7 +4120,7 @@ LD887:
 LD88C:
         ANDA    #$0F
         STAA    seqParam0
-        JSR     LF081
+        JSR     getLineByte
         CMPA    #$1F
         BNE     LD89B
         JMP     LD358
@@ -4129,7 +4137,7 @@ LD8A0:
 LD8A8:
         ANDA    #$0F
         STAA    drcsRowHi
-        JSR     LF081
+        JSR     getLineByte
         CMPA    #$40
         BCC     LD8E0
         CMPA    #$1F
@@ -4148,7 +4156,7 @@ LD8C0:
         MUL
         ADDB    drcsRowLo
         STAB    drcsRowHi
-        JSR     LF081
+        JSR     getLineByte
         CMPA    #$1F
         BNE     LD8DB
         JMP     LD358
@@ -4186,7 +4194,7 @@ LD8FD:
         JMP     LD917
 
 LD914:
-        JSR     LF081
+        JSR     getLineByte
 
 LD917:
         CMPA    #$1F
@@ -4205,7 +4213,7 @@ LD925:
 
 LD92C:
         STAA    unpackIn
-        JSR     LF081
+        JSR     getLineByte
         CMPA    #$1F
         BNE     LD939
         JMP     LD358
@@ -4278,7 +4286,7 @@ LD997:
         STAA    $01,X
         LDAA    unpackE
         STAA    $00,X
-        JSR     LD9FE
+        JSR     writePortRegs
         INC     drcsRowHi
         LDAB    drcsRowHi
         CMPB    #$10
@@ -4289,7 +4297,7 @@ LD9C3:
         JMP     LD914
 
 LD9C6:
-        JSR     LF081
+        JSR     getLineByte
 
 LD9C9:
         CMPA    #$1F
@@ -4313,7 +4321,7 @@ LD9DE:
         ABX
         STAA    $00,X
         INC     drcsRowHi
-        JSR     LDA1C
+        JSR     writeVideoRegs
         LDAB    drcsRowHi
         CMPB    #$04
         BCS     LD9FB
@@ -4323,7 +4331,8 @@ LD9DE:
 LD9FB:
         JMP     LD9C6
 
-LD9FE:
+writePortRegs:
+; shift the 16 pairs at $05F6 out through P3DDR and the register file
         PSHA
         PSHB
         PSHX
@@ -4349,7 +4358,8 @@ LDA13:
         PULA
         RTS
 
-LDA1C:
+writeVideoRegs:
+; shift videoReg3 down to videoReg0 into P3CSR, five bits each, then set bit 7 of videoReg0
         PSHA
         LDAA    videoReg3
         ANDA    #$1F
@@ -4375,13 +4385,13 @@ ctrlIgnored:
 ctlAPB:
 ; C0 $08 APB - cursor back
         DEC     cursorCol
-        JSR     LEC16
+        JSR     wrapCursor
         JMP     parseNextByte
 
 ctlAPF:
 ; C0 $09 APF - cursor forward
         INC     cursorCol
-        JSR     LEC16
+        JSR     wrapCursor
         JMP     parseNextByte
 
 ctlAPD:
@@ -4391,18 +4401,18 @@ ctlAPD:
         JMP     parseNextByte
 
 LDA5D:
-        JSR     LEE3A
+        JSR     restoreGL
         TST     scrollEnabled
         BPL     LDA73
         LDAA    cursorRow
         CMPA    scrollBottom
         BNE     LDA73
-        JSR     LEA44
+        JSR     scrollUp
         JMP     parseNextByte
 
 LDA73:
         INC     cursorRow
-        JSR     LEC16
+        JSR     wrapCursor
         JSR     setRowPointers
         JMP     parseNextByte
 
@@ -4413,18 +4423,18 @@ ctlAPU:
         JMP     parseNextByte
 
 LDA87:
-        JSR     LEE3A
+        JSR     restoreGL
         TST     scrollEnabled
         BPL     LDA9D
         LDAA    cursorRow
         CMPA    scrollTop
         BNE     LDA9D
-        JSR     LEB28
+        JSR     scrollDown
         JMP     parseNextByte
 
 LDA9D:
         DEC     cursorRow
-        JSR     LEC16
+        JSR     wrapCursor
         JSR     setRowPointers
         JMP     parseNextByte
 
@@ -4454,7 +4464,7 @@ LDAB1:
 ctlAPR:
 ; C0 $0D APR - cursor to start of line
         CLR     cursorCol
-        JSR     LEC16
+        JSR     wrapCursor
         JSR     setRowPointers
         JMP     parseNextByte
 
@@ -4506,7 +4516,7 @@ ctlRPT:
         JMP     parseNextByte
 
 LDB33:
-        JSR     LE98C
+        JSR     nextParamByte
         ANDA    #$3F
         STAA    repeatCount
         LDAA    savedSS
@@ -4518,7 +4528,7 @@ LDB41:
         LDAA    repeatSS
         STAA    gsetSS
         LDAA    charCode
-        JSR     LE781
+        JSR     putChar
         DEC     repeatCount
         JMP     LDB41
 
@@ -4614,9 +4624,9 @@ ctlAPH:
 ; C0 $1E APH - cursor home
         CLR     cursorRow
         CLR     cursorCol
-        JSR     LECB5
+        JSR     resetAttrs
         JSR     setRowPointers
-        JSR     LEE3A
+        JSR     restoreGL
         JMP     parseNextByte
 
 ctlUS:
@@ -4626,7 +4636,7 @@ ctlUS:
         JSR     leaveStatusLine
 
 LDC0C:
-        JSR     LE98C
+        JSR     nextParamByte
         CMPA    #$23
         BNE     LDC16
         JMP     LD40A
@@ -4665,13 +4675,13 @@ LDC3E:
 
 LDC45:
         CLR     cursorVisible
-        JSR     LECB5
-        JSR     LEE3A
+        JSR     resetAttrs
+        JSR     restoreGL
         LDAA    colourIndex
         ANDA    #$3F
         STAA    cursorRow
         DEC     cursorRow
-        JSR     LE98C
+        JSR     nextParamByte
         ANDA    #$3F
         STAA    cursorCol
         DEC     cursorCol
@@ -4830,9 +4840,9 @@ LDD2A:
         LDAA    cursorRow
         CMPA    scrollBottom
         BNE     LDD3E
-        JSR     LEA44
+        JSR     scrollUp
         DEC     cursorRow
-        JSR     LEC16
+        JSR     wrapCursor
         JSR     setRowPointers
 
 LDD3E:
@@ -4921,7 +4931,7 @@ c1aCSI:
 c1aBBD:
 ; C1 $9C BBD - black background (serial set)
         LDAA    #$00
-        JSR     LE9FF
+        JSR     applyBackground
         JMP     LDDFB
 
 c1aNBD:
@@ -5131,7 +5141,7 @@ c1bMosaicCyan:
 c1bMosaicWhite:
 ; C1 $97 MosaicWhite - mosaic foreground white (parallel set)
         LDAA    #$07
-        JSR     LE9FF
+        JSR     applyBackground
         JMP     parseNextByte
 
 c1bCDY:
@@ -5225,12 +5235,12 @@ escLS3:
 
 escDesignateG0:
 ; ESC $28 - ESC 2/8
-        JSR     LE98C
+        JSR     nextParamByte
         CMPA    #$20
         BNE     LDF53
         LDAA    #$05
         STAA    gsetG0
-        JSR     LE98C
+        JSR     nextParamByte
         JMP     parseNextByte
 
 LDF53:
@@ -5244,12 +5254,12 @@ LDF58:
 
 escDesignateG1:
 ; ESC $29 - ESC 2/9
-        JSR     LE98C
+        JSR     nextParamByte
         CMPA    #$20
         BNE     LDF70
         LDAA    #$05
         STAA    gsetG1
-        JSR     LE98C
+        JSR     nextParamByte
         JMP     parseNextByte
 
 LDF70:
@@ -5263,12 +5273,12 @@ LDF75:
 
 escDesignateG2:
 ; ESC $2A - ESC 2/10
-        JSR     LE98C
+        JSR     nextParamByte
         CMPA    #$20
         BNE     LDF8D
         LDAA    #$05
         STAA    gsetG2
-        JSR     LE98C
+        JSR     nextParamByte
         JMP     parseNextByte
 
 LDF8D:
@@ -5282,12 +5292,12 @@ LDF92:
 
 escDesignateG3:
 ; ESC $2B - ESC 2/11
-        JSR     LE98C
+        JSR     nextParamByte
         CMPA    #$20
         BNE     LDFAA
         LDAA    #$05
         STAA    gsetG3
-        JSR     LE98C
+        JSR     nextParamByte
         JMP     parseNextByte
 
 LDFAA:
@@ -5301,7 +5311,7 @@ LDFAF:
 
 escSelectC1Set:
 ; ESC $22 - ESC 2/2 - writes $0497, choosing ctrlTableC1a or C1b
-        JSR     LE98C
+        JSR     nextParamByte
         ANDA    #$01
         BEQ     LDFC7
         LDAA    gsetGLDefault
@@ -5382,7 +5392,7 @@ LDFFB:
         ADDA    colourIndex
         STAA    scrollTop
         DEC     scrollTop
-        JSR     LE98C
+        JSR     nextParamByte
         CMPA    #$3B
         BEQ     LE029
         JMP     LE9A2
@@ -5392,12 +5402,12 @@ LE025:
         STAB    scrollTop
 
 LE029:
-        JSR     LE98C
+        JSR     nextParamByte
         ANDA    #$0F
         STAA    colourIndex
         STAA    scrollBottom
         DEC     scrollBottom
-        JSR     LE98C
+        JSR     nextParamByte
         CMPA    #$55
         BEQ     LE075
         CMPA    #$56
@@ -5410,7 +5420,7 @@ LE029:
         ADDA    colourIndex
         STAA    scrollBottom
         DEC     scrollBottom
-        JSR     LE98C
+        JSR     nextParamByte
         CMPA    #$55
         BEQ     LE075
         CMPA    #$56
@@ -5444,22 +5454,22 @@ LE08D:
         JMP     parseNextByte
 
 LE095:
-        JSR     LEA44
+        JSR     scrollUp
         JMP     parseNextByte
 
 LE09B:
-        JSR     LEB28
+        JSR     scrollDown
         JMP     parseNextByte
 
 LE0A1:
         LDX     #$1003
         LDAB    #$B0
         LDAA    #$30
-        JSR     LE573
+        JSR     applyAttr
         LDX     #$1001
         LDAB    #$C0
         LDAA    #$80
-        JSR     LE573
+        JSR     applyAttr
         CLR     flashMode
         JMP     LE4F4
 
@@ -5467,11 +5477,11 @@ LE0BB:
         LDX     #$1001
         LDAB    #$C0
         TBA
-        JSR     LE573
+        JSR     applyAttr
         LDX     #$1003
         LDAB    #$B0
         LDAA    #$10
-        JSR     LE573
+        JSR     applyAttr
         CLR     flashMode
         JMP     LE4F4
 
@@ -5479,11 +5489,11 @@ LE0D4:
         LDX     #$1001
         LDAB    #$80
         LDAA    #$00
-        JSR     LE573
+        JSR     applyAttr
         LDX     #$1003
         LDAB    #$90
         LDAA    #$00
-        JSR     LE573
+        JSR     applyAttr
         CLR     flashMode
         JMP     LE4F4
 
@@ -5491,11 +5501,11 @@ LE0EE:
         LDX     #$1001
         LDAB    #$80
         LDAA    #$80
-        JSR     LE573
+        JSR     applyAttr
         LDX     #$1003
         LDAB    #$90
         LDAA    #$00
-        JSR     LE573
+        JSR     applyAttr
         CLR     flashMode
         JMP     LE4F4
 
@@ -5503,11 +5513,11 @@ LE108:
         LDX     #$1001
         LDAB    #$80
         LDAA    #$00
-        JSR     LE573
+        JSR     applyAttr
         LDX     #$1003
         LDAB    #$90
         LDAA    #$10
-        JSR     LE573
+        JSR     applyAttr
         CLR     flashMode
         JMP     LE4F4
 
@@ -5519,11 +5529,11 @@ LE122:
         LDX     #$0001
         LDAB    #$80
         LDAA    #$00
-        JSR     LE57B
+        JSR     setAttrCell
         LDX     #$0003
         LDAB    #$90
         LDAA    #$00
-        JSR     LE57B
+        JSR     setAttrCell
         JMP     LE4FC
 
 LE143:
@@ -5597,11 +5607,11 @@ LE1BB:
         LDX     #$0001
         LDAB    #$80
         LDAA    #$00
-        JSR     LE57B
+        JSR     setAttrCell
         LDX     #$0003
         LDAB    #$90
         LDAA    #$00
-        JSR     LE57B
+        JSR     setAttrCell
         JMP     LE4FC
 
 LE1DC:
@@ -5669,7 +5679,7 @@ LE24C:
 
 csiDigit0:
 ; CSI $30 - numeric parameter '0'
-        JSR     LE98C
+        JSR     nextParamByte
         CMPA    #$40
         BNE     LE25E
         JMP     LDFCF
@@ -5694,7 +5704,7 @@ LE273:
 
 csiDigit1:
 ; CSI $31 - numeric parameter '1'
-        JSR     LE98C
+        JSR     nextParamByte
         CMPA    #$40
         BNE     LE280
         JMP     LDFD2
@@ -5729,7 +5739,7 @@ LE2A3:
 
 csiDigit2:
 ; CSI $32 - numeric parameter '2'
-        JSR     LE98C
+        JSR     nextParamByte
         CMPA    #$40
         BNE     LE2B0
         JMP     LDFD5
@@ -5764,7 +5774,7 @@ LE2D3:
 
 csiDigit3:
 ; CSI $33 - numeric parameter '3'
-        JSR     LE98C
+        JSR     nextParamByte
         CMPA    #$40
         BNE     LE2E0
         JMP     LDFD8
@@ -5789,7 +5799,7 @@ LE2F5:
 
 csiDigit4:
 ; CSI $34 - numeric parameter '4'
-        JSR     LE98C
+        JSR     nextParamByte
         CMPA    #$41
         BNE     LE302
         JMP     LE108
@@ -5804,7 +5814,7 @@ LE309:
 
 csiDigit5:
 ; CSI $35 - numeric parameter '5'
-        JSR     LE98C
+        JSR     nextParamByte
         CMPA    #$41
         BNE     LE316
         JMP     LE122
@@ -5819,7 +5829,7 @@ LE31D:
 
 csiDigit6:
 ; CSI $36 - numeric parameter '6'
-        JSR     LE98C
+        JSR     nextParamByte
         CMPA    #$41
         BNE     LE32A
         JMP     LE1BB
@@ -5834,7 +5844,7 @@ LE331:
 
 csiDigit7:
 ; CSI $37 - numeric parameter '7'
-        JSR     LE98C
+        JSR     nextParamByte
         CMPA    #$30
         BCS     LE33E
         JMP     LDFF5
@@ -5844,7 +5854,7 @@ LE33E:
 
 csiDigit8:
 ; CSI $38 - numeric parameter '8'
-        JSR     LE98C
+        JSR     nextParamByte
         CMPA    #$30
         BCS     LE34B
         JMP     LDFF8
@@ -5854,7 +5864,7 @@ LE34B:
 
 csiDigit9:
 ; CSI $39 - numeric parameter '9'
-        JSR     LE98C
+        JSR     nextParamByte
         CMPA    #$30
         BCS     LE358
         JMP     LDFFB
@@ -5867,12 +5877,12 @@ csiFinalB:
         LDX     #$2003
         LDAB    #$08
         TBA
-        JSR     LE573
+        JSR     applyAttr
         JMP     LE4F4
 
 escDefine:
 ; ESC $23 - ESC 2/3 - definition sequence
-        JSR     LE98C
+        JSR     nextParamByte
         CMPA    #$20
         BNE     LE371
         JMP     LE4C7
@@ -5883,7 +5893,7 @@ LE371:
         JMP     LE9A2
 
 LE378:
-        JSR     LE98C
+        JSR     nextParamByte
         STAA    colourIndex
         CMPA    #$5E
         BEQ     LE38F
@@ -5978,7 +5988,7 @@ orphanE3EF:
         LDX     #$0001
         LDAB    #$C0
         LDAA    #$00
-        JSR     LEDF7
+        JSR     setAttrRow
         LDX     #$0003
         LDAB    #$B0
         LDAA    #$00
@@ -6046,18 +6056,18 @@ LE463:
         LDAA    #$10
         LDAB    #$30
         LDX     #$0000
-        JSR     LE573
+        JSR     applyAttr
         JMP     LE4F4
 
 LE470:
         LDAA    #$00
         LDAB    #$10
         LDX     #$0000
-        JSR     LE573
+        JSR     applyAttr
         JMP     LE4F4
 
 LE47D:
-        JSR     LEDF7
+        JSR     setAttrRow
         JMP     parseNextByte
 
 LE483:
@@ -6071,7 +6081,7 @@ LE483:
         ORAA    colourIndex
         LDAB    #$1F
         LDX     #$0002
-        JSR     LEDF7
+        JSR     setAttrRow
         JMP     parseNextByte
 
 LE49F:
@@ -6099,7 +6109,7 @@ LE4BB:
         JMP     parseNextByte
 
 LE4C7:
-        JSR     LE98C
+        JSR     nextParamByte
         CMPA    #$5E
         BNE     LE4D3
         LDAA    #$88
@@ -6215,12 +6225,14 @@ LE558:
         LDX     attrSpanBit
         RTS
 
-LE573:
+applyAttr:
+; apply an attribute the way the current mode wants: setAttrSpan in serial, setAttrCell in parallel
         TST     parallelMode
-        BMI     LE57B
+        BMI     setAttrCell
         JMP     setAttrSpan
 
-LE57B:
+setAttrCell:
+; the parallel-set attribute write: this cell only, straight into attr0..attr3
         STAA    attrValue
         COMB
         STAB    attrMask
@@ -6238,7 +6250,8 @@ LE57B:
         LDAA    attrValue
         RTS
 
-LE5A1:
+drawStatusRule:
+; lay the status line's own attributes down across row 24
         LDAA    cursorRow
         PSHA
         LDAA    cursorCol
@@ -6251,15 +6264,15 @@ LE5A1:
         LDX     #$0000
         LDAB    #$FF
         LDAA    #$00
-        JSR     LEDF7
+        JSR     setAttrRow
         INX
-        JSR     LEDF7
+        JSR     setAttrRow
         INX
         LDAA    #$02
-        JSR     LEDF7
+        JSR     setAttrRow
         INX
         LDAA    #$88
-        JSR     LEDF7
+        JSR     setAttrRow
         LDAA    #$2B
         STAA    colourIndex
         LDAB    #$13
@@ -6289,7 +6302,7 @@ LE5FA:
         STAA    redrawReq
         LDAA    #$17
         STAA    cursorRowMax
-        JSR     LE98C
+        JSR     nextParamByte
         STAA    colourIndex
         ANDA    #$F0
         CMPA    #$20
@@ -6304,7 +6317,7 @@ LE616:
         STAA    cursorRowMax
         LDAA    #$FF
         STAA    redrawReq
-        JSR     LE98C
+        JSR     nextParamByte
 
 LE62A:
         CMPA    #$71
@@ -6316,7 +6329,7 @@ LE634:
         JMP     LE9A2
 
 LE637:
-        JSR     LE98C
+        JSR     nextParamByte
         TAB
         CMPA    #$4F
         BNE     LE642
@@ -6417,12 +6430,12 @@ enterStatusLine:
         CLR     wrapEnabled
         CLR     clutIndex
         CLR     parallelMode
-        JSR     LE98C
+        JSR     nextParamByte
         ANDA    #$1F
         STAA    cursorRow
         DEC     cursorRow
         JSR     setRowPointers
-        JSR     LEE3A
+        JSR     restoreGL
         CLR     gsetG0
         LDAA    #$01
         STAA    gsetG1
@@ -6433,7 +6446,7 @@ enterStatusLine:
         LDX     #$0000
         LDAB    #$80
         LDAA    #$00
-        JSR     LEDF7
+        JSR     setAttrRow
         JMP     parseNextByte
 
 LE73E:
@@ -6464,7 +6477,8 @@ leaveStatusLine:
         STAA    gsetG1
         RTS
 
-LE781:
+putChar:
+; put charCode on the screen at the cursor, scrolling first if that is where the cursor is
         STAA    charCode
         LDAA    parallelMode
         BEQ     LE7CB
@@ -6493,9 +6507,9 @@ LE7B1:
         LDAA    cursorRow
         CMPA    scrollTop
         BNE     LE7C2
-        JSR     LEB28
+        JSR     scrollDown
         INC     cursorRow
-        JSR     LEC16
+        JSR     wrapCursor
 
 LE7C2:
         DEC     cursorRow
@@ -6736,11 +6750,11 @@ LE94E:
         CMPA    #$27
         BEQ     LE968
         INC     cursorCol
-        JSR     LEC16
+        JSR     wrapCursor
 
 LE968:
         INC     cursorCol
-        JSR     LEC16
+        JSR     wrapCursor
         JSR     setRowPointers
         RTS
 
@@ -6756,13 +6770,14 @@ LE972:
         RTS
 
 LE986:
-        JSR     LE781
+        JSR     putChar
         JMP     parseNextByte
 
-LE98C:
-        JSR     LF081
+nextParamByte:
+; fetch the next parameter byte, skipping $00. US ($1F) abandons the sequence by popping the caller's return address and re-dispatching
+        JSR     getLineByte
         CMPA    #$00
-        BEQ     LE98C
+        BEQ     nextParamByte
         CMPA    #$1F
         BNE     LE99E
         PULA
@@ -6838,7 +6853,8 @@ LE9E7:
         STAA    attr2
         RTS
 
-LE9FF:
+applyBackground:
+; background colour: clutIndex into attr3's low two bits, colourIndex into attr2's top three
         STAA    colourIndex
         TST     parallelMode
         BMI     LEA22
@@ -6874,7 +6890,8 @@ LEA22:
         STAA    attr2
         RTS
 
-LEA44:
+scrollUp:
+; scroll the window up one row, if a scroll region is set
         TST     scrollTop
         BPL     LEA4A
         RTS
@@ -7013,7 +7030,8 @@ LEB14:
         BNE     LEB10
         RTS
 
-LEB28:
+scrollDown:
+; scroll it down one row
         TST     scrollTop
         BPL     LEB2E
         RTS
@@ -7160,7 +7178,8 @@ LEBFE:
         BNE     LEBFE
         RTS
 
-LEC16:
+wrapCursor:
+; cursorCol has left 0-39, so wrap the line and scroll if that ran off the window
         LDAA    cursorCol
         BMI     LEC22
         CMPA    #$28
@@ -7170,10 +7189,10 @@ LEC16:
 LEC22:
         TST     wrapEnabled
         BPL     LEC38
-        JSR     LEE3A
+        JSR     restoreGL
         LDAA    #$27
         STAA    cursorCol
-        JSR     LEC8D
+        JSR     cursorUp
         JSR     setRowPointers
         JMP     LEC5A
 
@@ -7184,9 +7203,9 @@ LEC38:
 LEC3E:
         TST     wrapEnabled
         BPL     LEC52
-        JSR     LEE3A
+        JSR     restoreGL
         CLR     cursorCol
-        JSR     LECA1
+        JSR     cursorDown
         JSR     setRowPointers
         JMP     LEC5A
 
@@ -7224,31 +7243,34 @@ LEC84:
         STAA    cursorRow
         JMP     setRowPointers
 
-LEC8D:
+cursorUp:
+; up one row, scrolling when the cursor is already at scrollTop
         LDAA    cursorRow
         CMPA    scrollTop
         BNE     LEC9D
         TST     scrollEnabled
         BPL     LEC9D
-        JMP     LEB28
+        JMP     scrollDown
 
 LEC9D:
         DEC     cursorRow
         RTS
 
-LECA1:
+cursorDown:
+; down one row, scrolling at scrollBottom
         LDAA    cursorRow
         CMPA    scrollBottom
         BNE     LECB1
         TST     scrollEnabled
         BPL     LECB1
-        JMP     LEA44
+        JMP     scrollUp
 
 LECB1:
         INC     cursorRow
         RTS
 
-LECB5:
+resetAttrs:
+; attr0..attr3 back to $00 $80 $07 $99, the values clearPlanes writes
         CLR     flashMode
         CLR     attr0
         LDAA    #$80
@@ -7259,7 +7281,8 @@ LECB5:
         STAA    attr3
         RTS
 
-LECCB:
+resetAll:
+; the cold reset: every mode flag, the blink, the ring pointers, the cursor
         CLR     hostFeedMode
         CLR     escPending
         CLR     modeMono
@@ -7336,7 +7359,8 @@ LECCB:
         STAA    c64StatusMsg
         RTS
 
-LED9D:
+resetProtocol:
+; reset the CEPT and BSC state - G-sets, ackSeq, crcShift, the mode flags - without touching the screen
         CLR     inStatusLine
         CLR     parallelMode
         LDAA    #$30
@@ -7372,7 +7396,8 @@ LED9D:
         STAA    heldMosaic
         RTS
 
-LEDF7:
+setAttrRow:
+; setAttrSpan across all 40 cells of the row rather than to the end of a span
         STAA    attrValue
         STAB    attrMask
         STX     attrSpanBit
@@ -7410,7 +7435,8 @@ LEE26:
         LDX     attrSpanBit
         RTS
 
-LEE3A:
+restoreGL:
+; put gsetGLDefault back into gsetGL and reset heldMosaic to $09
         TST     gsetGL
         BPL     LEE45
         LDAA    gsetGLDefault
@@ -7483,7 +7509,8 @@ LEE91:
         BCS     LEE91
         RTS
 
-LEE9A:
+clearScreen:
+; clearPlanes, then fill rowFlags with $0F
         JSR     clearPlanes
         CLR     redrawReq
         LDX     #$1B03
@@ -7497,7 +7524,8 @@ LEEA5:
         STAA    rowFlags
         RTS
 
-LEEB1:
+clearVideoRam:
+; walk PORT3 from $18 to $3F clearing $5F80 upward, which is every column bank
         LDAA    #$18
 
 LEEB3:
@@ -7688,7 +7716,8 @@ strStatusMsgs:
         FCC     "Decodersoftware V3.3"
         FCC     "Belegt              "
 
-LF081:
+getLineByte:
+; the idle loop: service the host link and the redraw until rxBufGet yields a byte, forwarding to the C64 while captureMode is on and counting $1A into pageCount
         JSR     fetchHostByte
         JSR     execHostByte
         JSR     rxBufGet
@@ -7702,7 +7731,7 @@ LF094:
         JSR     execHostByte
         LDAA    redrawReq
         ORAA    statusDirty
-        BNE     LF081
+        BNE     getLineByte
         JSR     rxBufGet
         CMPA    #$00
         BEQ     LF094
@@ -7710,7 +7739,7 @@ LF094:
 LF0A9:
         TST     captureMode
         BEQ     LF0B1
-        JSR     LF979
+        JSR     c64Put
 
 ; pageCount, and why the C64 watches it.
 ;
@@ -7981,7 +8010,7 @@ fetchHostByte:
 LF1E3:
         JSR     hostFifoGet
         BCC     LF1F0
-        JSR     LF459
+        JSR     noSecondSource
         BCC     LF1F0
         JMP     LF409
 
@@ -8097,7 +8126,7 @@ LF2AB:
         JMP     LF2ED
 
 LF2B3:
-        JSR     LF40C
+        JSR     prestelKey
         TSTA
         BEQ     LF2E4
         CMPA    #$13
@@ -8116,7 +8145,7 @@ LF2CB:
         CMPB    #$0C
         BNE     LF2D7
         PSHA
-        JSR     LE5A1
+        JSR     drawStatusRule
         PULA
 
 LF2D7:
@@ -8124,7 +8153,7 @@ LF2D7:
         BEQ     LF2E7
         TST     hostFeedMode
         BNE     LF2E7
-        JSR     LF7A4
+        JSR     sendLineByte
 
 LF2E4:
         JMP     LF409
@@ -8302,7 +8331,8 @@ LF409:
         TAP
         RTS
 
-LF40C:
+prestelKey:
+; PRESTEL only: $13 and $1C are handled here rather than as CEPT controls
         TST     modePrestel
         BEQ     LF41A
         CMPA    #$13
@@ -8367,7 +8397,8 @@ orphanF457:
         SEC
         RTS
 
-LF459:
+noSecondSource:
+; SEC / RTS. fetchHostByte tries a second input source and this is it, so the C64 link is the only one
         SEC
         RTS
 
@@ -8390,7 +8421,7 @@ LF470:
         CLR     pendingByte
         TST     connected
         BNE     LF487
-        JSR     LEE9A
+        JSR     clearScreen
         LDAA    #$FF
         STAA    statusDirty
         JMP     LF59F
@@ -8401,7 +8432,7 @@ LF487:
         STAB    c64StatusMsg
         JSR     showStatusMsg
         JSR     redrawScreen
-        JSR     LF5CF
+        JSR     modemReset
         CLR     abortFlag
         SEC
         RTS
@@ -8412,7 +8443,7 @@ LF49D:
         TST     connected
         BMI     LF4AC
         CLR     pendingByte
-        JSR     LF5A4
+        JSR     hangUp
 
 LF4AC:
         JMP     LF59F
@@ -8479,7 +8510,7 @@ LF503:
         STAB    c64StatusMsg
         JSR     showStatusMsg
         JSR     redrawScreen
-        JSR     LF5CF
+        JSR     modemReset
         LDAB    P4DDR
         ANDB    #$0F
         STAB    P4DDR
@@ -8517,23 +8548,23 @@ sendRowToC64:
 LF55E:
         LDX     sendPtrChar
         LDAA    $00,X
-        JSR     LF979
+        JSR     c64Put
         INX
         STX     sendPtrChar
         LDX     sendPtrAccent
         LDAA    $00,X
-        JSR     LF979
+        JSR     c64Put
         INX
         STX     sendPtrAccent
         LDX     sendPtrAttr
         LDAA    $00,X
-        JSR     LF979
+        JSR     c64Put
         LDAA    $01,X
-        JSR     LF979
+        JSR     c64Put
         LDAA    $02,X
-        JSR     LF979
+        JSR     c64Put
         LDAA    $03,X
-        JSR     LF979
+        JSR     c64Put
         INX
         INX
         INX
@@ -8551,11 +8582,12 @@ LF5A2:
         CLC
         RTS
 
-LF5A4:
-        JSR     LF83E
+hangUp:
+; drop the line, reset the protocol, and put txBitTick back on the output compare
+        JSR     dialStart
         TST     connected
         BEQ     LF5C7
-        JSR     LED9D
+        JSR     resetProtocol
         SEI
         LDAA    TRCSR
         LDAA    RDR
@@ -8575,7 +8607,8 @@ LF5C7:
         CLI
         RTS
 
-LF5CF:
+modemReset:
+; quiet the SCI and the modem, install timerHandlerAlt, and wait out timerA
         LDAA    #$08
         STAA    TRCSR
         LDAA    PORT2
@@ -8645,7 +8678,7 @@ LF601:
 ; else's.
 sciRxHandler:
 ; SCI receive interrupt - a byte off the 1200-baud line, handed to the modem state machine
-        JSR     LF75F
+        JSR     sciRead
         BCC     LF627
         JMP     LF75E
 
@@ -8766,11 +8799,11 @@ LF6F4:
         CMPA    #$06
         BEQ     LF707
         LDAA    #$10
-        JSR     LF7A4
+        JSR     sendLineByte
         LDAA    modemReply
 
 LF707:
-        JSR     LF7A4
+        JSR     sendLineByte
         JMP     LF75E
 
 LF70D:
@@ -8813,7 +8846,8 @@ LF747:
 LF75E:
         RTI
 
-LF75F:
+sciRead:
+; read RDR if the SCI has a byte. C=1 when it has none, and on a framing error
         LDAA    TRCSR
         TAB
         ANDA    #$40
@@ -8860,7 +8894,8 @@ LF79C:
         LDAA    RDR
         RTS
 
-LF7A4:
+sendLineByte:
+; send a byte up the 75-baud line; PRESTEL and ASCII modes reorder the bits first
         LDAB    modePrestel
         ORAB    modeAscii
         BEQ     LF7D1
@@ -8981,7 +9016,8 @@ LF837:
         BCS     LF82C
         BRA     LF830
 
-LF83E:
+dialStart:
+; raise the port bits that start a call, show status message 0, and start timerA
         LDAA    PORT2
         ORAA    #$03
         STAA    PORT2
@@ -9037,7 +9073,7 @@ LF897:
         STAB    c64StatusMsg
         JSR     showStatusMsg
         JSR     redrawScreen
-        JSR     LF5CF
+        JSR     modemReset
         RTS
 
 LF8BD:
@@ -9105,7 +9141,7 @@ LF92F:
         STAB    c64StatusMsg
         JSR     showStatusMsg
         JSR     redrawScreen
-        JSR     LF5CF
+        JSR     modemReset
         RTS
 
 LF942:
@@ -9114,7 +9150,7 @@ LF942:
         STAB    c64StatusMsg
         JSR     showStatusMsg
         JSR     redrawScreen
-        JSR     LF5CF
+        JSR     modemReset
         RTS
 
 timerHandlerAlt:
@@ -9134,7 +9170,8 @@ timerHandlerAlt:
         STD     OCRH
         RTI
 
-LF979:
+c64Put:
+; push one byte into c64OutFifo, spinning while the ring is full
         PSHA
         PSHB
         PSHX
@@ -9196,11 +9233,11 @@ LF9D9:
         LDD     #$0000
         STD     asciiCol
         LDAA    #$0C
-        JSR     LFBAA
+        JSR     asciiPutChar
 
 LF9F2:
-        JSR     LFC01
-        JSR     LFB9A
+        JSR     asciiLoop
+        JSR     asciiRestoreCell
         BRA     LF9F2
 
 ; ASCII terminal-mode C0 dispatch: 32 big-endian entries, $F9FA-$FA39.
@@ -9308,7 +9345,7 @@ asciiBS:
 LFABF:
         DEC     asciiCol
         LDAA    #$20
-        JMP     LFB0D
+        JMP     asciiGlyphPtr
 
 asciiCR:
 ; ASCII $0D CR - asciiCol to 0
@@ -9372,7 +9409,8 @@ asciiCurUp:
 LFB0C:
         RTS
 
-LFB0D:
+asciiGlyphPtr:
+; map the character to a fontNarrow glyph, through the German substitution table at $FC30 when germanFont is set
         TST     germanFont
         BEQ     LFB23
         LDX     #$FC30
@@ -9450,7 +9488,8 @@ LFB6E:
         BNE     LFB6E
         RTS
 
-LFB9A:
+asciiRestoreCell:
+; put the saved cell back under the cursor, then fall into asciiDispatchC0
         PSHA
         LDAA    asciiPort3
         STAA    >PORT3
@@ -9462,7 +9501,8 @@ asciiDispatchC0:
 ; ASCII mode's C0 dispatcher: A * 2 indexes asciiCtrlTable
         PULA
 
-LFBAA:
+asciiPutChar:
+; ASCII mode: C0 codes through asciiCtrlTable, anything else drawn and asciiCol advanced, wrapping at 80
         ANDA    #$7F
         CMPA    #$1F
         BHI     LFBBC
@@ -9475,7 +9515,7 @@ LFBAA:
         BRA     LFBCF
 
 LFBBC:
-        JSR     LFB0D
+        JSR     asciiGlyphPtr
         INC     asciiCol
         LDAA    asciiCol
         CMPA    #$50
@@ -9510,7 +9550,8 @@ LFBFE:
         STD     $00,X
         RTS
 
-LFC01:
+asciiLoop:
+; the ASCII terminal's idle loop - the counterpart of getLineByte
         JSR     rxBufGet
         TSTA
         BNE     LFC1C
@@ -9525,16 +9566,16 @@ LFC17:
         JSR     redrawScreen
 
 LFC1A:
-        BRA     LFC01
+        BRA     asciiLoop
 
 LFC1C:
         TST     captureMode
         BEQ     LFC24
-        JSR     LF979
+        JSR     c64Put
 
 LFC24:
         RTS
-        JSR     LF75F
+        JSR     sciRead
         BCS     LFC2F
         ANDA    #$7F
         JSR     rxBufPut

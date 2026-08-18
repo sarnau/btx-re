@@ -838,7 +838,7 @@ L16B9:
         LDA     btxIrqArmA
         STA     btxIrqArmA
         CLI
-        JSR     L2404
+        JSR     c64LoadExtra
 
 c64StartSession:
 ; vector 1 $1003 - show the splash, send ceptStartPage to the decoder, reset the capture-buffer pointers and mode flags
@@ -2842,7 +2842,8 @@ L2402:
         CLC
         RTS
 
-L2404:
+c64LoadExtra:
+; hold CTRL at power-on to load BTX-EXTRA.MAS from disk - keyboard row 7, $DC01 = $FB. Released, it returns at once
         LDA     #$7F
         STA     $DC00
         LDA     $DC01
@@ -3412,9 +3413,9 @@ c64MacroDirLine:
 L2867:
         JSR     vecDiskGetByte
         BCS     L28A5
-        BVS     L2896
+        BVS     c64PadLine
         CMP     #$00
-        BEQ     L2896
+        BEQ     c64PadLine
         JSR     vecSendKey
         DEC     c64DirCount
         BNE     L2867
@@ -3436,17 +3437,18 @@ L288A:
         CLC
         RTS
 
-L2896:
+c64PadLine:
+; pad the rest of the directory line with spaces, then close the macro file
         LDA     #$20
         JSR     vecSendByte
         DEC     c64DirCount
-        BNE     L2896
+        BNE     c64PadLine
         JSR     vecMacroCloseRead
         CLC
         RTS
 
 L28A5:
-        JSR     L2896
+        JSR     c64PadLine
         SEC
         RTS
 

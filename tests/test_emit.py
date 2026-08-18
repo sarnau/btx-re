@@ -235,3 +235,11 @@ def test_architecture_document_matches_the_sources():
     r = subprocess.run(["python3", str(ROOT / "tools" / "checkdoc.py")],
                        capture_output=True, text=True, cwd=ROOT)
     assert r.returncode == 0, r.stdout
+
+
+def test_no_subroutine_is_left_unnamed():
+    """A JSR target still called L<addr> is a function nobody has looked at."""
+    for f in ("btx_decoder_ii.asm", "c64_payload.asm", "c64_bootstrap.asm"):
+        src = (OUT / f).read_text()
+        anon = set(re.findall(r"^\s+JSR\s+(L[0-9A-F]{4})\s*$", src, re.M))
+        assert not anon, (f, sorted(anon))
