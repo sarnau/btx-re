@@ -165,15 +165,16 @@ def collect_labels(data: bytes, base: int, block: C64Block,
         # An address assembled into a zero-page pointer is a location too.
         targets.update(v for v in _pointer_targets(seq, set(sidecar.c64_pointers)).values()
                        if block.org <= v < block.org + (block.end - block.start))
-        # A label cannot sit inside a record - the code indexes into the menu
-        # table, reading a record's address bytes with LDA table+1,Y - so those
-        # addresses stay numeric rather than collapsing onto the next record.
-        inside_records = set()
+        # A label cannot sit inside a multi-byte entry. The code reads these
+        # tables a byte at a time - LDA table+1,Y for a record's address, or
+        # the high half of a pointer - and a label there would collapse onto
+        # the next entry, silently changing the operand. Those stay numeric.
+        interior = set()
         for region in sidecar.regions:
-            if region.kind == "byte_word":
-                inside_records |= set(range(region.start - block.offset + 1,
-                                            region.end - block.offset))
-        targets -= inside_records
+            if region.kind in _WORD_KINDS or region.kind == "byte_word":
+                interior |= set(range(region.start - block.offset + 1,
+                                      region.end - block.offset))
+        targets -= interior
 
         found = dict(named)
         found.update({a: f"L{a:04X}" for a in targets

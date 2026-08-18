@@ -166,6 +166,7 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 
 
 [labels]
+"0xB468" = "c64PtrTable"
 "0xBD3F" = "c64MenuKeys"
 "0xBDE9" = "ceptMonitorMsg"
 "0xCD17" = "ceptMacroDir"
@@ -396,6 +397,20 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xFFF0" = "vectors"
 
 [block_comments]
+"0xB468" = """
+16-bit pointers, runtime $10C0-$10CD.
+
+  $10C0  ceptStartPage    the startup page
+  $10C2  $8000            the cartridge window - left as bytes, since it names
+                          hardware rather than a location in this program
+  $10C4  ceptStartPage    again
+  $10C6  $10CE            the two bytes immediately after this table
+  $10C8  $114A            in the variable block
+  $10CA  ceptMacroDir     the "Makro-Verzeichnis" page
+  $10CC  c64StrTable      the string table
+
+Three of the seven point at CEPT pages or the string table, which is what
+identifies this as a table of data pointers rather than loose bytes."""
 "0xBD3F" = """
 Menu key dispatch: records of one ASCII key byte then a 16-bit handler
 address, terminated by $00.
@@ -1310,6 +1325,26 @@ kind = "code6502"
 
 [[regions]]
 start = 0xB45F
+end = 0xB468
+kind = "bytes"
+
+[[regions]]
+start = 0xB468
+end = 0xB46A
+kind = "words"
+
+[[regions]]
+start = 0xB46A
+end = 0xB46C
+kind = "bytes"
+
+[[regions]]
+start = 0xB46C
+end = 0xB476
+kind = "words"
+
+[[regions]]
+start = 0xB476
 end = 0xB552
 kind = "bytes"
 

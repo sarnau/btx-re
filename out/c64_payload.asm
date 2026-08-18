@@ -309,54 +309,43 @@ L10B4:
 c64VecTableEnd:
         FCB     $00,$00,$00,$00,$00,$00,$00,$00,$00
 
-L10C0:
-        FCB     $BD
-
-L10C1:
-        FCB     $2B,$00
+; 16-bit pointers, runtime $10C0-$10CD.
+;
+;   $10C0  ceptStartPage    the startup page
+;   $10C2  $8000            the cartridge window - left as bytes, since it names
+;                           hardware rather than a location in this program
+;   $10C4  ceptStartPage    again
+;   $10C6  $10CE            the two bytes immediately after this table
+;   $10C8  $114A            in the variable block
+;   $10CA  ceptMacroDir     the "Makro-Verzeichnis" page
+;   $10CC  c64StrTable      the string table
+;
+; Three of the seven point at CEPT pages or the string table, which is what
+; identifies this as a table of data pointers rather than loose bytes.
+c64PtrTable:
+        DW      ceptStartPage
+        FCB     $00
 
 L10C3:
         FCB     $80
 
 L10C4:
-        FCB     $BD
+        DW      ceptStartPage,L10CE,L114A,ceptMacroDir,c64StrTable
 
-L10C5:
-        FCB     $2B
+L10CE:
+        FCB     $0D,$0D,$00,$00,$8D,$0D,$0A,$00,$91,$0B,$00,$00,$11,$0A,$00,$00
+        FCB     $1D,$09,$00,$00,$14,$08,$00,$00,$9D,$08,$00,$00,$13,$1E,$00,$00
+        FCB     $93,$0C,$00,$00,$85,$13,$00,$00,$86,$1C,$00,$00,$87,$1A,$00,$00
+        FCB     $89,$10,$52,$00,$8B,$10,$41,$00,$8A,$10,$54,$00,$8C,$10,$45,$00
+        FCB     $90,$80,$00,$00,$05,$87,$00,$00,$1C,$81,$00,$00,$9F,$86,$00,$00
+        FCB     $9C,$85,$00,$00,$1E,$82,$00,$00,$1F,$84,$00,$00,$9E,$83,$00,$00
+        FCB     $5F,$11,$00,$00,$06,$14,$00,$00,$AE,$13,$00,$00,$AB,$11,$00,$00
+        FCB     $24,$A4,$00,$00,$5C,$A3,$00,$00,$00,$00,$00,$00
 
-L10C6:
-        FCB     $CE
-
-L10C7:
-        FCB     $10
-
-L10C8:
-        FCB     $4A
-
-L10C9:
-        FCB     $11
-
-L10CA:
-        FCB     $6F
-
-L10CB:
-        FCB     $29
-
-L10CC:
-        FCB     $70
-
-L10CD:
-        FCB     $16,$0D,$0D,$00,$00,$8D,$0D,$0A,$00,$91,$0B,$00,$00,$11,$0A,$00
-        FCB     $00,$1D,$09,$00,$00,$14,$08,$00,$00,$9D,$08,$00,$00,$13,$1E,$00
-        FCB     $00,$93,$0C,$00,$00,$85,$13,$00,$00,$86,$1C,$00,$00,$87,$1A,$00
-        FCB     $00,$89,$10,$52,$00,$8B,$10,$41,$00,$8A,$10,$54,$00,$8C,$10,$45
-        FCB     $00,$90,$80,$00,$00,$05,$87,$00,$00,$1C,$81,$00,$00,$9F,$86,$00
-        FCB     $00,$9C,$85,$00,$00,$1E,$82,$00,$00,$1F,$84,$00,$00,$9E,$83,$00
-        FCB     $00,$5F,$11,$00,$00,$06,$14,$00,$00,$AE,$13,$00,$00,$AB,$11,$00
-        FCB     $00,$24,$A4,$00,$00,$5C,$A3,$00,$00,$00,$00,$00,$00,$23,$19,$27
-        FCB     $00,$27,$2F,$00,$00,$2B,$19,$7B,$00,$DB,$3F,$00,$00,$2D,$19,$42
-        FCB     $20,$DD,$19,$41,$20,$5C,$5B,$00,$00,$A9,$19,$2D,$00,$40,$19,$48
-        FCB     $75,$BA,$19
+L114A:
+        FCB     $23,$19,$27,$00,$27,$2F,$00,$00,$2B,$19,$7B,$00,$DB,$3F,$00,$00
+        FCB     $2D,$19,$42,$20,$DD,$19,$41,$20,$5C,$5B,$00,$00,$A9,$19,$2D,$00
+        FCB     $40,$19,$48,$75,$BA,$19
         FCC     "HU*+"
         FCB     $00,$00,$C0,$2A,$00,$00,$5E,$5D,$00,$00,$DE,$5C,$00,$00,$3A,$19
         FCB     $48,$6F,$5B,$19,$48,$4F,$3B,$19,$48,$61,$5D,$19
@@ -690,7 +679,7 @@ c64ScreenOut1:
         STA     btxReg012
         LDA     L10C4
         STA     FAC1EXP
-        LDA     L10C5
+        LDA     $10C5
         STA     FAC1MAN1
         LDA     #$FF
         STA     btxReg00F
@@ -708,9 +697,9 @@ L172A:
         JMP     L171B
 
 L172D:
-        LDA     L10C0
+        LDA     c64PtrTable
         STA     L11DA
-        LDA     L10C1
+        LDA     $10C1
         STA     L11DB
         LDA     #$00
         STA     L11D9
@@ -828,9 +817,9 @@ L17EE:
         TXA
 
 L17EF:
-        LDX     L10C8
+        LDX     $10C8
         STX     FAC2EXP
-        LDX     L10C9
+        LDX     $10C9
         STX     FAC2MAN1
         LDY     #$00
 
@@ -851,9 +840,9 @@ L180C:
         TXA
 
 L180D:
-        LDX     L10C6
+        LDX     $10C6
         STX     FAC2EXP
-        LDX     L10C7
+        LDX     $10C7
         STX     FAC2MAN1
         LDY     #$00
 
@@ -1480,9 +1469,9 @@ c64Vec20:
         LDA     #$FF
         STA     btxStatus
         STA     L11D9
-        LDA     L10C0
+        LDA     c64PtrTable
         STA     FAC1MAN4
-        LDA     L10C1
+        LDA     $10C1
         STA     FAC1SGN
         RTS
 
@@ -1542,9 +1531,9 @@ c64Vec22:
         JSR     L1012
         LDA     #$06
         JSR     L105D
-        LDA     L10C0
+        LDA     c64PtrTable
         STA     FAC1MAN4
-        LDA     L10C1
+        LDA     $10C1
         STA     FAC1SGN
         LDA     #$00
         STA     L11DD
@@ -2144,9 +2133,9 @@ c64Vec31:
 ; vector 31 at runtime $20ED - jump-table entry 31
         ASL     A
         TAY
-        LDA     L10CC
+        LDA     $10CC
         STA     FAC1MAN2
-        LDA     L10CD
+        LDA     $10CD
         STA     FAC1MAN3
         LDA     ($63),Y
         TAX
@@ -2191,9 +2180,9 @@ c64Vec32:
 L213E:
         JSR     L1090
         BCS     L2174
-        LDA     L10C0
+        LDA     c64PtrTable
         STA     FAC1MAN4
-        LDA     L10C1
+        LDA     $10C1
         STA     FAC1SGN
 
 L214D:
@@ -3151,9 +3140,9 @@ c64Vec51:
         JSR     L1012
         LDA     #$4C
         JSR     L1012
-        LDA     L10CA
+        LDA     $10CA
         STA     FAC1EXP
-        LDA     L10CB
+        LDA     $10CB
         STA     FAC1MAN1
 
 L27EF:
@@ -3438,11 +3427,11 @@ L29D7:
         JSR     L1012
         LDA     #$4D
         JSR     L1012
-        LDA     L10C0
+        LDA     c64PtrTable
         STA     FAC1MAN4
         STA     FAC2MAN4
         STA     L11DA
-        LDA     L10C1
+        LDA     $10C1
         STA     FAC1SGN
         STA     FAC2SGN
         STA     L11DB
@@ -3621,9 +3610,9 @@ c64Vec58:
         LDA     FAC1SGN
         CMP     L10C3
         BNE     c64Vec58
-        LDA     L10C0
+        LDA     c64PtrTable
         STA     FAC1MAN4
-        LDA     L10C1
+        LDA     $10C1
         STA     FAC1SGN
         JMP     c64Vec58
 
@@ -3661,9 +3650,9 @@ L2B64:
         LDX     FAC2SGN
         CPX     L10C3
         BNE     L2B7F
-        LDX     L10C0
+        LDX     c64PtrTable
         STX     FAC2MAN4
-        LDX     L10C1
+        LDX     $10C1
         STX     FAC2SGN
 
 L2B7F:

@@ -317,7 +317,10 @@ def test_in_block_data_references_use_labels():
     src = (OUT / "c64_payload.asm").read_text()
     refs = re.findall(r"^\s+(?:LDA|STA|LDX|LDY|STX|STY|CMP|INC|DEC)\s+(L[0-9A-F]{4})$",
                       src, re.M)
-    assert len(refs) > 200, len(refs)
+    # A floor, not an exact count - the number moves whenever a data region is
+    # retyped. The invariant that matters is the one below: every reference
+    # resolves.
+    assert len(refs) > 150, len(refs)
     defined = {m.group(1) for m in re.finditer(r"^([A-Za-z_][A-Za-z0-9_]*):", src, re.M)}
     assert not (set(refs) - defined), sorted(set(refs) - defined)[:5]
 
@@ -349,3 +352,20 @@ def test_labels_never_land_inside_a_record():
     src = (OUT / "c64_payload.asm").read_text()
     assert "L1998" not in src and "L1999" not in src
     assert "LDA     $1998,Y" in src or "LDA     $1999,Y" in src
+
+
+def test_pointer_table_resolves_to_its_targets():
+    """$10C0 onward holds 16-bit pointers; three of them name CEPT pages or the
+    string table, which is what identifies the table."""
+    src = (OUT / "c64_payload.asm").read_text()
+    body = src.split("c64PtrTable:", 1)[1][:400]
+    assert "DW      ceptStartPage" in body
+    assert "ceptMacroDir" in body and "c64StrTable" in body
+
+
+def test_no_label_sits_inside_a_multi_byte_entry():
+    """The code reads these tables a byte at a time, so a label inside an entry
+    would collapse onto the next one and change the operand."""
+    src = (OUT / "c64_payload.asm").read_text()
+    for interior in ("L10C1:", "L10C5:", "L10C7:", "L1998:", "L1999:"):
+        assert interior not in src, interior
