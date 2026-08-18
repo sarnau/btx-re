@@ -54,12 +54,19 @@ and mixing them made every operand a special case.
 Each 6502 block is assembled on its own at the address it really runs at, and
 the result is linked back into the 6801 listing as binary:
 
-    out/c64_bootstrap.asm   ORG $8000   ->  c64_bootstrap.bin    123 bytes
-    out/c64_payload.asm     ORG $1000   ->  c64_payload.bin     7521 bytes
+    out/c64_bootstrap.asm   ORG $8000   ->  c64_bootstrap.bin    121 bytes
+    out/c64_payload.asm     ORG $0FFE   ->  c64_payload.bin     7523 bytes
     out/btx_decoder_ii.asm  ORG $8000   ->  BINCLUDEs both      32768 bytes
 
-The two blocks are contiguous - the PRG load-address word belongs to the
-bootstrap binary - so the 6801 listing carries nothing but the two BINCLUDEs.
+The payload starts at the PRG load-address word and is ORGed two bytes early so
+its data still lands at $1000. `c64_payload.bin` is therefore a genuine C64
+`.prg` - load address followed by data - which is exactly what the 6801 streams
+and what the bootstrap's loader consumes. The two blocks are contiguous, so the
+6801 listing carries nothing but the two BINCLUDEs.
+
+Hardware the C64 sees is symbolic too: `btxFifoWr`, `btxFifoRd`, `btxXferEn`
+and friends are declared under `c64_symbols` in the sidecar and pair with the
+6801-side names at `$6000`.
 
 `build.py` checks each block against the ROM bytes it came from before the 6801
 listing pulls it in, so a failure says which block broke rather than giving one

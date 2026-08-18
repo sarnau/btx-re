@@ -2733,94 +2733,11 @@ LB31D:
         STAA    c64XferDone
         RTS
 
-; C64-side 6502 code, $B32D-$D108. Not 6801 - the cartridge carries the C64's
-; BTX terminal application in the same 32 KB image as the 68B01 firmware, which
-; is why a 6801 trace never reaches it.
-;
-; $B32D-$B33F  c64CartHeader C64 autostart cartridge header
-; $B340-$B3A5  c64ColdStart  cartridge cold-start, runs at C64 $8000
-; $B3A6-$B3A7  c64LoadAddr   $00 $10 - little-endian load address $1000
-; $B3A8-$D108  c64Payload    7521 bytes, loaded to C64 $1000-$2D60
-;
-; ROM $B32D maps to C64 $8000, proved by the cartridge header itself:
-;
-;     $B32D  13 80              cold start vector  $8013
-;     $B32F  72 FE              warm start vector  $FE72
-;     $B331  C3 C2 CD 38 30     "CBM80" autostart signature
-;     $B336  00 00 00 FF 00...  padding
-;
-; $8013 resolves to ROM $B32D + $13 = $B340, exactly where the cold-start code
-; begins - and independently, the JMP $8036 at $B36D lands exactly on $B363.
-;
-; The bootstrap then runs from cartridge ROM at C64 $8000:
-;
-;     JSR $FDA3 / $FD90 / $FD15 / $FF5B   KERNAL init, restore vectors, CINT
-;     LDX #$00 / STX $D016                VIC setup
-;     JSR $804D / STA $61                 fetch load address low byte
-;     JSR $804D / STA $62                 fetch load address high byte
-;     LDY #$00
-;   loop:
-;     JSR $804D / BCS done / STA ($61),Y  copy one byte
-;     INY / BNE loop / INC $62 / JMP loop
-;
-; $804D fetches the next byte from the decoder; carry set marks end of stream.
-; The two bytes at c64LoadAddr are the first thing that loop consumes, which is
-; what puts the payload at $1000. Ports $8000, $8001, $8009, $800A and $800B are
-; the C64's window onto the decoder hardware.
-;
-; The payload begins with a 61-entry JMP table at runtime $1000-$10B6 - the
-; module's dispatch vector - with bodies at $174C-$2943.
-;
-; Load address established three independent ways:
-;   1. the $00 $10 PRG header at $B3A6, consumed by the loader above;
-;   2. offset $A3A8 puts 97.6% of the payload's own JSR/JMP targets on real
-;      instruction boundaries, against 11.7% and 5.9% one byte either side;
-;   3. call sites JSR into a series spaced 3 apart based at $1009, which is
-;      entry 3 of the jump table at $1000.
-;
-; German UI strings run $B552-$B9FF (runtime $11AA-$1657), padded to 40 columns:
-; "Load Capture Display Macro Xfer Screen", "ASCII Btx Keybd Telesoft Edit Pause
-; Quit", "Capture-Modus ein - Ende: STOP-Taste", and the macro prefix
-; "@:BTX-MAK-".
-;
-; Note $D109-$D348 is NOT part of this payload - those are the 6801 control-code
-; dispatch tables documented at $D36A.
-c64CartHeader:
-
 ; bootstrap: 6502 code, assembled separately at $8000. See out/c64_bootstrap.asm.
         BINCLUDE "c64_bootstrap.bin"
 
 
-; C64 payload: a 61-entry JMP dispatch table at runtime $1000-$10B6, then code at
-; $174C-$2943 with data below it. The table is the module's whole API surface and
-; the natural place to start reading.
-;
-; Entries are labelled c64Vec00..c64Vec60 at their ROM addresses. Vectors 44 and
-; 45 share a target ($220B), so 60 distinct addresses carry labels. Three have
-; evidenced names rather than structural ones:
-;
-;   c64ScreenInit  vector 0   CLALL and $D016/$D021/$D800
-;   c64ScreenOut1  vector 1   CHROUT with $D021/$D800/$D900
-;   c64ScreenOut2  vector 54  the same pattern
-;
-; The rest keep structural names because tracing them transitively is not
-; discriminating: almost every entry reaches a shared input loop, so GETIN and
-; STOP appear nearly everywhere and say nothing about the individual routine.
-; Naming them means reading them one at a time - a task the size of the 6801
-; side, not a sweep.
-;
-; Two findings for anyone continuing:
-;
-;   - $11D7-$11FC is a VARIABLE block, not text. Code stores into $11D8-$11F7,
-;     which is what separates it from the German strings beginning at $11FD
-;     ("von Diskette: File? "). The ROM image holds their initial values, which
-;     is why that area first reads as unprintable filler in front of the text.
-;   - Text records are 40 columns followed by a 5-byte trailer
-;     ($2C $00 $C0 $01 $98). Nothing addresses them directly, so they are reached
-;     by index; the only LDA #$2D in the payload is at runtime $287B.
-c64Payload:
-
-; payload: 6502 code, assembled separately at $1000. See out/c64_payload.asm.
+; payload: 6502 code, assembled separately at $0FFE. See out/c64_payload.asm.
         BINCLUDE "c64_payload.bin"
 
 

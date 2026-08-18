@@ -384,6 +384,20 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xFFF0" = "vectors"
 
 [block_comments]
+"0xB372" = """
+Handing control to the payload.
+
+    LDA #$00 / STA btxStatus     bank the cartridge out
+    JMP (btxLoadLo)              jump through $8000
+
+$8000 is cartridge ROM while the cartridge is mapped, holding the cold-start
+vector $8013. The loader has already written the fetched load address into
+btxLoadLo/btxLoadHi - stores land in the RAM underneath the ROM - so once the
+cartridge is banked out the same indirect read returns $1000 instead, and
+control lands on the payload rather than back in the bootstrap.
+
+That is why the loader stores the load address twice, to $61/$62 for its own
+copy loop and to $8000/$8001 for this jump."""
 "0xB45F" = """
 Data following the C64 payload's jump table.
 
@@ -1249,15 +1263,33 @@ kind = "ptr_table"
 
 
 # The two 6502 blocks. Each is assembled as its own program at the address it
-# really runs at, and linked back in as binary. See docs/.
+# really runs at, and linked back in as binary.
+#
+# The payload starts two bytes early, at the PRG load-address word, and is
+# ORGed to $0FFE so the data still lands at $1000. That makes c64_payload.bin a
+# genuine C64 .prg - load address followed by data - which is exactly what the
+# 6801 streams and what the bootstrap's loader consumes.
 [[c64_blocks]]
 name = "bootstrap"
 start = 0xB32D
-end = 0xB3A8
+end = 0xB3A6
 org = 0x8000
 
 [[c64_blocks]]
 name = "payload"
-start = 0xB3A8
+start = 0xB3A6
 end = 0xD109
-org = 0x1000
+org = 0x0FFE
+
+# The C64's view of the decoder hardware. The 6801 sees the same registers at
+# $6000; see the block comment at $B2E2 for the pairing. $8000/$8001 are RAM
+# under the cartridge ROM, used to stash the load address.
+[c64_symbols]
+"0x8000" = "btxLoadLo"
+"0x8001" = "btxLoadHi"
+"0x8009" = "btxFifoWr"
+"0x800A" = "btxFifoRd"
+"0x800B" = "btxXferEn"
+"0x800C" = "btxStatus"
+"0x8010" = "btxXferDone"
+"0x8080" = "btxFifo"

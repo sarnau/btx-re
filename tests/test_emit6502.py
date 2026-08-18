@@ -27,8 +27,8 @@ def test_each_block_assembles_to_exactly_its_rom_bytes():
     check; this pins the sizes and load addresses too."""
     result = build.run(write=True)
     rom = result.rom
-    for name, start, end, org in (("bootstrap", 0xB32D, 0xB3A8, 0x8000),
-                                  ("payload", 0xB3A8, 0xD109, 0x1000)):
+    for name, start, end, org in (("bootstrap", 0xB32D, 0xB3A6, 0x8000),
+                                  ("payload", 0xB3A6, 0xD109, 0x0FFE)):
         blob = (OUT / f"c64_{name}.bin").read_bytes()
         assert blob == rom[start - 0x8000:end - 0x8000], name
         src = (OUT / f"c64_{name}.asm").read_text()
@@ -36,17 +36,31 @@ def test_each_block_assembles_to_exactly_its_rom_bytes():
         assert "CPU     6502" in src, name
 
 
+def test_payload_binary_is_a_real_prg():
+    """The payload carries its own PRG load-address word and is ORGed two bytes
+    early so the data still lands at $1000. The binary is therefore a genuine
+    C64 .prg - which is exactly what the 6801 streams and the loader consumes."""
+    build.run(write=True)
+    blob = (OUT / "c64_payload.bin").read_bytes()
+    assert blob[:2] == bytes([0x00, 0x10]), blob[:2].hex()
+    src = (OUT / "c64_payload.asm").read_text()
+    assert "c64LoadAddr:" in src
+    assert "FCB     $00,$10" in src
+    assert "ORG     $0FFE" in src
+
+
 def test_blocks_are_contiguous_and_leave_no_loose_bytes():
-    """The PRG load-address word belongs to the bootstrap binary, so the two
-    BINCLUDEs sit back to back with nothing emitted between them."""
+    """The two BINCLUDEs sit back to back with nothing emitted between them."""
     import build as _b
     sc = __import__("dis65xx.sidecar", fromlist=["load_sidecar"]).load_sidecar(
         pathlib.Path(__file__).resolve().parent.parent / "sidecar" / "decoder_ii.toml")
     boot, payload = sc.c64_blocks
     assert boot.end == payload.start, (hex(boot.end), hex(payload.start))
-    src = (OUT / "c64_bootstrap.asm").read_text()
-    assert "c64LoadAddr:" in src
-    assert "FCB     $00,$10" in src
+    listing = build.run(write=False).listing
+    between = listing.split('BINCLUDE "c64_bootstrap.bin"')[1].split(
+        'BINCLUDE "c64_payload.bin"')[0]
+    assert not [ln for ln in between.splitlines()
+                if ln.strip() and not ln.lstrip().startswith(";")], between
 
 
 def test_data_regions_render_as_fcb_not_instructions():

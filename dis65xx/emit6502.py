@@ -18,7 +18,7 @@ _MNEM_WIDTH = 8
 _JUMPS = ("JMP", "JSR")
 
 
-def _operand(insn, labels: dict[int, str]) -> str:
+def _operand(insn, labels: dict[int, str], symbols: dict[int, str] | None = None) -> str:
     m, v = insn.mode, insn.operand
     if m is Mode.IMP:
         return ""
@@ -26,8 +26,9 @@ def _operand(insn, labels: dict[int, str]) -> str:
         return "A"
     if m is Mode.IMM:
         return f"#${v:02X}"
+    symbols = symbols or {}
     if m is Mode.ZP:
-        return f"${v:02X}"
+        return symbols.get(v) or f"${v:02X}"
     if m is Mode.ZPX:
         return f"${v:02X},X"
     if m is Mode.ZPY:
@@ -37,10 +38,17 @@ def _operand(insn, labels: dict[int, str]) -> str:
     if m is Mode.IZY:
         return f"(${v:02X}),Y"
     if m is Mode.IND:
-        return f"({labels.get(v) or f'${v:04X}'})"
+        # The operand names the location holding the address, not the target,
+        # so a data symbol describes it better than a code label.
+        return f"({symbols.get(v) or labels.get(v) or f'${v:04X}'})"
     if m is Mode.REL:
         return labels.get(v) or f"${v:04X}"
-    name = labels.get(v)
+    # A control transfer names a label; anything else prefers a hardware or
+    # RAM symbol, since it is referring to a location, not to code.
+    if insn.mnemonic in _JUMPS and m is not Mode.IND:
+        name = labels.get(v)
+    else:
+        name = symbols.get(v) or labels.get(v)
     pre = ">" if v < 0x100 and name is None else ""
     body = name or f"${v:04X}"
     if m is Mode.ABS:
@@ -139,6 +147,22 @@ def emit_block(data: bytes, base: int, block: C64Block, sidecar: Sidecar) -> str
         f"{'':{_INDENT}}{'CPU':{_MNEM_WIDTH}}6502",
         "",
     ]
+    # Which hardware/RAM symbols this block actually touches.
+    touched: dict[int, str] = {}
+    for _rt, insn, _b in _decode_block(data, base, block, labels, sidecar):
+        if insn is None or insn.operand is None:
+            continue
+        if insn.mnemonic in _JUMPS and insn.mode is not Mode.IND:
+            continue
+        name = sidecar.c64_symbols.get(insn.operand)
+        if name:
+            touched[insn.operand] = name
+    if touched:
+        lines.append("; Decoder hardware and RAM, as the C64 sees it.")
+        width = max(len(n) for n in touched.values())
+        for addr in sorted(touched):
+            lines.append(f"{touched[addr]:<{max(width, 8)}} EQU     ${addr:04X}")
+        lines.append("")
     if external:
         lines.append("; C64 ROM entry points.")
         width = max(len(n) for n in external.values())
@@ -149,6 +173,7 @@ def emit_block(data: bytes, base: int, block: C64Block, sidecar: Sidecar) -> str
     lines.append("")
 
     all_names = {**external, **labels}
+    used_symbols = {a: n for a, n in sidecar.c64_symbols.items()}
     pending: list[int] = []
 
     def flush() -> None:
@@ -173,7 +198,7 @@ def emit_block(data: bytes, base: int, block: C64Block, sidecar: Sidecar) -> str
             continue
         flush()
         body = (f"{'':{_INDENT}}{insn.mnemonic:{_MNEM_WIDTH}}"
-                f"{_operand(insn, all_names)}").rstrip()
+                f"{_operand(insn, all_names, used_symbols)}").rstrip()
         comment = sidecar.line_comments.get(rt + block.offset)
         lines.append(f"{body:<40}; {comment}" if comment else body)
     flush()

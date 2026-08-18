@@ -141,6 +141,22 @@ def emit(data: bytes, result: TraceResult, sidecar: Sidecar) -> str:
             lines.append(_fcb_line(chunk))
 
     while addr < end:
+        c64 = sidecar.c64_block_at(addr)
+        if c64 is not None and addr == c64.start:
+            flush()
+            lines.append("")
+            lines.append(f"; {c64.name}: 6502 code, assembled separately at "
+                         f"${c64.org:04X}. See out/c64_{c64.name}.asm.")
+            lines.append(f"{'':{_INDENT}}BINCLUDE \"c64_{c64.name}.bin\"")
+            lines.append("")
+            addr = c64.end
+            continue
+        # Annotations inside a 6502 block belong to that block's own source,
+        # not here, so nothing from it leaks into the 6801 listing.
+        if sidecar.c64_block_at(addr) is not None:
+            addr += 1
+            continue
+
         label = sidecar.labels.get(addr)
         block = sidecar.block_comments.get(addr)
         region = sidecar.region_at(addr)
@@ -160,16 +176,6 @@ def emit(data: bytes, result: TraceResult, sidecar: Sidecar) -> str:
             if label:
                 lines.append(f"{label}:")
 
-        c64 = sidecar.c64_block_at(addr)
-        if c64 is not None and addr == c64.start:
-            flush()
-            lines.append("")
-            lines.append(f"; {c64.name}: 6502 code, assembled separately at "
-                         f"${c64.org:04X}. See out/c64_{c64.name}.asm.")
-            lines.append(f"{'':{_INDENT}}BINCLUDE \"c64_{c64.name}.bin\"")
-            lines.append("")
-            addr = c64.end
-            continue
 
         if region is not None and region.kind in ("words", "ptr_table") and not is_code:
             flush()
