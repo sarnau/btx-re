@@ -20,16 +20,17 @@ JUMP_TABLE = {
     0xFFD5: "LOAD", 0xFFD8: "SAVE", 0xFFB7: "READST",
 }
 
-# Internal KERNAL routines behind those entries. The serial group is what the
-# payload uses to drive the IEC bus directly instead of going through OPEN/LOAD.
+# Internal KERNAL routines behind those entries. These carry the ROM's own
+# names - the serial group is the implementation the jump table dispatches to,
+# and the payload calls it directly instead of going through OPEN/LOAD.
 INTERNAL = {
-    0xED09: "IEC_TALK", 0xED0C: "IEC_LISTEN", 0xEDB9: "IEC_SECOND",
-    0xEDC7: "IEC_TKSA", 0xEDDD: "IEC_CIOUT", 0xEDEF: "IEC_UNTLK",
-    0xEDFE: "IEC_UNLSN", 0xEE13: "IEC_ACPTR",
+    0xED09: "TALK", 0xED0C: "LISTEN", 0xEDB9: "SECOND",
+    0xEDC7: "TKSA", 0xEDDD: "CIOUT", 0xEDEF: "UNTLK",
+    0xEDFE: "UNLSN", 0xEE13: "ACPTR",
     0xFD15: "RESTOR", 0xFDA3: "IOINIT", 0xFF5B: "CINT",
-    0xF642: "KERNAL_CLOSE", 0xEA31: "IRQ_ENTRY",
-    # The CPU vectors at the top of the map. $FFFC holds the address of the
-    # reset routine, so JMP ($FFFC) restarts the machine.
+    0xEA31: "IRQ",
+    # $FFFC holds the address of the reset routine, so JMP ($FFFC) restarts
+    # the machine.
     0xFFFC: "KERNAL_RESET",
 }
 

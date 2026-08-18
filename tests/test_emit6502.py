@@ -276,11 +276,11 @@ def test_low_memory_uses_c64_rom_names():
 
 
 def test_sa_fa_are_not_treated_as_a_pointer_pair():
-    """LDA #$66 / STA SA / LDA #$08 / STA FA / JSR KERNAL_CLOSE sets a
-    secondary address and device 8, so it only looked like a pointer setup."""
+    """LDA #$66 / STA SA / LDA #$08 / STA FA / JSR $F642 sets a secondary
+    address and device 8, so it only looked like a pointer setup."""
     src = (OUT / "c64_payload.asm").read_text()
     lines = [ln.strip() for ln in src.splitlines()]
-    i = lines.index("JSR     KERNAL_CLOSE")
+    i = lines.index("JSR     KERNAL_F642")
     assert lines[i - 4:i] == ["LDA     #$66", "STA     SA",
                               "LDA     #$08", "STA     FA"]
 

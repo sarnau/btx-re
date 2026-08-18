@@ -68,18 +68,18 @@ btxReg1FD   EQU     $81FD
 ; C64 ROM entry points.
 KERNAL_E3BF  EQU     $E3BF
 KERNAL_E56C  EQU     $E56C
-IRQ_ENTRY    EQU     $EA31
-IEC_TALK     EQU     $ED09
-IEC_LISTEN   EQU     $ED0C
-IEC_SECOND   EQU     $EDB9
-IEC_TKSA     EQU     $EDC7
-IEC_CIOUT    EQU     $EDDD
-IEC_UNTLK    EQU     $EDEF
-IEC_UNLSN    EQU     $EDFE
-IEC_ACPTR    EQU     $EE13
+IRQ          EQU     $EA31
+TALK         EQU     $ED09
+LISTEN       EQU     $ED0C
+SECOND       EQU     $EDB9
+TKSA         EQU     $EDC7
+CIOUT        EQU     $EDDD
+UNTLK        EQU     $EDEF
+UNLSN        EQU     $EDFE
+ACPTR        EQU     $EE13
 KERNAL_F3D5  EQU     $F3D5
 KERNAL_F3F6  EQU     $F3F6
-KERNAL_CLOSE EQU     $F642
+KERNAL_F642  EQU     $F642
 RESTOR       EQU     $FD15
 KERNAL_FD90  EQU     $FD90
 IOINIT       EQU     $FDA3
@@ -1217,12 +1217,12 @@ L1A15:
         JSR     L1012
         LDA     #$02
         JSR     L107E
-        JSR     IEC_UNLSN
+        JSR     UNLSN
         LDA     #$08
-        JSR     IEC_LISTEN
+        JSR     LISTEN
         LDA     #$EF
-        JSR     IEC_SECOND
-        JSR     IEC_UNLSN
+        JSR     SECOND
+        JSR     UNLSN
         LDA     #$00
         STA     btxReg005
         JMP     (KERNAL_RESET)
@@ -1352,11 +1352,11 @@ c64Vec19:
         LDA     #$00
         STA     STATUS
         LDA     #$08
-        JSR     IEC_LISTEN
+        JSR     LISTEN
         BIT     STATUS
         BMI     L1B38
         LDA     #$6F
-        JSR     IEC_SECOND
+        JSR     SECOND
         BIT     STATUS
         BPL     L1B4B
 
@@ -1373,7 +1373,7 @@ L1B42:
         RTS
 
 L1B4B:
-        JSR     IEC_UNLSN
+        JSR     UNLSN
         JSR     L1075
         JSR     L1078
         LDA     #$0B
@@ -1477,7 +1477,7 @@ L1BEA:
         JSR     L1012
         PLA
         JSR     L1009
-        JSR     IEC_UNTLK
+        JSR     UNTLK
         RTS
 
 c64Vec20:
@@ -1724,7 +1724,7 @@ L1DEC:
         DEC     L11DF
         BNE     L1DB7
         LDA     #$0D
-        JSR     IEC_CIOUT
+        JSR     CIOUT
         INC     L11E0
         LDA     L11E0
         CMP     #$29
@@ -1755,12 +1755,12 @@ L1E20:
 
 L1E24:
         LDA     FA
-        JSR     IEC_LISTEN
+        JSR     LISTEN
         LDA     SA
         AND     #$EF
         ORA     #$E0
-        JSR     IEC_SECOND
-        JSR     IEC_UNLSN
+        JSR     SECOND
+        JSR     UNLSN
         JSR     L101B
         RTS
 
@@ -2054,14 +2054,14 @@ L2023:
 
 L2036:
         LDA     L11BE,Y
-        JSR     IEC_CIOUT
+        JSR     CIOUT
         INC     L11B9
         LDY     L11B9
         CPY     L11BC
         BNE     L2036
         LDA     #$00
-        JSR     IEC_CIOUT
-        JSR     IEC_UNLSN
+        JSR     CIOUT
+        JSR     UNLSN
         LDA     #$FF
         STA     L11D8
         LDA     #$10
@@ -2221,7 +2221,7 @@ L214D:
 L2160:
         LDY     #$00
         LDA     (FAC1MAN4),Y
-        JSR     IEC_CIOUT
+        JSR     CIOUT
         INC     FAC1MAN4
         BNE     L216D
         INC     FAC1SGN
@@ -2406,7 +2406,7 @@ L2260:
         LDA     #$21
 
 L2269:
-        JSR     IEC_CIOUT
+        JSR     CIOUT
         RTS
 
 c64Vec46:
@@ -2524,26 +2524,26 @@ c64Vec49:
         STA     FNLEN
         JSR     KERNAL_F3D5
         LDA     FA
-        JSR     IEC_LISTEN
+        JSR     LISTEN
         LDA     SA
-        JSR     IEC_SECOND
+        JSR     SECOND
         BIT     STATUS
         BMI     L234C
         LDA     #$1B
-        JSR     IEC_CIOUT
+        JSR     CIOUT
         LDA     #$40
-        JSR     IEC_CIOUT
+        JSR     CIOUT
         LDA     #$1B
-        JSR     IEC_CIOUT
+        JSR     CIOUT
         LDA     #$33
-        JSR     IEC_CIOUT
+        JSR     CIOUT
         LDA     #$18
-        JSR     IEC_CIOUT
+        JSR     CIOUT
         CLC
         RTS
 
 L234C:
-        JSR     IEC_UNLSN
+        JSR     UNLSN
         JSR     L1078
         LDA     #$0F
         JSR     L105D
@@ -2564,7 +2564,7 @@ L2359:
         BIT     btxReg1F8
         BMI     L2364
         JSR     L104B
-        JMP     IRQ_ENTRY
+        JMP     IRQ
 
 L2364:
         JSR     L104B
@@ -2608,8 +2608,8 @@ L2396:
         JSR     L1066
         PLA
         PHA
-        JSR     IEC_CIOUT
-        JSR     IEC_UNLSN
+        JSR     CIOUT
+        JSR     UNLSN
         PLA
 
 L23A8:
@@ -2643,7 +2643,7 @@ L23C8:
         JSR     L1033
         PHP
         PHA
-        JSR     IEC_UNTLK
+        JSR     UNTLK
         PLA
         PLP
         BVC     L23F8
@@ -2866,12 +2866,12 @@ c64Vec38:
         STA     STATUS
         LDA     #$08
         STA     FA
-        JSR     IEC_TALK
+        JSR     TALK
         BIT     STATUS
         BMI     L2650
         LDA     #$6F
         STA     SA
-        JSR     IEC_TKSA
+        JSR     TKSA
         JSR     L1078
         LDA     #$09
         JSR     L105D
@@ -2925,7 +2925,7 @@ L2641:
         BVC     L2641
 
 L2648:
-        JSR     IEC_UNTLK
+        JSR     UNTLK
         BIT     L11DC
         BPL     L2652
 
@@ -2943,12 +2943,12 @@ c64Vec39:
         STA     STATUS
         LDA     #$08
         STA     FA
-        JSR     IEC_TALK
+        JSR     TALK
         LDX     STATUS
         BNE     L26A5
         LDA     #$6F
         STA     SA
-        JSR     IEC_TKSA
+        JSR     TKSA
         LDX     STATUS
         BNE     L26A5
         LDA     #$00
@@ -2977,7 +2977,7 @@ L2696:
         BVC     L2696
 
 L269D:
-        JSR     IEC_UNTLK
+        JSR     UNTLK
         BIT     L11DC
         BPL     L26A7
 
@@ -3030,9 +3030,9 @@ c64Vec34:
         LDA     #$65
         STA     SA
         LDA     FA
-        JSR     IEC_LISTEN
+        JSR     LISTEN
         LDA     SA
-        JSR     IEC_SECOND
+        JSR     SECOND
 
 L26EF:
         LDA     btxReg090
@@ -3055,7 +3055,7 @@ L2709:
         CMP     L11ED
         BEQ     L271E
         LDA     #$01
-        JSR     IEC_CIOUT
+        JSR     CIOUT
         INC     L11ED
 
 L271E:
@@ -3067,10 +3067,10 @@ c64Vec35:
         STA     STATUS
         LDA     #$08
         STA     FA
-        JSR     IEC_TALK
+        JSR     TALK
         LDA     #$66
         STA     SA
-        JSR     IEC_TKSA
+        JSR     TKSA
         RTS
 
 c64Vec60:
@@ -3109,8 +3109,8 @@ c64Vec48:
         STY     FNLEN
 
 L276F:
-        JSR     IEC_UNLSN
-        JSR     IEC_UNTLK
+        JSR     UNLSN
+        JSR     UNTLK
         LDA     #$08
         STA     FA
         LDA     #$64
@@ -3134,9 +3134,9 @@ L2795:
         LDA     #$64
         STA     SA
         LDA     FA
-        JSR     IEC_LISTEN
+        JSR     LISTEN
         LDA     SA
-        JSR     IEC_SECOND
+        JSR     SECOND
         LDA     FA
         STA     DFLTO
         CLC
@@ -3301,8 +3301,8 @@ c64Vec16:
         STA     FNLEN
 
 L28C3:
-        JSR     IEC_UNTLK
-        JSR     IEC_UNLSN
+        JSR     UNTLK
+        JSR     UNLSN
         JSR     L10B1
         BCS     L28EB
         LDA     SA
@@ -3310,10 +3310,10 @@ L28C3:
         JSR     L1075
         BCS     L28EB
         LDA     FA
-        JSR     IEC_TALK
+        JSR     TALK
         LDA     L11BB
         STA     SA
-        JSR     IEC_TKSA
+        JSR     TKSA
         JSR     L1033
         TAX
         CLC
@@ -3334,7 +3334,7 @@ L28F1:
         STA     STATUS
         JSR     STOP
         BEQ     L290B
-        JSR     IEC_ACPTR
+        JSR     ACPTR
         TAX
         LDA     STATUS
         LSR     A
@@ -3351,25 +3351,25 @@ L290B:
 
 c64Vec33:
 ; vector 33 at runtime $290D - jump-table entry 33
-        JSR     IEC_UNLSN
+        JSR     UNLSN
         LDA     #$08
-        JSR     IEC_LISTEN
+        JSR     LISTEN
         LDA     #$E4
-        JSR     IEC_SECOND
-        JSR     IEC_UNLSN
+        JSR     SECOND
+        JSR     UNLSN
         RTS
 
 c64Vec36:
 ; vector 36 at runtime $291E - jump-table entry 36
         JSR     L1066
         LDA     #$00
-        JSR     IEC_CIOUT
-        JSR     IEC_UNLSN
+        JSR     CIOUT
+        JSR     UNLSN
         LDA     #$08
-        JSR     IEC_LISTEN
+        JSR     LISTEN
         LDA     #$E5
-        JSR     IEC_SECOND
-        JSR     IEC_UNLSN
+        JSR     SECOND
+        JSR     UNLSN
         RTS
 
 c64Vec37:
@@ -3378,17 +3378,17 @@ c64Vec37:
         STA     SA
         LDA     #$08
         STA     FA
-        JSR     KERNAL_CLOSE
+        JSR     KERNAL_F642
         RTS
 
 c64Vec18:
 ; vector 18 at runtime $2943 - jump-table entry 18
-        JSR     IEC_UNTLK
+        JSR     UNTLK
         LDA     #$08
         STA     FA
         LDA     #$64
         STA     SA
-        JSR     KERNAL_CLOSE
+        JSR     KERNAL_F642
         RTS
 
 c64Vec59:
@@ -3396,12 +3396,12 @@ c64Vec59:
         LDA     #$00
         STA     STATUS
         LDA     FA
-        JSR     IEC_LISTEN
+        JSR     LISTEN
         LDA     STATUS
         BMI     L296A
         LDA     SA
         ORA     #$F0
-        JSR     IEC_SECOND
+        JSR     SECOND
         LDA     STATUS
         BPL     L296C
 
@@ -3603,7 +3603,7 @@ L2AD1:
 L2ADB:
         JSR     L10AE
         BCS     L2AE6
-        JSR     IEC_CIOUT
+        JSR     CIOUT
         JMP     L2ADB
 
 L2AE6:
