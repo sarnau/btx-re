@@ -455,6 +455,7 @@ sha256 = "2799910767fdb7067fb91f72aef691bf692a8f7a2f2b26acb71d3d1ca3f68926"
 "0xF52D" = "sendRowToC64"
 "0xF7E4" = "rxBufPut"
 "0xF7FE" = "rxBufGet"
+"0xAF7B" = "separationMask"
 "0xA210" = "redrawScreen"
 "0xEED2" = "resetStatusLine"
 "0xF670" = "modemDispatch"
@@ -1606,36 +1607,45 @@ of a row is its RIGHT half, the second its LEFT half. Reading them in the
 6801's usual big-endian order splits every glyph across two characters, which
 is what makes this data look like garbage at first.
 
-Ink occupies columns 4-15 of the swapped 16-bit word - the 12-pixel CEPT cell.
-Bits 14-12 are always zero. Bit 15 is not ink: it is a per-glyph flag, uniform
-across all ten rows of a glyph, and it marks CONTIGUOUS GRAPHICS - glyphs the
-video hardware must draw edge to edge with no inter-character gap, as opposed
-to normally spaced text.
+Ink is bits 0-11 of the swapped 16-bit word - the 12-pixel CEPT cell, bit 11
+leftmost. Bits 12-14 are zero in all 3840 rows of all four sets. Bit 15 is not
+ink: it is a per-glyph flag, uniform across all ten rows of a glyph in every
+case.
 
-Evidence is distributional rather than from code, because the firmware never
-reads the character generator (its only references to the font area are two
-LDD #$84D0 that are not even glyph-aligned), so the video hardware fetches it
-directly and consumes this bit. Across the 349 live glyphs the flag agrees
-with set membership 345 times, 98.9%:
+WHAT BIT 15 MEANS. The firmware reads it, at $A69B:
 
-  G0        95/96 clear
-  accents   96/96 clear
-  mosaic    94/96 set
-  set3      60/61 set   (35 unused placeholder slots excluded)
+    LDX glyphPtr
+    TST $02,X          glyphPtr is base-1, so this is glyph byte 1 -
+    BPL skip           the high half of row 0, and TST tests its bit 7
+    LDAA $00E1 / BITA #$07 / BEQ skip        only for a graphics set
+    LDAA $00E0 / BITA #$08 / BNE apply       separated by attribute
+    LDAA $00E1 / ANDA #$20 / BEQ skip        or by set
 
-All four exceptions are individually sensible, which is what makes the reading
-convincing:
+and when all three hold it copies the glyph into glyphBuf and ANDs it with the
+20-byte separationMask at $AF7B:
 
-  G0 $7C      set. The full-height vertical bar - a line-drawing character
-              that has to join the cells above and below, so it is contiguous
-              even though it sits in the text set. Its neighbours { and } leave
-              row 9 blank; $7C has ink in all ten rows.
-  mosaic $4E  clear, and $5E likewise. These are the only two mosaic glyphs
-  mosaic $5E  that leave rows 0 and 9 blank - separated rather than contiguous
-              variants.
-  set3 $20    clear. The space.
+    row 0  001111001111       rows 2, 6 and 9 are cleared entirely
+    row 1  001111001111
+    row 2  000000000000
 
-Not proven from firmware; a schematic or the display hardware would settle it.
+So bit 15 marks a glyph as SEPARABLE, and separation is done in software: the
+mask clears the leftmost two pixels of each 6-pixel block column and the last
+row of each block row, turning contiguous mosaics into separated ones. The
+block grid it implies - two columns, rows 0-2, 3-6 and 7-9 - is the one the
+mosaic codes themselves use.
+
+The distribution agrees, and is per-glyph exactly:
+
+  G0        1/96 set     only $7C, the full-height vertical bar
+  accents   0/96 set
+  mosaic   94/96 set     all but $4E and $5E
+  line     60/96 set     the 36 clear ones include the 35 placeholder slots
+
+An earlier reading here had this backwards - bit 15 as a CONTIGUOUS flag
+consumed by the video hardware, with a note that the firmware never touches the
+font. That was wrong because the glyph fetch reads through the stack pointer
+with PUL and the flag test is an indexed byte off glyphPtr, so neither shows up
+as a font reference under ordinary addressing.
 
   $8000  fontG0       96 glyphs  Latin alphanumerics and punctuation
   $8780  fontAccents  96 glyphs  non-spacing diacriticals and symbols (CEPT G2)
@@ -1669,6 +1679,8 @@ Sets up the stack, configures ports 1 and 2, and installs the interrupt soft
 vectors before entering the main firmware."""
 
 [line_comments]
+"0xA69E" = "bit 15 of row 0 - glyphPtr is base-1, so $02,X is glyph byte 1"
+"0xA6D6" = "separationMask - 1, since PUL pre-increments, same convention as glyphPtr"
 "0xF37B" = "$10 $5A - begin a status-line record: 4 attribute bytes then 40 characters"
 "0xF38A" = "$10 $7A - end it, and put the default status line back"
 "0xF23F" = "each of the first four bytes is written across all 40 cells of the status row"

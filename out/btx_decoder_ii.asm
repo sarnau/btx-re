@@ -259,36 +259,45 @@ c64IrqArmB     EQU     $61FD
 ; 6801's usual big-endian order splits every glyph across two characters, which
 ; is what makes this data look like garbage at first.
 ;
-; Ink occupies columns 4-15 of the swapped 16-bit word - the 12-pixel CEPT cell.
-; Bits 14-12 are always zero. Bit 15 is not ink: it is a per-glyph flag, uniform
-; across all ten rows of a glyph, and it marks CONTIGUOUS GRAPHICS - glyphs the
-; video hardware must draw edge to edge with no inter-character gap, as opposed
-; to normally spaced text.
+; Ink is bits 0-11 of the swapped 16-bit word - the 12-pixel CEPT cell, bit 11
+; leftmost. Bits 12-14 are zero in all 3840 rows of all four sets. Bit 15 is not
+; ink: it is a per-glyph flag, uniform across all ten rows of a glyph in every
+; case.
 ;
-; Evidence is distributional rather than from code, because the firmware never
-; reads the character generator (its only references to the font area are two
-; LDD #$84D0 that are not even glyph-aligned), so the video hardware fetches it
-; directly and consumes this bit. Across the 349 live glyphs the flag agrees
-; with set membership 345 times, 98.9%:
+; WHAT BIT 15 MEANS. The firmware reads it, at $A69B:
 ;
-;   G0        95/96 clear
-;   accents   96/96 clear
-;   mosaic    94/96 set
-;   set3      60/61 set   (35 unused placeholder slots excluded)
+;     LDX glyphPtr
+;     TST $02,X          glyphPtr is base-1, so this is glyph byte 1 -
+;     BPL skip           the high half of row 0, and TST tests its bit 7
+;     LDAA $00E1 / BITA #$07 / BEQ skip        only for a graphics set
+;     LDAA $00E0 / BITA #$08 / BNE apply       separated by attribute
+;     LDAA $00E1 / ANDA #$20 / BEQ skip        or by set
 ;
-; All four exceptions are individually sensible, which is what makes the reading
-; convincing:
+; and when all three hold it copies the glyph into glyphBuf and ANDs it with the
+; 20-byte separationMask at $AF7B:
 ;
-;   G0 $7C      set. The full-height vertical bar - a line-drawing character
-;               that has to join the cells above and below, so it is contiguous
-;               even though it sits in the text set. Its neighbours { and } leave
-;               row 9 blank; $7C has ink in all ten rows.
-;   mosaic $4E  clear, and $5E likewise. These are the only two mosaic glyphs
-;   mosaic $5E  that leave rows 0 and 9 blank - separated rather than contiguous
-;               variants.
-;   set3 $20    clear. The space.
+;     row 0  001111001111       rows 2, 6 and 9 are cleared entirely
+;     row 1  001111001111
+;     row 2  000000000000
 ;
-; Not proven from firmware; a schematic or the display hardware would settle it.
+; So bit 15 marks a glyph as SEPARABLE, and separation is done in software: the
+; mask clears the leftmost two pixels of each 6-pixel block column and the last
+; row of each block row, turning contiguous mosaics into separated ones. The
+; block grid it implies - two columns, rows 0-2, 3-6 and 7-9 - is the one the
+; mosaic codes themselves use.
+;
+; The distribution agrees, and is per-glyph exactly:
+;
+;   G0        1/96 set     only $7C, the full-height vertical bar
+;   accents   0/96 set
+;   mosaic   94/96 set     all but $4E and $5E
+;   line     60/96 set     the 36 clear ones include the 35 placeholder slots
+;
+; An earlier reading here had this backwards - bit 15 as a CONTIGUOUS flag
+; consumed by the video hardware, with a note that the firmware never touches the
+; font. That was wrong because the glyph fetch reads through the stack pointer
+; with PUL and the flag test is an indexed byte off glyphPtr, so neither shows up
+; as a font reference under ordinary addressing.
 ;
 ;   $8000  fontG0       96 glyphs  Latin alphanumerics and punctuation
 ;   $8780  fontAccents  96 glyphs  non-spacing diacriticals and symbols (CEPT G2)
@@ -1550,7 +1559,7 @@ LA681:
 
 LA69B:
         LDX     glyphPtr
-        TST     $02,X
+        TST     $02,X                   ; bit 15 of row 0 - glyphPtr is base-1, so $02,X is glyph byte 1
         BPL     LA6F8
         LDAA    >$00E1
         BITA    #$07
@@ -1581,7 +1590,7 @@ LA6CB:
         INX
         DECB
         BNE     LA6CB
-        LDS     #$AF7A
+        LDS     #$AF7A                  ; separationMask - 1, since PUL pre-increments, same convention as glyphPtr
         LDX     #glyphBuf
         LDAB    #$0A
 
@@ -2765,48 +2774,50 @@ bitDoubleTable:
         FCB     $0C,$03,$0C,$0C,$0C,$0F,$0C,$30,$0C,$33,$0C,$3C,$0C,$3F,$0C,$C0
         FCB     $0C,$C3,$0C,$CC,$0C,$CF,$0C,$F0,$0C,$F3,$0C,$FC,$0C,$FF,$0C,$00
         FCB     $0F,$03,$0F,$0C,$0F,$0F,$0F,$30,$0F,$33,$0F,$3C,$0F,$3F,$0F,$C0
-        FCB     $0F,$C3,$0F,$CC,$0F,$CF,$0F,$F0,$0F,$F3,$0F,$FC,$0F,$FF,$0F,$F3
-        FCB     $CF,$F3,$CF,$F0,$00,$F3,$CF,$F3,$CF,$F3,$CF,$F0,$00,$F3,$CF,$F3
-        FCB     $CF,$F0,$00,$FF,$8F,$FF,$8F,$FF,$8F,$FF,$8F,$FF,$8F,$FF,$8F,$FF
-        FCB     $8F,$FF,$8F,$FF,$8F,$FF,$8F,$41,$43,$44,$45,$47,$48,$49,$4A,$4C
-        FCB     $4E,$4F,$52,$53,$54,$55,$57,$59,$5A,$64,$68,$6C,$74,$69,$00,$AF
-        FCB     $E9,$AF,$FD,$B0,$11,$B0,$25,$B0,$39,$B0,$4D,$B0,$61,$B0,$75,$B0
-        FCB     $89,$B0,$9D,$B0,$B1,$B0,$C5,$B0,$D9,$B0,$ED,$B1,$01,$B1,$15,$B1
-        FCB     $29,$B1,$3D,$B1,$51,$B1,$65,$B1,$79,$B1,$8D,$B1,$A1,$00,$00,$00
-        FCB     $00,$01,$F0,$03,$18,$06,$0C,$07,$FC,$06,$0C,$06,$0C,$00,$00,$00
-        FCB     $00,$00,$00,$00,$00,$07,$F0,$0C,$18,$0C,$00,$0C,$00,$0C,$18,$07
-        FCB     $F0,$00,$00,$00,$00,$00,$00,$00,$00,$0F,$F0,$06,$18,$06,$18,$06
-        FCB     $18,$06,$18,$0F,$F0,$00,$00,$00,$00,$00,$00,$00,$00,$0F,$F8,$06
-        FCB     $18,$07,$80,$06,$00,$06,$18,$0F,$F8,$00,$00,$00,$00,$00,$00,$00
-        FCB     $00,$07,$F0,$0C,$00,$0C,$78,$0C,$18,$0C,$18,$07,$F0,$00,$00,$00
-        FCB     $00,$00,$00,$00,$00,$0F,$1E,$06,$0C,$07,$FC,$06,$0C,$06,$0C,$0F
-        FCB     $1E,$00,$00,$00,$00,$00,$00,$00,$00,$03,$F0,$00,$C0,$00,$C0,$00
-        FCB     $C0,$00,$C0,$03,$F0,$00,$00,$00,$00,$00,$00,$00,$00,$01,$FC,$00
-        FCB     $18,$00,$18,$00,$18,$0C,$18,$07,$F0,$00,$00,$00,$00,$00,$00,$00
-        FCB     $00,$0F,$00,$06,$00,$06,$00,$06,$00,$06,$0C,$0F,$FC,$00,$00,$00
-        FCB     $00,$00,$00,$00,$00,$0F,$1E,$07,$8C,$07,$CC,$06,$6C,$06,$3C,$0F
-        FCB     $1C,$00,$00,$00,$00,$00,$00,$00,$00,$01,$F0,$03,$18,$06,$0C,$06
-        FCB     $0C,$03,$18,$01,$F0,$00,$00,$00,$00,$00,$00,$00,$00,$0F,$F0,$06
-        FCB     $18,$07,$F0,$06,$C0,$06,$60,$0F,$38,$00,$00,$00,$00,$00,$00,$00
-        FCB     $00,$03,$FC,$06,$00,$03,$F8,$00,$0C,$06,$0C,$07,$F8,$00,$00,$00
-        FCB     $00,$00,$00,$00,$00,$0F,$FC,$0C,$CC,$00,$C0,$00,$C0,$00,$C0,$01
-        FCB     $E0,$00,$00,$00,$00,$00,$00,$00,$00,$0F,$3C,$06,$18,$06,$18,$06
-        FCB     $18,$06,$18,$03,$F0,$00,$00,$00,$00,$00,$00,$00,$00,$0F,$3C,$06
-        FCB     $18,$06,$18,$06,$D8,$06,$D8,$03,$30,$00,$00,$00,$00,$00,$00,$00
-        FCB     $00,$0E,$1C,$03,$30,$01,$E0,$00,$C0,$00,$C0,$01,$E0,$00,$00,$00
-        FCB     $00,$00,$00,$00,$00,$0F,$FC,$0C,$18,$00,$60,$01,$80,$06,$00,$0F
-        FCB     $FC,$00,$00,$00,$00,$00,$00,$00,$00,$00,$0C,$00,$0C,$03,$FC,$06
-        FCB     $0C,$06,$0C,$03,$FE,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$0E
-        FCB     $00,$06,$00,$07,$F0,$06,$18,$0F,$3C,$00,$00,$00,$00,$00,$00,$00
-        FCB     $00,$00,$00,$03,$C0,$00,$C0,$00,$C0,$00,$C0,$00,$F0,$00,$00,$00
-        FCB     $00,$00,$00,$00,$00,$00,$00,$00,$C0,$03,$F0,$00,$C0,$00,$C0,$00
-        FCB     $70,$00,$00,$00,$00,$00,$00,$01,$C0,$00,$00,$03,$C0,$00,$C0,$00
-        FCB     $C0,$00,$C0,$03,$F0,$00,$00,$00,$00,$20,$00,$38,$00,$B0,$01,$B0
-        FCB     $01,$32,$01,$FF,$03,$30,$02,$30,$04,$30,$04,$32,$00,$FF,$07,$00
-        FCB     $00,$06,$01,$FF,$01,$86,$01,$86,$01,$86,$01,$86,$01,$86,$01,$86
-        FCB     $01,$FE,$01,$86,$01,$04,$01,$00,$00,$80,$00,$C0,$00,$80,$01,$18
-        FCB     $05,$FC,$07,$18,$06,$98,$06,$58,$06,$58,$06,$18,$06,$F0,$06,$20
-        FCB     $06,$0C,$06,$FE
+        FCB     $0F,$C3,$0F,$CC,$0F,$CF,$0F,$F0,$0F,$F3,$0F,$FC,$0F,$FF,$0F
+
+separationMask:
+        FCB     $F3,$CF,$F3,$CF,$F0,$00,$F3,$CF,$F3,$CF,$F3,$CF,$F0,$00,$F3,$CF
+        FCB     $F3,$CF,$F0,$00,$FF,$8F,$FF,$8F,$FF,$8F,$FF,$8F,$FF,$8F,$FF,$8F
+        FCB     $FF,$8F,$FF,$8F,$FF,$8F,$FF,$8F,$41,$43,$44,$45,$47,$48,$49,$4A
+        FCB     $4C,$4E,$4F,$52,$53,$54,$55,$57,$59,$5A,$64,$68,$6C,$74,$69,$00
+        FCB     $AF,$E9,$AF,$FD,$B0,$11,$B0,$25,$B0,$39,$B0,$4D,$B0,$61,$B0,$75
+        FCB     $B0,$89,$B0,$9D,$B0,$B1,$B0,$C5,$B0,$D9,$B0,$ED,$B1,$01,$B1,$15
+        FCB     $B1,$29,$B1,$3D,$B1,$51,$B1,$65,$B1,$79,$B1,$8D,$B1,$A1,$00,$00
+        FCB     $00,$00,$01,$F0,$03,$18,$06,$0C,$07,$FC,$06,$0C,$06,$0C,$00,$00
+        FCB     $00,$00,$00,$00,$00,$00,$07,$F0,$0C,$18,$0C,$00,$0C,$00,$0C,$18
+        FCB     $07,$F0,$00,$00,$00,$00,$00,$00,$00,$00,$0F,$F0,$06,$18,$06,$18
+        FCB     $06,$18,$06,$18,$0F,$F0,$00,$00,$00,$00,$00,$00,$00,$00,$0F,$F8
+        FCB     $06,$18,$07,$80,$06,$00,$06,$18,$0F,$F8,$00,$00,$00,$00,$00,$00
+        FCB     $00,$00,$07,$F0,$0C,$00,$0C,$78,$0C,$18,$0C,$18,$07,$F0,$00,$00
+        FCB     $00,$00,$00,$00,$00,$00,$0F,$1E,$06,$0C,$07,$FC,$06,$0C,$06,$0C
+        FCB     $0F,$1E,$00,$00,$00,$00,$00,$00,$00,$00,$03,$F0,$00,$C0,$00,$C0
+        FCB     $00,$C0,$00,$C0,$03,$F0,$00,$00,$00,$00,$00,$00,$00,$00,$01,$FC
+        FCB     $00,$18,$00,$18,$00,$18,$0C,$18,$07,$F0,$00,$00,$00,$00,$00,$00
+        FCB     $00,$00,$0F,$00,$06,$00,$06,$00,$06,$00,$06,$0C,$0F,$FC,$00,$00
+        FCB     $00,$00,$00,$00,$00,$00,$0F,$1E,$07,$8C,$07,$CC,$06,$6C,$06,$3C
+        FCB     $0F,$1C,$00,$00,$00,$00,$00,$00,$00,$00,$01,$F0,$03,$18,$06,$0C
+        FCB     $06,$0C,$03,$18,$01,$F0,$00,$00,$00,$00,$00,$00,$00,$00,$0F,$F0
+        FCB     $06,$18,$07,$F0,$06,$C0,$06,$60,$0F,$38,$00,$00,$00,$00,$00,$00
+        FCB     $00,$00,$03,$FC,$06,$00,$03,$F8,$00,$0C,$06,$0C,$07,$F8,$00,$00
+        FCB     $00,$00,$00,$00,$00,$00,$0F,$FC,$0C,$CC,$00,$C0,$00,$C0,$00,$C0
+        FCB     $01,$E0,$00,$00,$00,$00,$00,$00,$00,$00,$0F,$3C,$06,$18,$06,$18
+        FCB     $06,$18,$06,$18,$03,$F0,$00,$00,$00,$00,$00,$00,$00,$00,$0F,$3C
+        FCB     $06,$18,$06,$18,$06,$D8,$06,$D8,$03,$30,$00,$00,$00,$00,$00,$00
+        FCB     $00,$00,$0E,$1C,$03,$30,$01,$E0,$00,$C0,$00,$C0,$01,$E0,$00,$00
+        FCB     $00,$00,$00,$00,$00,$00,$0F,$FC,$0C,$18,$00,$60,$01,$80,$06,$00
+        FCB     $0F,$FC,$00,$00,$00,$00,$00,$00,$00,$00,$00,$0C,$00,$0C,$03,$FC
+        FCB     $06,$0C,$06,$0C,$03,$FE,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+        FCB     $0E,$00,$06,$00,$07,$F0,$06,$18,$0F,$3C,$00,$00,$00,$00,$00,$00
+        FCB     $00,$00,$00,$00,$03,$C0,$00,$C0,$00,$C0,$00,$C0,$00,$F0,$00,$00
+        FCB     $00,$00,$00,$00,$00,$00,$00,$00,$00,$C0,$03,$F0,$00,$C0,$00,$C0
+        FCB     $00,$70,$00,$00,$00,$00,$00,$00,$01,$C0,$00,$00,$03,$C0,$00,$C0
+        FCB     $00,$C0,$00,$C0,$03,$F0,$00,$00,$00,$00,$20,$00,$38,$00,$B0,$01
+        FCB     $B0,$01,$32,$01,$FF,$03,$30,$02,$30,$04,$30,$04,$32,$00,$FF,$07
+        FCB     $00,$00,$06,$01,$FF,$01,$86,$01,$86,$01,$86,$01,$86,$01,$86,$01
+        FCB     $86,$01,$FE,$01,$86,$01,$04,$01,$00,$00,$80,$00,$C0,$00,$80,$01
+        FCB     $18,$05,$FC,$07,$18,$06,$98,$06,$58,$06,$58,$06,$18,$06,$F0,$06
+        FCB     $20,$06,$0C,$06,$FE
 
 ; RESET entry.
 ;

@@ -656,14 +656,56 @@ first byte of a row is its *right* half. Read in the 6801's usual big-endian
 order every glyph splits across two characters, which is what makes this data
 look like noise at first sight.
 
-Ink occupies columns 4–15 of the swapped word: the 12-pixel CEPT cell. Bit 15
-is not ink but a per-glyph flag marking **contiguous graphics** — glyphs drawn
-edge to edge with no inter-character gap. *(Inference: the firmware never reads
-the font, so the video hardware consumes this bit. Across 349 live glyphs the
-flag agrees with set membership 345 times, and all four exceptions are
-individually sensible — G0 `$7C` is the full-height vertical bar, mosaic `$4E`
-and `$5E` are the only mosaics leaving rows 0 and 9 blank, and set3 `$20` is
-the space.)*
+Ink is **bits 0–11** of the swapped word — the 12-pixel CEPT cell, bit 11
+leftmost. Bits 12–14 are zero in all 3840 rows of all four sets.
+
+**Bit 15 marks a glyph as separable**, and the firmware reads it:
+
+```
+LA69B:  LDX     glyphPtr
+        TST     $02,X           bit 15 of row 0 - glyphPtr is base-1,
+        BPL     LA6F8           so $02,X is glyph byte 1
+        LDAA    >$00E1
+        BITA    #$07            only for a graphics set
+        BEQ     LA6F8
+        LDAA    >$00E0
+        BITA    #$08            separated by attribute
+        BNE     LA6B7
+        LDAA    >$00E1
+        ANDA    #$20            or by set
+        BEQ     LA6F8
+```
+
+When all three hold, the glyph is copied into `glyphBuf` and ANDed with
+`separationMask`, twenty bytes at `$AF7B`:
+
+```
+row 0  001111001111        rows 2, 6 and 9 are cleared entirely
+row 1  001111001111
+row 2  000000000000
+```
+
+The mask clears the leftmost two pixels of each 6-pixel block column and the
+last row of each block row — turning contiguous mosaics into **separated
+mosaics**, in software. The block grid it implies, two columns by rows 0–2,
+3–6 and 7–9, is the same one the mosaic codes use: `$21` lights rows 0–2 of the
+left half, `$30` rows 7–9 of it.
+
+The distribution confirms the reading and is per-glyph exactly — bit 15 is set
+on all ten rows of a glyph or none:
+
+| Set | Bit 15 set | |
+|---|---|---|
+| G0 | 1 / 96 | only `$7C`, the full-height vertical bar |
+| accents | 0 / 96 | |
+| mosaic | 94 / 96 | all but `$4E` and `$5E` |
+| line | 60 / 96 | the 36 clear include the 35 placeholder slots |
+
+*This corrects an earlier reading in these notes, which had bit 15 as a
+**contiguous** flag consumed by the video hardware, on the grounds that the
+firmware never touches the font. That was wrong: the glyph fetch reads through
+the stack pointer with `PUL` and the flag test is an indexed byte off
+`glyphPtr`, so neither appears as a font reference under ordinary addressing.*
 
 `$9E00`–`$A20F` holds a second font: 104 glyphs, 8 pixels wide, one byte per
 row, no byte-order surprise.
@@ -882,9 +924,6 @@ entire C64 payload is byte-for-byte identical. See
 
 ## 10. Not established
 
-- **Font bit 15.** The contiguous-graphics reading is an inference from
-  distribution; the firmware never reads the font, so nothing in the ROM tests
-  the bit. A schematic would settle it.
 - **The modem protocol's finer points.** Every variable is named and the CRC is
   identified — `modemCrc` at `$F818` is a reflected CRC-16 with polynomial
   `$8005` — but the meaning of individual DBT-03 command bytes in `modemCmd`
