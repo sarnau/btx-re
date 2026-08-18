@@ -34,15 +34,24 @@ softVecOcf     EQU     $F4
 softVecIcf     EQU     $F6
 softVecIrq1    EQU     $F8
 softVecSwi     EQU     $FA
+drcsStorePtr   EQU     $0402
 scrollEnd      EQU     $0406
 scrollStart    EQU     $0408
 rowAttr        EQU     $040A
 rowAccent      EQU     $040C
 rowRender      EQU     $040E
+sendPtrChar    EQU     $0410
+sendPtrAttr    EQU     $0412
+sendPtrAccent  EQU     $0414
+canAttr0       EQU     $0417
+canAttr1       EQU     $0418
+canAttr2       EQU     $0419
+canAttr3       EQU     $041A
 drcsChar       EQU     $041B
 drcsWide       EQU     $041C
 drcsTall       EQU     $041D
 drcsFormat     EQU     $041E
+drcsCharSpan   EQU     $041F
 drcsRowHi      EQU     $0420
 drcsRowLo      EQU     $0421
 drcsSel0       EQU     $0422
@@ -54,6 +63,12 @@ drcsPlane1     EQU     $043E
 drcsPlane2     EQU     $0456
 drcsPlane3     EQU     $046E
 drcsOffset     EQU     $0487
+drcsRepeat     EQU     $0488
+fmtKeyLo       EQU     $0488
+drcsBitPair    EQU     $0489
+drcsClearCount EQU     $0489
+savedSP        EQU     $048A
+attrTemp       EQU     $048C
 colourIndex    EQU     $048D
 attrCellOffset EQU     $048E
 attrFillHi     EQU     $048E
@@ -62,9 +77,13 @@ gSetSelector   EQU     $048F
 eraseStartCol  EQU     $0490
 fillCol        EQU     $0490
 repeatCount    EQU     $0490
+sendCols       EQU     $0492
+revealMask     EQU     $0493
+defaultColour  EQU     $0494
 clutIndex      EQU     $0495
 accentPending  EQU     $0496
 parallelMode   EQU     $0497
+heldMosaic     EQU     $0498
 gsetG0         EQU     $0499
 gsetG1         EQU     $049A
 gsetG2         EQU     $049B
@@ -72,7 +91,11 @@ gsetG3         EQU     $049C
 gsetGL         EQU     $049D
 gsetGR         EQU     $049E
 gsetSS         EQU     $049F
+savedSS        EQU     $04A0
+repeatSS       EQU     $04A1
 gsetGLDefault  EQU     $04A2
+scrollEnabled  EQU     $04A3
+wrapEnabled    EQU     $04A4
 savedRow       EQU     $04A5
 savedCol       EQU     $04A6
 saved04A4      EQU     $04A7
@@ -82,7 +105,9 @@ savedGL        EQU     $04AA
 savedGR        EQU     $04AB
 savedG0        EQU     $04AC
 savedG1        EQU     $04AD
+statusDirty    EQU     $04AE
 inStatusLine   EQU     $04AF
+flashMode      EQU     $04B0
 attr0          EQU     $04B1
 attr1          EQU     $04B2
 attr2          EQU     $04B3
@@ -92,31 +117,109 @@ attrSpanBit    EQU     $04B6
 attrByteIndex  EQU     $04B7
 attrMask       EQU     $04B8
 attrValue      EQU     $04B9
+dc3Count       EQU     $04BE
+seqParam0      EQU     $04BF
+seqParam1      EQU     $04C0
+unpackA        EQU     $04C1
+unpackB        EQU     $04C2
+unpackC        EQU     $04C3
+unpackD        EQU     $04C4
+unpackE        EQU     $04C5
+unpackIn       EQU     $04C6
+blinkOff       EQU     $04C8
+blinkSave      EQU     $04C9
+blinkTimer     EQU     $04CB
+modemCmd       EQU     $04CD
+modemReply     EQU     $04CE
+modemByte      EQU     $04CF
 txRingHead     EQU     $04D0
 txRingTail     EQU     $04D1
+modemShift     EQU     $04D2
+spare04D3      EQU     $04D3
+modemMatch     EQU     $04D4
+modemLast      EQU     $04D5
+modemCount     EQU     $04D6
+modemRetry     EQU     $04D7
+modemToggle    EQU     $04D8
+connected      EQU     $04D9
+hostFeedMode   EQU     $04DA
+escPending     EQU     $04DB
 pendingByte    EQU     $04DC
+abortFlag      EQU     $04DD
+promptCol      EQU     $04DE
+captureMode    EQU     $04DF
+modeHex        EQU     $04E0
+hexHigh        EQU     $04E1
+statusMsg      EQU     $04E2
+timerA         EQU     $04E3
+timerB         EQU     $04E5
+timerC         EQU     $04E7
 txCurBit       EQU     $04EA
 txShift        EQU     $04EB
 txBitsLeft     EQU     $04EC
+modemBreak     EQU     $04ED
 txRing         EQU     $04EE
+modemBits      EQU     $05EF
+rxBufRd        EQU     $05F0
+rxBufWr        EQU     $05F2
+rxBufMark      EQU     $05F4
+spare0616      EQU     $0616
 asciiCol       EQU     $0617
 asciiRow       EQU     $0618
+asciiRows      EQU     $0619
+asciiDst       EQU     $061A
+asciiSrc       EQU     $061C
+asciiTmp       EQU     $061E
+asciiTmpHi     EQU     $061F
+asciiPort3     EQU     $0620
+asciiCellPtr   EQU     $0621
+asciiCellSave  EQU     $0623
+germanFont     EQU     $0627
 renderRow      EQU     $07B0
 renderCol      EQU     $07B1
 glyphPtr       EQU     $07B2
+glyphPtr2      EQU     $07B4
 videoPtr       EQU     $07B6
 blitRows       EQU     $07B8
+blitLines      EQU     $07B9
+invMaskHi      EQU     $07BA
+invMaskLo      EQU     $07BB
+fgColour       EQU     $07BC
+bgColour       EQU     $07BD
 glyphBuf       EQU     $07BE
+colourBits     EQU     $07D6
+glyphPtrSave   EQU     $07D8
+glyphFlags     EQU     $07DA
+glyphPass      EQU     $07DC
+redrawT        EQU     $07DD
+redrawW        EQU     $07DE
+redrawKind     EQU     $07DF
 glyphCode      EQU     $07E0
+accentCode     EQU     $07E1
 drcsCell       EQU     $07E2
+tallCell       EQU     $07E3
+drcsStore      EQU     $0800
 cursorRowMax   EQU     $1B00
 glyphRows      EQU     $1B01
+rowFlags       EQU     $1B02
 scrollTop      EQU     $1B1C
 scrollBottom   EQU     $1B1D
 cursorRow      EQU     $1B1E
 cursorCol      EQU     $1B1F
+cursorVisible  EQU     $1B20
 rowChar        EQU     $1B21
 redrawReq      EQU     $1B23
+modeR          EQU     $1B24
+modeT          EQU     $1B25
+modeW          EQU     $1B26
+modePrestel    EQU     $1B27
+modeAscii      EQU     $1B28
+modeAntiope    EQU     $1B29
+videoReg0      EQU     $1B2A
+videoReg1      EQU     $1B2B
+videoReg2      EQU     $1B2C
+videoReg3      EQU     $1B2D
+rxBuffer       EQU     $2000
 planeRender    EQU     $4000
 planeAttr      EQU     $4400
 planeChar      EQU     $5400
@@ -128,6 +231,7 @@ c64XferEn      EQU     $600B
 c64Status      EQU     $600C
 c64XferDone    EQU     $6010
 c64Fifo        EQU     $6080
+c64StatusMsg   EQU     $6090
 
         ORG     $8000
 
@@ -747,12 +851,12 @@ redrawScreen:
         LDAA    redrawReq
 
 LA213:
-        STAA    $07DF
+        STAA    redrawKind
         CLR     redrawReq
-        LDAA    $1B25
-        STAA    $07DD
-        LDAA    $1B26
-        STAA    $07DE
+        LDAA    modeT
+        STAA    redrawT
+        LDAA    modeW
+        STAA    redrawW
         LDAA    #$0A
         STAA    glyphRows
         LDAA    #$FF
@@ -765,7 +869,7 @@ LA213:
         CLR     $00EE
 
 LA23E:
-        TST     $1B20
+        TST     cursorVisible
         BEQ     LA250
         LDX     rowChar
         LDAB    cursorCol
@@ -775,8 +879,8 @@ LA23E:
         STAA    $00,X
 
 LA250:
-        LDAA    $07DD
-        ORAA    $07DE
+        LDAA    redrawT
+        ORAA    redrawW
         BEQ     LA26F
         LDAA    #$17
         STAA    >PORT3
@@ -793,12 +897,12 @@ LA264:
 
 LA26F:
         LDAA    cursorRowMax
-        STAA    $07B9
+        STAA    blitLines
         LDAA    #$17
         STAA    >PORT3
         SEI
         STS     >$00EC
-        LDS     #$1B02
+        LDS     #rowFlags
         LDX     #videoRam
 
 LA284:
@@ -813,11 +917,11 @@ LA28F:
         ABX
         DEC     blitRows
         BNE     LA28F
-        DEC     $07B9
+        DEC     blitLines
         BNE     LA284
         LDS     >$00EC
         CLI
-        LDAA    $1B02
+        LDAA    rowFlags
         ANDA    #$7F
 
 LA2A5:
@@ -839,7 +943,7 @@ LA2B8:
         BNE     LA2B8
         TSTA
         BNE     LA2AD
-        LDAA    $1B20
+        LDAA    cursorVisible
         EORA    #$FF
         ORAA    cursorCol
         STAA    $6081
@@ -889,7 +993,7 @@ LA2E4:
         STD     >$00E4
         LDD     #planeAccent
         STD     >$00E8
-        TST     $1B28
+        TST     modeAscii
         BEQ     LA312
         JMP     LA797
 
@@ -901,7 +1005,7 @@ LA312:
         STAA    >$00E0
         TSTB
         BMI     LA32A
-        TST     $07DF
+        TST     redrawKind
         BNE     LA32A
         JMP     LA71D
 
@@ -924,7 +1028,7 @@ LA32A:
         JMP     LA71D
 
 LA351:
-        TST     $07DD
+        TST     redrawT
         BEQ     LA377
         LDAA    >$00E0
         BITA    #$10
@@ -1021,12 +1125,12 @@ LA3FF:
         STAB    >$00E1
 
 LA402:
-        TST     $07DE
+        TST     redrawW
         BEQ     LA413
         LDAA    #$07
-        STAA    $07BC
+        STAA    fgColour
         LDAA    #$00
-        STAA    $07BD
+        STAA    bgColour
         BRA     LA427
 
 LA413:
@@ -1038,26 +1142,26 @@ LA413:
         LSRB
         LSRB
         LSRB
-        STAB    $07BC
+        STAB    fgColour
         ANDA    #$1F
-        STAA    $07BD
+        STAA    bgColour
 
 LA427:
         LDAA    >$00E0
         ANDA    #$04
         BEQ     LA446
-        LDAA    $07BD
+        LDAA    bgColour
         CMPA    #$08
         BNE     LA43A
         LDAA    #$00
-        STAA    $07BD
+        STAA    bgColour
 
 LA43A:
-        LDAA    $07BC
+        LDAA    fgColour
         CMPA    #$08
         BNE     LA446
         LDAA    #$00
-        STAA    $07BC
+        STAA    fgColour
 
 LA446:
         LDAA    >$00E1
@@ -1067,16 +1171,16 @@ LA446:
         LDAA    >$00E3
         ANDA    #$04
         BEQ     LA46A
-        LDAA    $07BC
-        LDAB    $07BD
-        STAB    $07BC
-        STAA    $07BD
+        LDAA    fgColour
+        LDAB    bgColour
+        STAB    fgColour
+        STAA    bgColour
         LDAA    >$00E3
         EORA    #$20
         STAA    >$00E3
 
 LA46A:
-        TST     $1B24
+        TST     modeR
         BEQ     LA479
         LDAA    >$00E3
         ORAA    #$08
@@ -1087,8 +1191,8 @@ LA479:
         LDAA    >$00E3
         ANDA    #$08
         BNE     LA486
-        LDAA    $07BD
-        STAA    $07BC
+        LDAA    bgColour
+        STAA    fgColour
 
 LA486:
         TST     $00E3
@@ -1096,13 +1200,13 @@ LA486:
         LDAA    >$00E1
         BITA    #$40
         BEQ     LA49A
-        LDAA    $07BC
+        LDAA    fgColour
         EORA    #$08
-        STAA    $07BC
+        STAA    fgColour
 
 LA49A:
-        LDAB    $07BC
-        LDAA    $07BD
+        LDAB    fgColour
+        LDAA    bgColour
         ASLB
         ASLB
         LSRD
@@ -1157,7 +1261,7 @@ LA4E2:
 LA4F9:
         LDX     >$00E8
         LDAA    $00,X
-        STAA    $07E1
+        STAA    accentCode
         LDAB    >$00E0
         ANDB    #$03
         BEQ     LA550
@@ -1220,7 +1324,7 @@ LA55B:
         BNE     LA55B
         TSTA
         BNE     LA550
-        LDAA    $1B20
+        LDAA    cursorVisible
         EORA    #$FF
         ORAA    cursorCol
         STAA    $6081
@@ -1228,7 +1332,7 @@ LA55B:
         STAA    $6082
         LDAA    glyphCode
         STAA    $6083
-        LDAA    $07E1
+        LDAA    accentCode
         STAA    $6084
         LDAA    >$00E0
         STAA    $6085
@@ -1305,7 +1409,7 @@ LA5D6:
         BNE     LA5F3
         LDX     #$AF8E
         STX     glyphPtr
-        CLR     $07DC
+        CLR     glyphPass
         LDAB    >$00E1
         ANDB    #$FC
         STAB    >$00E1
@@ -1331,7 +1435,7 @@ LA5F3:
         JMP     LA69B
 
 LA618:
-        CLR     $07DC
+        CLR     glyphPass
         LDAB    #$FF
 
 LA61D:
@@ -1348,25 +1452,25 @@ LA61D:
         LDX     $00,X
         DEX
         STX     glyphPtr
-        DEC     $07DC
+        DEC     glyphPass
 
 LA639:
         LDX     $AEF2
         DEX
-        STX     $07B4
-        LDAB    $07E1
+        STX     glyphPtr2
+        LDAB    accentCode
         ANDB    #$7F
         SUBB    #$20
         LDAA    #$14
         MUL
-        ADDD    $07B4
-        STD     $07B4
+        ADDD    glyphPtr2
+        STD     glyphPtr2
         SEI
         STS     >$00EC
         LDS     glyphPtr                ; the glyph is read with PUL, so S becomes the source pointer and the real stack is parked in $00EC
         LDX     #glyphBuf
         LDAB    #$0A
-        TST     $07DC
+        TST     glyphPass
         BMI     LA66E
 
 LA661:
@@ -1391,7 +1495,7 @@ LA66E:
         BNE     LA66E
 
 LA679:
-        LDS     $07B4
+        LDS     glyphPtr2
         LDX     #glyphBuf
         LDAB    #$0A
 
@@ -1491,7 +1595,7 @@ LA718:
         BRA     LA71D
 
 LA71D:
-        TST     $1B20
+        TST     cursorVisible
         BEQ     LA75F
         LDAA    renderCol
         CMPA    cursorCol
@@ -1601,7 +1705,7 @@ drcsGlyphPtr:
         LDD     glyphPtr
         ADDD    #$0002
         STD     glyphPtr
-        STD     $07D6
+        STD     colourBits
         LDX     glyphPtr
         LDAA    $00,X
         ANDA    #$20
@@ -1612,10 +1716,10 @@ drcsGlyphPtr:
 
 LA81C:
         LDX     glyphPtr
-        STX     $07D8
+        STX     glyphPtrSave
         LDAA    $02,X
         ANDA    #$30
-        STAA    $07DA
+        STAA    glyphFlags
         CMPA    #$00
         BNE     LA830
         JMP     LA900
@@ -1626,8 +1730,8 @@ LA830:
         JMP     LA900
 
 LA837:
-        CLR     $07BA
-        CLR     $07BB
+        CLR     invMaskHi
+        CLR     invMaskLo
         LDAA    >$00E3
         BPL     LA845
         JMP     LA8C5
@@ -1646,7 +1750,7 @@ LA850:
         LDAA    #$30
 
 LA859:
-        STAA    $07BB
+        STAA    invMaskLo
         LDAA    >$00E1
         LSRA
         ANDA    #$40
@@ -1660,48 +1764,48 @@ LA86D:
         EORA    #$40
 
 LA86F:
-        ORAA    $07BB
-        STAA    $07BB
+        ORAA    invMaskLo
+        STAA    invMaskLo
         ANDA    #$30
         CMPA    #$30
         BNE     LA8C5
-        LDAA    $07DA
+        LDAA    glyphFlags
         ANDA    #$10
         BEQ     LA894
-        LDAA    $07BA
+        LDAA    invMaskHi
         ORAA    #$C0
-        STAA    $07BA
-        LDAA    $07BB
+        STAA    invMaskHi
+        LDAA    invMaskLo
         ORAA    #$0F
-        STAA    $07BB
+        STAA    invMaskLo
         BRA     LA8C5
 
 LA894:
-        TST     $1B2A
+        TST     videoReg0
         BPL     LA8C5
-        LDAA    $1B2D
+        LDAA    videoReg3
         ANDA    #$1F
         EORA    #$08
         STAA    P3CSR
-        LDAA    $1B2C
+        LDAA    videoReg2
         ANDA    #$1F
         EORA    #$08
         STAA    P3CSR
-        LDAA    $1B2B
+        LDAA    videoReg1
         ANDA    #$1F
         EORA    #$08
         STAA    P3CSR
-        LDAA    $1B2A
+        LDAA    videoReg0
         ANDA    #$1F
         EORA    #$08
         STAA    P3CSR
-        LDAA    $1B2A
+        LDAA    videoReg0
         ANDA    #$7F
-        STAA    $1B2A
+        STAA    videoReg0
 
 LA8C5:
         LDAA    >$00E3
-        TST     $1B24
+        TST     modeR
         BEQ     LA8CF
         ORAA    #$08
 
@@ -1715,19 +1819,19 @@ LA8CF:
 LA8DA:
         CMPA    #$0C
         BNE     LA8F3
-        LDAA    $07BC
-        STAA    $07BD
+        LDAA    fgColour
+        STAA    bgColour
 
 LA8E4:
-        LDAA    $07BD
-        STAA    $07BC
+        LDAA    bgColour
+        STAA    fgColour
         LDX     fontBaseTable
         DEX
         STX     glyphPtr
         BRA     LA900
 
 LA8F3:
-        LDAA    $07DA
+        LDAA    glyphFlags
         CMPA    #$10
         BNE     LA8FD
         JMP     LA903
@@ -1773,7 +1877,7 @@ LA93B:
         PULA
         PULB
         ANDB    #$0F
-        ORAB    $07BA
+        ORAB    invMaskHi
         STD     $02,X
         STD     $06,X
         LDAB    #$08
@@ -1799,8 +1903,8 @@ LA96B:
         PULA
         PULB
         ANDB    #$0F
-        EORA    $07BA
-        EORB    $07BB
+        EORA    invMaskHi
+        EORB    invMaskLo
         STD     $02,X
         LDAB    #$04
         ABX
@@ -1821,11 +1925,11 @@ LA98A:
         MUL
         ADDD    #videoRam
         STD     videoPtr
-        CLR     $07E3
+        CLR     tallCell
         LDAB    >$00E0
         ANDB    #$01
         BEQ     LA9AE
-        DEC     $07E3
+        DEC     tallCell
 
 LA9AE:
         SEI
@@ -1835,7 +1939,7 @@ LA9AE:
         STAB    blitRows
 
 LA9BB:
-        LDAA    $07DA
+        LDAA    glyphFlags
         ANDA    #$10
         BEQ     LA9C5
         JMP     LAA4E
@@ -1844,7 +1948,7 @@ LA9C5:
         PULA
         PULB
         ASLA
-        STAA    $07D6
+        STAA    colourBits
         ROLB
         ASLA
         ROLB
@@ -1856,12 +1960,12 @@ LA9C5:
         LDX     videoPtr
         ORAB    #$20
         STD     $00,X
-        TST     $07E3
+        TST     tallCell
         BEQ     LA9E5
         STD     $04,X
 
 LA9E5:
-        LDAB    $07D6
+        LDAB    colourBits
         ANDB    #$7E
         LDX     #$AEFB
         ABX
@@ -1870,7 +1974,7 @@ LA9E5:
         ORAB    #$20
         INC     PORT3
         STD     $00,X
-        TST     $07E3
+        TST     tallCell
         BEQ     LAA01
         STD     $04,X
 
@@ -1879,7 +1983,7 @@ LAA01:
         PULA
         PULB
         ASLA
-        STAA    $07D6
+        STAA    colourBits
         ROLB
         ASLA
         ROLB
@@ -1889,25 +1993,25 @@ LAA01:
         ABX
         LDD     $00,X
         LDX     videoPtr
-        EORA    $07BA
-        EORB    $07BB
+        EORA    invMaskHi
+        EORB    invMaskLo
         STD     $02,X
-        TST     $07E3
+        TST     tallCell
         BEQ     LAA28
         STD     $06,X
 
 LAA28:
-        LDAB    $07D6
+        LDAB    colourBits
         ANDB    #$7E
         LDX     #$AEFB
         ABX
         LDD     $00,X
         LDX     videoPtr
         INC     PORT3
-        EORA    $07BA
-        EORB    $07BB
+        EORA    invMaskHi
+        EORB    invMaskLo
         STD     $02,X
-        TST     $07E3
+        TST     tallCell
         BEQ     LAA48
         STD     $06,X
 
@@ -1921,13 +2025,13 @@ LAA4E:
         TBA
         ANDA    #$07
         ASLA
-        STAA    $07D6
+        STAA    colourBits
         PULA
         LSRA
         RORB
         LSRB
         ANDB    #$70
-        ORAB    $07D6
+        ORAB    colourBits
         LDX     #$AEFB
         ABX
         LDD     $00,X
@@ -1935,7 +2039,7 @@ LAA4E:
         LDX     videoPtr
         INC     PORT3
         STD     $00,X
-        TST     $07E3
+        TST     tallCell
         BEQ     LAA79
         STD     $04,X
 
@@ -1944,21 +2048,21 @@ LAA79:
         TBA
         ANDA    #$07
         ASLA
-        STAA    $07D6
+        STAA    colourBits
         PULA
         LSRA
         RORB
         LSRB
         ANDB    #$70
-        ORAB    $07D6
+        ORAB    colourBits
         LDX     #$AEFB
         ABX
         LDD     $00,X
-        EORA    $07BA
-        EORB    $07BB
+        EORA    invMaskHi
+        EORB    invMaskLo
         LDX     videoPtr
         STD     $02,X
-        TST     $07E3
+        TST     tallCell
         BEQ     LAAA2
         STD     $06,X
 
@@ -1981,7 +2085,7 @@ LAAA2:
         DEC     PORT3
         ORAB    #$30
         STD     $00,X
-        TST     $07E3
+        TST     tallCell
         BEQ     LAAC7
         STD     $04,X
 
@@ -2000,17 +2104,17 @@ LAAC7:
         ABX
         LDD     $00,X
         LDX     videoPtr
-        EORA    $07BA
-        EORB    $07BB
+        EORA    invMaskHi
+        EORB    invMaskLo
         STD     $02,X
-        TST     $07E3
+        TST     tallCell
         BEQ     LAAEA
         STD     $06,X
 
 LAAEA:
         LDAB    #$04
         ABX
-        TST     $07E3
+        TST     tallCell
         BEQ     LAAF3
         ABX
 
@@ -2718,7 +2822,7 @@ reset:
         JSR     LEEB1
         JSR     LEE9A
         JSR     LD849
-        JSR     LD3E5
+        JSR     drcsClearStore
         JSR     setRowPointers
         JSR     LECCB
         JSR     LB2A3
@@ -2735,9 +2839,9 @@ LB280:
         LDD     #sciRxHandler
         STD     >softVecSci
         CLI
-        CLR     $1B28
-        CLR     $1B27
-        CLR     $1B29
+        CLR     modeAscii
+        CLR     modePrestel
+        CLR     modeAntiope
         JSR     LEE9A
         JSR     LEED2
         CLR     pendingByte
@@ -3053,25 +3157,25 @@ LD3D8:
         PULA
         JMP     $00,X
 
-LD3E5:
-        LDD     #$0800
-        STD     $0402
+drcsClearStore:
+        LDD     #drcsStore
+        STD     drcsStorePtr
         LDAA    #$60
-        STAA    $0489
+        STAA    drcsClearCount
 
 LD3F0:
         LDAB    #$17
 
 LD3F2:
-        LDX     $0402
+        LDX     drcsStorePtr
         ABX
         CLR     $00,X
         DECB
         BPL     LD3F2
         LDD     #$0030
-        ADDD    $0402
-        STD     $0402
-        DEC     $0489
+        ADDD    drcsStorePtr
+        STD     drcsStorePtr
+        DEC     drcsClearCount
         BNE     LD3F0
         RTS
 
@@ -3146,7 +3250,7 @@ parseFormatParams:
         BHI     LD47E
         CMPA    #$28
         BNE     LD472
-        JSR     LD3E5
+        JSR     drcsClearStore
         JMP     LD475
 
 LD472:
@@ -3159,7 +3263,7 @@ LD475:
 
 LD47E:
         ANDA    #$0F
-        STAA    $0488
+        STAA    fmtKeyLo
         JSR     LE98C
         ANDA    #$07
         STAA    drcsFormat
@@ -3167,7 +3271,7 @@ LD47E:
         ASLA
         ASLA
         ASLA
-        ORAA    $0488
+        ORAA    fmtKeyLo
 
 fmtLookup:
         LDAB    #$11
@@ -3192,7 +3296,7 @@ LD49F:
         LDX     #fmtVals041F
         ABX
         LDAA    $00,X
-        STAA    $041F
+        STAA    drcsCharSpan
         JMP     LD34C
 
 LD4BD:
@@ -3241,7 +3345,7 @@ drcsDefineChar:
         LDAA    #$00
 
 LD4CB:
-        LDX     #$041F
+        LDX     #drcsCharSpan
         ABX
         STAA    $00,X
         DECB
@@ -3502,11 +3606,11 @@ LD6A4:
         CMPA    #$2E
         BEQ     LD697
         ANDA    #$0F
-        STAA    $0488
+        STAA    drcsRepeat
 
 LD6AD:
         JSR     LD6B8
-        DEC     $0488
+        DEC     drcsRepeat
         BNE     LD6AD
         JMP     LD501
 
@@ -3555,10 +3659,10 @@ LD6E8:
 LD6FA:
         LDAB    #$30
         MUL
-        ADDD    #$0800
-        STD     $0402
+        ADDD    #drcsStore
+        STD     drcsStorePtr
         LDAA    drcsChar
-        ADDA    $041F
+        ADDA    drcsCharSpan
         CMPA    #$7F
         BCS     LD70F
         LDAA    #$7F
@@ -3572,18 +3676,18 @@ LD70F:
         BEQ     LD75B
         JMP     LD78C
 
-LD720:
+drcsWriteRow:
         PSHB
         PSHA
         PSHX
         LDAA    drcsRowHi
-        LDX     $0402
+        LDX     drcsStorePtr
         STAA    $00,X
         LDAA    drcsRowLo
         STAA    $01,X
-        LDD     $0402
+        LDD     drcsStorePtr
         ADDD    #$0002
-        STD     $0402
+        STD     drcsStorePtr
         PULX
         PULA
         PULB
@@ -3601,7 +3705,7 @@ LD73F:
         ANDA    #$0F
         ORAA    #$00
         STAA    drcsRowLo
-        JSR     LD720
+        JSR     drcsWriteRow
         INCB
         INCB
         CMPB    #$18
@@ -3620,7 +3724,7 @@ LD75D:
         ANDA    #$0F
         ORAA    #$20
         STAA    drcsRowLo
-        JSR     LD720
+        JSR     drcsWriteRow
         LDX     #drcsPlane1
         ABX
         LDAA    $01,X
@@ -3628,7 +3732,7 @@ LD75D:
         LDAA    $00,X
         ANDA    #$0F
         STAA    drcsRowLo
-        JSR     LD720
+        JSR     drcsWriteRow
         INCB
         INCB
         CMPB    #$18
@@ -3653,14 +3757,14 @@ LD78D:
         RORA
         ANDA    #$C0
         STAA    $01,X
-        STAA    $0489
+        STAA    drcsBitPair
         LDX     #drcsPlane0
         ABX
         LDAA    $01,X
         ANDA    #$3F
-        ORAA    $0489
+        ORAA    drcsBitPair
         STAA    drcsRowHi
-        JSR     LD720
+        JSR     drcsWriteRow
         LDX     #drcsPlane3
         ABX
         LDAA    $01,X
@@ -3674,14 +3778,14 @@ LD78D:
         RORA
         ANDA    #$C0
         STAA    $01,X
-        STAA    $0489
+        STAA    drcsBitPair
         LDX     #drcsPlane2
         ABX
         LDAA    $01,X
         ANDA    #$3F
-        ORAA    $0489
+        ORAA    drcsBitPair
         STAA    drcsRowHi
-        JSR     LD720
+        JSR     drcsWriteRow
         INCB
         INCB
         CMPB    #$18
@@ -3732,13 +3836,13 @@ LD843:
 
 LD849:
         CLRA
-        STAA    $1B2A
+        STAA    videoReg0
         INCA
-        STAA    $1B2B
+        STAA    videoReg1
         INCA
-        STAA    $1B2C
+        STAA    videoReg2
         INCA
-        STAA    $1B2D
+        STAA    videoReg3
         JSR     LDA1C
         LDAB    #$1F
 
@@ -3754,8 +3858,8 @@ LD85E:
         JMP     LD9FE
 
 LD870:
-        CLR     $04BF
-        CLR     $04C0
+        CLR     seqParam0
+        CLR     seqParam1
         JSR     LF081
         CMPA    #$30
         BCS     LD880
@@ -3772,7 +3876,7 @@ LD887:
 
 LD88C:
         ANDA    #$0F
-        STAA    $04BF
+        STAA    seqParam0
         JSR     LF081
         CMPA    #$1F
         BNE     LD89B
@@ -3784,7 +3888,7 @@ LD89B:
 
 LD8A0:
         ANDA    #$0F
-        STAA    $04C0
+        STAA    seqParam1
         JMP     LD34C
 
 LD8A8:
@@ -3819,7 +3923,7 @@ LD8DB:
         JMP     LD349
 
 LD8E0:
-        LDAB    $04BF
+        LDAB    seqParam0
         ANDB    #$0F
         CMPB    #$02
         BNE     LD8EC
@@ -3839,11 +3943,11 @@ LD8F6:
 LD8FD:
         SUBB    #$10
         STAB    drcsRowHi
-        CLR     $04C1
-        CLR     $04C2
-        CLR     $04C3
-        CLR     $04C4
-        CLR     $04C5
+        CLR     unpackA
+        CLR     unpackB
+        CLR     unpackC
+        CLR     unpackD
+        CLR     unpackE
         JMP     LD917
 
 LD914:
@@ -3865,7 +3969,7 @@ LD925:
         JMP     LD349
 
 LD92C:
-        STAA    $04C6
+        STAA    unpackIn
         JSR     LF081
         CMPA    #$1F
         BNE     LD939
@@ -3883,61 +3987,61 @@ LD940:
 
 LD947:
         LSRA
-        ROR     $04C1
+        ROR     unpackA
         LSRA
-        ROR     $04C2
+        ROR     unpackB
         LSRA
-        ROR     $04C3
+        ROR     unpackC
         LSRA
-        ROR     $04C1
+        ROR     unpackA
         LSRA
-        ROR     $04C2
+        ROR     unpackB
         LSRA
-        ROR     $04C3
-        LDAA    $04C6
+        ROR     unpackC
+        LDAA    unpackIn
         LSRA
-        ROR     $04C1
+        ROR     unpackA
         LSRA
-        ROR     $04C2
+        ROR     unpackB
         LSRA
-        ROR     $04C3
+        ROR     unpackC
         LSRA
-        ROR     $04C1
+        ROR     unpackA
         LSRA
-        ROR     $04C2
+        ROR     unpackB
         LSRA
-        ROR     $04C3
+        ROR     unpackC
         LDAA    #$00
-        STAA    $04C5
+        STAA    unpackE
         LDAA    #$04
 
 LD981:
-        ASL     $04C1
-        ROL     $04C5
+        ASL     unpackA
+        ROL     unpackE
         DECA
         BNE     LD981
         LDAA    #$04
 
 LD98C:
-        ASL     $04C2
-        ROL     $04C4
+        ASL     unpackB
+        ROL     unpackD
         DECA
         BNE     LD98C
         LDAA    #$04
 
 LD997:
-        ASL     $04C3
-        ROL     $04C4
+        ASL     unpackC
+        ROL     unpackD
         DECA
         BNE     LD997
         LDAA    drcsRowHi
         ASLA
         TAB
-        LDAA    $04C4
+        LDAA    unpackD
         LDX     #$05F6
         ABX
         STAA    $01,X
-        LDAA    $04C5
+        LDAA    unpackE
         STAA    $00,X
         JSR     LD9FE
         INC     drcsRowHi
@@ -3970,7 +4074,7 @@ LD9D7:
 LD9DE:
         ANDA    #$1F
         LDAB    drcsRowHi
-        LDX     #$1B2A
+        LDX     #videoReg0
         ABX
         STAA    $00,X
         INC     drcsRowHi
@@ -4012,20 +4116,20 @@ LDA13:
 
 LDA1C:
         PSHA
-        LDAA    $1B2D
+        LDAA    videoReg3
         ANDA    #$1F
         STAA    P3CSR
-        LDAA    $1B2C
+        LDAA    videoReg2
         ANDA    #$1F
         STAA    P3CSR
-        LDAA    $1B2B
+        LDAA    videoReg1
         ANDA    #$1F
         STAA    P3CSR
-        LDAA    $1B2A
+        LDAA    videoReg0
         ANDA    #$1F
         STAA    P3CSR
         ORAA    #$80
-        STAA    $1B2A
+        STAA    videoReg0
         PULA
         RTS
 
@@ -4049,7 +4153,7 @@ ctlAPD:
 
 LDA5D:
         JSR     LEE3A
-        TST     $04A3
+        TST     scrollEnabled
         BPL     LDA73
         LDAA    cursorRow
         CMPA    scrollBottom
@@ -4070,7 +4174,7 @@ ctlAPU:
 
 LDA87:
         JSR     LEE3A
-        TST     $04A3
+        TST     scrollEnabled
         BPL     LDA9D
         LDAA    cursorRow
         CMPA    scrollTop
@@ -4093,17 +4197,17 @@ LDAB1:
         LDAA    #$FF
         STAA    scrollTop
         STAA    scrollBottom
-        STAA    $04A3
+        STAA    scrollEnabled
         JSR     clearPlanes
         LDAA    #$18
         STAA    cursorRow
         CLR     cursorCol
         JSR     setRowPointers
-        LDAA    $1B25
+        LDAA    modeT
         STAA    redrawReq
         CLR     clutIndex
-        CLR     $1B24
-        CLR     $1B25
+        CLR     modeR
+        CLR     modeT
         JMP     ctlAPH
 
 ctlAPR:
@@ -4141,7 +4245,7 @@ ctlCON:
 
 LDB16:
         LDAA    #$FF
-        STAA    $1B20
+        STAA    cursorVisible
         LDX     rowChar
         LDAB    cursorCol
         ABX
@@ -4159,13 +4263,13 @@ LDB33:
         JSR     LE98C
         ANDA    #$3F
         STAA    repeatCount
-        LDAA    $04A0
-        STAA    $04A1
+        LDAA    savedSS
+        STAA    repeatSS
 
 LDB41:
         LDAA    repeatCount
         BEQ     LDB58
-        LDAA    $04A1
+        LDAA    repeatSS
         STAA    gsetSS
         LDAA    charCode
         JSR     LE781
@@ -4181,7 +4285,7 @@ ctlCOF:
         JMP     parseNextByte
 
 LDB63:
-        CLR     $1B20
+        CLR     cursorVisible
 
 LDB66:
         JMP     parseNextByte
@@ -4197,15 +4301,15 @@ ctlCAN:
         LDX     rowAttr
         ABX
         LDAA    $00,X
-        STAA    $0417
+        STAA    canAttr0
         LDAA    $01,X
         ANDA    #$F7
-        STAA    $0418
+        STAA    canAttr1
         LDAA    $02,X
-        STAA    $0419
+        STAA    canAttr2
         LDAA    $03,X
         ANDA    #$BF
-        STAA    $041A
+        STAA    canAttr3
 
 LDB94:
         LDAA    #$A0
@@ -4220,13 +4324,13 @@ LDB94:
         ASLB
         LDX     rowAttr
         ABX
-        LDAA    $0417
+        LDAA    canAttr0
         STAA    $00,X
-        LDAA    $0418
+        LDAA    canAttr1
         STAA    $01,X
-        LDAA    $0419
+        LDAA    canAttr2
         STAA    $02,X
-        LDAA    $041A
+        LDAA    canAttr3
         STAA    $03,X
         INC     cursorCol
         LDAA    cursorCol
@@ -4308,7 +4412,7 @@ LDC3E:
         JMP     LD34C
 
 LDC45:
-        CLR     $1B20
+        CLR     cursorVisible
         JSR     LECB5
         JSR     LEE3A
         LDAA    colourIndex
@@ -4518,14 +4622,14 @@ c1aCDY:
         JMP     LDDFB
 
 c1aSPL:
-        LDX     #$0800                  ; C1 $99 SPL - stop lining (serial set)
+        LDX     #drcsStore              ; C1 $99 SPL - stop lining (serial set)
         LDAB    #$08
         LDAA    #$00
         JSR     setAttrSpan
         JMP     LDDFB
 
 c1aSTL:
-        LDX     #$0800                  ; C1 $9A STL - start lining (serial set)
+        LDX     #drcsStore              ; C1 $9A STL - start lining (serial set)
         LDAB    #$08
         LDAA    #$08
         JSR     setAttrSpan
@@ -4546,7 +4650,7 @@ c1aNBD:
         LDX     rowAttr
         ABX
         LDAA    $02,X
-        STAA    $048C
+        STAA    attrTemp
         RORA
         RORA
         RORA
@@ -4554,7 +4658,7 @@ c1aNBD:
         LDX     #$0203
         LDAB    #$03
         JSR     setAttrSpan
-        LDAA    $048C
+        LDAA    attrTemp
         RORA
         RORA
         RORA
@@ -4574,7 +4678,7 @@ LDDE0:
         LDAA    gsetGL
         BPL     LDDEB
         LDAA    charCode
-        STAA    $0498
+        STAA    heldMosaic
 
 LDDEB:
         JMP     LDDFB
@@ -4586,10 +4690,10 @@ c1aRMS:
 
 LDDF6:
         LDAA    #$09
-        STAA    $0498
+        STAA    heldMosaic
 
 LDDFB:
-        LDAA    $0498
+        LDAA    heldMosaic
         JMP     LD358
 
 c1bAlphaBlack:
@@ -4631,7 +4735,7 @@ c1bFSH:
         ORAA    #$10
         STAA    attr3
         LDAA    #$00
-        STAA    $04B0
+        STAA    flashMode
         LDAA    attr1
         ANDA    #$3F
         ORAA    #$80
@@ -4640,7 +4744,7 @@ c1bFSH:
 
 c1bSTD:
         LDAA    #$00                    ; C1 $89 STD - steady (parallel set)
-        STAA    $04B0
+        STAA    flashMode
         LDAA    attr1
         ANDA    #$3F
         ORAA    #$80
@@ -5010,7 +5114,7 @@ LE08A:
 
 LE08D:
         LDAA    #$FF
-        STAA    $04A3
+        STAA    scrollEnabled
         JMP     parseNextByte
 
 LE095:
@@ -5030,7 +5134,7 @@ LE0A1:
         LDAB    #$C0
         LDAA    #$80
         JSR     LE573
-        CLR     $04B0
+        CLR     flashMode
         JMP     LE4F4
 
 LE0BB:
@@ -5042,7 +5146,7 @@ LE0BB:
         LDAB    #$B0
         LDAA    #$10
         JSR     LE573
-        CLR     $04B0
+        CLR     flashMode
         JMP     LE4F4
 
 LE0D4:
@@ -5054,7 +5158,7 @@ LE0D4:
         LDAB    #$90
         LDAA    #$00
         JSR     LE573
-        CLR     $04B0
+        CLR     flashMode
         JMP     LE4F4
 
 LE0EE:
@@ -5066,7 +5170,7 @@ LE0EE:
         LDAB    #$90
         LDAA    #$00
         JSR     LE573
-        CLR     $04B0
+        CLR     flashMode
         JMP     LE4F4
 
 LE108:
@@ -5078,14 +5182,14 @@ LE108:
         LDAB    #$90
         LDAA    #$10
         JSR     LE573
-        CLR     $04B0
+        CLR     flashMode
         JMP     LE4F4
 
 LE122:
         TST     parallelMode
         BPL     LE143
         LDAA    #$01
-        STAA    $04B0
+        STAA    flashMode
         LDX     #$0001
         LDAB    #$80
         LDAA    #$00
@@ -5163,7 +5267,7 @@ LE1BB:
         TST     parallelMode
         BPL     LE1DC
         LDAA    #$FF
-        STAA    $04B0
+        STAA    flashMode
         LDX     #$0001
         LDAB    #$80
         LDAA    #$00
@@ -5674,7 +5778,7 @@ LE4D3:
         ORAA    #$80
 
 LE4E3:
-        STAA    $1B02
+        STAA    rowFlags
         LDX     #$1B03
 
 LE4E9:
@@ -5843,7 +5947,7 @@ LE5D7:
 
 LE5FA:
         LDAA    #$FF
-        STAA    $04A4
+        STAA    wrapEnabled
         STAA    redrawReq
         LDAA    #$17
         STAA    cursorRowMax
@@ -5867,7 +5971,7 @@ LE616:
 LE62A:
         CMPA    #$71
         BNE     LE634
-        CLR     $04A4
+        CLR     wrapEnabled
         JMP     parseNextByte
 
 LE634:
@@ -5910,7 +6014,7 @@ LE669:
         CLR     gsetG0
         CLR     gsetGL
         CLR     gsetGLDefault
-        CLR     $1B20
+        CLR     cursorVisible
         LDAB    #$01
         STAB    gsetG2
         INCB
@@ -5922,9 +6026,9 @@ LE669:
         STAA    cursorRowMax
         LDAA    #$FF
         STAA    redrawReq
-        STAA    $04A4
+        STAA    wrapEnabled
         LDAA    #$80
-        STAA    $1B02
+        STAA    rowFlags
         LDX     #$1B03
 
 LE69A:
@@ -5956,7 +6060,7 @@ enterStatusLine:
         STAA    savedCol
         LDAA    cursorRow
         STAA    savedRow
-        LDAA    $04A4
+        LDAA    wrapEnabled
         STAA    saved04A4
         LDAA    clutIndex
         STAA    savedClut
@@ -5971,7 +6075,7 @@ enterStatusLine:
         LDAA    gsetGR
         STAA    savedGR
         CLR     cursorCol
-        CLR     $04A4
+        CLR     wrapEnabled
         CLR     clutIndex
         CLR     parallelMode
         JSR     LE98C
@@ -6005,7 +6109,7 @@ leaveStatusLine:
         STAA    cursorRow
         JSR     setRowPointers
         LDAA    saved04A4
-        STAA    $04A4
+        STAA    wrapEnabled
         LDAA    savedClut
         STAA    clutIndex
         LDAA    savedParallel
@@ -6176,7 +6280,7 @@ LE87A:
         STAB    $00,X
 
 LE885:
-        LDAA    $04B0
+        LDAA    flashMode
         BEQ     LE8C7
         CMPA    #$01
         BEQ     LE8A9
@@ -6224,7 +6328,7 @@ LE8C7:
         STAA    $00,X
         CLR     accentPending
         LDAB    gsetSS
-        STAB    $04A0
+        STAB    savedSS
         BMI     LE8FA
         LDX     #gsetG0
         ABX
@@ -6723,7 +6827,7 @@ LEC16:
         JMP     LEC5A
 
 LEC22:
-        TST     $04A4
+        TST     wrapEnabled
         BPL     LEC38
         JSR     LEE3A
         LDAA    #$27
@@ -6737,7 +6841,7 @@ LEC38:
         JMP     LEC5A
 
 LEC3E:
-        TST     $04A4
+        TST     wrapEnabled
         BPL     LEC52
         JSR     LEE3A
         CLR     cursorCol
@@ -6758,7 +6862,7 @@ LEC5A:
         RTS
 
 LEC65:
-        TST     $04A4
+        TST     wrapEnabled
         BPL     LEC73
         LDAA    cursorRowMax
         STAA    cursorRow
@@ -6769,7 +6873,7 @@ LEC73:
         JMP     setRowPointers
 
 LEC79:
-        TST     $04A4
+        TST     wrapEnabled
         BPL     LEC84
         CLR     cursorRow
         JMP     setRowPointers
@@ -6783,7 +6887,7 @@ LEC8D:
         LDAA    cursorRow
         CMPA    scrollTop
         BNE     LEC9D
-        TST     $04A3
+        TST     scrollEnabled
         BPL     LEC9D
         JMP     LEB28
 
@@ -6795,7 +6899,7 @@ LECA1:
         LDAA    cursorRow
         CMPA    scrollBottom
         BNE     LECB1
-        TST     $04A3
+        TST     scrollEnabled
         BPL     LECB1
         JMP     LEA44
 
@@ -6804,7 +6908,7 @@ LECB1:
         RTS
 
 LECB5:
-        CLR     $04B0
+        CLR     flashMode
         CLR     attr0
         LDAA    #$80
         STAA    attr1
@@ -6815,44 +6919,44 @@ LECB5:
         RTS
 
 LECCB:
-        CLR     $04DA
-        CLR     $04DB
-        CLR     $1B26
+        CLR     hostFeedMode
+        CLR     escPending
+        CLR     modeW
         CLR     pendingByte
-        CLR     $04DD
-        CLR     $04DE
+        CLR     abortFlag
+        CLR     promptCol
         CLR     redrawReq
-        CLR     $1B25
-        CLR     $1B24
-        CLR     $0616
+        CLR     modeT
+        CLR     modeR
+        CLR     spare0616
         CLR     inStatusLine
         CLR     parallelMode
         LDAA    #$FF
-        STAA    $0493
+        STAA    revealMask
         LDAA    #$07
-        STAA    $0494
-        CLR     $04C8
+        STAA    defaultColour
+        CLR     blinkOff
         LDD     #$02EE
-        STD     $04CB
+        STD     blinkTimer
         LDAA    #$30
-        STAA    $04CD
-        LDD     #$2000
-        STD     $05F0
-        STD     $05F2
-        STD     $05F4
+        STAA    modemCmd
+        LDD     #rxBuffer
+        STD     rxBufRd
+        STD     rxBufWr
+        STD     rxBufMark
         CLR     txRingHead
         CLR     txRingTail
-        CLR     $04D8
+        CLR     modemToggle
         CLR     txBitsLeft
-        CLR     $04D6
-        CLR     $04ED
-        CLR     $04D2
-        CLR     $04D3
-        CLR     $04D7
+        CLR     modemCount
+        CLR     modemBreak
+        CLR     modemShift
+        CLR     spare04D3
+        CLR     modemRetry
         CLR     gsetG0
         CLR     gsetGL
         CLR     gsetGLDefault
-        CLR     $1B20
+        CLR     cursorVisible
         LDAB    #$01
         STAB    gsetG2
         INCB
@@ -6863,7 +6967,7 @@ LECCB:
         LDAA    #$17
         STAA    cursorRowMax
         LDAA    #$FF
-        STAA    $04A4
+        STAA    wrapEnabled
         CLR     accentPending
         CLR     cursorRow
         CLR     cursorCol
@@ -6873,35 +6977,35 @@ LECCB:
         STAA    scrollTop
         STAA    scrollBottom
         STAA    gsetSS
-        STAA    $04A3
+        STAA    scrollEnabled
         LDAA    #$09
-        STAA    $0498
-        CLR     $04DF
-        CLR     $1B27
-        CLR     $1B28
-        CLR     $0627
-        CLR     $1B29
-        CLR     $04E0
+        STAA    heldMosaic
+        CLR     captureMode
+        CLR     modePrestel
+        CLR     modeAscii
+        CLR     germanFont
+        CLR     modeAntiope
+        CLR     modeHex
         CLR     cursorRow
         CLR     cursorCol
         JSR     setRowPointers
-        CLR     $04D9
+        CLR     connected
         LDAA    #$64
-        STAA    $04E2
-        STAA    $6090
+        STAA    statusMsg
+        STAA    c64StatusMsg
         RTS
 
 LED9D:
         CLR     inStatusLine
         CLR     parallelMode
         LDAA    #$30
-        STAA    $04CD
-        CLR     $04D8
-        CLR     $04D6
-        CLR     $04ED
-        CLR     $04D2
-        CLR     $04D3
-        CLR     $04D7
+        STAA    modemCmd
+        CLR     modemToggle
+        CLR     modemCount
+        CLR     modemBreak
+        CLR     modemShift
+        CLR     spare04D3
+        CLR     modemRetry
         CLR     gsetG0
         CLR     gsetGL
         CLR     gsetGLDefault
@@ -6915,16 +7019,16 @@ LED9D:
         LDAA    #$17
         STAA    cursorRowMax
         LDAA    #$FF
-        STAA    $04A4
+        STAA    wrapEnabled
         CLR     accentPending
         CLR     clutIndex
         LDAA    #$FF
         STAA    scrollTop
         STAA    scrollBottom
         STAA    gsetSS
-        STAA    $04A3
+        STAA    scrollEnabled
         LDAA    #$09
-        STAA    $0498
+        STAA    heldMosaic
         RTS
 
 LEDF7:
@@ -6973,7 +7077,7 @@ LEE3A:
 
 LEE45:
         LDAA    #$09
-        STAA    $0498
+        STAA    heldMosaic
         RTS
 
 ; Clear all four display planes to their power-on state.
@@ -7049,7 +7153,7 @@ LEEA5:
         INX
         CPX     #$1B1B
         BNE     LEEA5
-        STAA    $1B02
+        STAA    rowFlags
         RTS
 
 LEEB1:
@@ -7076,9 +7180,9 @@ LEEBC:
         RTS
 
 LEED2:
-        LDAA    $1B27
-        ORAA    $1B29
-        ORAA    $1B28
+        LDAA    modePrestel
+        ORAA    modeAntiope
+        ORAA    modeAscii
         BNE     LEEFC
         LDX     #$5300
         LDAB    #$04
@@ -7087,10 +7191,10 @@ LEEE2:
         CLR     $00,X
         LDAA    #$C0
         STAA    $01,X
-        LDAA    $0494
+        LDAA    defaultColour
         STAA    $02,X
         LDAA    #$98
-        ANDA    $0493
+        ANDA    revealMask
         STAA    $03,X
         ABX
         CPX     #$53A0
@@ -7114,36 +7218,36 @@ LEF01:
         BCS     LEF01
 
 LEF15:
-        JSR     LEF1C
-        JSR     LEFCB
+        JSR     showModeName
+        JSR     showStatusMsg
         RTS
 
-LEF1C:
-        JSR     LF0F8
+showModeName:
+        JSR     cursorBlinkOn
         TPA
         PSHA
         SEI
-        STS     $048A
+        STS     savedSP
         LDS     #$EF66
-        TST     $04E0
+        TST     modeHex
         BEQ     LEF32
         LDS     #$EFB6
         BRA     LEF4E
 
 LEF32:
-        TST     $1B27
+        TST     modePrestel
         BEQ     LEF3C
         LDS     #$EF7A
         BRA     LEF4E
 
 LEF3C:
-        TST     $1B29
+        TST     modeAntiope
         BEQ     LEF46
         LDS     #$EFA2
         BRA     LEF4E
 
 LEF46:
-        TST     $1B28
+        TST     modeAscii
         BEQ     LEF4E
         LDS     #$EF8E
 
@@ -7157,11 +7261,11 @@ LEF51:
         INX
         CPX     #$57D4
         BCS     LEF51
-        LDS     $048A
+        LDS     savedSP
         PULA
         TAP
         LDAA    #$FF
-        STAA    $04AE
+        STAA    statusDirty
         RTS
 
 ; Terminal mode names, 20 columns each: "CEPT Bildschirmtext", "PRESTEL
@@ -7176,13 +7280,13 @@ strModeNames:
         FCC     "ANTIOPE             "
         FCC     "HEX-Tastatureingabe "
 
-LEFCB:
-        JSR     LF0F8
+showStatusMsg:
+        JSR     cursorBlinkOn
         TPA
         PSHA
         SEI
-        STS     $048A
-        LDAB    $04E2
+        STS     savedSP
+        LDAB    statusMsg
         LDX     #strStatusMsgs
         ABX
         TXS
@@ -7195,11 +7299,11 @@ LEFDF:
         INX
         CPX     #$57E8
         BCS     LEFDF
-        LDS     $048A
+        LDS     savedSP
         PULA
         TAP
         LDAA    #$FF
-        STAA    $04AE
+        STAA    statusDirty
         RTS
 
 ; Status messages, 20 columns each, and the version string.
@@ -7222,24 +7326,24 @@ strStatusMsgs:
 LF081:
         JSR     fetchHostByte
         JSR     execHostByte
-        JSR     LF7FE
+        JSR     rxBufGet
         CMPA    #$00
         BNE     LF0A9
-        CLR     $04AE
+        CLR     statusDirty
         JSR     redrawScreen
 
 LF094:
         JSR     fetchHostByte
         JSR     execHostByte
         LDAA    redrawReq
-        ORAA    $04AE
+        ORAA    statusDirty
         BNE     LF081
-        JSR     LF7FE
+        JSR     rxBufGet
         CMPA    #$00
         BEQ     LF094
 
 LF0A9:
-        TST     $04DF
+        TST     captureMode
         BEQ     LF0B1
         JSR     LF979
 
@@ -7257,14 +7361,14 @@ LF0B5:
 LF0C1:
         RTS
 
-LF0C2:
-        LDX     $04CB
+cursorBlinkOff:
+        LDX     blinkTimer
         BMI     LF0F7
         LDX     #$FFFF
-        STX     $04CB
+        STX     blinkTimer
         LDX     #$5300
         LDD     $02,X
-        STD     $04C9
+        STD     blinkSave
         LDD     #$0889
 
 LF0D8:
@@ -7285,18 +7389,18 @@ LF0E6:
         CPX     #$57E8
         BCS     LF0E6
         LDAA    #$FF
-        STAA    $04AE
+        STAA    statusDirty
 
 LF0F7:
         RTS
 
-LF0F8:
-        LDX     $04CB
+cursorBlinkOn:
+        LDX     blinkTimer
         BPL     LF128
         LDX     #$02EE
-        STX     $04CB
+        STX     blinkTimer
         LDX     #$5300
-        LDD     $04C9
+        LDD     blinkSave
 
 LF109:
         STD     $02,X
@@ -7316,7 +7420,7 @@ LF117:
         CPX     #$57E8
         BCS     LF117
         LDAA    #$FF
-        STAA    $04AE
+        STAA    statusDirty
 
 LF128:
         RTS
@@ -7436,20 +7540,20 @@ LF1B0:
 
 LF1B3:
         JSR     fetchHostByte
-        TST     $04D9
+        TST     connected
         BEQ     LF1D7
-        TST     $04C8
+        TST     blinkOff
         BNE     LF1D7
-        TST     $0493
+        TST     revealMask
         BPL     LF1D7
-        LDAA    $0494
+        LDAA    defaultColour
         CMPA    #$07
         BNE     LF1D7
-        LDX     $04CB
+        LDX     blinkTimer
         BEQ     LF1D7
         BMI     LF1D7
         DEX
-        STX     $04CB
+        STX     blinkTimer
 
 LF1D7:
         RTI
@@ -7488,7 +7592,7 @@ LF1E3:
         JMP     LF409
 
 LF1F0:
-        TST     $04E0
+        TST     modeHex
         BEQ     LF22A
         SUBA    #$30
         CMPA    #$09
@@ -7497,38 +7601,38 @@ LF1F0:
         SUBA    #$27
         CMPA    #$0F
         BLS     LF20C
-        CLR     $04E0
-        JSR     LEF1C
+        CLR     modeHex
+        JSR     showModeName
         JMP     LF409
 
 LF20C:
-        LDAB    $04E0
+        LDAB    modeHex
         CMPB    #$02
         BEQ     LF222
         ASLA
         ASLA
         ASLA
         ASLA
-        STAA    $04E1
+        STAA    hexHigh
         LDAA    #$02
-        STAA    $04E0
+        STAA    modeHex
         JMP     LF409
 
 LF222:
-        ORAA    $04E1
+        ORAA    hexHigh
         LDAB    #$01
-        STAB    $04E0
+        STAB    modeHex
 
 LF22A:
-        LDAB    $04DE
+        LDAB    promptCol
         BEQ     LF29F
         CMPB    #$28
         BLS     LF253
         LDAB    #$2C
-        SUBB    $04DE
+        SUBB    promptCol
         CMPB    #$03
         BNE     LF23F
-        ANDA    $0493
+        ANDA    revealMask
 
 LF23F:
         LDX     #$5300
@@ -7540,13 +7644,13 @@ LF245:
         ABX
         CPX     #$53A0
         BCS     LF245
-        DEC     $04DE
+        DEC     promptCol
         JMP     LF409
 
 LF253:
         CMPA    #$00
         BNE     LF25D
-        CLR     $04DE
+        CLR     promptCol
         JMP     LF409
 
 LF25D:
@@ -7554,46 +7658,46 @@ LF25D:
         BEQ     LF299
         CMPA    #$08
         BNE     LF287
-        LDAA    $04DE
+        LDAA    promptCol
         CMPA    #$28
         BCS     LF26F
         JMP     LF409
 
 LF26F:
-        INC     $04DE
+        INC     promptCol
         LDX     #$57C0
         LDAB    #$28
-        SUBB    $04DE
+        SUBB    promptCol
         ABX
         LDAA    #$A0
         STAA    $00,X
         LDAA    #$FF
-        STAA    $04AE
+        STAA    statusDirty
         JMP     LF409
 
 LF287:
         LDX     #$57C0
         LDAB    #$28
-        SUBB    $04DE
+        SUBB    promptCol
         ABX
         ORAA    #$80
         STAA    $00,X
         LDAA    #$FF
-        STAA    $04AE
+        STAA    statusDirty
 
 LF299:
-        DEC     $04DE
+        DEC     promptCol
         JMP     LF409
 
 LF29F:
         CMPA    #$10
         BNE     LF2AB
         LDAA    #$FF
-        STAA    $04DB
+        STAA    escPending
         JMP     LF409
 
 LF2AB:
-        TST     $04DB
+        TST     escPending
         BPL     LF2B3
         JMP     LF2ED
 
@@ -7603,17 +7707,17 @@ LF2B3:
         BEQ     LF2E4
         CMPA    #$13
         BNE     LF2C2
-        INC     $04BE
+        INC     dc3Count
         BRA     LF2D7
 
 LF2C2:
         CMPA    #$1C
         BEQ     LF2CB
-        CLR     $04BE
+        CLR     dc3Count
         BRA     LF2D7
 
 LF2CB:
-        LDAB    $04BE
+        LDAB    dc3Count
         CMPB    #$0C
         BNE     LF2D7
         PSHA
@@ -7621,9 +7725,9 @@ LF2CB:
         PULA
 
 LF2D7:
-        TST     $04D9
+        TST     connected
         BEQ     LF2E7
-        TST     $04DA
+        TST     hostFeedMode
         BNE     LF2E7
         JSR     LF7A4
 
@@ -7631,16 +7735,16 @@ LF2E4:
         JMP     LF409
 
 LF2E7:
-        JSR     LF7E4
+        JSR     rxBufPut
         JMP     LF409
 
 LF2ED:
-        CLR     $04DB
+        CLR     escPending
         CMPA    #$52
         BNE     LF304
-        LDAA    $1B24
+        LDAA    modeR
         EORA    #$01
-        STAA    $1B24
+        STAA    modeR
         LDAA    #$FF
         STAA    redrawReq
         JMP     LF409
@@ -7648,9 +7752,9 @@ LF2ED:
 LF304:
         CMPA    #$54
         BNE     LF318
-        LDAA    $1B25
+        LDAA    modeT
         EORA    #$FF
-        STAA    $1B25
+        STAA    modeT
         LDAA    #$FF
         STAA    redrawReq
         JMP     LF409
@@ -7659,14 +7763,14 @@ LF318:
         CMPA    #$57
         BNE     LF327
         LDAA    #$FF
-        STAA    $1B26
+        STAA    modeW
         STAA    redrawReq
         JMP     LF409
 
 LF327:
         CMPA    #$77
         BNE     LF336
-        CLR     $1B26
+        CLR     modeW
         LDAA    #$FF
         STAA    redrawReq
         JMP     LF409
@@ -7675,24 +7779,24 @@ LF336:
         CMPA    #$75
         BNE     LF342
         LDAA    #$FF
-        STAA    $04C8
+        STAA    blinkOff
         JMP     LF409
 
 LF342:
         CMPA    #$55
         BNE     LF34C
-        CLR     $04C8
+        CLR     blinkOff
         JMP     LF409
 
 LF34C:
         CMPA    #$73
         BNE     LF353
-        JSR     LF0C2
+        JSR     cursorBlinkOff
 
 LF353:
         CMPA    #$53
         BNE     LF35A
-        JSR     LF0F8
+        JSR     cursorBlinkOn
 
 LF35A:
         CMPA    #$31
@@ -7719,29 +7823,29 @@ LF37B:
         CMPA    #$5A
         BNE     LF38A
         LDAA    #$2C
-        STAA    $04DE
-        JSR     LF0F8
+        STAA    promptCol
+        JSR     cursorBlinkOn
         JMP     LF409
 
 LF38A:
         CMPA    #$7A
         BNE     LF397
         JSR     LEED2
-        JSR     LF0F8
+        JSR     cursorBlinkOn
         JMP     LF409
 
 LF397:
         CMPA    #$4D
         BNE     LF3A6
         LDAA    #$FF
-        STAA    $04DF
+        STAA    captureMode
         STAA    c64XferEn
         JMP     LF409
 
 LF3A6:
         CMPA    #$6D
         BNE     LF3B3
-        CLR     $04DF
+        CLR     captureMode
         CLR     c64XferEn
         JMP     LF409
 
@@ -7749,48 +7853,48 @@ LF3B3:
         CMPA    #$4C
         BNE     LF3BF
         LDAA    #$FF
-        STAA    $04DA
+        STAA    hostFeedMode
         JMP     LF409
 
 LF3BF:
         CMPA    #$6C
         BNE     LF3C9
-        CLR     $04DA
+        CLR     hostFeedMode
         JMP     LF409
 
 LF3C9:
         CMPA    #$48
         BNE     LF3D8
         LDAA    #$01
-        STAA    $04E0
-        JSR     LEF1C
+        STAA    modeHex
+        JSR     showModeName
         JMP     LF409
 
 LF3D8:
         CMPA    #$4E
         BNE     LF3E4
         LDAA    #$FF
-        STAA    $0627
+        STAA    germanFont
         JMP     LF409
 
 LF3E4:
         CMPA    #$6E
         BNE     LF3EE
-        CLR     $0627
+        CLR     germanFont
         JMP     LF409
 
 LF3EE:
         CMPA    #$2C
         BNE     LF3FA
         LDAA    #$01
-        STAA    $0494
+        STAA    defaultColour
         JMP     LF409
 
 LF3FA:
         CMPA    #$2E
         BNE     LF406
         LDAA    #$07
-        STAA    $0494
+        STAA    defaultColour
         JMP     LF409
 
 LF406:
@@ -7802,7 +7906,7 @@ LF409:
         RTS
 
 LF40C:
-        TST     $1B27
+        TST     modePrestel
         BEQ     LF41A
         CMPA    #$13
         BEQ     LF428
@@ -7811,7 +7915,7 @@ LF40C:
         RTS
 
 LF41A:
-        TST     $1B28
+        TST     modeAscii
         BEQ     LF427
         CMPA    #$09
         BEQ     LF42E
@@ -7870,12 +7974,12 @@ LF459:
         RTS
 
 execHostByte:
-        LDX     $04CB
+        LDX     blinkTimer
         BNE     LF463
-        JSR     LF0C2
+        JSR     cursorBlinkOff
 
 LF463:
-        TST     $04DD
+        TST     abortFlag
         BNE     LF487
         LDAA    pendingByte
         BNE     LF470
@@ -7885,28 +7989,28 @@ LF470:
         CMPA    #$45
         BNE     LF49D
         CLR     pendingByte
-        TST     $04D9
+        TST     connected
         BNE     LF487
         JSR     LEE9A
         LDAA    #$FF
-        STAA    $04AE
+        STAA    statusDirty
         JMP     LF59F
 
 LF487:
         LDAB    #$50
-        STAB    $04E2
-        STAB    $6090
-        JSR     LEFCB
+        STAB    statusMsg
+        STAB    c64StatusMsg
+        JSR     showStatusMsg
         JSR     redrawScreen
         JSR     LF5CF
-        CLR     $04DD
+        CLR     abortFlag
         SEC
         RTS
 
 LF49D:
         CMPA    #$41
         BNE     LF4AF
-        TST     $04D9
+        TST     connected
         BMI     LF4AC
         CLR     pendingByte
         JSR     LF5A4
@@ -7932,10 +8036,10 @@ LF4BD:
 LF4C4:
         CMPA    #$47
         BNE     LF4D9
-        CLR     $1B28
-        CLR     $1B27
+        CLR     modeAscii
+        CLR     modePrestel
         LDAA    #$FF
-        STAA    $1B29
+        STAA    modeAntiope
         JSR     LEED2
         JMP     LF59F
 
@@ -7950,7 +8054,7 @@ LF4E5:
         CMPA    #$4B
         BNE     LF4F4
         LDAA    #$7F
-        STAA    $0493
+        STAA    revealMask
         JSR     LEED2
         JMP     LF59F
 
@@ -7958,13 +8062,13 @@ LF4F4:
         CMPA    #$6B
         BNE     LF503
         LDAA    #$FF
-        STAA    $0493
+        STAA    revealMask
         JSR     LEED2
         JMP     LF59F
 
 LF503:
         CMPA    #$51
-        BNE     LF52D
+        BNE     sendRowToC64
         LDAA    #$07
         STAA    P1DDR
         LDAA    PORT1
@@ -7972,9 +8076,9 @@ LF503:
         ORAA    #$04
         STAA    PORT1
         LDAB    #$50
-        STAB    $04E2
-        STAB    $6090
-        JSR     LEFCB
+        STAB    statusMsg
+        STAB    c64StatusMsg
+        JSR     showStatusMsg
         JSR     redrawScreen
         JSR     LF5CF
         LDAB    P4DDR
@@ -7985,7 +8089,7 @@ LF503:
 LF52B:
         BRA     LF52B
 
-LF52D:
+sendRowToC64:
         CMPA    #$11
         BCS     LF59F
         CMPA    #$2A
@@ -7996,32 +8100,32 @@ LF52D:
         LDX     #lineAddrChar
         ABX
         LDX     $00,X
-        STX     $0410
+        STX     sendPtrChar
         LDX     #lineAddrAccent
         ABX
         LDX     $00,X
-        STX     $0414
+        STX     sendPtrAccent
         LDX     #lineAddrAttr
         ABX
         LDX     $00,X
-        STX     $0412
+        STX     sendPtrAttr
         LDAA    #$28
-        STAA    $0492
+        STAA    sendCols
         LDAA    #$FF
         STAA    c64XferEn
 
 LF55E:
-        LDX     $0410
+        LDX     sendPtrChar
         LDAA    $00,X
         JSR     LF979
         INX
-        STX     $0410
-        LDX     $0414
+        STX     sendPtrChar
+        LDX     sendPtrAccent
         LDAA    $00,X
         JSR     LF979
         INX
-        STX     $0414
-        LDX     $0412
+        STX     sendPtrAccent
+        LDX     sendPtrAttr
         LDAA    $00,X
         JSR     LF979
         LDAA    $01,X
@@ -8034,8 +8138,8 @@ LF55E:
         INX
         INX
         INX
-        STX     $0412
-        DEC     $0492
+        STX     sendPtrAttr
+        DEC     sendCols
         BNE     LF55E
         CLR     c64XferEn
         JMP     LF59F
@@ -8049,7 +8153,7 @@ LF5A2:
 
 LF5A4:
         JSR     LF83E
-        TST     $04D9
+        TST     connected
         BEQ     LF5C7
         JSR     LED9D
         SEI
@@ -8082,8 +8186,8 @@ LF5CF:
         STAA    TCSR
         LDAA    #$11
         STAA    P2DDR
-        CLR     $04D9
-        CLR     $04D8
+        CLR     connected
+        CLR     modemToggle
         SEI
         LDD     #timerHandlerAlt
         STD     >softVecOcf
@@ -8093,16 +8197,16 @@ LF5CF:
         STD     OCRH
         CLI
         LDD     #$07D0
-        STD     $04E3
+        STD     timerA
 
 LF601:
-        LDAA    $04E3
+        LDAA    timerA
         CMPA    #$FF
         BNE     LF601
         LDAA    #$64
-        STAA    $04E2
-        STAA    $6090
-        JSR     LEFCB
+        STAA    statusMsg
+        STAA    c64StatusMsg
+        JSR     showStatusMsg
         JSR     redrawScreen
         SEI
         LDD     #txBitTick
@@ -8116,14 +8220,14 @@ sciRxHandler:
         JMP     LF75E
 
 LF627:
-        LDAB    $04D6
+        LDAB    modemCount
         BEQ     LF62F
         JMP     LF71A
 
 LF62F:
         CMPA    #$04
         BNE     LF65A
-        TST     $04ED
+        TST     modemBreak
         BEQ     LF65A
         LDAA    #$08
         STAA    TRCSR
@@ -8138,26 +8242,26 @@ LF62F:
         LDAA    #$11
         STAA    P2DDR
         LDAB    #$FF
-        STAB    $04DD
+        STAB    abortFlag
         JMP     LF75E
 
 LF65A:
-        CLR     $04ED
+        CLR     modemBreak
         CMPA    #$10
         BNE     LF669
         LDAB    #$FF
-        STAB    $04ED
+        STAB    modemBreak
         JMP     LF75E
 
 LF669:
         CMPA    #$02
-        BNE     LF670
+        BNE     modemDispatch
         JMP     LF6BE
 
-LF670:
-        STAA    $04CF
-        JSR     LF818
-        LDAA    $04CF
+modemDispatch:
+        STAA    modemByte
+        JSR     modemCrc
+        LDAA    modemByte
         CMPA    #$00
         BEQ     LF6B0
         CMPA    #$01
@@ -8183,39 +8287,39 @@ LF698:
         BEQ     LF6B0
         CMPA    #$17
         BEQ     LF6D5
-        TST     $04DA
+        TST     hostFeedMode
         BNE     LF6B0
-        JSR     LF7E4
+        JSR     rxBufPut
 
 LF6B0:
         JMP     LF75E
 
 LF6B3:
         LDAA    #$30
-        STAA    $04CD
-        CLR     $04D8
+        STAA    modemCmd
+        CLR     modemToggle
         JMP     LF75E
 
 LF6BE:
         LDAA    #$FF
-        STAA    $04D8
+        STAA    modemToggle
         LDD     #$0000
-        STD     $04D2
-        CLR     $04D6
-        LDD     $05F4
-        STD     $05F2
+        STD     modemShift
+        CLR     modemCount
+        LDD     rxBufMark
+        STD     rxBufWr
         JMP     LF75E
 
 LF6D5:
-        TST     $04D8
+        TST     modemToggle
         BPL     LF6ED
-        CLR     $04D8
-        LDAA    $04CD
+        CLR     modemToggle
+        LDAA    modemCmd
         EORA    #$01
-        STAA    $04CE
-        STAA    $04CD
+        STAA    modemReply
+        STAA    modemCmd
         LDAA    #$02
-        STAA    $04D6
+        STAA    modemCount
 
 LF6ED:
         JMP     LF75E
@@ -8225,14 +8329,14 @@ LF6F0:
         BRA     LF707
 
 LF6F4:
-        LDAA    $04CE
+        LDAA    modemReply
         CMPA    #$15
         BEQ     LF707
         CMPA    #$06
         BEQ     LF707
         LDAA    #$10
         JSR     LF7A4
-        LDAA    $04CE
+        LDAA    modemReply
 
 LF707:
         JSR     LF7A4
@@ -8240,39 +8344,39 @@ LF707:
 
 LF70D:
         LDAA    #$02
-        STAA    $04D6
+        STAA    modemCount
         LDAA    #$06
-        STAA    $04CE
+        STAA    modemReply
         JMP     LF75E
 
 LF71A:
-        CLR     $04ED
-        DEC     $04D6
+        CLR     modemBreak
+        DEC     modemCount
         BEQ     LF728
-        STAA    $04D5
+        STAA    modemLast
         JMP     LF75E
 
 LF728:
-        STAA    $04D4
-        LDX     $04D2
-        CPX     $04D4
+        STAA    modemMatch
+        LDX     modemShift
+        CPX     modemMatch
         BNE     LF747
         LDD     #$0000
-        STD     $04D2
-        LDAA    $04D7
+        STD     modemShift
+        LDAA    modemRetry
         BNE     LF747
-        LDD     $05F2
-        STD     $05F4
+        LDD     rxBufWr
+        STD     rxBufMark
         JMP     LF6F4
 
 LF747:
-        LDD     $05F4
-        STD     $05F2
-        CLR     $04D7
+        LDD     rxBufMark
+        STD     rxBufWr
+        CLR     modemRetry
         LDAA    #$15
-        STAA    $04CE
+        STAA    modemReply
         LDD     #$0000
-        STD     $04D2
+        STD     modemShift
         JMP     LF6F4
 
 LF75E:
@@ -8315,19 +8419,19 @@ LF772:
         LDAA    #$11
         STAA    P2DDR
         LDAA    #$FF
-        STAA    $04DD
+        STAA    abortFlag
         SEC
         RTS
 
 LF79C:
         LDAA    #$01
-        STAA    $04D7
+        STAA    modemRetry
         LDAA    RDR
         RTS
 
 LF7A4:
-        LDAB    $1B27
-        ORAB    $1B28
+        LDAB    modePrestel
+        ORAB    modeAscii
         BEQ     LF7D1
         PSHA
         RORA
@@ -8376,26 +8480,26 @@ LF7D1:
         STAA    $00,X
         RTS
 
-LF7E4:
-        LDX     $05F2
+rxBufPut:
+        LDX     rxBufWr
         INX
         CPX     #$3000
         BNE     LF7F0
-        LDX     #$2000
+        LDX     #rxBuffer
 
 LF7F0:
-        STX     $05F2
-        TST     $04D8
+        STX     rxBufWr
+        TST     modemToggle
         BMI     LF7FB
-        STX     $05F4
+        STX     rxBufMark
 
 LF7FB:
         STAA    $00,X
         RTS
 
-LF7FE:
-        LDX     $05F0
-        CPX     $05F4
+rxBufGet:
+        LDX     rxBufRd
+        CPX     rxBufMark
         BNE     LF809
         LDAA    #$00
         RTS
@@ -8404,23 +8508,29 @@ LF809:
         INX
         CPX     #$3000
         BNE     LF812
-        LDX     #$2000
+        LDX     #rxBuffer
 
 LF812:
-        STX     $05F0
+        STX     rxBufRd
         LDAA    $00,X
         RTS
 
-LF818:
-        LDAA    $04CF
-        STAA    $05EF
-        LDD     $04D2
+; The CRC over the modem link.
+;
+; modemByte goes in, modemShift carries the running value, and eight rounds of
+; LSRD with EORA #$A0 / EORB #$01 on a set bit is a reflected CRC-16 with the
+; polynomial $8005 - the one X.25 and the DBT-03 protocol use. modemBits is the
+; byte being clocked out, one bit per round.
+modemCrc:
+        LDAA    modemByte
+        STAA    modemBits
+        LDD     modemShift
         LDX     #$0008
 
 LF824:
         LSRD
         BCC     LF837
-        LSR     $05EF
+        LSR     modemBits
         BCS     LF830
 
 LF82C:
@@ -8430,11 +8540,11 @@ LF82C:
 LF830:
         DEX
         BNE     LF824
-        STD     $04D2
+        STD     modemShift
         RTS
 
 LF837:
-        LSR     $05EF
+        LSR     modemBits
         BCS     LF82C
         BRA     LF830
 
@@ -8442,9 +8552,9 @@ LF83E:
         LDAA    PORT2
         ORAA    #$03
         STAA    PORT2
-        CLR     $04E2
-        CLR     $6090
-        JSR     LEFCB
+        CLR     statusMsg
+        CLR     c64StatusMsg
+        JSR     showStatusMsg
         JSR     redrawScreen
         SEI
         LDD     COUNTH
@@ -8456,7 +8566,7 @@ LF83E:
         LDD     #timerHandlerAlt
         STD     >softVecOcf
         LDD     #$84D0
-        STD     $04E3
+        STD     timerA
         CLI
         LDAA    PORT2
         ANDA    #$EF
@@ -8467,11 +8577,11 @@ LF83E:
         ORAA    #$01
         STAA    TCSR
         LDD     #$10AE
-        STD     $04E5
+        STD     timerB
 
 LF881:
         LDD     #$00C8
-        STD     $04E7
+        STD     timerC
         CLR     pendingByte
         JSR     fetchHostByte
         LDAA    pendingByte
@@ -8480,19 +8590,19 @@ LF881:
         JMP     LF942
 
 LF897:
-        LDAA    $04E5
+        LDAA    timerB
         CMPA    #$FF
         BEQ     LF8BD
         LDAA    PORT2
         ANDA    #$08
         BEQ     LF881
-        LDAA    $04E7
+        LDAA    timerC
         CMPA    #$FF
         BNE     LF897
         LDAB    #$78
-        STAB    $04E2
-        STAB    $6090
-        JSR     LEFCB
+        STAB    statusMsg
+        STAB    c64StatusMsg
+        JSR     showStatusMsg
         JSR     redrawScreen
         JSR     LF5CF
         RTS
@@ -8509,7 +8619,7 @@ LF8CD:
         LDX     #$0016
 
 LF8D0:
-        LDAA    $04E3
+        LDAA    timerA
         CMPA    #$FF
         BEQ     LF92F
         LDAA    PORT2
@@ -8518,12 +8628,12 @@ LF8D0:
         DEX
         BNE     LF8D0
         LDAB    #$14
-        STAB    $04E2
-        STAB    $6090
-        JSR     LEFCB
+        STAB    statusMsg
+        STAB    c64StatusMsg
+        JSR     showStatusMsg
         JSR     redrawScreen
         LDD     #$84D0
-        STD     $04E3
+        STD     timerA
 
 LF8F4:
         JSR     fetchHostByte
@@ -8534,56 +8644,56 @@ LF8F4:
 
 LF901:
         LDD     #$00C8
-        STD     $04E7
+        STD     timerC
 
 LF907:
-        LDAA    $04E3
+        LDAA    timerA
         CMPA    #$FF
         BEQ     LF92F
         LDAA    PORT2
         ANDA    #$08
         BEQ     LF8F4
-        LDAA    $04E7
+        LDAA    timerC
         CMPA    #$FF
         BNE     LF907
         LDAB    #$28
-        STAB    $04E2
-        STAB    $6090
-        JSR     LEFCB
+        STAB    statusMsg
+        STAB    c64StatusMsg
+        JSR     showStatusMsg
         JSR     redrawScreen
         LDAA    #$FF
-        STAA    $04D9
+        STAA    connected
         RTS
 
 LF92F:
         CLI
         LDAB    #$3C
-        STAB    $04E2
-        STAB    $6090
-        JSR     LEFCB
+        STAB    statusMsg
+        STAB    c64StatusMsg
+        JSR     showStatusMsg
         JSR     redrawScreen
         JSR     LF5CF
         RTS
 
 LF942:
         LDAB    #$50
-        STAB    $04E2
-        STAB    $6090
-        JSR     LEFCB
+        STAB    statusMsg
+        STAB    c64StatusMsg
+        JSR     showStatusMsg
         JSR     redrawScreen
         JSR     LF5CF
         RTS
 
 timerHandlerAlt:
-        LDD     $04E3
+        LDD     timerA
         ADDD    #$FFFF
-        STD     $04E3
-        LDD     $04E5
+        STD     timerA
+        LDD     timerB
         ADDD    #$FFFF
-        STD     $04E5
-        LDD     $04E7
+        STD     timerB
+        LDD     timerC
         ADDD    #$FFFF
-        STD     $04E7
+        STD     timerC
         LDAA    TCSR
         LDD     OCRH
         ADDD    #$03E8
@@ -8618,16 +8728,16 @@ LF999:
         LDD     #$FC25
         STD     >softVecSci
         CLI
-        CLR     $1B27
-        CLR     $1B29
+        CLR     modePrestel
+        CLR     modeAntiope
         LDAA    #$FF
-        STAA    $1B28
+        STAA    modeAscii
         JSR     clearPlanes
         JSR     LEED2
-        CLR     $1B20
+        CLR     cursorVisible
         CLR     pendingByte
         LDAA    #$80
-        STAA    $1B02
+        STAA    rowFlags
         LDX     #$1B03
 
 LF9C3:
@@ -8820,7 +8930,7 @@ LFB0C:
         RTS
 
 LFB0D:
-        TST     $0627
+        TST     germanFont
         BEQ     LFB23
         LDX     #$FC30
 
@@ -8841,7 +8951,7 @@ LFB23:
         LDAB    #$0A
         MUL
         ADDD    #fontNarrow
-        STD     $061C
+        STD     asciiSrc
         LDAA    asciiCol
         LSRA
         ADDA    #$18
@@ -8850,59 +8960,59 @@ LFB23:
         LDAA    #$28
         MUL
         ADDD    #videoRam
-        STD     $061A
+        STD     asciiDst
         LDAA    #$0A
-        STAA    $0619
+        STAA    asciiRows
         LDAB    asciiCol
         ANDB    #$01
         BEQ     LFB6E
 
 LFB4F:
-        LDX     $061C
+        LDX     asciiSrc
         LDAA    $00,X
         INX
-        STX     $061C
-        LDX     $061A
+        STX     asciiSrc
+        LDX     asciiDst
         LDAB    $00,X
         ANDB    #$C0
         ABA
         STAA    $00,X
         LDAB    #$04
         ABX
-        STX     $061A
-        DEC     $0619
+        STX     asciiDst
+        DEC     asciiRows
         BNE     LFB4F
         RTS
 
 LFB6E:
-        LDX     $061C
+        LDX     asciiSrc
         LDAA    $00,X
         INX
-        STX     $061C
-        LDX     $061A
+        STX     asciiSrc
+        LDX     asciiDst
         CLRB
         LSRD
         LSRD
-        STD     $061E
+        STD     asciiTmp
         LDD     $00,X
         ANDB    #$F0
-        ORAB    $061E
+        ORAB    asciiTmp
         ANDA    #$3F
-        ORAA    $061F
+        ORAA    asciiTmpHi
         STD     $00,X
         LDAB    #$04
         ABX
-        STX     $061A
-        DEC     $0619
+        STX     asciiDst
+        DEC     asciiRows
         BNE     LFB6E
         RTS
 
 LFB9A:
         PSHA
-        LDAA    $0620
+        LDAA    asciiPort3
         STAA    >PORT3
-        LDX     $0621
-        LDD     $0623
+        LDX     asciiCellPtr
+        LDD     asciiCellSave
         STD     $00,X
 
 asciiDispatchC0:
@@ -8934,15 +9044,15 @@ LFBCF:
         LDAB    #$28
         MUL
         ADDD    #$5C24
-        STD     $0621
-        LDX     $0621
+        STD     asciiCellPtr
+        LDX     asciiCellPtr
         LDAA    asciiCol
         LSRA
         ADDA    #$18
         STAA    >PORT3
-        STAA    $0620
+        STAA    asciiPort3
         LDD     $00,X
-        STD     $0623
+        STD     asciiCellSave
         LDAA    asciiCol
         BITA    #$01
         BEQ     LFBFB
@@ -8957,14 +9067,14 @@ LFBFE:
         RTS
 
 LFC01:
-        JSR     LF7FE
+        JSR     rxBufGet
         TSTA
         BNE     LFC1C
         JSR     fetchHostByte
         JSR     execHostByte
         TST     redrawReq
         BNE     LFC17
-        TST     $04AE
+        TST     statusDirty
         BEQ     LFC1A
 
 LFC17:
@@ -8974,7 +9084,7 @@ LFC1A:
         BRA     LFC01
 
 LFC1C:
-        TST     $04DF
+        TST     captureMode
         BEQ     LFC24
         JSR     LF979
 
@@ -8983,7 +9093,7 @@ LFC24:
         JSR     LF75F
         BCS     LFC2F
         ANDA    #$7F
-        JSR     LF7E4
+        JSR     rxBufPut
 
 LFC2F:
         RTI

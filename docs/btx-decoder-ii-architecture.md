@@ -588,21 +588,25 @@ entire C64 payload is byte-for-byte identical. See
 - **Font bit 15.** The contiguous-graphics reading is an inference from
   distribution; the firmware never reads the font, so nothing in the ROM tests
   the bit. A schematic would settle it.
-- **106 external-RAM locations.** Down from 149. What is left is mostly shared
-  scratch, where a name fitting one use would misread in another — `$048E` is a
-  mask complement in `setAttrSpan` and an index into `rowAttr` fifty lines
-  later — plus the modem state around `$04C8`–`$04ED`, which needs the
-  datacomms path read end to end rather than a sweep.
+- **The modem protocol's finer points.** Every variable is named and the CRC is
+  identified — `modemCrc` at `$F818` is a reflected CRC-16 with polynomial
+  `$8005` — but the meaning of individual DBT-03 command bytes in `modemCmd`
+  and `modemReply` is read off their values, not from a specification.
+- **`$1B24`–`$1B26`.** Three display options toggled by host commands `R`, `T`
+  and `W`, snapshotted for the redraw as `redrawT` and `redrawW`. Named after
+  the letters that set them, since what they switch is not established.
 - **`$61F9`–`$61FD`.** Write-only control registers whose function is unknown.
   Their C64-side counterparts `$81F8`–`$81FD` are touched by the payload's cold
   start and its IRQ handler, which says they carry an interrupt enable and
   acknowledge, but not which bit is which.
-- **Seven interface registers.** `$8005`, `$800F`, `$8011`, `$8012` and `$8090`
-  are read or written by the payload without their meaning being established.
-  `$8011` is a counter the decoder advances — `c64WaitDecoder` spins on it and
-  `c64MacroRecOpen` paces the macro file against it — and `$8090` reads `$28`
-  or `$50` at points where the payload is deciding about line width, but
-  neither is proven.
+- **Four interface registers.** `$8005`, `$800F`, `$8011` and `$8012` are read
+  or written by the payload without their meaning being established. `$8011` is
+  a counter the decoder advances — `c64WaitDecoder` spins on it and
+  `c64MacroRecOpen` paces the macro file against it.
+
+  `$8090` is settled: it is `c64StatusMsg` at `$6090`, the decoder's copy of
+  `statusMsg`, the byte offset into `strStatusMsgs`. The C64's `$28` and `$50`
+  tests are records 2 and 4 — "Verbindung" and "Abbruch".
 - **The `$D419` no-match path.** Reachable, but harmless: two of its three
   outputs are read only for bit 7 and the third is clamped. Documented in the
   sidecar rather than treated as a bug.

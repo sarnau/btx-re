@@ -5,62 +5,62 @@
         CPU     6502
 
 ; Decoder hardware and RAM, as the C64 sees it.
-c64Ptr      EQU     $0061
-c64PtrHi    EQU     $0062
-c64MsgPtr   EQU     $0063
-c64MsgPtrHi EQU     $0064
-c64BufWr    EQU     $0065
-c64BufWrHi  EQU     $0066
-c64KeyPtr   EQU     $0069
-c64KeyPtrHi EQU     $006A
-c64BufRd    EQU     $006D
-c64BufRdHi  EQU     $006E
-STATUS      EQU     $0090
-DFLTO       EQU     $009A
-c64ScrPtr   EQU     $00A7
-c64ScrPtrHi EQU     $00A8
-FNLEN       EQU     $00B7
-LA          EQU     $00B8
-SA          EQU     $00B9
-FA          EQU     $00BA
-FNADR       EQU     $00BB
-BLNSW       EQU     $00CC
-PNTR        EQU     $00D3
-TBLX        EQU     $00D6
-LDTB1       EQU     $00D9
-BUF         EQU     $0200
-IERROR      EQU     $0300
-CINV        EQU     $0314
-btxReg005   EQU     $8005
-btxRxWr     EQU     $8009
-btxRxRd     EQU     $800A
-btxXferEn   EQU     $800B
-btxStatus   EQU     $800C
-btxTxWr     EQU     $800D
-btxTxRd     EQU     $800E
-btxReg00F   EQU     $800F
-btxXferDone EQU     $8010
-btxReg011   EQU     $8011
-btxReg012   EQU     $8012
-btxRxFifo   EQU     $8020
-btxTxFifo   EQU     $8040
-btxFifo00   EQU     $8080
-btxFifo01   EQU     $8081
-btxFifo02   EQU     $8082
-btxFifo03   EQU     $8083
-btxFifo04   EQU     $8084
-btxFifo05   EQU     $8085
-btxFifo06   EQU     $8086
-btxFifo07   EQU     $8087
-btxFifo08   EQU     $8088
-btxFifo09   EQU     $8089
-btxFifo0A   EQU     $808A
-btxFifo0B   EQU     $808B
-btxReg090   EQU     $8090
-btxReg1F8   EQU     $81F8
-btxReg1F9   EQU     $81F9
-btxReg1FC   EQU     $81FC
-btxReg1FD   EQU     $81FD
+c64Ptr       EQU     $0061
+c64PtrHi     EQU     $0062
+c64MsgPtr    EQU     $0063
+c64MsgPtrHi  EQU     $0064
+c64BufWr     EQU     $0065
+c64BufWrHi   EQU     $0066
+c64KeyPtr    EQU     $0069
+c64KeyPtrHi  EQU     $006A
+c64BufRd     EQU     $006D
+c64BufRdHi   EQU     $006E
+STATUS       EQU     $0090
+DFLTO        EQU     $009A
+c64ScrPtr    EQU     $00A7
+c64ScrPtrHi  EQU     $00A8
+FNLEN        EQU     $00B7
+LA           EQU     $00B8
+SA           EQU     $00B9
+FA           EQU     $00BA
+FNADR        EQU     $00BB
+BLNSW        EQU     $00CC
+PNTR         EQU     $00D3
+TBLX         EQU     $00D6
+LDTB1        EQU     $00D9
+BUF          EQU     $0200
+IERROR       EQU     $0300
+CINV         EQU     $0314
+btxReg005    EQU     $8005
+btxRxWr      EQU     $8009
+btxRxRd      EQU     $800A
+btxXferEn    EQU     $800B
+btxStatus    EQU     $800C
+btxTxWr      EQU     $800D
+btxTxRd      EQU     $800E
+btxReg00F    EQU     $800F
+btxXferDone  EQU     $8010
+btxReg011    EQU     $8011
+btxReg012    EQU     $8012
+btxRxFifo    EQU     $8020
+btxTxFifo    EQU     $8040
+btxFifo00    EQU     $8080
+btxFifo01    EQU     $8081
+btxFifo02    EQU     $8082
+btxFifo03    EQU     $8083
+btxFifo04    EQU     $8084
+btxFifo05    EQU     $8085
+btxFifo06    EQU     $8086
+btxFifo07    EQU     $8087
+btxFifo08    EQU     $8088
+btxFifo09    EQU     $8089
+btxFifo0A    EQU     $808A
+btxFifo0B    EQU     $808B
+btxStatusMsg EQU     $8090
+btxReg1F8    EQU     $81F8
+btxReg1F9    EQU     $81F9
+btxReg1FC    EQU     $81FC
+btxReg1FD    EQU     $81FD
 
 ; C64 ROM entry points and tables.
 INITCZ       EQU     $E3BF
@@ -2759,8 +2759,8 @@ L23A8:
         BNE     L23BA
 
 L23AC:
-        LDX     btxReg090
-        CPX     btxReg090
+        LDX     btxStatusMsg
+        CPX     btxStatusMsg
         BNE     L23AC
         CPX     #$28
         BEQ     L23BA
@@ -3177,8 +3177,8 @@ c64MacroRecOpen:
         JSR     SECND
 
 L26EF:
-        LDA     btxReg090
-        CMP     btxReg090
+        LDA     btxStatusMsg
+        CMP     btxStatusMsg
         BNE     L26EF
         CMP     #$28
         BEQ     L2709
@@ -3795,7 +3795,7 @@ c64TelesoftByte:
         JMP     c64TelesoftByte
 
 L2B3A:
-        LDA     btxReg090
+        LDA     btxStatusMsg
         CMP     #$50
         BEQ     L2B50
         JSR     vecGetKey
