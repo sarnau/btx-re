@@ -167,6 +167,12 @@ c64CopyLoop:
   INY / BNE c64CopyLoop / INC c64PtrHi / JMP c64CopyLoop
 ```
 
+One more thing happens before the terminal starts. `c64LoadExtra` scans
+keyboard row 7 for CTRL, and if it is held at power-on it loads
+`c64ExtraFile` — "BTX-EXTRA.MAS" — from disk before going on. That is what the
+`c64ExtraFile` string and status message 25, *"Zusatzsoftware wird geladen"*,
+are for: extra software, on a key nothing on screen mentions.
+
 `SIZE+8` is an entry eight bytes into the KERNAL's memory sizing, at the tail
 that sets `MEMSTR` to `$0800` and `HIBASE` to `$0400`. It skips the
 top-of-memory scan, which would otherwise walk into the cartridge window. Both
@@ -644,6 +650,29 @@ that record's address:
 
 ### Dispatch
 
+Bytes reach the parser through two routines. `getLineByte` is the idle loop —
+it services the host link and the redraw until `rxBufGet` yields something,
+forwards to the C64 while `captureMode` is on, and counts `$1A` into
+`pageCount`. `nextParamByte` sits on top of it for the bytes *inside* a
+sequence, and has one behaviour worth knowing:
+
+```
+nextParamByte:
+        JSR     getLineByte
+        CMPA    #$00
+        BEQ     nextParamByte       $00 is skipped, not delivered
+        CMPA    #$1F
+        BNE     ...
+        PULA
+        PULA                        US - drop the caller's return address
+        LDAA    #$1F
+        JMP     LD358               and re-dispatch from the top
+```
+
+A US (`$1F`) arriving mid-sequence **abandons the sequence**, by popping the
+return address of whichever handler asked for the byte. So a truncated escape
+can never leave the parser waiting for parameters that will not come.
+
 Five tables, all reached through one idiom:
 
 ```
@@ -1026,6 +1055,19 @@ between `scrollTop` and `scrollBottom` with a ceiling in `cursorRowMax`. `$EC16`
 the wrap logic; `$EC8D` and `$ECA1` are the bounded row moves, each falling
 through to scroll at the window edge.
 
+A cell is drawn by one of four routines, chosen by `curAttr0` bits 0–1 — which
+are the CEPT size attributes NSZ, DBH, DBW and DBS at C1 `$8C`–`$8F`:
+
+| Bits | Routine | |
+|---|---|---|
+| 0 | `blitNormal` | one cell |
+| 1 | `blitDoubleH` | double height |
+| 2 | `blitDoubleW` | double width |
+| 3 | `blitDoubleHW` | both |
+
+The three enlarging ones are near-identical to the first, which is why they
+read as duplicated code until the selector is followed back to the attribute.
+
 Double-width rendering uses `bitDoubleTable` at `$AEFB` — 64 words, entry n
 being n with every bit duplicated, **byte-swapped**: entry 1 reads `FDB $0300`,
 not `$0003`. All 64 were checked against the doubling by computation. The swap
@@ -1164,9 +1206,10 @@ counter, `statusMsg` and `btxStatusMsg` the same index — so a question about
 one processor can be answered from the other. Several findings here came out
 that way rather than from either image alone.
 
-Every named routine also carries a note saying what it does, and a test fails
-if one gains a name without one — a name says what something is called, which
-is not the same thing.
+Every subroutine is named — no `JSR` target anywhere is still an `L<address>` —
+and every one carries a note saying what it does. Two tests enforce both, since
+a name says what something is called, which is not the same thing as what it
+does, and an unnamed call target is a function nobody has read.
 
 The names are not uniformly strong, and the difference matters when reading
 them. Most are evidenced from behaviour: `inStatusLine` by the routine pair
