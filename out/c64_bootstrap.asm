@@ -75,8 +75,9 @@ CINT        EQU     $FF5B
 ; Note $D109-$D348 is NOT part of this payload - those are the 6801 control-code
 ; dispatch tables documented at $D36A.
 c64CartHeader:
-        FCB     $13,$80,$72,$FE,$C3,$C2,$CD,$38,$30,$00,$00,$00,$FF,$00,$00,$00
-        FCB     $00,$00,$00
+        FCB     $13,$80
+        FCB     $72,$FE,$C3,$C2,$CD
+        FCB     $38,$30,$00,$00,$00,$FF,$00,$00,$00,$00,$00,$00
 
 c64ColdStart:
         LDX     #$00

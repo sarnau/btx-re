@@ -101,11 +101,31 @@ def test_binclude_missing_file_is_reported():
         assemble('        ORG $8000\n        BINCLUDE "nope.bin"\n        END\n')
 
 
-def test_string_table_renders_as_little_endian_words():
-    """The 6502 pointer table must be DW, not FDB - FDB is big-endian."""
+def test_string_table_uses_labels_not_addresses():
+    """DW because FDB is big-endian, and labels because each entry points at a
+    record in this same block."""
     src = (OUT / "c64_payload.asm").read_text()
     assert "c64StrTable:" in src
-    assert "DW      $11F8,$1211," in src
+    assert "DW      L11F8,L1211," in src
+    for label in ("L11F8", "L126B", "L1643"):
+        assert f"{label}:" in src, label
+
+
+def test_text_records_render_as_readable_strings():
+    """A record is five header bytes then characters; showing the characters as
+    characters is the whole point of the listing."""
+    src = (OUT / "c64_payload.asm").read_text()
+    assert 'FCC     "Load Capture Display Macro Xfer Screen  "' in src
+    assert 'FCC     "ASCII Btx Keybd Telesoft Edit Pause Quit"' in src
+    # the header stays hex, immediately above its text
+    idx = src.index('FCC     "Load Capture')
+    assert "FCB     $2C,$00,$C0,$01,$98" in src[idx - 120:idx]
+
+
+def test_fcc_round_trips_and_survives_a_semicolon():
+    """A naive comment strip truncates any string containing ';'."""
+    _, out = assemble('        ORG $1000\n        FCC "a;b"\n        FCB $FF\n        END\n')
+    assert out == b"a;b\xff"
 
 
 def test_dw_is_little_endian_and_fdb_is_big():
@@ -124,3 +144,14 @@ def test_text_block_through_screen_init_is_data():
     assert not re.search(r"^\s+(LDA|STA|JSR|JMP)\s", table, re.M), \
         "the pointer table must not be disassembled as code"
     assert re.search(r"^\s+LDA\s", tail, re.M), "code should resume after the label"
+
+
+def test_strings_avoid_characters_the_assemblers_read_differently():
+    """asl treats \\ as an escape and " as the delimiter. A run containing
+    either falls back to FCB rather than relying on quoting rules that the two
+    assemblers might not agree on - asl rejected "A \\[" outright."""
+    src = (OUT / "c64_payload.asm").read_text()
+    for line in src.splitlines():
+        if line.strip().startswith("FCC"):
+            text = line.split('"', 1)[1].rsplit('"', 1)[0]
+            assert "\\" not in text and '"' not in text, line

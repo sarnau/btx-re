@@ -33,7 +33,7 @@ class _Line:
 def _parse(source: str) -> list[_Line]:
     out: list[_Line] = []
     for no, raw in enumerate(source.splitlines(), start=1):
-        text = raw.split(";", 1)[0].rstrip()
+        text = _strip_comment(raw).rstrip()
         if not text.strip():
             continue
 
@@ -50,6 +50,31 @@ def _parse(source: str) -> list[_Line]:
         operand = parts[1].strip() if len(parts) > 1 else ""
         out.append(_Line(no, label, op, operand))
     return out
+
+
+def _strip_comment(raw: str) -> str:
+    """Drop a trailing ; comment, but not one inside a quoted string.
+
+    FCC strings carry arbitrary text, semicolons included, so a naive split
+    truncates them."""
+    out = []
+    in_quote = False
+    for ch in raw:
+        if ch == '"':
+            in_quote = not in_quote
+        elif ch == ";" and not in_quote:
+            break
+        out.append(ch)
+    return "".join(out)
+
+
+def _fcc_text(line: _Line) -> str:
+    """The characters of an FCC directive. Quoted, no escapes - the emitter
+    never puts a quote inside one."""
+    t = line.operand.strip()
+    if len(t) < 2 or t[0] != '"' or t[-1] != '"':
+        raise ValueError(f"line {line.no}: FCC needs a quoted string, got {t!r}")
+    return t[1:-1]
 
 
 def _split_values(operand: str) -> list[str]:
@@ -101,6 +126,8 @@ def _sizeof(line: _Line, symbols: dict[str, int], strict: bool, cpu: str) -> int
         return 0
     if op == "BINCLUDE":
         return _binclude_size(line)
+    if op == "FCC":
+        return len(_fcc_text(line))
     if op == "FCB":
         return len(_split_values(line.operand))
     if op in ("FDB", "DW"):
@@ -275,6 +302,11 @@ def assemble(source: str, *, include_dir: str | pathlib.Path = ".") -> tuple[int
             blob = _binclude_path(line).read_bytes()
             out.extend(blob)
             pc += len(blob)
+            continue
+        if op == "FCC":
+            text = _fcc_text(line)
+            out.extend(text.encode("latin-1"))
+            pc += len(text)
             continue
         if op == "FCB":
             for token in _split_values(line.operand):

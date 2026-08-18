@@ -100,9 +100,20 @@ def collect_labels(data: bytes, base: int, block: C64Block,
     """Named labels from the sidecar, plus L<addr> for every internal target."""
     named = {a - block.offset: n for a, n in sidecar.labels.items()
              if block.start <= a < block.end}
+    # Pointer tables inside the block name locations in it; each entry should
+    # resolve to a label, which also breaks the data runs at record boundaries.
+    table_targets: set[int] = set()
+    for region in sidecar.regions:
+        if region.kind not in _WORD_KINDS:
+            continue
+        if not (block.start <= region.start < block.end):
+            continue
+        for a in range(region.start, min(region.end, block.end) - 1, 2):
+            table_targets.add(int.from_bytes(data[a - base:a - base + 2], "little"))
+
     labels = dict(named)
     for _ in range(8):
-        targets: set[int] = set()
+        targets: set[int] = set(table_targets)
         for rt, insn, _b in _decode_block(data, base, block, labels, sidecar):
             if insn is None:
                 continue
@@ -177,10 +188,31 @@ def emit_block(data: bytes, base: int, block: C64Block, sidecar: Sidecar) -> str
     used_symbols = {a: n for a, n in sidecar.c64_symbols.items()}
     pending: list[int] = []
 
+    def _printable(b: int) -> bool:
+        # '"' delimits an FCC string and '\\' starts an escape sequence in asl,
+        # so a run containing either falls back to FCB rather than needing
+        # quoting rules that the two assemblers might read differently.
+        return 0x20 <= b < 0x7F and b not in (0x22, 0x5C)
+
     def flush() -> None:
+        """Emit pending data, showing runs of text as text."""
         while pending:
-            chunk = bytes(pending[:BYTES_PER_FCB])
-            del pending[:BYTES_PER_FCB]
+            run = 0
+            while run < len(pending) and _printable(pending[run]):
+                run += 1
+            if run >= 4:
+                text = bytes(pending[:run]).decode("latin-1")
+                del pending[:run]
+                for i in range(0, len(text), 40):
+                    lines.append(f"{'':{_INDENT}}{'FCC':{_MNEM_WIDTH}}"
+                                 f'"{text[i:i + 40]}"')
+                continue
+            take = run if run else 1
+            while take < len(pending) and not _printable(pending[take]):
+                take += 1
+            take = min(take, BYTES_PER_FCB)
+            chunk = bytes(pending[:take])
+            del pending[:take]
             lines.append(f"{'':{_INDENT}}{'FCB':{_MNEM_WIDTH}}"
                          + ",".join(f"${b:02X}" for b in chunk))
 
@@ -205,7 +237,8 @@ def emit_block(data: bytes, base: int, block: C64Block, sidecar: Sidecar) -> str
                     vals = [int.from_bytes(data[lo - base + 2 * i:lo - base + 2 * i + 2],
                                            "little") for i in range(count)]
                     lines.append(f"{'':{_INDENT}}{'DW':{_MNEM_WIDTH}}"
-                                 + ",".join(f"${v:04X}" for v in vals))
+                                 + ",".join(all_names.get(v) or f"${v:04X}"
+                                            for v in vals))
                     words_left = count * 2
             if words_left:
                 words_left -= 1
