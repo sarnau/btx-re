@@ -7,39 +7,44 @@
 
 ; Hardware registers and RAM locations referenced below.
 
-P1DDR       EQU     $00
-P2DDR       EQU     $01
-PORT1       EQU     $02
-PORT2       EQU     $03
-P3DDR       EQU     $04
-P4DDR       EQU     $05
-PORT3       EQU     $06
-PORT4       EQU     $07
-TCSR        EQU     $08
-COUNTH      EQU     $09
-COUNTL      EQU     $0A
-OCRH        EQU     $0B
-OCRL        EQU     $0C
-ICRH        EQU     $0D
-ICRL        EQU     $0E
-P3CSR       EQU     $0F
-RMCR        EQU     $10
-TRCSR       EQU     $11
-RDR         EQU     $12
-TDR         EQU     $13
-RAMCR       EQU     $14
-softVecSci  EQU     $F0
-softVecTof  EQU     $F2
-softVecOcf  EQU     $F4
-softVecIcf  EQU     $F6
-softVecIrq1 EQU     $F8
-softVecSwi  EQU     $FA
-c64FifoWr   EQU     $6009
-c64FifoRd   EQU     $600A
-c64XferEn   EQU     $600B
-c64Status   EQU     $600C
-c64XferDone EQU     $6010
-c64Fifo     EQU     $6080
+P1DDR        EQU     $00
+P2DDR        EQU     $01
+PORT1        EQU     $02
+PORT2        EQU     $03
+P3DDR        EQU     $04
+P4DDR        EQU     $05
+PORT3        EQU     $06
+PORT4        EQU     $07
+TCSR         EQU     $08
+COUNTH       EQU     $09
+COUNTL       EQU     $0A
+OCRH         EQU     $0B
+OCRL         EQU     $0C
+ICRH         EQU     $0D
+ICRL         EQU     $0E
+P3CSR        EQU     $0F
+RMCR         EQU     $10
+TRCSR        EQU     $11
+RDR          EQU     $12
+TDR          EQU     $13
+RAMCR        EQU     $14
+softVecSci   EQU     $F0
+softVecTof   EQU     $F2
+softVecOcf   EQU     $F4
+softVecIcf   EQU     $F6
+softVecIrq1  EQU     $F8
+softVecSwi   EQU     $FA
+cursorRowMax EQU     $1B00
+scrollTop    EQU     $1B1C
+scrollBottom EQU     $1B1D
+cursorRow    EQU     $1B1E
+cursorCol    EQU     $1B1F
+c64FifoWr    EQU     $6009
+c64FifoRd    EQU     $600A
+c64XferEn    EQU     $600B
+c64Status    EQU     $600C
+c64XferDone  EQU     $6010
+c64Fifo      EQU     $6080
 
         ORG     $8000
 
@@ -639,7 +644,7 @@ fontNarrow:
         STAA    $1B01
         LDAA    #$FF
         STAA    >$00EE
-        LDAA    $1B00
+        LDAA    cursorRowMax
         CMPA    #$17
         BEQ     $A23E
         LDAA    #$0C
@@ -648,7 +653,7 @@ fontNarrow:
         TST     $1B20
         BEQ     $A250
         LDX     $1B21
-        LDAB    $1B1F
+        LDAB    cursorCol
         ABX
         LDAA    $00,X
         ORAA    #$80
@@ -666,7 +671,7 @@ fontNarrow:
         CPX     #$5FFF
         BLS     $A264
         JMP     $A2AD
-        LDAA    $1B00
+        LDAA    cursorRowMax
         STAA    $07B9
         LDAA    #$17
         STAA    >PORT3
@@ -705,9 +710,9 @@ fontNarrow:
         BNE     $A2AD
         LDAA    $1B20
         EORA    #$FF
-        ORAA    $1B1F
+        ORAA    cursorCol
         STAA    $6081
-        LDAA    $1B1E
+        LDAA    cursorRow
         STAA    $6082
         LDAA    #$FF
         STAA    $6089
@@ -802,14 +807,14 @@ fontNarrow:
         ANDA    #$01
         BEQ     $A3DC
         LDAA    $07B0
-        CMPA    $1B00
+        CMPA    cursorRowMax
         BEQ     $A3D9
         LDAA    $07B0
         INCA
-        CMPA    $1B1C
+        CMPA    scrollTop
         BEQ     $A3D9
         DECA
-        CMPA    $1B1D
+        CMPA    scrollBottom
         BEQ     $A3D9
         LDX     >$00E4
         LDAA    $00,X
@@ -995,9 +1000,9 @@ fontNarrow:
         BNE     $A550
         LDAA    $1B20
         EORA    #$FF
-        ORAA    $1B1F
+        ORAA    cursorCol
         STAA    $6081
-        LDAA    $1B1E
+        LDAA    cursorRow
         STAA    $6082
         LDAA    $07E0
         STAA    $6083
@@ -1195,15 +1200,15 @@ fontNarrow:
         TST     $1B20
         BEQ     $A75F
         LDAA    $07B1
-        CMPA    $1B1F
+        CMPA    cursorCol
         BNE     $A75F
         LDAA    $07B0
-        CMPA    $1B1E
+        CMPA    cursorRow
         BNE     $A75F
-        LDAA    $1B1F
+        LDAA    cursorCol
         ADDA    #$18
         STAA    >PORT3
-        LDAB    $1B1E
+        LDAB    cursorRow
         ASLB
         ASLB
         LDAA    $1B01
@@ -1238,7 +1243,7 @@ fontNarrow:
         LDAA    $07B0
         CMPA    #$14
         BNE     $A7BB
-        LDAA    $1B00
+        LDAA    cursorRowMax
         CMPA    #$13
         BNE     $A7BB
         LDAA    #$18
@@ -1254,7 +1259,7 @@ fontNarrow:
         LDX     #$5300
         STX     >$00E4
         JMP     $A312
-        LDAA    $1B00
+        LDAA    cursorRowMax
         INCA
         CMPA    $07B0
         BLT     $A7D5
@@ -1267,7 +1272,7 @@ fontNarrow:
         JMP     $A312
         LDAA    #$0A
         STAA    $1B01
-        LDAA    $1B00
+        LDAA    cursorRowMax
         CMPA    #$17
         BEQ     $A7E6
         LDAA    #$0C
@@ -3217,7 +3222,7 @@ fmtLookup:
         CLR     $0487
         CLR     $0420
         CLR     $0421
-        LDAB    $1B00
+        LDAB    cursorRowMax
         CMPB    #$13
         BNE     $D546
         JMP     $D4DD
@@ -3767,10 +3772,10 @@ fmtLookup:
 
 ctrlIgnored:
         JMP     $E9A2
-        DEC     $1B1F
+        DEC     cursorCol
         JSR     $EC16
         JMP     parseNextByte
-        INC     $1B1F
+        INC     cursorCol
         JSR     $EC16
         JMP     parseNextByte
         TST     $04AF
@@ -3779,12 +3784,12 @@ ctrlIgnored:
         JSR     $EE3A
         TST     $04A3
         BPL     $DA73
-        LDAA    $1B1E
-        CMPA    $1B1D
+        LDAA    cursorRow
+        CMPA    scrollBottom
         BNE     $DA73
         JSR     $EA44
         JMP     parseNextByte
-        INC     $1B1E
+        INC     cursorRow
         JSR     $EC16
         JSR     $E9A5
         JMP     parseNextByte
@@ -3794,12 +3799,12 @@ ctrlIgnored:
         JSR     $EE3A
         TST     $04A3
         BPL     $DA9D
-        LDAA    $1B1E
-        CMPA    $1B1C
+        LDAA    cursorRow
+        CMPA    scrollTop
         BNE     $DA9D
         JSR     $EB28
         JMP     parseNextByte
-        DEC     $1B1E
+        DEC     cursorRow
         JSR     $EC16
         JSR     $E9A5
         JMP     parseNextByte
@@ -3807,13 +3812,13 @@ ctrlIgnored:
         BPL     $DAB1
         JMP     parseNextByte
         LDAA    #$FF
-        STAA    $1B1C
-        STAA    $1B1D
+        STAA    scrollTop
+        STAA    scrollBottom
         STAA    $04A3
         JSR     $EE4B
         LDAA    #$18
-        STAA    $1B1E
-        CLR     $1B1F
+        STAA    cursorRow
+        CLR     cursorCol
         JSR     $E9A5
         LDAA    $1B25
         STAA    $1B23
@@ -3821,7 +3826,7 @@ ctrlIgnored:
         CLR     $1B24
         CLR     $1B25
         JMP     $DBF2
-        CLR     $1B1F
+        CLR     cursorCol
         JSR     $EC16
         JSR     $E9A5
         JMP     parseNextByte
@@ -3845,7 +3850,7 @@ ctrlIgnored:
         LDAA    #$FF
         STAA    $1B20
         LDX     $1B21
-        LDAB    $1B1F
+        LDAB    cursorCol
         ABX
         LDAA    $00,X
         ORAA    #$80
@@ -3876,7 +3881,7 @@ ctrlIgnored:
         LDX     $040A
         LDAA    $00,X
         BMI     $DB66
-        LDAB    $1B1F
+        LDAB    cursorCol
         STAB    $0490
         ASLB
         ASLB
@@ -3894,7 +3899,7 @@ ctrlIgnored:
         STAA    $041A
         LDAA    #$A0
         LDX     $1B21
-        LDAB    $1B1F
+        LDAB    cursorCol
         ABX
         STAA    $00,X
         LDX     $040E
@@ -3912,12 +3917,12 @@ ctrlIgnored:
         STAA    $02,X
         LDAA    $041A
         STAA    $03,X
-        INC     $1B1F
-        LDAA    $1B1F
+        INC     cursorCol
+        LDAA    cursorCol
         CMPA    #$28
         BCS     $DB94
         LDAA    $0490
-        STAA    $1B1F
+        STAA    cursorCol
         JMP     parseNextByte
         TST     $04AF
         BPL     $DBDA
@@ -3931,8 +3936,8 @@ ctrlIgnored:
         LDAA    #$03
         STAA    $049F
         JMP     parseNextByte
-        CLR     $1B1E
-        CLR     $1B1F
+        CLR     cursorRow
+        CLR     cursorCol
         JSR     $ECB5
         JSR     $E9A5
         JSR     $EE3A
@@ -3969,12 +3974,12 @@ ctrlIgnored:
         JSR     $EE3A
         LDAA    $048D
         ANDA    #$3F
-        STAA    $1B1E
-        DEC     $1B1E
+        STAA    cursorRow
+        DEC     cursorRow
         JSR     $E98C
         ANDA    #$3F
-        STAA    $1B1F
-        DEC     $1B1F
+        STAA    cursorCol
+        DEC     cursorCol
         JSR     $E9A5
         JMP     parseNextByte
         JMP     $D34C
@@ -4051,11 +4056,11 @@ ctrlIgnored:
         LDAB    #$03
         LDAA    #$03
         JSR     $E4FF
-        LDAA    $1B1E
-        CMPA    $1B1D
+        LDAA    cursorRow
+        CMPA    scrollBottom
         BNE     $DD3E
         JSR     $EA44
-        DEC     $1B1E
+        DEC     cursorRow
         JSR     $EC16
         JSR     $E9A5
         JMP     $DDFB
@@ -4097,7 +4102,7 @@ ctrlIgnored:
         LDAA    #$00
         JSR     $E9FF
         JMP     $DDFB
-        LDAB    $1B1F
+        LDAB    cursorCol
         ASLB
         ASLB
         LDX     $040A
@@ -4337,19 +4342,19 @@ ctrlIgnored:
         ASL     $048D
         ASL     $048D
         ADDA    $048D
-        STAA    $1B1C
-        DEC     $1B1C
+        STAA    scrollTop
+        DEC     scrollTop
         JSR     $E98C
         CMPA    #$3B
         BEQ     $E029
         JMP     $E9A2
         DECB
-        STAB    $1B1C
+        STAB    scrollTop
         JSR     $E98C
         ANDA    #$0F
         STAA    $048D
-        STAA    $1B1D
-        DEC     $1B1D
+        STAA    scrollBottom
+        DEC     scrollBottom
         JSR     $E98C
         CMPA    #$55
         BEQ     $E075
@@ -4361,8 +4366,8 @@ ctrlIgnored:
         ASL     $048D
         ASL     $048D
         ADDA    $048D
-        STAA    $1B1D
-        DEC     $1B1D
+        STAA    scrollBottom
+        DEC     scrollBottom
         JSR     $E98C
         CMPA    #$55
         BEQ     $E075
@@ -4370,16 +4375,16 @@ ctrlIgnored:
         BEQ     $E067
         JMP     $E9A2
         LDAA    #$FF
-        STAA    $1B1C
-        STAA    $1B1D
+        STAA    scrollTop
+        STAA    scrollBottom
         STAA    $1B23
         JMP     parseNextByte
         LDAA    #$FF
         STAA    $1B23
-        LDAA    $1B1C
+        LDAA    scrollTop
         BEQ     $E067
-        LDAA    $1B1D
-        CMPA    $1B00
+        LDAA    scrollBottom
+        CMPA    cursorRowMax
         BEQ     $E067
         JMP     parseNextByte
         LDAA    #$00
@@ -4453,7 +4458,7 @@ ctrlIgnored:
         LDAA    #$00
         JSR     $E57B
         JMP     $E4FC
-        LDAB    $1B1F
+        LDAB    cursorCol
         LDX     $040E
         ABX
         LDAA    $00,X
@@ -4461,7 +4466,7 @@ ctrlIgnored:
         STAA    $00,X
         CLR     $048D
         CLR     $048E
-        LDAA    $1B1F
+        LDAA    cursorCol
         STAA    $0490
         LDAB    $0490
         ASLB
@@ -4517,7 +4522,7 @@ ctrlIgnored:
         LDAA    #$00
         JSR     $E57B
         JMP     $E4FC
-        LDAB    $1B1F
+        LDAB    cursorCol
         LDX     $040E
         ABX
         LDAA    $00,X
@@ -4525,7 +4530,7 @@ ctrlIgnored:
         STAA    $00,X
         CLR     $048D
         CLR     $048E
-        LDAA    $1B1F
+        LDAA    cursorCol
         STAA    $0490
         LDAB    $0490
         ASLB
@@ -4819,7 +4824,7 @@ ctrlIgnored:
         ASLA
         ORAA    $048D
         ORAA    #$80
-        LDAB    $1B1E
+        LDAB    cursorRow
         LDX     #$1B03
         ABX
         STAA    $00,X
@@ -4858,7 +4863,7 @@ ctrlIgnored:
         BPL     $E514
         RTS
         LDX     $040E
-        LDAB    $1B1F
+        LDAB    cursorCol
         ABX
         LDAA    $00,X
         ORAA    $04B6
@@ -4872,7 +4877,7 @@ ctrlIgnored:
         LDAA    $00,X
         ANDA    $04B6
         BEQ     $E525
-        LDAB    $1B1F
+        LDAB    cursorCol
         LDX     $1B21
         ABX
         LDAB    $048F
@@ -4882,7 +4887,7 @@ ctrlIgnored:
         INX
         DECB
         BNE     $E53F
-        LDAB    $1B1F
+        LDAB    cursorCol
         ASLB
         ASLB
         ADDB    $04B7
@@ -4922,14 +4927,14 @@ ctrlIgnored:
         COMB
         LDAA    $04B9
         RTS
-        LDAA    $1B1E
+        LDAA    cursorRow
         PSHA
-        LDAA    $1B1F
+        LDAA    cursorCol
         PSHA
         LDAA    #$18
-        STAA    $1B1E
+        STAA    cursorRow
         LDAA    #$00
-        STAA    $1B1F
+        STAA    cursorCol
         JSR     $E9A5
         LDX     #$0000
         LDAB    #$FF
@@ -4958,16 +4963,16 @@ ctrlIgnored:
         DECB
         BPL     $E5D7
         PULA
-        STAA    $1B1F
+        STAA    cursorCol
         PULA
-        STAA    $1B1E
+        STAA    cursorRow
         JSR     $E9A5
         RTS
         LDAA    #$FF
         STAA    $04A4
         STAA    $1B23
         LDAA    #$17
-        STAA    $1B00
+        STAA    cursorRowMax
         JSR     $E98C
         STAA    $048D
         ANDA    #$F0
@@ -4978,7 +4983,7 @@ ctrlIgnored:
         CMPA    #$42
         BNE     $E62A
         LDAA    #$13
-        STAA    $1B00
+        STAA    cursorRowMax
         LDAA    #$FF
         STAA    $1B23
         JSR     $E98C
@@ -5022,7 +5027,7 @@ ctrlIgnored:
         INCB
         STAB    $049C
         LDAA    #$17
-        STAA    $1B00
+        STAA    cursorRowMax
         LDAA    #$FF
         STAA    $1B23
         STAA    $04A4
@@ -5049,9 +5054,9 @@ ctrlIgnored:
         JMP     parseNextByte
         LDAA    #$FF
         STAA    $04AF
-        LDAA    $1B1F
+        LDAA    cursorCol
         STAA    $04A6
-        LDAA    $1B1E
+        LDAA    cursorRow
         STAA    $04A5
         LDAA    $04A4
         STAA    $04A7
@@ -5067,14 +5072,14 @@ ctrlIgnored:
         STAA    $04AA
         LDAA    $049E
         STAA    $04AB
-        CLR     $1B1F
+        CLR     cursorCol
         CLR     $04A4
         CLR     $0495
         CLR     $0497
         JSR     $E98C
         ANDA    #$1F
-        STAA    $1B1E
-        DEC     $1B1E
+        STAA    cursorRow
+        DEC     cursorRow
         JSR     $E9A5
         JSR     $EE3A
         CLR     $0499
@@ -5093,9 +5098,9 @@ ctrlIgnored:
         JMP     parseNextByte
         CLR     $04AF
         LDAA    $04A6
-        STAA    $1B1F
+        STAA    cursorCol
         LDAA    $04A5
-        STAA    $1B1E
+        STAA    cursorRow
         JSR     $E9A5
         LDAA    $04A7
         STAA    $04A4
@@ -5118,14 +5123,14 @@ ctrlIgnored:
         LDAA    $04B1
         ANDA    #$01
         BEQ     $E7CB
-        LDAA    $1B1E
+        LDAA    cursorRow
         BEQ     $E7CB
-        LDAA    $1B1E
+        LDAA    cursorRow
         DECA
-        CMPA    $1B1D
+        CMPA    scrollBottom
         BNE     $E7A1
         JMP     $E94E
-        LDAB    $1B1F
+        LDAB    cursorCol
         ASLB
         ASLB
         LDX     $040A
@@ -5133,16 +5138,16 @@ ctrlIgnored:
         LDAA    $00,X
         BPL     $E7B1
         JMP     $E94E
-        LDAA    $1B1E
-        CMPA    $1B1C
+        LDAA    cursorRow
+        CMPA    scrollTop
         BNE     $E7C2
         JSR     $EB28
-        INC     $1B1E
+        INC     cursorRow
         JSR     $EC16
-        DEC     $1B1E
+        DEC     cursorRow
         JSR     $E9A5
-        INC     $1B1E
-        LDAB    $1B1F
+        INC     cursorRow
+        LDAB    cursorCol
         ASLB
         ASLB
         STAB    $048E
@@ -5180,7 +5185,7 @@ ctrlIgnored:
         STAA    $06,X
         LDAA    $04B4
         STAA    $07,X
-        TST     $1B1F
+        TST     cursorCol
         BEQ     $E885
         DEX
         DEX
@@ -5226,7 +5231,7 @@ ctrlIgnored:
         BEQ     $E87A
         ORAB    #$10
         PSHB
-        LDAB    $1B1F
+        LDAB    cursorCol
         LDX     $040E
         ABX
         PULB
@@ -5309,7 +5314,7 @@ ctrlIgnored:
         ANDA    #$F8
         ORAA    $048F
         STAA    $01,X
-        LDAB    $1B1F
+        LDAB    cursorCol
         LDX     $1B21
         ABX
         LDAA    $04B5
@@ -5321,17 +5326,17 @@ ctrlIgnored:
         LDAA    $00,X
         ANDA    #$02
         BEQ     $E968
-        LDAA    $1B1F
+        LDAA    cursorCol
         CMPA    #$27
         BEQ     $E968
-        INC     $1B1F
+        INC     cursorCol
         JSR     $EC16
-        INC     $1B1F
+        INC     cursorCol
         JSR     $EC16
         JSR     $E9A5
         RTS
         LDX     $040C
-        LDAB    $1B1F
+        LDAB    cursorCol
         ABX
         LDAA    $04B5
         ANDA    #$7F
@@ -5353,7 +5358,7 @@ ctrlIgnored:
         RTS
         JMP     $D34C
         JMP     parseNextByte
-        LDAB    $1B1E
+        LDAB    cursorRow
         ASLB
         LDX     #$FC77
         ABX
@@ -5426,16 +5431,16 @@ ctrlIgnored:
         ORAA    $048D
         STAA    $04B3
         RTS
-        TST     $1B1C
+        TST     scrollTop
         BPL     $EA4A
         RTS
-        LDAB    $1B1D
+        LDAB    scrollBottom
         ASLB
         LDX     #$FC77
         ABX
         LDD     $00,X
         STD     $0406
-        LDAB    $1B1C
+        LDAB    scrollTop
         ASLB
         LDX     #$FC77
         ABX
@@ -5456,13 +5461,13 @@ ctrlIgnored:
         INX
         DECB
         BNE     $EA7C
-        LDAB    $1B1D
+        LDAB    scrollBottom
         ASLB
         LDX     #$FC45
         ABX
         LDD     $00,X
         STD     $0406
-        LDAB    $1B1C
+        LDAB    scrollTop
         ASLB
         LDX     #$FC45
         ABX
@@ -5476,13 +5481,13 @@ ctrlIgnored:
         INX
         CPX     $0406
         BCS     $EAA4
-        LDAB    $1B1D
+        LDAB    scrollBottom
         ASLB
         LDX     #$FCDB
         ABX
         LDD     $00,X
         STD     $0406
-        LDAB    $1B1C
+        LDAB    scrollTop
         ASLB
         LDX     #$FCDB
         ABX
@@ -5501,13 +5506,13 @@ ctrlIgnored:
         INX
         DECB
         BNE     $EADC
-        LDAB    $1B1D
+        LDAB    scrollBottom
         ASLB
         LDX     #$FCA9
         ABX
         LDD     $00,X
         STD     $0406
-        LDAB    $1B1C
+        LDAB    scrollTop
         ASLB
         LDX     #$FCA9
         ABX
@@ -5537,16 +5542,16 @@ ctrlIgnored:
         DECB
         BNE     $EB10
         RTS
-        TST     $1B1C
+        TST     scrollTop
         BPL     $EB2E
         RTS
-        LDAB    $1B1C
+        LDAB    scrollTop
         ASLB
         LDX     #$FC77
         ABX
         LDD     $00,X
         STD     $0406
-        LDAB    $1B1D
+        LDAB    scrollBottom
         ASLB
         LDX     #$FC77
         ABX
@@ -5569,13 +5574,13 @@ ctrlIgnored:
         INX
         DECB
         BNE     $EB62
-        LDAB    $1B1C
+        LDAB    scrollTop
         ASLB
         LDX     #$FC45
         ABX
         LDD     $00,X
         STD     $0406
-        LDAB    $1B1D
+        LDAB    scrollBottom
         ASLB
         LDX     #$FC45
         ABX
@@ -5590,13 +5595,13 @@ ctrlIgnored:
         DEX
         CPX     $0406
         BCC     $EB8B
-        LDAB    $1B1C
+        LDAB    scrollTop
         ASLB
         LDX     #$FCDB
         ABX
         LDD     $00,X
         STD     $0406
-        LDAB    $1B1D
+        LDAB    scrollBottom
         ASLB
         LDX     #$FCDB
         ABX
@@ -5617,13 +5622,13 @@ ctrlIgnored:
         INX
         DECB
         BNE     $EBC5
-        LDAB    $1B1C
+        LDAB    scrollTop
         ASLB
         LDX     #$FCA9
         ABX
         LDD     $00,X
         STD     $0406
-        LDAB    $1B1D
+        LDAB    scrollBottom
         ASLB
         LDX     #$FCA9
         ABX
@@ -5658,7 +5663,7 @@ ctrlIgnored:
         DECB
         BNE     $EBFE
         RTS
-        LDAA    $1B1F
+        LDAA    cursorCol
         BMI     $EC22
         CMPA    #$28
         BCC     $EC3E
@@ -5667,56 +5672,56 @@ ctrlIgnored:
         BPL     $EC38
         JSR     $EE3A
         LDAA    #$27
-        STAA    $1B1F
+        STAA    cursorCol
         JSR     $EC8D
         JSR     $E9A5
         JMP     $EC5A
-        CLR     $1B1F
+        CLR     cursorCol
         JMP     $EC5A
         TST     $04A4
         BPL     $EC52
         JSR     $EE3A
-        CLR     $1B1F
+        CLR     cursorCol
         JSR     $ECA1
         JSR     $E9A5
         JMP     $EC5A
         LDAA    #$27
-        STAA    $1B1F
+        STAA    cursorCol
         JMP     $EC5A
-        LDAA    $1B1E
+        LDAA    cursorRow
         BMI     $EC65
-        CMPA    $1B00
+        CMPA    cursorRowMax
         BHI     $EC79
         RTS
         TST     $04A4
         BPL     $EC73
-        LDAA    $1B00
-        STAA    $1B1E
+        LDAA    cursorRowMax
+        STAA    cursorRow
         JMP     $E9A5
-        CLR     $1B1E
+        CLR     cursorRow
         JMP     $E9A5
         TST     $04A4
         BPL     $EC84
-        CLR     $1B1E
+        CLR     cursorRow
         JMP     $E9A5
-        LDAA    $1B00
-        STAA    $1B1E
+        LDAA    cursorRowMax
+        STAA    cursorRow
         JMP     $E9A5
-        LDAA    $1B1E
-        CMPA    $1B1C
+        LDAA    cursorRow
+        CMPA    scrollTop
         BNE     $EC9D
         TST     $04A3
         BPL     $EC9D
         JMP     $EB28
-        DEC     $1B1E
+        DEC     cursorRow
         RTS
-        LDAA    $1B1E
-        CMPA    $1B1D
+        LDAA    cursorRow
+        CMPA    scrollBottom
         BNE     $ECB1
         TST     $04A3
         BPL     $ECB1
         JMP     $EA44
-        INC     $1B1E
+        INC     cursorRow
         RTS
         CLR     $04B0
         CLR     $04B1
@@ -5773,17 +5778,17 @@ ctrlIgnored:
         INCB
         STAB    $049C
         LDAA    #$17
-        STAA    $1B00
+        STAA    cursorRowMax
         LDAA    #$FF
         STAA    $04A4
         CLR     $0496
-        CLR     $1B1E
-        CLR     $1B1F
+        CLR     cursorRow
+        CLR     cursorCol
         JSR     $E9A5
         CLR     $0495
         LDAA    #$FF
-        STAA    $1B1C
-        STAA    $1B1D
+        STAA    scrollTop
+        STAA    scrollBottom
         STAA    $049F
         STAA    $04A3
         LDAA    #$09
@@ -5794,8 +5799,8 @@ ctrlIgnored:
         CLR     $0627
         CLR     $1B29
         CLR     $04E0
-        CLR     $1B1E
-        CLR     $1B1F
+        CLR     cursorRow
+        CLR     cursorCol
         JSR     $E9A5
         CLR     $04D9
         LDAA    #$64
@@ -5823,14 +5828,14 @@ ctrlIgnored:
         INCB
         STAB    $049C
         LDAA    #$17
-        STAA    $1B00
+        STAA    cursorRowMax
         LDAA    #$FF
         STAA    $04A4
         CLR     $0496
         CLR     $0495
         LDAA    #$FF
-        STAA    $1B1C
-        STAA    $1B1D
+        STAA    scrollTop
+        STAA    scrollBottom
         STAA    $049F
         STAA    $04A3
         LDAA    #$09

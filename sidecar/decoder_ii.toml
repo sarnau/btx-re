@@ -208,6 +208,20 @@ LDA $8009 / CMP $8009 / BNE in the C64 bootstrap.
 
 $0406 is a shared scratch pointer, reused at $EA54 and elsewhere for pointer
 tables at $FC45/$FC77/$FCA9/$FCDB."""
+"0x1B1E" = """
+Display cursor state.
+
+$1B1F is the column, wrapped against 40 ($28) and 39 ($27) - the CEPT screen
+width. $1B1E is the row, clamped between scrollTop ($1B1C) and scrollBottom
+($1B1D) with an absolute ceiling in cursorRowMax ($1B00).
+
+$EC16 is the wrap logic: column below 0 sets it to 39 and decrements the row;
+column reaching 40 clears it and increments the row. $EC8D and $ECA1 are the
+bounded row decrement and increment, each falling through to scroll ($EB28 /
+$EA44) when the cursor is already at the window edge.
+
+The $1B00-$1B2D block is therefore RAM holding display state, NOT a
+memory-mapped peripheral as its all-read/write access pattern first suggested."""
 "0x0000" = """
 Hardware memory map, as established from the addresses the firmware touches.
 
@@ -215,8 +229,7 @@ Hardware memory map, as established from the addresses the firmware touches.
   $0080-$00FF  6801 internal RAM; interrupt soft vectors at $00F0-$00FB
   $0400-$07FF  external RAM, ~1 KB of variables; the stack grows down from
                $0400 (LDS #$0400 at reset), so $0000-$03FF is stack space
-  $1B00-$1B2D  peripheral, 20 registers, all read/write with read-modify-write
-               access; function not yet established
+  $1B00-$1B2D  RAM holding display/cursor state (see $1B1E), not a peripheral
   $6009-$6011  C64 dual-port control and status
   $6080-$608F  16-byte shared FIFO to the C64
   $61F9-$61FD  write-only control registers
@@ -390,6 +403,13 @@ vectors before entering the main firmware."""
 "0x0012" = "RDR"
 "0x0013" = "TDR"
 "0x0014" = "RAMCR"
+# Display cursor state (RAM, not a peripheral). See the block comment at $1B1E.
+"0x1B00" = "cursorRowMax"
+"0x1B1C" = "scrollTop"
+"0x1B1D" = "scrollBottom"
+"0x1B1E" = "cursorRow"
+"0x1B1F" = "cursorCol"
+
 # C64 interface: a dual-port window. The 6801 sees it at $6000, the C64 at
 # $8000 - the low offsets match ($x009/$x00A/$x00B).
 "0x6009" = "c64FifoWr"
