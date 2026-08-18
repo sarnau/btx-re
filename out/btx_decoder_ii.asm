@@ -100,6 +100,8 @@ txBitsLeft     EQU     $04EC
 txRing         EQU     $04EE
 asciiCol       EQU     $0617
 asciiRow       EQU     $0618
+renderRow      EQU     $07B0
+renderCol      EQU     $07B1
 glyphPtr       EQU     $07B2
 videoPtr       EQU     $07B6
 glyphBuf       EQU     $07BE
@@ -857,8 +859,27 @@ LA2E4:
         CPX     #$53A0
         BCS     LA2E4
         LDAA    #$00
-        STAA    $07B0
-        STAA    $07B1
+
+; renderRow and renderCol - where the raster walk currently is.
+;
+; Reset to 0 here, stepped at $A776, and read at 29 sites. Every one of them
+; treats the pair the same way, which is worth saying because two of the uses
+; look unrelated at a glance:
+;
+;   compared   CMPA cursorCol / CMPA cursorRow at $A722 and $A72A, so $A71D can
+;              tell when the walk has reached the cursor and draw it
+;   addressed  renderRow * 4 * glyphRows + videoRam -> videoPtr, while renderCol
+;              goes to PORT3 with #$18 added. One is arithmetic on a variable,
+;              the other loads a hardware latch, but both are the same position
+;   sent       $A59B and $A5A1 copy them into $6089 and $608A, the row and column
+;              bytes of the cell mailbox. The C64 reads exactly those two as
+;              btxFifo09 and btxFifo0A and hands them to c64PlotChar as Y and X
+;
+; renderCol wraps against the byte at $AEFA rather than an immediate, so the
+; line width is a ROM constant sitting just under fontBaseTable. renderRow wraps
+; to 24 when it reaches 20 and $1B00 holds 19, which is the status line.
+        STAA    renderRow
+        STAA    renderCol
         LDD     #planeChar
         STD     >$00E6
         LDD     #planeAttr
@@ -927,10 +948,10 @@ LA377:
         BEQ     LA3DC
         ANDA    #$02
         BEQ     LA3AE
-        LDAA    $07B1
+        LDAA    renderCol
         CMPA    #$27
         BEQ     LA3A6
-        LDAA    $07B0
+        LDAA    renderRow
         BEQ     LA3AE
         LDD     >$00E4
         SUBD    #$00A0
@@ -952,10 +973,10 @@ LA3AE:
         LDAA    >$00E0
         ANDA    #$01
         BEQ     LA3DC
-        LDAA    $07B0
+        LDAA    renderRow
         CMPA    cursorRowMax
         BEQ     LA3D9
-        LDAA    $07B0
+        LDAA    renderRow
         INCA
         CMPA    scrollTop
         BEQ     LA3D9
@@ -1214,9 +1235,9 @@ LA55B:
         STAA    $6087
         LDAA    >$00E3
         STAA    $6088
-        LDAA    $07B0
+        LDAA    renderRow
         STAA    $6089
-        LDAA    $07B1
+        LDAA    renderCol
         STAA    $608A
         LDAA    #$FF
         STAA    $608B
@@ -1453,10 +1474,10 @@ LA718:
 LA71D:
         TST     $1B20
         BEQ     LA75F
-        LDAA    $07B1
+        LDAA    renderCol
         CMPA    cursorCol
         BNE     LA75F
-        LDAA    $07B0
+        LDAA    renderRow
         CMPA    cursorRow
         BNE     LA75F
         LDAA    cursorCol
@@ -1489,14 +1510,14 @@ LA75F:
         LDD     >$00E4
         ADDD    #$0004
         STD     >$00E4
-        INC     $07B1
-        LDAA    $07B1
+        INC     renderCol
+        LDAA    renderCol
         CMPA    $AEFA
         BLS     LA7C4
         LDAA    #$00
-        STAA    $07B1
-        INC     $07B0
-        LDAA    $07B0
+        STAA    renderCol
+        INC     renderRow
+        LDAA    renderRow
         CMPA    #$14
         BNE     LA7BB
         LDAA    cursorRowMax
@@ -1505,7 +1526,7 @@ LA75F:
 
 LA797:
         LDAA    #$18
-        STAA    $07B0
+        STAA    renderRow
         LDAA    #$0A
         STAA    glyphRows
         LDAA    #$FF
@@ -1521,7 +1542,7 @@ LA797:
 LA7BB:
         LDAA    cursorRowMax
         INCA
-        CMPA    $07B0
+        CMPA    renderRow
         BLT     LA7D5
 
 LA7C4:
@@ -1705,10 +1726,10 @@ LA903:
         JMP     LA98A
 
 LA90D:
-        LDAB    $07B1
+        LDAB    renderCol
         ADDB    #$18
         STAB    >PORT3
-        LDAB    $07B0
+        LDAB    renderRow
         ASLB
         ASLB
         LDAA    glyphRows
@@ -1771,10 +1792,10 @@ LA96B:
         JMP     LA71D
 
 LA98A:
-        LDAB    $07B1
+        LDAB    renderCol
         ADDB    #$18
         STAB    >PORT3
-        LDAB    $07B0
+        LDAB    renderRow
         ASLB
         ASLB
         LDAA    glyphRows
@@ -1986,10 +2007,10 @@ LAAFE:
         JMP     LA71D
 
 LAB05:
-        LDAB    $07B1
+        LDAB    renderCol
         ADDB    #$18
         STAB    >PORT3
-        LDAB    $07B0
+        LDAB    renderRow
         ASLB
         ASLB
         LDAA    glyphRows
@@ -2124,10 +2145,10 @@ LABD8:
         RTS
 
 LABD9:
-        LDAB    $07B1
+        LDAB    renderCol
         ADDB    #$18
         STAB    >PORT3
-        LDAB    $07B0
+        LDAB    renderRow
         ASLB
         ASLB
         LDAA    glyphRows
@@ -2301,10 +2322,10 @@ LACFA:
         RTS
 
 LACFB:
-        LDAB    $07B1
+        LDAB    renderCol
         ADDB    #$18
         STAB    >PORT3
-        LDAB    $07B0
+        LDAB    renderRow
         ASLB
         ASLB
         LDAA    glyphRows
@@ -2429,10 +2450,10 @@ LADE7:
         RTS
 
 LADE8:
-        LDAB    $07B1
+        LDAB    renderCol
         ADDB    #$18
         STAB    >PORT3
-        LDAB    $07B0
+        LDAB    renderRow
         ASLB
         ASLB
         LDAA    glyphRows
