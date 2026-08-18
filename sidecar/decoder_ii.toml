@@ -779,13 +779,30 @@ $6C, BASIC's ARGMO, is never touched. It used to appear in the EQU list because
 the emitter matched immediates against the symbol table, so LDA #$6C pulled the
 name in; immediates are values, not addresses, and no longer do.
 
-The KERNAL file variables above are used as intended: FNLEN, LA, SA, FA and the
-FNADR pointer are set up before OPEN, LOAD and CLOSE, and the payload drives
-the IEC bus through the routines behind them.
+Every other zero-page location the payload touches was checked against the
+built ROM's own symbol table, both for the address and for the use, and each
+is used for the purpose its name states:
 
-Only locations with well-established names are listed. The rest of the zero
-page the payload touches - the BASIC workspace below $60 and a scattering
-above $B0 - is left as addresses, since a name there would be a guess."""
+  $90  STATUS   cleared before every IEC operation and read back after. The
+                BIT STATUS tests are the N and V bits the KERNAL sets, and
+                c64DiskGetByte's LDA #$FD / AND STATUS clears the read-timeout
+                bit before retrying. None of that would work if $90 were being
+                borrowed, because it is the KERNAL that writes it
+  $9A  DFLTO    stored once, at the end of c64OpenSeqWrite, so that BSOUT goes
+                to the file just opened. Nothing in the payload reads it back,
+                which is the evidence rather than a gap: the store only means
+                anything because the KERNAL reads it
+  $B7-$BC       FNLEN, LA, SA, FA and the FNADR pointer, set up before OPEN,
+                LOAD and CLOSE
+  $CC $D3 $D6   BLNSW, PNTR and TBLX, the screen editor variables c64SetCursor
+                sets before calling STUPT
+  $D9  LDTB1    read by c64PlotChar, with LDTB2 at $ECF0
+
+$A0 and $D0 were declared as TIME_ and CRSW for a while. The payload addresses
+neither; they appeared only because the emitter matched immediates against the
+symbol table, and they went with that.
+
+No zero-page operand in either block is left as a bare address."""
 "0xC80C" = """
 Filename of the extra software: "BTX-EXTRA.MAS", null-terminated.
 
@@ -1924,7 +1941,6 @@ org = 0x0FFE
 "0x006E" = "c64BufRdHi"
 "0x0090" = "STATUS"
 "0x009A" = "DFLTO"
-"0x00A0" = "TIME_"
 "0x00A7" = "c64ScrPtr"
 "0x00A8" = "c64ScrPtrHi"
 "0x00B7" = "FNLEN"
@@ -1933,7 +1949,6 @@ org = 0x0FFE
 "0x00BA" = "FA"
 "0x00BB" = "FNADR"
 "0x00CC" = "BLNSW"
-"0x00D0" = "CRSW"
 "0x00D3" = "PNTR"
 "0x00D9" = "LDTB1"
 "0x00D6" = "TBLX"

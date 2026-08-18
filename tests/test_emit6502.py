@@ -523,3 +523,16 @@ def test_data_operands_do_not_invent_kernal_names():
     assert c64kernal.known_name(0xEC00) is None
     assert c64kernal.known_name(0xECF0) == "LDTB2"
     assert c64kernal.known_name(0xFD90) == "SIZE+8"
+
+
+def test_no_dead_zero_page_symbols():
+    """A symbol the payload never addresses should not be declared. TIME_ and
+    CRSW were declared for a while because immediates were matched against the
+    symbol table, so LDA #$A0 looked like a reference to $A0."""
+    import tomllib
+    sidecar = tomllib.load(open(OUT.parent / "sidecar" / "decoder_ii.toml", "rb"))
+    src = ((OUT / "c64_payload.asm").read_text()
+           + (OUT / "c64_bootstrap.asm").read_text())
+    dead = [n for n in sidecar["c64_symbols"].values()
+            if not re.search(rf"^{n}\s+EQU\s", src, re.M)]
+    assert not dead, dead
