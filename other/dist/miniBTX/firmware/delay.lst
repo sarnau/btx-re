@@ -1,0 +1,220 @@
+   1               		.file	"delay.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   7               		.text
+   8               	.global	systemDelay10ms
+  10               	systemDelay10ms:
+  11               	/* prologue: function */
+  12               	/* frame size = 0 */
+  13               	/* stack size = 0 */
+  14               	.L__stack_usage = 0
+  15               	.L2:
+  16 0000 8823      		tst r24
+  17 0002 01F0      		breq .L5
+  18 0004 EFE3      		ldi r30,lo8(-25537)
+  19 0006 FCE9      		ldi r31,hi8(-25537)
+  20 0008 3197      		1: sbiw r30,1
+  21 000a 01F4      		brne 1b
+  22 000c 00C0      		rjmp .
+  23 000e 0000      		nop
+  24 0010 8150      		subi r24,lo8(-(-1))
+  25 0012 00C0      		rjmp .L2
+  26               	.L5:
+  27               	/* epilogue start */
+  28 0014 0895      		ret
+  30               	.global	systemDelay1s
+  32               	systemDelay1s:
+  33 0016 CF93      		push r28
+  34               	/* prologue: function */
+  35               	/* frame size = 0 */
+  36               	/* stack size = 1 */
+  37               	.L__stack_usage = 1
+  38 0018 C82F      		mov r28,r24
+  39               	.L7:
+  40 001a CC23      		tst r28
+  41 001c 01F0      		breq .L9
+  42 001e 84E6      		ldi r24,lo8(100)
+  43 0020 00D0      		rcall systemDelay10ms
+  44 0022 C150      		subi r28,lo8(-(-1))
+  45 0024 00C0      		rjmp .L7
+  46               	.L9:
+  47               	/* epilogue start */
+  48 0026 CF91      		pop r28
+  49 0028 0895      		ret
+  51               	.global	systemDelay100ms
+  53               	systemDelay100ms:
+  54 002a CF93      		push r28
+  55               	/* prologue: function */
+  56               	/* frame size = 0 */
+  57               	/* stack size = 1 */
+  58               	.L__stack_usage = 1
+  59 002c C82F      		mov r28,r24
+  60               	.L11:
+  61 002e CC23      		tst r28
+  62 0030 01F0      		breq .L13
+  63 0032 8AE0      		ldi r24,lo8(10)
+  64 0034 00D0      		rcall systemDelay10ms
+  65 0036 C150      		subi r28,lo8(-(-1))
+  66 0038 00C0      		rjmp .L11
+  67               	.L13:
+  68               	/* epilogue start */
+  69 003a CF91      		pop r28
+  70 003c 0895      		ret
+  72               	.global	systemDelay1ms
+  74               	systemDelay1ms:
+  75               	/* prologue: function */
+  76               	/* frame size = 0 */
+  77               	/* stack size = 0 */
+  78               	.L__stack_usage = 0
+  79               	.L15:
+  80 003e 8823      		tst r24
+  81 0040 01F0      		breq .L17
+  82 0042 EFE9      		ldi r30,lo8(3999)
+  83 0044 FFE0      		ldi r31,hi8(3999)
+  84 0046 3197      		1: sbiw r30,1
+  85 0048 01F4      		brne 1b
+  86 004a 00C0      		rjmp .
+  87 004c 0000      		nop
+  88 004e 8150      		subi r24,lo8(-(-1))
+  89 0050 00C0      		rjmp .L15
+  90               	.L17:
+  91               	/* epilogue start */
+  92 0052 0895      		ret
+  94               	.global	systemDelay10us
+  96               	systemDelay10us:
+  97               	/* prologue: function */
+  98               	/* frame size = 0 */
+  99               	/* stack size = 0 */
+ 100               	.L__stack_usage = 0
+ 101               	.L19:
+ 102 0054 8823      		tst r24
+ 103 0056 01F0      		breq .L21
+ 104 0058 95E3      		ldi r25,lo8(53)
+ 105 005a 9A95      		1: dec r25
+ 106 005c 01F4      		brne 1b
+ 107 005e 0000      		nop
+ 108 0060 8150      		subi r24,lo8(-(-1))
+ 109 0062 00C0      		rjmp .L19
+ 110               	.L21:
+ 111               	/* epilogue start */
+ 112 0064 0895      		ret
+ 114               	.global	systemDelay100us
+ 116               	systemDelay100us:
+ 117 0066 CF93      		push r28
+ 118               	/* prologue: function */
+ 119               	/* frame size = 0 */
+ 120               	/* stack size = 1 */
+ 121               	.L__stack_usage = 1
+ 122 0068 C82F      		mov r28,r24
+ 123               	.L23:
+ 124 006a CC23      		tst r28
+ 125 006c 01F0      		breq .L25
+ 126 006e 8AE0      		ldi r24,lo8(10)
+ 127 0070 00D0      		rcall systemDelay10us
+ 128 0072 C150      		subi r28,lo8(-(-1))
+ 129 0074 00C0      		rjmp .L23
+ 130               	.L25:
+ 131               	/* epilogue start */
+ 132 0076 CF91      		pop r28
+ 133 0078 0895      		ret
+ 135               	.global	systemDelay1us
+ 137               	systemDelay1us:
+ 138               	/* prologue: function */
+ 139               	/* frame size = 0 */
+ 140               	/* stack size = 0 */
+ 141               	.L__stack_usage = 0
+ 142               	.L27:
+ 143 007a 8823      		tst r24
+ 144 007c 01F0      		breq .L29
+ 145 007e 95E0      		ldi r25,lo8(5)
+ 146 0080 9A95      		1: dec r25
+ 147 0082 01F4      		brne 1b
+ 148 0084 0000      		nop
+ 149 0086 8150      		subi r24,lo8(-(-1))
+ 150 0088 00C0      		rjmp .L27
+ 151               	.L29:
+ 152               	/* epilogue start */
+ 153 008a 0895      		ret
+ 155               	.global	systemDelay05us
+ 157               	systemDelay05us:
+ 158               	/* prologue: function */
+ 159               	/* frame size = 0 */
+ 160               	/* stack size = 0 */
+ 161               	.L__stack_usage = 0
+ 162               	.L31:
+ 163 008c 8823      		tst r24
+ 164 008e 01F0      		breq .L33
+ 165 0090 92E0      		ldi r25,lo8(2)
+ 166 0092 9A95      		1: dec r25
+ 167 0094 01F4      		brne 1b
+ 168 0096 00C0      		rjmp .
+ 169 0098 8150      		subi r24,lo8(-(-1))
+ 170 009a 00C0      		rjmp .L31
+ 171               	.L33:
+ 172               	/* epilogue start */
+ 173 009c 0895      		ret
+ 175               	.global	systemDelay01us
+ 177               	systemDelay01us:
+ 178               	/* prologue: function */
+ 179               	/* frame size = 0 */
+ 180               	/* stack size = 0 */
+ 181               	.L__stack_usage = 0
+ 182               	.L35:
+ 183 009e 8823      		tst r24
+ 184 00a0 01F0      		breq .L37
+ 185 00a2 00C0      		rjmp .
+ 186 00a4 8150      		subi r24,lo8(-(-1))
+ 187 00a6 00C0      		rjmp .L35
+ 188               	.L37:
+ 189               	/* epilogue start */
+ 190 00a8 0895      		ret
+ 192               	.global	systemDelay16
+ 194               	systemDelay16:
+ 195               	/* prologue: function */
+ 196               	/* frame size = 0 */
+ 197               	/* stack size = 0 */
+ 198               	.L__stack_usage = 0
+ 199               	/* #APP */
+ 200               	 ;  105 "/usr/lib/avr/include/util/delay_basic.h" 1
+ 201 00aa 0197      		1: sbiw r24,1
+ 202 00ac 01F4      		brne 1b
+ 203               	 ;  0 "" 2
+ 204               	/* #NOAPP */
+ 205 00ae 0895      		ret
+ 207               	.global	systemDelay8
+ 209               	systemDelay8:
+ 210               	/* prologue: function */
+ 211               	/* frame size = 0 */
+ 212               	/* stack size = 0 */
+ 213               	.L__stack_usage = 0
+ 214               	/* #APP */
+ 215               	 ;  83 "/usr/lib/avr/include/util/delay_basic.h" 1
+ 216 00b0 8A95      		1: dec r24
+ 217 00b2 01F4      		brne 1b
+ 218               	 ;  0 "" 2
+ 219               	/* #NOAPP */
+ 220 00b4 0895      		ret
+ 222               		.ident	"GCC: (GNU) 4.8.2"
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 delay.c
+     /tmp/cchzLu0J.s:2      *ABS*:000000000000003e __SP_H__
+     /tmp/cchzLu0J.s:3      *ABS*:000000000000003d __SP_L__
+     /tmp/cchzLu0J.s:4      *ABS*:000000000000003f __SREG__
+     /tmp/cchzLu0J.s:5      *ABS*:0000000000000000 __tmp_reg__
+     /tmp/cchzLu0J.s:6      *ABS*:0000000000000001 __zero_reg__
+     /tmp/cchzLu0J.s:10     .text:0000000000000000 systemDelay10ms
+     /tmp/cchzLu0J.s:32     .text:0000000000000016 systemDelay1s
+     /tmp/cchzLu0J.s:53     .text:000000000000002a systemDelay100ms
+     /tmp/cchzLu0J.s:74     .text:000000000000003e systemDelay1ms
+     /tmp/cchzLu0J.s:96     .text:0000000000000054 systemDelay10us
+     /tmp/cchzLu0J.s:116    .text:0000000000000066 systemDelay100us
+     /tmp/cchzLu0J.s:137    .text:000000000000007a systemDelay1us
+     /tmp/cchzLu0J.s:157    .text:000000000000008c systemDelay05us
+     /tmp/cchzLu0J.s:177    .text:000000000000009e systemDelay01us
+     /tmp/cchzLu0J.s:194    .text:00000000000000aa systemDelay16
+     /tmp/cchzLu0J.s:209    .text:00000000000000b0 systemDelay8
+
+NO UNDEFINED SYMBOLS

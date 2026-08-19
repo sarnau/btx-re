@@ -126,6 +126,7 @@ Ghidra would produce plausible-looking but wrong disassembly.
     third_party/         asl and c64rom sources, see third_party/README.md
     PDFs/                datasheets and specifications, see below
     other/               third-party BTX material, see below
+    prior-analysis/      an earlier IDA pass, see prior-analysis/README.md
 
 Both ROM images live in this repository, so nothing here depends on a path
 outside it. `sidecar/decoder_ii.toml` names the primary one under `meta.rom`

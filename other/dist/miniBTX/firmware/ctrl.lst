@@ -1,0 +1,61 @@
+   1               		.file	"ctrl.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   7               		.text
+   8               	.global	systemCtrlInit
+  10               	systemCtrlInit:
+  11               	/* prologue: function */
+  12               	/* frame size = 0 */
+  13               	/* stack size = 0 */
+  14               	.L__stack_usage = 0
+  15 0000 C19A      		sbi 0x18,1
+  16 0002 B99A      		sbi 0x17,1
+  17 0004 C29A      		sbi 0x18,2
+  18 0006 949A      		sbi 0x12,4
+  19 0008 0895      		ret
+  21               	.global	systemCtrlReady
+  23               	systemCtrlReady:
+  24               	/* prologue: function */
+  25               	/* frame size = 0 */
+  26               	/* stack size = 0 */
+  27               	.L__stack_usage = 0
+  28 000a C198      		cbi 0x18,1
+  29 000c 0895      		ret
+  31               	.global	systemCtrlCheckInhibit
+  33               	systemCtrlCheckInhibit:
+  34               	/* prologue: function */
+  35               	/* frame size = 0 */
+  36               	/* stack size = 0 */
+  37               	.L__stack_usage = 0
+  38 000e 86B3      		in r24,0x16
+  39 0010 82FB      		bst r24,2
+  40 0012 8827      		clr r24
+  41 0014 80F9      		bld r24,0
+  42 0016 0895      		ret
+  44               	.global	systemCtrlCheckTerminate
+  46               	systemCtrlCheckTerminate:
+  47               	/* prologue: function */
+  48               	/* frame size = 0 */
+  49               	/* stack size = 0 */
+  50               	.L__stack_usage = 0
+  51 0018 80B3      		in r24,0x10
+  52 001a 8295      		swap r24
+  53 001c 8170      		andi r24,1
+  54 001e 0895      		ret
+  56               		.ident	"GCC: (GNU) 4.8.2"
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 ctrl.c
+     /tmp/ccdBCC9Q.s:2      *ABS*:000000000000003e __SP_H__
+     /tmp/ccdBCC9Q.s:3      *ABS*:000000000000003d __SP_L__
+     /tmp/ccdBCC9Q.s:4      *ABS*:000000000000003f __SREG__
+     /tmp/ccdBCC9Q.s:5      *ABS*:0000000000000000 __tmp_reg__
+     /tmp/ccdBCC9Q.s:6      *ABS*:0000000000000001 __zero_reg__
+     /tmp/ccdBCC9Q.s:10     .text:0000000000000000 systemCtrlInit
+     /tmp/ccdBCC9Q.s:23     .text:000000000000000a systemCtrlReady
+     /tmp/ccdBCC9Q.s:33     .text:000000000000000e systemCtrlCheckInhibit
+     /tmp/ccdBCC9Q.s:46     .text:0000000000000018 systemCtrlCheckTerminate
+
+NO UNDEFINED SYMBOLS

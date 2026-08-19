@@ -1,0 +1,53 @@
+   1               		.file	"main.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   7               		.section	.text.startup,"ax",@progbits
+   8               	.global	main
+  10               	main:
+  11               	/* prologue: function */
+  12               	/* frame size = 0 */
+  13               	/* stack size = 0 */
+  14               	.L__stack_usage = 0
+  15 0000 80E4      		ldi r24,lo8(64)
+  16 0002 93E0      		ldi r25,lo8(3)
+  17 0004 00D0      		rcall systemUartInit
+  18 0006 00D0      		rcall systemCtrlInit
+  19 0008 00D0      		rcall systemDbt03Init
+  20 000a 81E0      		ldi r24,lo8(1)
+  21 000c 00D0      		rcall systemUartTransmit
+  22 000e 00D0      		rcall systemDbt03ConnectionOk
+  23 0010 80E0      		ldi r24,0
+  24 0012 00D0      		rcall systemUartTransmit
+  25 0014 00D0      		rcall systemCtrlReady
+  26               	.L3:
+  27 0016 00D0      		rcall systemUartRecive
+  28 0018 00D0      		rcall systemDbt03Transmit
+  29 001a 00D0      		rcall systemCtrlCheckTerminate
+  30 001c 8111      		cpse r24,__zero_reg__
+  31 001e 00C0      		rjmp .L3
+  32 0020 00D0      		rcall systemDbt03ConnectionTerminate
+  33 0022 00C0      		rjmp .L3
+  35               		.ident	"GCC: (GNU) 4.8.2"
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 main.c
+     /tmp/ccA9iM3F.s:2      *ABS*:000000000000003e __SP_H__
+     /tmp/ccA9iM3F.s:3      *ABS*:000000000000003d __SP_L__
+     /tmp/ccA9iM3F.s:4      *ABS*:000000000000003f __SREG__
+     /tmp/ccA9iM3F.s:5      *ABS*:0000000000000000 __tmp_reg__
+     /tmp/ccA9iM3F.s:6      *ABS*:0000000000000001 __zero_reg__
+     /tmp/ccA9iM3F.s:10     .text.startup:0000000000000000 main
+
+UNDEFINED SYMBOLS
+systemUartInit
+systemCtrlInit
+systemDbt03Init
+systemUartTransmit
+systemDbt03ConnectionOk
+systemCtrlReady
+systemUartRecive
+systemDbt03Transmit
+systemCtrlCheckTerminate
+systemDbt03ConnectionTerminate

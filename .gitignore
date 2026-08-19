@@ -2,8 +2,10 @@ __pycache__/
 *.pyc
 .pytest_cache/
 
-# asl listing artifact from tools/check_asl.sh -L
-*.lst
+# asl listing artifact from tools/check_asl.sh -L. Anchored to out/ on purpose:
+# a bare *.lst also swallows other/dist/miniBTX/firmware/*.lst, which are
+# third-party sources rather than build output.
+/out/*.lst
 third_party/build/
 
 # .DS_Store, carried over from the parent's rules along with the two below.
