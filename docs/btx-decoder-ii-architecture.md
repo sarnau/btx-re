@@ -276,7 +276,10 @@ The manual also documents seven table pointers at `$10C0`–`$10CD` (`CAPPUF`,
 `CAPEND`, `HELPIC`, `ASCTAB`, `DINTAB`, `MAKPIC`, `MSGTAB`), 38 variables at
 `$11AA`–`$11F5`, and eight zero-page pointers. Two of the zero-page names it
 gives — SCRPTR at `$67`, a pointer to video RAM, and DISHLP at `$6B`, a pointer
-to the display translation table — are never referenced by this ROM revision.
+to the display translation table — are never referenced by either ROM revision.
+Neither is dead only here: the whole 6502 payload is byte-for-byte identical in
+the CV30113 ROM, so nothing in the shipped C64 software touches them, and they
+are best read as documentation that outlived the code it described.
 They appear here without backticks because they are names from the manual only:
 nothing in the disassembly defines them, and `tools/checkdoc.py` is right to
 insist that every identifier the prose marks as code exists in the sources.
