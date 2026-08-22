@@ -134,8 +134,8 @@ and pins it by SHA-256, which is what makes a swapped or truncated image a
 build failure rather than a silently different disassembly.
 
 `PDFs/` holds the primary sources the architecture document reasons from: the
-MC6801 reference manual and datasheet, ETS 300 072 for CEPT, the Commodore
-service manual for this cartridge, and datasheets for the parts on the board —
+MC6801 reference manual and datasheet, ETS 300 072 for CEPT, Commodore's
+*Bedienungshandbuch* for this cartridge, and datasheets for the parts on the board —
 the 65005 gate array, the MC1377 encoder, the M41464 DRAMs, and the handful of
 74-series glue chips. They are the reason a claim about the hardware can be
 checked against something other than the ROM.
