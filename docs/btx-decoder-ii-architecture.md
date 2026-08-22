@@ -194,9 +194,92 @@ filled with a single value.
 
 7521 bytes at `$1000`–`$2D60`. Everything it does is reached through a
 **61-entry `JMP` table** at `$1000`–`$10B6` — no routine is called except
-through its slot, so the table is the whole API surface. Entries are labelled
-`vec<Name>` and their bodies `c64<Name>`; vectors 44 and 45 share one body under
-two slots.
+through its slot, so the table is the whole API surface. Vectors 44 and 45 share
+one body under two slots.
+
+The table is not a reconstruction. Commodore published it: the
+*Bedienungshandbuch*, Anhang D, "Sprung- und Speicheradressen der
+Anwender-Software", pages 36–43, lists all 61 entries with names and calling
+conventions, so a user program stored as `BTX-EXTRA.MAS` could call into the
+terminal. Those published names are what the listing uses for the slots; the
+bodies keep the descriptive names worked out here, so each slot reads as the
+documented name jumping to what it does — `TOBTX` to `c64SendByte`, `STAMSG` to
+`c64ShowMsg`.
+
+### The published API
+
+| # | Addr | Name | What the manual says it does |
+|---|---|---|---|
+| 0 | `$1000` | `START` | cold start |
+| 1 | `$1003` | `WEITER` | re-entry after loading extension software |
+| 2 | `$1006` | `MAIN` | main program, without splash screen or initialisation |
+| 3 | `$1009` | `SENCOD` | send a byte to the decoder, A in Commodore code; uses CODCH |
+| 4 | `$100C` | `SPECAL` | open the special-functions menu |
+| 5 | `$100F` | `CODCH` | code conversion; result in CODE1-CODE3, C=1 if the code is ignored |
+| 6 | `$1012` | `TOBTX` | send a byte to the decoder without recoding |
+| 7 | `$1015` | `VONBT1` | get a character from the decoder, waiting until one arrives |
+| 8 | `$1018` | `VONBTX` | get a character from the decoder without waiting; C=1 if none |
+| 9 | `$101B` | `OLDST` | restore the decoder's white status line |
+| 10 | `$101E` | `CAPOFF` | end CAPTURE mode, saving the buffer if need be |
+| 11 | `$1021` | `DELAY` | while CTRL is held, wait about 10 ms |
+| 12 | `$1024` | `ASCII` | function "ASCII" |
+| 13 | `$1027` | `BTX` | function "BTX" |
+| 14 | `$102A` | `QUIT` | function "QUIT" |
+| 15 | `$102D` | `FILDIS` | function "LOAD" (file display) |
+| 16 | `$1030` | `OPRD` | open a file for reading and set it as TALKER |
+| 17 | `$1033` | `VONIEC` | read a byte from the IEC bus, from the current TALKER |
+| 18 | `$1036` | `CLORD` | close the read file OPRD opened |
+| 19 | `$1039` | `MAKEXE` | function "MACRO" |
+| 20 | `$103C` | `CAPTUR` | function "CAPTURE" |
+| 21 | `$103F` | `CAPROU` | pull data from the decoder into the capture buffer |
+| 22 | `$1042` | `DISCAP` | function "DISPLAY" |
+| 23 | `$1045` | `TEXT` | function "XFER" |
+| 24 | `$1048` | `SCREEN` | function "SCREEN" |
+| 25 | `$104B` | `HORROU` | the "listen" routine for SCREEN mode |
+| 26 | `$104E` | `KEYBD` | function "KEYBOARD" |
+| 27 | `$1051` | `PAUSE` | function "PAUSE" |
+| 28 | `$1054` | `EDIT` | function "EDIT" |
+| 29 | `$1057` | `NAMEIN` | read a filename into FNAME, length in NAMCTR |
+| 30 | `$105A` | `STSTR` | show the string at STRPTR in the status line |
+| 31 | `$105D` | `STAMSG` | show status message A, 1-25, from MSGTAB |
+| 32 | `$1060` | `SAVPUF` | save the capture buffer |
+| 33 | `$1063` | `CLOWRT` | close the write file |
+| 34 | `$1066` | `MKROUT` | set the open macro as output file (LISTENER) for EDIT |
+| 35 | `$1069` | `MKRIN` | set the open macro as input file (TALKER) |
+| 36 | `$106C` | `CLMW` | close the write macro |
+| 37 | `$106F` | `CLMR` | close the read macro |
+| 38 | `$1072` | `FLOST` | show the floppy status in the status line |
+| 39 | `$1075` | `FSCLR` | read and clear the floppy status without showing it |
+| 40 | `$1078` | `STLEER` | clear the status line |
+| 41 | `$107B` | `WTCON` | wait for CURSOR-ON from the network |
+| 42 | `$107E` | `PAUSAS` | pause for A seconds |
+| 43 | `$1081` | `DISPL` | draw a character cell on the C64 screen at XPOS/YPOS |
+| 44 | `$1084` | `DISFIL` | write a character cell to a file |
+| 45 | `$1087` | `DISPTR` | write a character cell to the printer |
+| 46 | `$108A` | `COMCOD` | convert a decoder cell to a Commodore code |
+| 47 | `$108D` | `OPMKRW` | open a macro for writing |
+| 48 | `$1090` | `OPWRT` | open a file for writing |
+| 49 | `$1093` | `OPPTR` | open the printer, initialised for the MPS-1200 |
+| 50 | `$1096` | `OPMKRO` | open a macro for reading |
+| 51 | `$1099` | `KATLOG` | show the macro directory |
+| 52 | `$109C` | `DISNAM` | show a macro name |
+| 53 | `$109F` | `GETAST` | get a byte from the keyboard or macro; records one in EDIT mode |
+| 54 | `$10A2` | `INIT` | initialise the C64 screen and print the message |
+| 55 | `$10A5` | `CHROUT` | print a character on the C64 screen at X,Y |
+| 56 | `$10A8` | `CURSOR` | show the cursor at X,Y; X=$FF turns it off |
+| 57 | `$10AB` | `TSW` | function "TELESOFT" |
+| 58 | `$10AE` | `TSWROU` | the telesoftware routine |
+| 59 | `$10B1` | `OPIEC` | open an IEC file |
+| 60 | `$10B4` | `OPTSW` | open a telesoftware file, type PRG |
+
+The manual also documents seven table pointers at `$10C0`–`$10CD` (`CAPPUF`,
+`CAPEND`, `HELPIC`, `ASCTAB`, `DINTAB`, `MAKPIC`, `MSGTAB`), 38 variables at
+`$11AA`–`$11F5`, and eight zero-page pointers. Two of the zero-page names it
+gives — SCRPTR at `$67`, a pointer to video RAM, and DISHLP at `$6B`, a pointer
+to the display translation table — are never referenced by this ROM revision.
+They appear here without backticks because they are names from the manual only:
+nothing in the disassembly defines them, and `tools/checkdoc.py` is right to
+insist that every identifier the prose marks as code exists in the sources.
 
 ### The menu is what unlocks it
 
@@ -248,11 +331,11 @@ most of the branching:
 
 | Flag | Set by | Effect |
 |---|---|---|
-| `c64GermanFlag` | Keybd | search `c64GermanKeys`; swap Y and Z |
+| `DTKBD` | Keybd | search `c64GermanKeys`; swap Y and Z |
 | `c64AlphaFlag` | ASCII / Btx | put `c64AsciiKeys` first in the search chain |
-| `c64CapFlag` | Capture | route incoming bytes into the buffer |
-| `c64RecFlag` | Edit | echo every key to the macro file |
-| `c64PlayFlag` | Macro | read keys from the macro file, not the keyboard |
+| `CAPFLG` | Capture | route incoming bytes into the buffer |
+| `EDTFLG` | Edit | echo every key to the macro file |
+| `MAKFLG` | Macro | read keys from the macro file, not the keyboard |
 
 `c64XlatKey` searches up to three tables in order — `c64AsciiKeys` (2-byte
 records, ASCII mode only), `c64GermanKeys` (4-byte, umlauts composed with the
@@ -260,9 +343,9 @@ CEPT diaeresis `$19 $48` plus a base letter), then `c64CtrlKeys` (4-byte,
 cursor and colour and function keys). A key expands to at most three CEPT
 bytes.
 
-The capture buffer runs from `c64BufStart` — which is where the startup page
+The capture buffer runs from `CAPPUF` — which is where the startup page
 happens to sit, so the first capture overwrites it — up to `$8000`, the
-cartridge window. `c64CapEnd` records how far it is filled.
+cartridge window. `CAPBIS` records how far it is filled.
 
 ### Character-cell rendering
 
@@ -680,7 +763,7 @@ attribute bytes into `curAttr0`, `curSet`, `curAttr2` and `curAttr3` before
 deciding anything about it. Four bytes in internal RAM are cheaper to reach
 than four indexed loads, and every glyph decision reads them repeatedly. They
 are also exactly what the mailbox forwards to the C64, so `curSet` and the
-payload's `c64CellSet` are the same byte two processors apart. Those strides are the clearest statement of the
+payload's `ATR1` are the same byte two processors apart. Those strides are the clearest statement of the
 layout anywhere in the image: three planes are one byte per cell across 40
 columns, and `planeAttr` is four, which is exactly why its rows sit 160 apart.
 
@@ -954,7 +1037,7 @@ $10B7-$10BF   nine bytes of alignment padding
 $10C0-$10CD   seven pointer slots
 $10CE-$1149   c64CtrlKeys      cursor, colour and function keys
 $114A-$11A9   c64GermanKeys    the German layout and its umlauts
-$11AA-$11B8   c64MacroFile     "@:BTX-MAK-<id>,S,W"
+$11AA-$11B8   MAKNAM     "@:BTX-MAK-<id>,S,W"
 $11B9-$11F7   variables
 $11F8-$166F   31 CEPT status records
 $1670-$16AD   c64StrTable, indexing them
@@ -970,7 +1053,7 @@ $2464  c64ExtraFile     $24A4  c64SplashText    $296F  ceptMacroDir
 $2BBD  ceptStartPage
 ```
 
-`ceptStartPage` is last, and that is not a coincidence: `c64BufStart` points at
+`ceptStartPage` is last, and that is not a coincidence: `CAPPUF` points at
 it, so the capture buffer begins where the startup page ends the image.
 
 100% of the image is accounted for: 13663 bytes of code, 19105 of typed data.
@@ -1048,7 +1131,7 @@ and every register in the shared interface window carries a name.
 
 That last one is what closed most recently, and it is worth saying what it
 bought: the two listings can now be read against each other. `cellSet` and
-`c64CellSet` are the same field, `pageCount` and `btxPageCount` the same
+`ATR1` are the same field, `pageCount` and `btxPageCount` the same
 counter, `statusMsg` and `btxStatusMsg` the same index — so a question about
 one processor can be answered from the other. Several findings here came out
 that way rather than from either image alone.

@@ -46,7 +46,7 @@ def test_payload_binary_is_a_real_prg():
     src = (OUT / "c64_payload.asm").read_text()
     assert "c64LoadAddr:" in src
     # the load address is a 16-bit word, and it names where the payload runs
-    assert "DW      vecColdStart" in src
+    assert "DW      START" in src
     assert "ORG     $0FFE" in src
 
 
@@ -255,16 +255,16 @@ def test_pointer_pairs_name_their_target():
     src = (OUT / "c64_payload.asm").read_text()
     assert "LDA     #c64SplashText&255" in src
     assert "LDA     #c64SplashText>>8" in src
-    assert "LDA     #c64MacroFile&255" in src
+    assert "LDA     #MAKNAM&255" in src
     # the low/high halves must pair with the right zero-page bytes
     lines = [ln.strip() for ln in src.splitlines()]
     i = lines.index("LDA     #c64SplashText&255")
     # $A7/$A8 are the KERNAL's RS-232 variables INBIT and BITCI, but the
     # payload only ever uses them as a 16-bit pointer, so they are named for
     # that instead.
-    assert lines[i + 1] == "STA     c64ScrPtr"
+    assert lines[i + 1] == "STA     SCNPTR"
     assert lines[i + 2] == "LDA     #c64SplashText>>8"
-    assert lines[i + 3] == "STA     c64ScrPtrHi"
+    assert lines[i + 3] == "STA     SCNPTRHi"
 
 
 def test_low_high_byte_expressions_assemble():
@@ -356,7 +356,7 @@ def test_menu_key_table_uses_byte_word_records():
     src = (OUT / "c64_payload.asm").read_text()
     body = src.split("c64MenuKeys:", 1)[1].split("\n\n", 1)[0]
     assert "FCB     $4C" in body and "; 'L'" in body
-    assert "DW      vecMenuLoad" in body
+    assert "DW      FILDIS" in body
     assert body.rstrip().endswith("FCB     $00")
     assert len(re.findall(r"^\s+DW\s", body, re.M)) == 13
 
@@ -387,7 +387,7 @@ def test_pointer_table_resolves_to_its_targets():
     """$10C0 onward holds 16-bit pointers; three of them name CEPT pages or the
     string table, which is what identifies the table."""
     src = (OUT / "c64_payload.asm").read_text()
-    body = src.split("c64BufStart:", 1)[1][:400]
+    body = src.split("CAPPUF:", 1)[1][:400]
     assert "DW      ceptStartPage" in body
     assert "ceptMacroDir" in body and "c64StrTable" in body
 
@@ -412,16 +412,16 @@ def test_indirect_operands_name_their_pointer():
     """LDA ($BB),Y reads through a zero-page pointer, so the operand names the
     pointer rather than showing its address."""
     src = (OUT / "c64_payload.asm").read_text()
-    assert "(c64KeyPtr),Y" in src
-    assert "(c64ScrPtr),Y" in src
+    assert "(KBDPTR),Y" in src
+    assert "(SCNPTR),Y" in src
 
 
 def test_every_word_entry_can_carry_its_own_label():
     """Treating every byte after a region start as interior denied labels to
     the second and later entries of a table."""
     src = (OUT / "c64_payload.asm").read_text()
-    names = ("c64CtrlKeysPtr:", "c64GermanKeysPtr:",
-             "c64MacroDirPtr:", "c64StrTablePtr:")
+    names = ("ASCTAB:", "DINTAB:",
+             "MAKPIC:", "MSGTAB:")
     for label in names:
         assert label in src, label
 
@@ -468,8 +468,13 @@ def test_kernal_names_come_from_the_rom_source():
                        ("KEY", 0xEA31), ("CLSEI", 0xF642), ("INITCZ", 0xE3BF)):
         assert re.search(rf"^{name}\s+EQU\s+\${addr:04X}$", src, re.M), name
     code = "\n".join(ln for ln in src.splitlines() if not ln.lstrip().startswith(";"))
-    for gone in ("IEC_CIOUT", "KERNAL_CLOSE", "IRQ_ENTRY", "CHROUT"):
+    for gone in ("IEC_CIOUT", "KERNAL_CLOSE", "IRQ_ENTRY"):
         assert gone not in code, gone
+    # CHROUT is a real name here, but it is Commodore's for the payload entry
+    # at $10A5 - documented in the Bedienungshandbuch, Anhang D - not a second
+    # name for the KERNAL's $FFD2. Guard the address, not the string.
+    assert not re.search(r"^CHROUT\s+EQU\s+\$FFD2$", src, re.M)
+    assert re.search(r"^CHROUT:$", src, re.M)
 
 
 def test_second_byte_of_a_field_reads_as_plus_one():
@@ -504,9 +509,9 @@ def test_macro_filename_template():
     """A CBM DOS filename with a slot for the macro identifier, not a string
     table - "@:" overwrites, ",S,W" opens sequential for write."""
     src = (OUT / "c64_payload.asm").read_text()
-    body = src.split("c64MacroFile:", 1)[1][:200]
+    body = src.split("MAKNAM:", 1)[1][:200]
     assert 'FCC     "@:BTX-MAK-"' in body
-    assert "c64MacroId:" in body
+    assert "MAKNR:" in body
     assert '",S,W"' in body
 
 

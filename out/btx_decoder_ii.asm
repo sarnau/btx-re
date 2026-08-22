@@ -1074,7 +1074,7 @@ LA2E4:
 ; four indexed loads, and every glyph decision reads them several times.
 ;
 ; These are exactly what the mailbox forwards to the C64 as cellAttr0, cellSet,
-; cellAttr2 and cellAttr3, so curSet and the payload's c64CellSet are the same
+; cellAttr2 and cellAttr3, so curSet and the payload's ATR1 are the same
 ; byte two processors apart. Its low three bits are the G-set code: 5 sets
 ; drcsCell, and non-zero is one of the three conditions for applying
 ; separationMask.

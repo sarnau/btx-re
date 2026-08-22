@@ -5,8 +5,8 @@
         CPU     6502
 
 ; Decoder hardware and RAM, as the C64 sees it.
-c64Ptr    EQU     $0061
-c64PtrHi  EQU     $0062
+ZPHELP    EQU     $0061
+ZPHELPHi  EQU     $0062
 btxLoadLo EQU     $8000
 btxLoadHi EQU     $8001
 btxRxWr   EQU     $8009
@@ -32,7 +32,7 @@ PCINT    EQU     $FF5B
 ;   $B32D-$B33F  c64CartHeader   C64 autostart cartridge header
 ;   $B340-$B3A5  c64CartStart    the bootstrap, runs from ROM at C64 $8000
 ;   $B3A6-$B3A7  c64LoadAddr     $00 $10 - little-endian load address $1000
-;   $B3A8-$D108  vecColdStart    7521 bytes, loaded to C64 $1000-$2D60
+;   $B3A8-$D108  START    7521 bytes, loaded to C64 $1000-$2D60
 ;
 ; ROM $B32D maps to C64 $8000, proved by the cartridge header itself:
 ;
@@ -49,12 +49,12 @@ PCINT    EQU     $FF5B
 ;
 ;     JSR IOINIT / SIZE+8 / RESTOR / PCINT
 ;     LDX #$00 / STX $D016                     VIC setup
-;     JSR c64BootGetByte / STA btxLoadLo, c64Ptr
-;     JSR c64BootGetByte / STA btxLoadHi, c64PtrHi
+;     JSR c64BootGetByte / STA btxLoadLo, ZPHELP
+;     JSR c64BootGetByte / STA btxLoadHi, ZPHELPHi
 ;     LDY #$00
 ;   c64CopyLoop:
-;     JSR c64BootGetByte / BCS c64StartPayload / STA (c64Ptr),Y
-;     INY / BNE c64CopyLoop / INC c64PtrHi / JMP c64CopyLoop
+;     JSR c64BootGetByte / BCS c64StartPayload / STA (ZPHELP),Y
+;     INY / BNE c64CopyLoop / INC ZPHELPHi / JMP c64CopyLoop
 ;
 ; SIZE+8 is an entry into the middle of the KERNAL's memory sizing: $FD88 is
 ; size, and eight bytes in is the tail that sets MEMSTR to $0800 and HIBASE to
@@ -93,10 +93,10 @@ PCINT    EQU     $FF5B
 ; btxLoadLo/btxLoadHi - stores land in the RAM underneath the ROM - so once the
 ; cartridge is banked out the same indirect read returns $1000 instead, and
 ; control lands on the payload rather than back in the bootstrap. That is why the
-; loader stores the load address twice, to c64Ptr for its own copy loop and to
+; loader stores the load address twice, to ZPHELP for its own copy loop and to
 ; btxLoadLo for this jump.
 ;
-; What it lands on is vecColdStart, entry 0 of the payload's 61-entry JMP table
+; What it lands on is START, entry 0 of the payload's 61-entry JMP table
 ; at runtime $1000-$10B6. The whole C64 side is built out of that table; see the
 ; comment there.
 ;
@@ -119,20 +119,20 @@ c64CartStart:
         JSR     PCINT
         JSR     c64BootGetByte
         STA     btxLoadLo
-        STA     c64Ptr
+        STA     ZPHELP
         JSR     c64BootGetByte
         STA     btxLoadHi
-        STA     c64PtrHi
+        STA     ZPHELPHi
         LDY     #$00
 
 c64CopyLoop:
 ; copy one byte, 256 at a time, until c64BootGetByte reports end of stream
         JSR     c64BootGetByte
         BCS     c64StartPayload
-        STA     (c64Ptr),Y
+        STA     (ZPHELP),Y
         INY
         BNE     c64CopyLoop
-        INC     c64PtrHi
+        INC     ZPHELPHi
         JMP     c64CopyLoop
 
 ; Handing control to the payload.
